@@ -1,5 +1,5 @@
 /*
-  # TrvicERP Core Tables - Complete Travel Industry Architecture
+  # TrivcERP Core Tables - Complete Travel Industry Architecture
   
   This migration creates the four core tables and supporting structures for a complete
   travel ERP system with atomic component management, dynamic pricing, customer segmentation,

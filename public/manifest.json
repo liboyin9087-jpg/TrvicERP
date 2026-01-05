@@ -1,6 +1,6 @@
 {
-  "name": "TrvicERP - 旅遊業整合工具",
-  "short_name": "TrvicERP",
+  "name": "TrivcERP - 旅遊業整合工具",
+  "short_name": "TrivcERP",
   "description": "Enterprise Travel Platform - Tesla-style Configurator + ERP + AI",
   "start_url": "/",
   "display": "standalone",

@@ -1,5 +1,5 @@
 -- ==============================================
--- TrvicERP - Profiles Table with RLS
+-- TrivcERP - Profiles Table with RLS
 -- Migration: 20240101000000_profiles_table.sql
 -- ==============================================
 

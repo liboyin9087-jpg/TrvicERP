@@ -54,7 +54,6 @@
     }
   ],
   "env": {
-    "VITE_APP_VERSION": "@vercel/env/VERCEL_GIT_COMMIT_SHA",
     "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
   }
 }
