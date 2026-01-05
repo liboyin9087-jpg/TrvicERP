@@ -1,4 +1,4 @@
-# 修復摘要 - TrvicERP 關鍵問題
+# 修復摘要 - TrivcERP 關鍵問題
 
 ## 執行日期
 2026-01-01
@@ -70,7 +70,7 @@ if ('serviceWorker' in navigator) {
 **解決方案**:
 - 建立標準的 MIT License 檔案
 - 版權年份: 2024
-- 版權持有人: TrvicERP Contributors
+- 版權持有人: TrivcERP Contributors
 
 #### P1.2 缺少錯誤邊界
 **問題**: React 應用程式缺少全域錯誤邊界，任何子元件錯誤都會導致整個應用程式崩潰。

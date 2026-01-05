@@ -6,7 +6,7 @@
 
 ## 繁體中文
 
-本文件記錄了 TrvicERP 專案的未來優化方向和擴展建議。
+本文件記錄了 TrivcERP 專案的未來優化方向和擴展建議。
 
 ## 🌦 天氣資訊整合
 
@@ -442,7 +442,7 @@ jobs:
 
 ## English
 
-This document outlines future optimization directions and expansion suggestions for the TrvicERP project.
+This document outlines future optimization directions and expansion suggestions for the TrivcERP project.
 
 ## 🌦 Weather Information Integration
 

@@ -1,5 +1,5 @@
 -- ==============================================
--- TrvicERP - Core Tables Migration
+-- TrivcERP - Core Tables Migration
 -- Migration: 20240101000001_core_tables.sql
 -- ==============================================
 

@@ -1,4 +1,4 @@
-# TrvicERP 專案 LLM 選型建議
+# TrivcERP 專案 LLM 選型建議
 
 ## 🎯 專案需求分析
 

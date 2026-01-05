@@ -1,5 +1,5 @@
 // =====================================================
-// TrvicERP - Service Worker (PWA)
+// TrivcERP - Service Worker (PWA)
 // =====================================================
 
 const CACHE_NAME = 'trvicerp-v3.0.0';

@@ -11,6 +11,7 @@ import AgencyDashboard from './pages/agency/AgencyDashboard';
 import CommitteeDashboard from './pages/committee/CommitteeDashboard';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import LoginPage from './pages/LoginPage';
+import AttractionsList from './pages/AttractionsList';
 import ProtectedRoute from './routes/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 import type { Role } from './types';
@@ -51,6 +52,15 @@ export default function App() {
         element={
           <ProtectedRoute allow={['EMPLOYEE']}>
             <EmployeeDashboard onLogout={() => void logout()} voterId={auth.user?.id} />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/attractions"
+        element={
+          <ProtectedRoute allow={['ADMIN', 'BOSS', 'CLIENT', 'HR', 'EMPLOYEE']}>
+            <AttractionsList />
           </ProtectedRoute>
         }
       />

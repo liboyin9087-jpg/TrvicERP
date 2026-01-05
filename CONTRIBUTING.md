@@ -6,13 +6,13 @@
 
 ## 繁體中文
 
-感謝您對 TrvicERP 專案的興趣！我們歡迎所有形式的貢獻。
+感謝您對 TrivcERP 專案的興趣！我們歡迎所有形式的貢獻。
 
 ### 🐛 回報 Bug
 
 如果您發現 Bug，請：
 
-1. 檢查 [Issues](https://github.com/liboyin9087-jpg/TrvicERP/issues) 確認是否已有人回報
+1. 檢查 [Issues](https://github.com/liboyin9087-jpg/TrivcERP/issues) 確認是否已有人回報
 2. 如果沒有，請建立新的 Issue，包含：
    - 清楚的標題描述問題
    - 重現步驟
@@ -24,7 +24,7 @@
 
 如果您有新功能的想法：
 
-1. 先檢查 [Issues](https://github.com/liboyin9087-jpg/TrvicERP/issues) 是否已有類似提議
+1. 先檢查 [Issues](https://github.com/liboyin9087-jpg/TrivcERP/issues) 是否已有類似提議
 2. 建立新的 Issue，標記為 `enhancement`，說明：
    - 功能的使用場景
    - 為什麼需要這個功能
@@ -37,8 +37,8 @@
 1. **Fork 專案**
    ```bash
    # 在 GitHub 上 fork 專案後
-   git clone https://github.com/你的使用者名稱/TrvicERP.git
-   cd TrvicERP
+   git clone https://github.com/你的使用者名稱/TrivcERP.git
+   cd TrivcERP
    ```
 
 2. **安裝依賴**
@@ -116,7 +116,7 @@
 ### 📁 專案結構
 
 ```
-TrvicERP/
+TrivcERP/
 ├── src/
 │   ├── components/       # React 組件
 │   ├── services/         # 服務層（API 呼叫、業務邏輯）
@@ -151,8 +151,8 @@ TrvicERP/
 
 ### 💬 討論和問題
 
-- 使用 [Discussions](https://github.com/liboyin9087-jpg/TrvicERP/discussions) 進行一般討論
-- 使用 [Issues](https://github.com/liboyin9087-jpg/TrvicERP/issues) 回報 Bug 或建議功能
+- 使用 [Discussions](https://github.com/liboyin9087-jpg/TrivcERP/discussions) 進行一般討論
+- 使用 [Issues](https://github.com/liboyin9087-jpg/TrivcERP/issues) 回報 Bug 或建議功能
 
 ### 📋 開發建議
 
@@ -186,19 +186,19 @@ TrvicERP/
 
 ### ❤️ 感謝
 
-感謝所有貢獻者讓 TrvicERP 變得更好！
+感謝所有貢獻者讓 TrivcERP 變得更好！
 
 ---
 
 ## English
 
-Thank you for your interest in the TrvicERP project! We welcome all forms of contributions.
+Thank you for your interest in the TrivcERP project! We welcome all forms of contributions.
 
 ### 🐛 Report Bugs
 
 If you find a bug, please:
 
-1. Check [Issues](https://github.com/liboyin9087-jpg/TrvicERP/issues) to see if it's already reported
+1. Check [Issues](https://github.com/liboyin9087-jpg/TrivcERP/issues) to see if it's already reported
 2. If not, create a new Issue with:
    - Clear title describing the problem
    - Steps to reproduce
@@ -210,7 +210,7 @@ If you find a bug, please:
 
 If you have an idea for a new feature:
 
-1. Check [Issues](https://github.com/liboyin9087-jpg/TrvicERP/issues) for similar suggestions
+1. Check [Issues](https://github.com/liboyin9087-jpg/TrivcERP/issues) for similar suggestions
 2. Create a new Issue labeled `enhancement`, explaining:
    - Use case for the feature
    - Why it's needed
@@ -223,8 +223,8 @@ If you have an idea for a new feature:
 1. **Fork the project**
    ```bash
    # After forking on GitHub
-   git clone https://github.com/your-username/TrvicERP.git
-   cd TrvicERP
+   git clone https://github.com/your-username/TrivcERP.git
+   cd TrivcERP
    ```
 
 2. **Install dependencies**
@@ -302,7 +302,7 @@ If you have an idea for a new feature:
 ### 📁 Project Structure
 
 ```
-TrvicERP/
+TrivcERP/
 ├── src/
 │   ├── components/       # React components
 │   ├── services/         # Service layer (API calls, business logic)
@@ -337,8 +337,8 @@ If you discover a security vulnerability, please **do not** create a public Issu
 
 ### 💬 Discussions and Questions
 
-- Use [Discussions](https://github.com/liboyin9087-jpg/TrvicERP/discussions) for general discussions
-- Use [Issues](https://github.com/liboyin9087-jpg/TrvicERP/issues) to report bugs or suggest features
+- Use [Discussions](https://github.com/liboyin9087-jpg/TrivcERP/discussions) for general discussions
+- Use [Issues](https://github.com/liboyin9087-jpg/TrivcERP/issues) to report bugs or suggest features
 
 ### 📋 Development Tips
 
@@ -372,4 +372,4 @@ If you discover a security vulnerability, please **do not** create a public Issu
 
 ### ❤️ Thank You
 
-Thanks to all contributors for making TrvicERP better!
+Thanks to all contributors for making TrivcERP better!

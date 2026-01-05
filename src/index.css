@@ -1,5 +1,5 @@
 /* =====================================================
-   TravelCanvas - Global Styles
+   TrivcERP - Global Styles
    Tailwind CSS + Custom Animations
    ===================================================== */
 
@@ -18,7 +18,7 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900;
+    @apply bg-white text-black;
   }
 
   ::-webkit-scrollbar {
@@ -31,7 +31,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 rounded-full;
+    @apply bg-gray-400 rounded-full;
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -133,16 +133,16 @@
   }
 
   .btn-primary {
-    @apply btn bg-slate-900 text-white hover:bg-slate-800 shadow-lg active:scale-95;
+    @apply btn bg-black text-white hover:bg-gray-800 shadow-lg active:scale-95;
   }
 
   .btn-secondary {
-    @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50;
+    @apply btn bg-white text-black border border-gray-300 hover:bg-gray-50;
   }
 
   .input {
-    @apply w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 
-           focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 bg-white 
+           focus:bg-white focus:border-black focus:ring-2 focus:ring-gray-200 
            outline-none transition-all;
   }
 
@@ -159,7 +159,7 @@
   }
 
   .skeleton {
-    @apply bg-slate-200 animate-pulse rounded;
+    @apply bg-gray-200 animate-pulse rounded;
   }
 }
 

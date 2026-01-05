@@ -1,4 +1,4 @@
-# TrvicERP 專案診斷報告與修復指南
+# TrivcERP 專案診斷報告與修復指南
 
 ## 執行摘要
 
@@ -194,4 +194,4 @@ LoginPage.tsx 會顯示 Demo 帳號，生產環境應隱藏：
 
 - [Supabase Edge Functions 文檔](https://supabase.com/docs/guides/functions)
 - [Vercel SPA 部署](https://vercel.com/docs/frameworks/vite)
-- [專案 GitHub](https://github.com/liboyin9087-jpg/TrvicERP)
+- [專案 GitHub](https://github.com/liboyin9087-jpg/TrivcERP)

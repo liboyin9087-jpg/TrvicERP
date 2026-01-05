@@ -1,8 +1,8 @@
-# TrvicERP - 完整系統架構文件
+# TrivcERP - 完整系統架構文件
 
 ## 系統概述
 
-TrvicERP 是一個完整的旅遊業ERP系統，整合了動態報價、客群推薦、競品分析、行程管理等功能。本系統採用 React + TypeScript + Supabase 架構，提供完整的資料管理與自動化功能。
+TrivcERP 是一個完整的旅遊業ERP系統，整合了動態報價、客群推薦、競品分析、行程管理等功能。本系統採用 React + TypeScript + Supabase 架構，提供完整的資料管理與自動化功能。
 
 ## 資料庫架構
 
@@ -518,4 +518,4 @@ supabase/migrations/create_core_erp_tables.sql
 
 **版本：** 3.0.0
 **最後更新：** 2026-01-03
-**維護者：** TrvicERP Team
+**維護者：** TrivcERP Team

@@ -1,7 +1,7 @@
 {
-  "name": "trvicerp",
+  "name": "trivicerp",
   "version": "3.2.0",
-  "description": "TrvicERP - 台灣旅遊業開源 ERP 系統 (含 AI 智能、RFP 比價、反雷資料庫)",
+  "description": "TrivcERP - 台灣旅遊業開源 ERP 系統 (含 AI 智能、RFP 比價、反雷資料庫)",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -64,14 +64,14 @@
     "llm",
     "pwa"
   ],
-  "author": "TrvicERP Community",
+  "author": "TrivcERP Community",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/liboyin9087-jpg/TrvicERP"
+    "url": "https://github.com/liboyin9087-jpg/TrivcERP"
   },
   "bugs": {
-    "url": "https://github.com/liboyin9087-jpg/TrvicERP/issues"
+    "url": "https://github.com/liboyin9087-jpg/TrivcERP/issues"
   },
-  "homepage": "https://github.com/liboyin9087-jpg/TrvicERP#readme"
+  "homepage": "https://github.com/liboyin9087-jpg/TrivcERP#readme"
 }

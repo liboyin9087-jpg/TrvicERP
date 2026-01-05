@@ -19,8 +19,8 @@
 #### 1. Clone 專案
 
 ```bash
-git clone https://github.com/liboyin9087-jpg/TrvicERP.git
-cd TrvicERP
+git clone https://github.com/liboyin9087-jpg/TrivcERP.git
+cd TrivcERP
 ```
 
 #### 2. 安裝依賴
@@ -265,8 +265,8 @@ Complete guide for setting up the development environment.
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/liboyin9087-jpg/TrvicERP.git
-cd TrvicERP
+git clone https://github.com/liboyin9087-jpg/TrivcERP.git
+cd TrivcERP
 ```
 
 #### 2. Install Dependencies

@@ -1,6 +1,6 @@
-# 部署指南 - TrvicERP
+# 部署指南 - TrivcERP
 
-本指南說明如何將 TrvicERP 部署到生產環境並推送至移動應用。
+本指南說明如何將 TrivcERP 部署到生產環境並推送至移動應用。
 
 ## 目錄
 
@@ -164,7 +164,7 @@ npm install @capacitor/core @capacitor/cli
 
 # 2. 初始化 Capacitor
 npx cap init
-# App name: TrvicERP
+# App name: TrivcERP
 # App ID: com.trvicerp.app
 # Web directory: dist
 
@@ -223,7 +223,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.trvicerp.app',
-  appName: 'TrvicERP',
+  appName: 'TrivcERP',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
@@ -256,7 +256,7 @@ VITE_LLM_API_KEY=your_production_api_key
 VITE_LLM_MODEL=meta-llama/Llama-3.2-90B-Vision-Instruct
 
 # 應用配置
-VITE_APP_NAME=TrvicERP
+VITE_APP_NAME=TrivcERP
 VITE_APP_VERSION=3.0.0
 NODE_ENV=production
 ```
@@ -412,6 +412,6 @@ npm run build
 
 - 📖 [完整文檔](README.md)
 - 🦙 [Llama 設置指南](LLAMA_SETUP.md)
-- 🐛 [回報問題](https://github.com/liboyin9087-jpg/TrvicERP/issues)
+- 🐛 [回報問題](https://github.com/liboyin9087-jpg/TrivcERP/issues)
 
 祝您部署順利！🚀

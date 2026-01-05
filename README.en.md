@@ -1,4 +1,4 @@
-# TrvicERP 🌏
+# TrivcERP 🌏
 
 Travel Industry Integration Tool - Tesla-style Travel Configurator + ERP Team Control System + Tourist Navigation App
 
@@ -127,7 +127,7 @@ npm run preview
 ## 📁 Project Structure
 
 ```
-TrvicERP/
+TrivcERP/
 ├── src/
 │   ├── components/          # React components
 │   │   ├── Icons.tsx        # SVG icon library
@@ -182,8 +182,8 @@ This project is configured with PWA support and can be installed on mobile devic
 
 1. Build the project: `npm run build`
 2. Deploy the `dist/` folder to any static hosting service:
-   - **Vercel**: `vercel deploy` or [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/liboyin9087-jpg/TrvicERP)
-   - **Netlify**: `netlify deploy` or [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/liboyin9087-jpg/TrvicERP)
+   - **Vercel**: `vercel deploy` or [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/liboyin9087-jpg/TrivcERP)
+   - **Netlify**: `netlify deploy` or [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/liboyin9087-jpg/TrivcERP)
    - **GitHub Pages**: Push to `gh-pages` branch
    - **Firebase Hosting**: `firebase deploy`
 
@@ -234,4 +234,4 @@ MIT License
 
 ---
 
-**Built by TrvicERP Team ❤️ Powered by Llama 🦙**
+**Built by TrivcERP Team ❤️ Powered by Llama 🦙**

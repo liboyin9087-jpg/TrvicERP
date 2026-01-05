@@ -1,4 +1,4 @@
-# TrvicERP 🌏
+# TrivcERP 🌏
 
 **台灣旅遊業開源 ERP 系統** — Tesla-style 旅遊配置器 + 團控管理 + 旅客導覽 App + AI 智能輔助
 
@@ -32,7 +32,7 @@
 
 ## 專案概述
 
-TrvicERP 是專為台灣旅遊業設計的開源企業資源規劃系統，整合了現代化的 Tesla-style 視覺配置器、完整的團控管理功能、以及支援離線使用的 PWA 旅客導覽應用程式。本系統適合企業福委會規劃員工旅遊、旅行社業者進行團控管理與 RFP 比價，以及導遊使用的行程導覽工具。
+TrivcERP 是專為台灣旅遊業設計的開源企業資源規劃系統，整合了現代化的 Tesla-style 視覺配置器、完整的團控管理功能、以及支援離線使用的 PWA 旅客導覽應用程式。本系統適合企業福委會規劃員工旅遊、旅行社業者進行團控管理與 RFP 比價，以及導遊使用的行程導覽工具。
 
 ---
 
@@ -77,8 +77,8 @@ TrvicERP 是專為台灣旅遊業設計的開源企業資源規劃系統，整�
 ### 步驟一：複製專案
 
 ```bash
-git clone https://github.com/liboyin9087-jpg/TrvicERP.git
-cd TrvicERP
+git clone https://github.com/liboyin9087-jpg/TrivcERP.git
+cd TrivcERP
 npm install
 ```
 
@@ -236,7 +236,7 @@ ollama serve
 ## 專案架構
 
 ```
-TrvicERP/
+TrivcERP/
 ├── api/                    # Vercel Serverless Functions
 │   ├── llm.ts              # LLM Proxy（多 Provider 支援）
 │   ├── rfp.ts              # RFP CRUD API
@@ -393,4 +393,4 @@ npm run test:e2e
 
 ---
 
-**由 TrvicERP 開源社群維護 ❤️**
+**由 TrivcERP 開源社群維護 ❤️**
