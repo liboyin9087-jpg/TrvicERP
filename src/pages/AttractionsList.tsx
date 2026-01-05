@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase';
 
 interface Attraction {
   id: number;
@@ -37,6 +37,11 @@ export default function AttractionsList() {
   async function fetchAttractions() {
     try {
       setLoading(true);
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
       const { data, error } = await supabase
         .from('attractions')
         .select('*')
