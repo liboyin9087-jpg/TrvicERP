@@ -71,9 +71,17 @@ interface LoginCredentials {
   password: string;
 }
 
+interface SignupCredentials {
+  email: string;
+  password: string;
+  displayName: string;
+  role: 'welfare_committee' | 'travel_agency' | 'employee' | 'admin';
+}
+
 interface AuthContextType {
   auth: AuthState;
   login: (credentials: LoginCredentials) => Promise<void>;
+  signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => Promise<void>;
   usingSupabase: boolean;
 }
@@ -271,6 +279,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // 註冊
+  const signup = async ({ email, password, displayName, role }: SignupCredentials) => {
+    if (!supabase) {
+      setAuth(prev => ({ ...prev, error: 'Demo 模式不支援註冊功能' }));
+      return;
+    }
+
+    setAuth(prev => ({ ...prev, isLoading: true, error: null }));
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: displayName,
+          role,
+        },
+      },
+    });
+
+    if (error) {
+      setAuth({
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+        error: error.message,
+      });
+      return;
+    }
+
+    if (data.user) {
+      const appRole = {
+        'admin': 'ADMIN' as Role,
+        'welfare_committee': 'CLIENT' as Role,
+        'travel_agency': 'BOSS' as Role,
+        'employee': 'EMPLOYEE' as Role,
+      }[role] || 'EMPLOYEE' as Role;
+
+      setAuth({
+        isAuthenticated: true,
+        user: mapSupabaseUser(data.user, appRole),
+        isLoading: false,
+        error: null,
+      });
+    }
+  };
+
   // 登出
   const logout = async () => {
     if (supabase) {
@@ -290,6 +345,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value: AuthContextType = {
     auth,
     login,
+    signup,
     logout,
     usingSupabase: isSupabaseConfigured,
   };
