@@ -1,0 +1,532 @@
+openapi: 3.0.3
+info:
+  title: TrvicERP API
+  description: |
+    TrvicERP 企業旅遊資源規劃系統 API
+    
+    提供旅遊規劃、報銷管理、AI 智能助理等功能的 RESTful API。
+    
+    ## 認證方式
+    使用 Supabase Auth 進行身份驗證，需在 Header 中提供 JWT token：
+    ```
+    Authorization: Bearer <access_token>
+    ```
+    
+    ## 速率限制
+    - 未認證請求: 100 次/小時
+    - 已認證請求: 1000 次/小時
+    
+  version: 3.2.0
+  contact:
+    name: TrvicERP Community
+    url: https://github.com/liboyin9087-jpg/TrvicERP
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://your-project.supabase.co/rest/v1
+    description: Supabase REST API
+  - url: https://your-project.supabase.co/functions/v1
+    description: Supabase Edge Functions
+
+tags:
+  - name: Trips
+    description: 旅程管理
+  - name: Proposals
+    description: 提案管理
+  - name: Attractions
+    description: 景點資料
+  - name: Policies
+    description: 政策文件
+  - name: AI
+    description: AI 智能助理
+
+paths:
+  /trips:
+    get:
+      summary: 取得旅程列表
+      tags: [Trips]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, cancelled]
+          description: 過濾旅程狀態
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: 每頁數量
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: 分頁偏移
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      summary: 建立新旅程
+      tags: [Trips]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripCreate'
+      responses:
+        '201':
+          description: 建立成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /trips/{id}:
+    get:
+      summary: 取得單一旅程
+      tags: [Trips]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: 更新旅程
+      tags: [Trips]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripUpdate'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+
+    delete:
+      summary: 刪除旅程
+      tags: [Trips]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 刪除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /attractions:
+    get:
+      summary: 取得景點列表
+      tags: [Attractions]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: 景點分類
+        - name: region
+          in: query
+          schema:
+            type: string
+          description: 地區
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: 搜尋關鍵字
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Attraction'
+
+  /policies:
+    get:
+      summary: 取得政策文件列表
+      tags: [Policies]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [reimbursement, employee-travel, business-travel]
+          description: 政策分類
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Policy'
+
+  /policies/search:
+    post:
+      summary: 搜尋政策 (RAG)
+      tags: [Policies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: 搜尋問題
+                  example: 差旅住宿費用標準是多少？
+              required: [query]
+      responses:
+        '200':
+          description: 搜尋成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    type: string
+                    description: AI 生成的回答
+                  sources:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PolicySource'
+                  confidence:
+                    type: number
+                    format: float
+                    description: 信心度 (0-1)
+
+  /ai/chat:
+    post:
+      summary: AI 對話
+      tags: [AI]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: 使用者訊息
+                  example: 幫我訂明早9點飛往東京的機票
+                conversationId:
+                  type: string
+                  description: 對話 ID（可選）
+              required: [message]
+      responses:
+        '200':
+          description: 對話成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIResponse'
+
+  /ai/intent:
+    post:
+      summary: 識別意圖
+      tags: [AI]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: 輸入文字
+              required: [text]
+      responses:
+        '200':
+          description: 識別成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Intent'
+
+components:
+  schemas:
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: 旅程名稱
+        destination:
+          type: string
+          description: 目的地
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        budget:
+          type: number
+          format: float
+        participants:
+          type: integer
+          description: 參加人數
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TripCreate:
+      type: object
+      required: [name, destination, start_date, end_date]
+      properties:
+        name:
+          type: string
+        destination:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        budget:
+          type: number
+          format: float
+        participants:
+          type: integer
+
+    TripUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        budget:
+          type: number
+
+    Attraction:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        region:
+          type: string
+        description:
+          type: string
+        address:
+          type: string
+        coordinates:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+
+    Policy:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+        content:
+          type: string
+        metadata:
+          type: object
+          properties:
+            department:
+              type: string
+            version:
+              type: string
+            lastUpdated:
+              type: string
+              format: date
+
+    PolicySource:
+      type: object
+      properties:
+        document:
+          $ref: '#/components/schemas/Policy'
+        score:
+          type: number
+          format: float
+          description: 相關性分數
+        chunk:
+          type: object
+          properties:
+            content:
+              type: string
+            chunkIndex:
+              type: integer
+
+    AIResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [assistant]
+        content:
+          type: string
+        intent:
+          $ref: '#/components/schemas/Intent'
+        action:
+          $ref: '#/components/schemas/Action'
+        timestamp:
+          type: integer
+          format: int64
+
+    Intent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [search_policy, book_trip, submit_expense, check_budget, create_proposal, ask_question, unknown]
+        confidence:
+          type: number
+          format: float
+        entities:
+          type: object
+          additionalProperties: true
+
+    Action:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        requiresConfirmation:
+          type: boolean
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              description:
+                type: string
+              status:
+                type: string
+                enum: [pending, executing, completed, failed]
+        status:
+          type: string
+          enum: [pending, confirmed, executing, completed, cancelled, failed]
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: 請求參數錯誤
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: 未授權
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: 資源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: 伺服器錯誤
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
