@@ -18,5 +18,9 @@ export { default as WarningDatabasePanel } from './WarningDatabasePanel';
 export { default as RFPGeneratorPanel } from './RFPGeneratorPanel';
 export { default as VersionControlPanel } from './VersionControlPanel';
 
+// AI 功能元件
+export { AIChat } from './AIChat';
+export { SyncStatusIndicator } from './SyncStatusIndicator';
+
 // Error Boundary
 export { default as ErrorBoundary } from './ErrorBoundary';
