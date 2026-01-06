@@ -108,16 +108,16 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
+    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg border border-gray-200">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center shadow-md">
             <span className="text-white text-lg">🤖</span>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">AI 助理</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="text-lg font-semibold text-black">AI 助理</h3>
+            <p className="text-sm text-gray-600">
               {isInitialized ? '線上' : '初始化中...'}
             </p>
           </div>
@@ -125,14 +125,14 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
         <div className="flex gap-2">
           <button
             onClick={handleClearChat}
-            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
+            className="px-3 py-1 text-sm text-gray-700 hover:text-black transition-colors"
           >
             清除對話
           </button>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-500 hover:text-black transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -143,17 +143,17 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">
         {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-lg px-4 py-3 ${
+              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
+                  ? 'bg-black text-white shadow-md'
+                  : 'bg-gray-100 text-black border border-gray-200'
               }`}
             >
               <p className="whitespace-pre-wrap">{message.content}</p>
@@ -164,13 +164,13 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
                   <button
                     onClick={() => handleConfirm(message.action!.id)}
                     disabled={isLoading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 font-medium transition-all"
                   >
                     確認執行
                   </button>
                   <button
                     disabled={isLoading}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50"
+                    className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 disabled:opacity-50 border border-gray-300 transition-all"
                   >
                     取消
                   </button>
@@ -179,7 +179,7 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
 
               {/* Timestamp */}
               <p className={`text-xs mt-2 ${
-                message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                message.role === 'user' ? 'text-gray-400' : 'text-gray-500'
               }`}>
                 {new Date(message.timestamp).toLocaleTimeString('zh-TW', {
                   hour: '2-digit',
@@ -193,11 +193,11 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
         {/* Loading indicator */}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-3">
+            <div className="bg-gray-100 rounded-2xl px-4 py-3 border border-gray-200">
               <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           </div>
@@ -207,7 +207,7 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
       </div>
 
       {/* Input */}
-      <div className="px-6 py-4 border-t border-gray-200">
+      <div className="px-6 py-4 border-t border-gray-200 bg-white">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             ref={inputRef}
@@ -216,12 +216,12 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="輸入您的問題或需求..."
             disabled={!isInitialized || isLoading}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-xl text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
           />
           <button
             type="submit"
             disabled={!isInitialized || isLoading || !input.trim()}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-800 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all font-medium"
           >
             發送
           </button>
@@ -232,21 +232,21 @@ export const AIChat: React.FC<AIChatProps> = ({ onClose }) => {
           <button
             onClick={() => setInput('差旅住宿費用標準是多少？')}
             disabled={!isInitialized || isLoading}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50"
+            className="px-3 py-2 text-sm bg-gray-100 text-black rounded-lg hover:bg-gray-200 disabled:opacity-50 border border-gray-200 transition-all"
           >
             💰 查詢報銷標準
           </button>
           <button
             onClick={() => setInput('員工旅遊補助有多少？')}
             disabled={!isInitialized || isLoading}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50"
+            className="px-3 py-2 text-sm bg-gray-100 text-black rounded-lg hover:bg-gray-200 disabled:opacity-50 border border-gray-200 transition-all"
           >
             🎫 員工旅遊補助
           </button>
           <button
             onClick={() => setInput('查詢我的預算額度')}
             disabled={!isInitialized || isLoading}
-            className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50"
+            className="px-3 py-2 text-sm bg-gray-100 text-black rounded-lg hover:bg-gray-200 disabled:opacity-50 border border-gray-200 transition-all"
           >
             📊 預算查詢
           </button>

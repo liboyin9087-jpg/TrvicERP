@@ -79,7 +79,7 @@ export const SyncStatusIndicator: React.FC = () => {
       {/* Status indicator */}
       <div className="flex items-center gap-2">
         <div className={`w-2 h-2 rounded-full ${getStatusColor()} ${isSyncing ? 'animate-pulse' : ''}`} />
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-black">
           {getStatusText()}
         </span>
       </div>
@@ -89,7 +89,7 @@ export const SyncStatusIndicator: React.FC = () => {
         <button
           onClick={handleManualSync}
           disabled={isSyncing}
-          className="text-sm text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+          className="text-sm text-gray-600 hover:text-black disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
           title="手動同步"
         >
           <svg
@@ -110,7 +110,7 @@ export const SyncStatusIndicator: React.FC = () => {
 
       {/* Stats tooltip */}
       <div className="relative group">
-        <button className="text-gray-400 hover:text-gray-600">
+        <button className="text-gray-500 hover:text-black transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -123,27 +123,27 @@ export const SyncStatusIndicator: React.FC = () => {
 
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-10">
-          <div className="bg-gray-900 text-white text-xs rounded-lg p-3 whitespace-nowrap">
+          <div className="bg-black text-white text-xs rounded-lg p-3 whitespace-nowrap shadow-lg">
             <div className="space-y-1">
               <div className="flex justify-between gap-4">
-                <span className="text-gray-400">上次同步:</span>
-                <span>
+                <span className="text-gray-300">上次同步:</span>
+                <span className="text-white">
                   {syncStats.lastSync
                     ? new Date(syncStats.lastSync).toLocaleString('zh-TW')
                     : '從未同步'}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="text-gray-400">景點資料:</span>
-                <span>{syncStats.cachedItems.attractions}</span>
+                <span className="text-gray-300">景點資料:</span>
+                <span className="text-white">{syncStats.cachedItems.attractions}</span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="text-gray-400">政策文件:</span>
-                <span>{syncStats.cachedItems.policies}</span>
+                <span className="text-gray-300">政策文件:</span>
+                <span className="text-white">{syncStats.cachedItems.policies}</span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="text-gray-400">旅程資料:</span>
-                <span>{syncStats.cachedItems.trips}</span>
+                <span className="text-gray-300">旅程資料:</span>
+                <span className="text-white">{syncStats.cachedItems.trips}</span>
               </div>
             </div>
           </div>
