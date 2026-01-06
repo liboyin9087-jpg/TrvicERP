@@ -17,13 +17,17 @@ import { getSupabaseClient } from '../lib/supabase';
 // Types
 // ==============================================
 
-type LLMProvider = 'supabase-edge' | 'vercel-proxy' | 'huggingface' | 'github-models' | 'ollama' | 'openai-compatible';
+type LLMProvider = 'supabase-edge' | 'vercel-proxy' | 'huggingface' | 'github-models' | 'ollama' | 'openai-compatible' | 'edge-ai';
+
+type EdgeAIModel = 'qwen2.5:3b' | 'llama3.2:3b' | 'llama3.2:1b';
 
 interface LLMConfig {
   provider: LLMProvider;
   apiKey?: string;
   baseURL?: string;
   model: string;
+  edgeModel?: EdgeAIModel;
+  fallbackProvider?: LLMProvider;
 }
 
 interface LLMResponse {
@@ -44,9 +48,20 @@ interface LLMResponse {
 const getLLMConfig = (): LLMConfig => {
   const provider = (import.meta.env.VITE_LLM_PROVIDER || 'supabase-edge') as LLMProvider;
 
+  // Edge AI mode for offline/mobile scenarios
+  const edgeAIEnabled = import.meta.env.VITE_EDGE_AI_ENABLED === 'true';
+  if (edgeAIEnabled) {
+    return {
+      provider: 'edge-ai',
+      model: 'hybrid',
+      edgeModel: (import.meta.env.VITE_EDGE_AI_MODEL || 'qwen2.5:3b') as EdgeAIModel,
+      fallbackProvider: provider,
+    };
+  }
+
   // 生產環境：建議用 Supabase Edge Function 代理（API key 不落地到前端）
   // 仍允許 ollama 走內網/本地端（例如公司內部環境）
-  if (import.meta.env.MODE === 'production' && provider !== 'supabase-edge' && provider !== 'ollama') {
+  if (import.meta.env.MODE === 'production' && provider !== 'supabase-edge' && provider !== 'ollama' && provider !== 'edge-ai') {
     console.warn('Production should use supabase-edge for security. Forcing supabase-edge.');
     return {
       provider: 'supabase-edge',
@@ -77,6 +92,8 @@ function getDefaultBaseURL(provider: LLMProvider): string {
       return 'http://localhost:11434/api';
     case 'openai-compatible':
       return 'https://api.openai.com/v1';
+    case 'edge-ai':
+      return 'local'; // Edge AI runs locally
     default:
       return '/api';
   }
@@ -89,15 +106,17 @@ function getDefaultModel(provider: LLMProvider): string {
     case 'vercel-proxy':
       return 'gpt-4o-mini';
     case 'huggingface':
-      return 'meta-llama/Llama-3.2-3B-Instruct';
+      return 'Qwen/Qwen2.5-3B-Instruct';
     case 'github-models':
-      return 'meta-llama/Llama-3.2-11B-Vision-Instruct';
+      return 'meta-llama/Llama-3.2-3B-Instruct';
     case 'ollama':
-      return 'llama3.2:3b';
+      return 'qwen2.5:3b';
     case 'openai-compatible':
       return 'gpt-4o-mini';
+    case 'edge-ai':
+      return 'qwen2.5:3b'; // Primary edge model
     default:
-      return 'llama3.2:3b';
+      return 'qwen2.5:3b';
   }
 }
 
@@ -293,6 +312,151 @@ async function callOpenAICompatible(
   };
 }
 
+/**
+ * Call Edge AI (local inference with lightweight models)
+ * Hybrid strategy: Qwen 2.5 3B (primary) + Llama 3.2 (fallback)
+ */
+async function callEdgeAI(
+  messages: Array<{ role: string; content: string }>,
+  config: LLMConfig
+): Promise<LLMResponse> {
+  console.log('[EdgeAI] Running local inference with', config.edgeModel);
+
+  // Check if offline
+  const isOffline = !navigator.onLine;
+  
+  try {
+    // Try primary model (Qwen 2.5 3B) - best for multi-language, math, API calls
+    if (config.edgeModel === 'qwen2.5:3b') {
+      return await callLocalModel(messages, 'qwen2.5:3b');
+    }
+
+    // Try fallback models (Llama 3.2) - good for conversational tasks
+    if (config.edgeModel === 'llama3.2:3b' || config.edgeModel === 'llama3.2:1b') {
+      return await callLocalModel(messages, config.edgeModel);
+    }
+
+    throw new Error('No edge model available');
+
+  } catch (error) {
+    console.error('[EdgeAI] Local inference failed:', error);
+
+    // If online and has fallback, try fallback provider
+    if (!isOffline && config.fallbackProvider) {
+      console.log('[EdgeAI] Falling back to', config.fallbackProvider);
+      const fallbackConfig = {
+        ...config,
+        provider: config.fallbackProvider,
+      };
+      return await callLLMProvider(messages, fallbackConfig);
+    }
+
+    // Return rule-based fallback
+    return {
+      text: generateRuleBasedResponse(messages),
+      provider: 'edge-ai-fallback',
+      model: 'rule-based',
+    };
+  }
+}
+
+/**
+ * Call local inference model via Web Workers or WASM
+ * In production, this would use GGUF quantized models with llama.cpp or ONNX Runtime
+ */
+async function callLocalModel(
+  messages: Array<{ role: string; content: string }>,
+  model: EdgeAIModel
+): Promise<LLMResponse> {
+  // Check if we have a local model available (via Ollama or similar)
+  const ollamaBaseURL = import.meta.env.VITE_OLLAMA_BASE_URL || 'http://localhost:11434/api';
+  
+  try {
+    const response = await fetch(`${ollamaBaseURL}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        stream: false,
+        options: {
+          temperature: 0.7,
+          num_predict: 500,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Local model error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      text: data.message?.content || '',
+      provider: 'edge-ai',
+      model,
+    };
+  } catch (error) {
+    console.error('[EdgeAI] Local model not available:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generate rule-based response as last resort fallback
+ */
+function generateRuleBasedResponse(
+  messages: Array<{ role: string; content: string }>
+): string {
+  const lastMessage = messages[messages.length - 1];
+  const content = lastMessage?.content?.toLowerCase() || '';
+
+  // Simple pattern matching for common queries
+  if (content.includes('差旅') || content.includes('報銷')) {
+    return '關於差旅報銷，請參考公司差旅政策文件。一般而言，需要在出差返回後 7 個工作天內提交申請，並附上完整收據。';
+  }
+
+  if (content.includes('補助') || content.includes('預算')) {
+    return '員工旅遊補助標準依職級而定。正職員工每人補助上限為 10,000 元。詳情請洽人力資源部門。';
+  }
+
+  if (content.includes('訂') || content.includes('預訂')) {
+    return '我可以協助您查詢和預訂行程。請提供更多詳細資訊，例如目的地、日期和人數。';
+  }
+
+  return '抱歉，我目前處於離線模式且無法處理複雜查詢。請在恢復網路連線後重試，或聯繫相關部門獲取協助。';
+}
+
+/**
+ * Unified call function for different providers
+ */
+async function callLLMProvider(
+  messages: Array<{ role: string; content: string }>,
+  config: LLMConfig
+): Promise<LLMResponse> {
+  switch (config.provider) {
+    case 'supabase-edge':
+      return await callSupabaseEdge(messages, config);
+    case 'vercel-proxy':
+      return await callVercelProxy(messages, config);
+    case 'huggingface':
+      const combinedPrompt = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+      return await callHuggingFace(combinedPrompt, config);
+    case 'github-models':
+      return await callGitHubModels(messages, config);
+    case 'ollama':
+      return await callOllama(messages, config);
+    case 'openai-compatible':
+      return await callOpenAICompatible(messages, config);
+    case 'edge-ai':
+      return await callEdgeAI(messages, config);
+    default:
+      throw new Error(`Unknown LLM provider: ${config.provider}`);
+  }
+}
+
 // ==============================================
 // Main LLM Call Function
 // ==============================================
@@ -305,38 +469,13 @@ async function callLLM(
   const messages = buildMessages(systemPrompt, userPrompt);
 
   // Check API key requirement
-  if (!config.apiKey && config.provider !== 'ollama' && config.provider !== 'vercel-proxy') {
+  if (!config.apiKey && config.provider !== 'ollama' && config.provider !== 'vercel-proxy' && config.provider !== 'edge-ai') {
     console.warn(`LLM_API_KEY not set for provider: ${config.provider}. Using fallback.`);
     return '';
   }
 
   try {
-    let response: LLMResponse;
-
-    switch (config.provider) {
-      case 'supabase-edge':
-        response = await callSupabaseEdge(messages, config);
-        break;
-      case 'vercel-proxy':
-        response = await callVercelProxy(messages, config);
-        break;
-      case 'huggingface':
-        // HuggingFace uses single prompt format
-        const combinedPrompt = `${systemPrompt}\n\nUser: ${userPrompt}\n\nAssistant:`;
-        response = await callHuggingFace(combinedPrompt, config);
-        break;
-      case 'github-models':
-        response = await callGitHubModels(messages, config);
-        break;
-      case 'ollama':
-        response = await callOllama(messages, config);
-        break;
-      case 'openai-compatible':
-        response = await callOpenAICompatible(messages, config);
-        break;
-      default:
-        throw new Error(`Unknown LLM provider: ${config.provider}`);
-    }
+    const response = await callLLMProvider(messages, config);
 
     console.log(`[LLM] Response from ${response.provider || config.provider}: ${response.text.length} chars`);
     return response.text;
