@@ -1,0 +1,1081 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  MapPin, Clock, Star, Search, Plus, Trash2, GripVertical,
+  Calendar, ChevronDown, Save, FolderOpen, X, Utensils, ShoppingBag,
+  Building, Train, Camera, ChevronRight, Sparkles, Lightbulb, Navigation,
+  Leaf, Mountain, Waves, Palette, Wheat, Building2, History, Eye
+} from 'lucide-react';
+import {
+  useItineraryBuilderStore,
+  CATEGORY_CONFIG,
+  type Spot,
+  type ScheduledSpot,
+  type SpotCategory,
+  type DayPlan,
+  type SeasonType,
+} from '../../src/store/useItineraryBuilderStore';
+import SeasonFilter from '../shared/SeasonFilter';
+import AudienceSelector from '../shared/AudienceSelector';
+import { ragEngine, type SpotRecord } from '../../src/lib/ai/RAGEngine';
+import { cn } from '../../src/lib/utils';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const formatDuration = (minutes: number): string => {
+  if (minutes < 60) return `${minutes}分`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}時${mins}分` : `${hours}時`;
+};
+
+const getCategoryIcon = (category: SpotCategory) => {
+  switch (category) {
+    case '綠色永續景點': return <Leaf className="w-4 h-4" />;
+    case '山林秘境': return <Mountain className="w-4 h-4" />;
+    case '海岸離島': return <Waves className="w-4 h-4" />;
+    case '文化深度體驗': return <Palette className="w-4 h-4" />;
+    case '農村慢旅': return <Wheat className="w-4 h-4" />;
+    case '都市邊緣秘境': return <Building2 className="w-4 h-4" />;
+    default: return <MapPin className="w-4 h-4" />;
+  }
+};
+
+// Resource Card (Left Panel)
+interface ResourceCardProps {
+  spot: Spot;
+  isDragOverlay?: boolean;
+}
+
+function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `resource-${spot.id}`,
+    data: { type: 'resource', spot },
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Get the first category for display (category is now an array)
+  const primaryCategory = spot.category[0];
+  const config = CATEGORY_CONFIG[primaryCategory];
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      style={isDragOverlay ? {} : style}
+      {...attributes}
+      {...listeners}
+      whileHover={!isDragOverlay ? { y: -2 } : undefined}
+      className={cn(
+        'glass-card overflow-hidden cursor-grab active:cursor-grabbing transition-all',
+        isDragOverlay && 'shadow-2xl rotate-2 scale-105',
+        isDragging && 'ring-2 ring-brand-500'
+      )}
+    >
+      <div className="relative h-28 overflow-hidden">
+        <img src={spot.image} alt={spot.name} className="w-full h-full object-cover" />
+        <div className={cn(
+          'absolute top-2 left-2 text-white px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1',
+          config?.color || 'bg-slate-500'
+        )}>
+          {getCategoryIcon(primaryCategory)}
+          {config?.label || primaryCategory}
+        </div>
+        {/* Sustainability Index Badge */}
+        {spot.sustainability_index && (
+          <div className="absolute top-2 right-2 bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 max-w-[120px]">
+            <Leaf className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{spot.sustainability_index.split('、')[0]}</span>
+          </div>
+        )}
+      </div>
+      <div className="p-3">
+        <h4 className="font-semibold text-slate-900 text-sm truncate">{spot.name}</h4>
+        <div className="flex items-center gap-1 text-slate-500 text-xs mt-1">
+          <MapPin className="w-3 h-3" />
+          <span className="truncate">{spot.county}</span>
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-1 text-slate-600 text-xs">
+            <Clock className="w-3 h-3" />
+            {formatDuration(spot.duration || 120)}
+          </div>
+          {spot.price > 0 && (
+            <span className="text-brand-600 font-medium text-xs">
+              NT${spot.price.toLocaleString()}
+            </span>
+          )}
+        </div>
+        {/* Target Audience Tags */}
+        <div className="flex flex-wrap gap-1 mt-2">
+          {spot.target_audience.slice(0, 3).map((audience, idx) => (
+            <span key={idx} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+              {audience}
+            </span>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Scheduled Spot Card (Right Panel)
+interface ScheduledSpotCardProps {
+  spot: ScheduledSpot;
+  dayId: string;
+  index: number;
+  onRemove: () => void;
+}
+
+function ScheduledSpotCard({ spot, dayId, index, onRemove }: ScheduledSpotCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: spot.instanceId,
+    data: { type: 'scheduled', spot, dayId, index },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Get the first category (category is now an array)
+  const primaryCategory = spot.category[0];
+  const config = CATEGORY_CONFIG[primaryCategory];
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      whileHover={{ x: 2 }}
+      className={cn(
+        'bg-white rounded-xl border border-slate-200 p-3 flex items-center gap-3 transition-all',
+        isDragging && 'ring-2 ring-brand-500 shadow-lg'
+      )}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
+      >
+        <GripVertical className="w-5 h-5" />
+      </div>
+
+      <div className={cn(
+        'w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0',
+        config?.color || 'bg-slate-500'
+      )}>
+        {index + 1}
+      </div>
+
+      <img
+        src={spot.image}
+        alt={spot.name}
+        className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+      />
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h5 className="font-medium text-slate-900 text-sm truncate">{spot.name}</h5>
+          <span className={cn('text-white px-1.5 py-0.5 rounded text-[10px]', config?.color || 'bg-slate-500')}>
+            {config?.label || primaryCategory}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {formatDuration(spot.duration || 120)}
+          </span>
+          <span className="flex items-center gap-1">
+            <MapPin className="w-3 h-3" />
+            {spot.county}
+          </span>
+        </div>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={onRemove}
+        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+      >
+        <Trash2 className="w-4 h-4" />
+      </motion.button>
+    </motion.div>
+  );
+}
+
+// Day Container (Droppable)
+interface DayContainerProps {
+  day: DayPlan;
+  onRemoveSpot: (instanceId: string) => void;
+  onRemoveDay: () => void;
+  canRemove: boolean;
+}
+
+function DayContainer({ day, onRemoveSpot, onRemoveDay, canRemove }: DayContainerProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `day-${day.id}`,
+    data: { type: 'day', dayId: day.id },
+  });
+
+  const totalDuration = day.spots.reduce((sum, s) => sum + s.duration, 0);
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        'glass-card border-2 border-dashed transition-all',
+        isOver ? 'border-brand-500 bg-brand-50/50' : 'border-slate-200'
+      )}
+    >
+      <div className="flex items-center justify-between p-4 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/25">
+            {day.dayNumber}
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">{day.title}</h3>
+            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+              <span>{day.spots.length} 個行程</span>
+              <span className="w-1 h-1 bg-slate-300 rounded-full" />
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {formatDuration(totalDuration)}
+              </span>
+            </div>
+          </div>
+        </div>
+        {canRemove && (
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onRemoveDay}
+            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+          </motion.button>
+        )}
+      </div>
+
+      <div className="p-4 space-y-3 min-h-[120px]">
+        <SortableContext
+          items={day.spots.map(s => s.instanceId)}
+          strategy={verticalListSortingStrategy}
+        >
+          {day.spots.length === 0 ? (
+            <div className={cn(
+              'border-2 border-dashed rounded-xl p-8 text-center transition-colors',
+              isOver ? 'border-brand-400 bg-brand-100/50' : 'border-slate-200'
+            )}>
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                <MapPin className="w-6 h-6 text-slate-400" />
+              </div>
+              <div className="text-slate-400 text-sm">
+                {isOver ? '放開以加入此天' : '拖曳景點到這裡'}
+              </div>
+            </div>
+          ) : (
+            day.spots.map((spot, index) => (
+              <ScheduledSpotCard
+                key={spot.instanceId}
+                spot={spot}
+                dayId={day.id}
+                index={index}
+                onRemove={() => onRemoveSpot(spot.instanceId)}
+              />
+            ))
+          )}
+        </SortableContext>
+      </div>
+    </motion.div>
+  );
+}
+
+// New Plan Modal
+interface NewPlanModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (name: string, destination: string, days: number) => void;
+}
+
+function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
+  const [name, setName] = useState('');
+  const [destination, setDestination] = useState('');
+  const [days, setDays] = useState(3);
+
+  if (!isOpen) return null;
+
+  const handleCreate = () => {
+    if (name.trim() && destination.trim()) {
+      onCreate(name.trim(), destination.trim(), days);
+      setName('');
+      setDestination('');
+      setDays(3);
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="glass-card w-full max-w-md p-6"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
+              <Navigation className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">建立新行程</h2>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 rounded-lg"
+          >
+            <X className="w-5 h-5" />
+          </motion.button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">行程名稱</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="例：北海道五日遊"
+              className="input-modern w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">目的地</label>
+            <input
+              type="text"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              placeholder="例：日本北海道"
+              className="input-modern w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">天數</label>
+            <select
+              value={days}
+              onChange={(e) => setDays(Number(e.target.value))}
+              className="input-modern w-full"
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                <option key={n} value={n}>{n} 天</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onClose}
+            className="btn-pill btn-pill-secondary flex-1"
+          >
+            取消
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleCreate}
+            disabled={!name.trim() || !destination.trim()}
+            className="btn-pill btn-pill-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            建立
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// Main Component
+export default function ItineraryBuilder() {
+  const {
+    currentPlan,
+    searchQuery,
+    categoryFilter,
+    seasonFilter,
+    audienceFilter,
+    savedPlans,
+    createNewPlan,
+    loadPlan,
+    savePlan,
+    loadVersion,
+    addDay,
+    removeDay,
+    addSpotToDay,
+    removeSpotFromDay,
+    reorderSpots,
+    moveSpot,
+    setSearchQuery,
+    setCategoryFilter,
+    setSeasonFilter,
+    setAudienceFilter,
+    getFilteredSpots,
+    setDragging,
+    clearCurrentPlan,
+  } = useItineraryBuilderStore();
+
+  const [showNewPlanModal, setShowNewPlanModal] = useState(false);
+  const [showSavedPlans, setShowSavedPlans] = useState(false);
+  const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<SpotRecord[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [saveChangesNote, setSaveChangesNote] = useState('');
+  const [showSaveModal, setShowSaveModal] = useState(false);
+
+  const handleGetAiRecommendations = async () => {
+    if (!currentPlan) return;
+    setAiLoading(true);
+    setShowAiPanel(true);
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    const allScheduledSpots = currentPlan.days.flatMap(d => d.spots);
+    const scheduledIds = allScheduledSpots.map(s => s.id);
+    let currentRegion = currentPlan.destination;
+    if (allScheduledSpots.length > 0) {
+      currentRegion = allScheduledSpots[0].county;
+    }
+
+    const recommendations = ragEngine.getRecommendations({
+      currentRegion,
+      excludeIds: scheduledIds,
+      tags: ['觀光', '景點', '美食'],
+    }, 6);
+
+    setAiRecommendations(recommendations);
+    setAiLoading(false);
+  };
+
+  const convertToSpot = (record: SpotRecord): Spot => ({
+    id: record.id,
+    name: record.name,
+    category: ['文化深度體驗'] as SpotCategory[],
+    county: record.region,
+    duration: 90,
+    description: record.note || `${record.region}的${record.tags[0] || '景點'}`,
+    image: `https://picsum.photos/seed/${record.id}/400/300`,
+    price: 0,
+    tags: record.tags,
+    season: ['春', '夏', '秋', '冬'],
+    sustainability_index: '',
+    target_audience: ['文青', '情侶'],
+  });
+
+  const filteredSpots = getFilteredSpots();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setDragging(true, active.id as string);
+    if (active.data.current?.type === 'resource') {
+      setActiveSpot(active.data.current.spot);
+    } else if (active.data.current?.type === 'scheduled') {
+      setActiveSpot(active.data.current.spot);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setDragging(false);
+    setActiveSpot(null);
+
+    if (!over || !currentPlan) return;
+
+    const activeData = active.data.current;
+    const overId = over.id as string;
+
+    if (activeData?.type === 'resource') {
+      if (overId.startsWith('day-')) {
+        const dayId = overId.replace('day-', '');
+        addSpotToDay(dayId, activeData.spot);
+      } else if (over.data.current?.type === 'scheduled') {
+        const dayId = over.data.current.dayId;
+        const index = over.data.current.index;
+        addSpotToDay(dayId, activeData.spot, index);
+      }
+    } else if (activeData?.type === 'scheduled') {
+      const fromDayId = activeData.dayId;
+      const fromIndex = activeData.index;
+
+      if (overId.startsWith('day-')) {
+        const toDayId = overId.replace('day-', '');
+        if (fromDayId !== toDayId) {
+          const toDay = currentPlan.days.find(d => d.id === toDayId);
+          const toIndex = toDay?.spots.length ?? 0;
+          moveSpot(fromDayId, toDayId, activeData.spot.instanceId, toIndex);
+        }
+      } else if (over.data.current?.type === 'scheduled') {
+        const toDayId = over.data.current.dayId;
+        const toIndex = over.data.current.index;
+
+        if (fromDayId === toDayId) {
+          if (fromIndex !== toIndex) {
+            reorderSpots(fromDayId, fromIndex, toIndex);
+          }
+        } else {
+          moveSpot(fromDayId, toDayId, activeData.spot.instanceId, toIndex);
+        }
+      }
+    }
+  };
+
+  const categories: (SpotCategory | 'all')[] = ['all', '綠色永續景點', '山林秘境', '海岸離島', '文化深度體驗', '農村慢旅', '都市邊緣秘境'];
+
+  return (
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100"
+    >
+      {/* Header */}
+      <motion.div variants={itemVariants} className="glass-panel border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between max-w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
+              <Navigation className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">行程配置器</h1>
+              <p className="text-sm text-slate-500">拖曳景點建立您的完美旅程</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {currentPlan && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleGetAiRecommendations}
+                  className="btn-pill gap-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-500/25"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  AI 推薦
+                </motion.button>
+                {currentPlan.versions && currentPlan.versions.length > 0 && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowVersionHistory(true)}
+                    className="btn-pill btn-pill-secondary gap-2"
+                  >
+                    <History className="w-4 h-4" />
+                    版本歷史
+                  </motion.button>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowSaveModal(true)}
+                  className="btn-pill btn-pill-primary gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  儲存
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={clearCurrentPlan}
+                  className="btn-pill btn-pill-secondary gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  關閉
+                </motion.button>
+              </>
+            )}
+            {!currentPlan && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowNewPlanModal(true)}
+                  className="btn-pill btn-pill-primary gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  新建行程
+                </motion.button>
+                {savedPlans.length > 0 && (
+                  <div className="relative">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setShowSavedPlans(!showSavedPlans)}
+                      className="btn-pill btn-pill-secondary gap-2"
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      載入行程
+                      <ChevronDown className="w-4 h-4" />
+                    </motion.button>
+                    <AnimatePresence>
+                      {showSavedPlans && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute right-0 mt-2 w-64 glass-card py-2 z-10"
+                        >
+                          {savedPlans.map(plan => (
+                            <button
+                              key={plan.id}
+                              onClick={() => { loadPlan(plan.id); setShowSavedPlans(false); }}
+                              className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center justify-between transition-colors"
+                            >
+                              <div>
+                                <div className="font-medium text-slate-900">{plan.name}</div>
+                                <div className="text-xs text-slate-500">{plan.destination} · {plan.days.length} 天</div>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-slate-400" />
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main Content */}
+      {!currentPlan ? (
+        <div className="flex-1 flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-12 h-12 text-slate-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">開始規劃您的旅程</h2>
+            <p className="text-slate-500 mb-6">建立新行程或載入已儲存的行程</p>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowNewPlanModal(true)}
+              className="btn-pill btn-pill-primary gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              建立新行程
+            </motion.button>
+          </motion.div>
+        </div>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 flex overflow-hidden">
+            {/* Left Panel */}
+            <div className="w-80 glass-panel border-r border-slate-200 flex flex-col flex-shrink-0">
+              <div className="p-4 border-b border-slate-100 space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="搜尋景點、餐廳..."
+                    className="input-modern w-full pl-10 pr-4 text-sm"
+                  />
+                </div>
+                <div className="flex gap-1.5 flex-wrap">
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                        categoryFilter === cat
+                          ? 'bg-slate-900 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      )}
+                    >
+                      {cat === 'all' ? '全部' : CATEGORY_CONFIG[cat].label}
+                    </button>
+                  ))}
+                </div>
+                <div className="pt-2 border-t border-slate-100 mt-2">
+                  <span className="text-xs text-slate-500 mb-1.5 block">季節篩選</span>
+                  <SeasonFilter
+                    value={seasonFilter}
+                    onChange={setSeasonFilter}
+                  />
+                </div>
+                <div className="pt-2 border-t border-slate-100 mt-2">
+                  <AudienceSelector
+                    value={audienceFilter}
+                    onChange={setAudienceFilter}
+                  />
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="grid gap-3">
+                  {filteredSpots.map(spot => (
+                    <ResourceCard key={spot.id} spot={spot} />
+                  ))}
+                </div>
+                {filteredSpots.length === 0 && (
+                  <div className="text-center py-8 text-slate-500">
+                    找不到符合條件的景點
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Panel */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <motion.div variants={itemVariants} className="glass-card p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">{currentPlan.name}</h2>
+                    <p className="text-sm text-slate-500 mt-1">{currentPlan.destination} · {currentPlan.days.length} 天行程</p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={addDay}
+                    className="btn-pill btn-pill-secondary gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    新增天數
+                  </motion.button>
+                </div>
+              </motion.div>
+
+              <div className="space-y-6">
+                {currentPlan.days.map(day => (
+                  <DayContainer
+                    key={day.id}
+                    day={day}
+                    onRemoveSpot={(instanceId) => removeSpotFromDay(day.id, instanceId)}
+                    onRemoveDay={() => removeDay(day.id)}
+                    canRemove={currentPlan.days.length > 1}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DragOverlay>
+            {activeSpot && <ResourceCard spot={activeSpot} isDragOverlay />}
+          </DragOverlay>
+        </DndContext>
+      )}
+
+      {/* AI Panel */}
+      <AnimatePresence>
+        {showAiPanel && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-card w-full max-w-2xl max-h-[80vh] flex flex-col"
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">AI 智慧推薦</h2>
+                    <p className="text-sm text-slate-500">根據您的行程推薦相近景點</p>
+                  </div>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowAiPanel(false)}
+                  className="p-2 hover:bg-slate-100 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </motion.button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6">
+                {aiLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4" />
+                    <p className="text-slate-600">AI 正在分析您的行程...</p>
+                  </div>
+                ) : aiRecommendations.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    {aiRecommendations.map(rec => (
+                      <motion.div
+                        key={rec.id}
+                        whileHover={{ y: -2 }}
+                        className="glass-card overflow-hidden"
+                      >
+                        <div className="relative h-32">
+                          <img
+                            src={`https://picsum.photos/seed/${rec.id}/400/300`}
+                            alt={rec.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-2 left-2 bg-purple-500 text-white px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1">
+                            <Lightbulb className="w-3 h-3" />
+                            推薦
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-slate-900 mb-1">{rec.name}</h4>
+                          <div className="flex items-center gap-1 text-slate-500 text-xs mb-2">
+                            <MapPin className="w-3 h-3" />
+                            {rec.region}
+                          </div>
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {rec.tags.slice(0, 3).map((tag, idx) => (
+                              <span key={idx} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              if (currentPlan && currentPlan.days.length > 0) {
+                                addSpotToDay(currentPlan.days[0].id, convertToSpot(rec));
+                                setAiRecommendations(prev => prev.filter(r => r.id !== rec.id));
+                              }
+                            }}
+                            className="w-full py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            加入第一天
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Lightbulb className="w-8 h-8 text-slate-400" />
+                    </div>
+                    <p className="text-slate-600 mb-2">目前沒有符合條件的推薦</p>
+                    <p className="text-slate-400 text-sm">試著加入一些景點後再取得推薦</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+                <p className="text-sm text-slate-500">
+                  {aiRecommendations.length > 0 && `找到 ${aiRecommendations.length} 個推薦景點`}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowAiPanel(false)}
+                  className="btn-pill btn-pill-secondary"
+                >
+                  關閉
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <NewPlanModal
+        isOpen={showNewPlanModal}
+        onClose={() => setShowNewPlanModal(false)}
+        onCreate={createNewPlan}
+      />
+
+      {/* Save Modal with Changes Note */}
+      <AnimatePresence>
+        {showSaveModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-card w-full max-w-md"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900">儲存行程</h2>
+                <button onClick={() => { setShowSaveModal(false); setSaveChangesNote(''); }} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">變更說明（選填）</label>
+                  <textarea
+                    value={saveChangesNote}
+                    onChange={(e) => setSaveChangesNote(e.target.value)}
+                    placeholder="請簡述本次變更內容..."
+                    rows={3}
+                    className="input-modern w-full resize-none"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowSaveModal(false); setSaveChangesNote(''); }}
+                    className="btn-pill btn-pill-secondary flex-1"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={() => {
+                      savePlan(saveChangesNote || undefined);
+                      setShowSaveModal(false);
+                      setSaveChangesNote('');
+                    }}
+                    className="btn-pill btn-pill-primary flex-1 gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    儲存
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Version History Modal */}
+      <AnimatePresence>
+        {showVersionHistory && currentPlan && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass-card w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <History className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-lg font-bold text-gray-900">版本歷史</h2>
+                  <span className="text-sm text-gray-500">目前版本：v{currentPlan.current_version || 1}</span>
+                </div>
+                <button onClick={() => setShowVersionHistory(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {currentPlan.versions && currentPlan.versions.length > 0 ? (
+                  <div className="space-y-3">
+                    {[...currentPlan.versions].reverse().map((version) => (
+                      <motion.div
+                        key={version.version}
+                        whileHover={{ x: 2 }}
+                        className={cn(
+                          'p-4 rounded-xl border-2 transition-all',
+                          version.version === currentPlan.current_version
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        )}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-bold text-gray-900">版本 {version.version}</span>
+                              {version.version === currentPlan.current_version && (
+                                <span className="px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">目前版本</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-600 mb-1">{version.changes}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                              <span>建立者：{version.created_by}</span>
+                              <span>時間：{new Date(version.created_at).toLocaleString('zh-TW')}</span>
+                            </div>
+                          </div>
+                          {version.version !== currentPlan.current_version && (
+                            <button
+                              onClick={() => {
+                                loadVersion(version.version);
+                                setShowVersionHistory(false);
+                              }}
+                              className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center gap-1"
+                            >
+                              <Eye className="w-4 h-4" />
+                              載入
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <History className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">尚無版本記錄</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}

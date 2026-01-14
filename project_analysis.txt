@@ -1,0 +1,864 @@
+專案結構：
+./0
+./App.tsx
+./components/admin/BookingModal.tsx
+./components/admin/CostingDashboard.tsx
+./components/admin/ERPInsights.tsx
+./components/admin/PassportKanban.tsx
+./components/admin/PaymentMonitor.tsx
+./components/admin/SessionManager.tsx
+./components/admin/WelfareDashboard.tsx
+./components/auth/LoginPage.tsx
+./components/client/DigitalBriefing.tsx
+./components/client/ItineraryView.tsx
+./components/client/TourAddons.tsx
+./components/client/TravelFootprint.tsx
+./components/client/TravelerApp.tsx
+./components/client/VotingPage.tsx
+./components/shared/EdgeAssistant.tsx
+./components/shared/InteractiveMap.tsx
+./components/staff/CustomerCDP.tsx
+./components/staff/InsuranceExport.tsx
+./components/staff/LeaderExpenseApp.tsx
+./components/staff/LineChatMonitor.tsx
+./components/staff/MiniTourEstimator.tsx
+./components/staff/OperationHub.tsx
+./components/staff/PassportKanban.tsx
+./components/staff/QuotationBuilder.tsx
+./components/staff/VisualPlanner.tsx
+./eslint.config.js
+./hooks/useQuotation.ts
+./index.css
+./index.html
+./index.tsx
+./lib/geoUtils.ts
+./lib/legalKnowledge.ts
+./lib/mockSupabase.ts
+./navigation.ts
+./package-lock.json
+./package.json
+./postcss.config.js
+./project_analysis.txt
+./tailwind.config.js
+./tailwind.config.js.bak
+./tailwind.config.js.save
+./tsconfig.json
+./types.ts
+./vite.config.ts
+
+
+App.tsx 內容：
+import React, { useState } from 'react';
+import {
+  Plane, LayoutDashboard, Calendar, Map, Users, CreditCard, FileText,
+  MessageCircle, Settings, LogOut, Menu, X, Bell, ChevronRight,
+  Calculator, Shield, Activity, Receipt, Sparkles, Building2
+} from 'lucide-react';
+
+// Auth
+import LoginPage from './components/auth/LoginPage';
+
+// Admin Components
+import ERPInsights from './components/admin/ERPInsights';
+import SessionManager from './components/admin/SessionManager';
+import WelfareDashboard from './components/admin/WelfareDashboard';
+import PaymentMonitor from './components/admin/PaymentMonitor';
+import PassportKanban from './components/admin/PassportKanban';
+import CostingDashboard from './components/admin/CostingDashboard';
+
+// Staff Components
+import VisualPlanner from './components/staff/VisualPlanner';
+import CustomerCDP from './components/staff/CustomerCDP';
+import InsuranceExport from './components/staff/InsuranceExport';
+import QuotationBuilder from './components/staff/QuotationBuilder';
+import OperationHub from './components/staff/OperationHub';
+import LeaderExpenseApp from './components/staff/LeaderExpenseApp';
+import LineChatMonitor from './components/staff/LineChatMonitor';
+import MiniTourEstimator from './components/staff/MiniTourEstimator';
+import StaffPassportKanban from './components/staff/PassportKanban';
+
+// Client Components
+import TravelerApp from './components/client/TravelerApp';
+import ItineraryView from './components/client/ItineraryView';
+import VotingPage from './components/client/VotingPage';
+import DigitalBriefing from './components/client/DigitalBriefing';
+import TourAddons from './components/client/TourAddons';
+import TravelFootprint from './components/client/TravelFootprint';
+
+// Shared Components
+import EdgeAssistant from './components/shared/EdgeAssistant';
+import InteractiveMap from './components/shared/InteractiveMap';
+
+type ViewKey = 
+  | 'dashboard' | 'sessions' | 'planner' | 'crm' | 'payments' | 'passport'
+  | 'costing' | 'insurance' | 'quotation' | 'operations' | 'expense' | 'chat'
+  | 'estimator' | 'map' | 'welfare'
+  | 'traveler' | 'itinerary' | 'voting' | 'briefing' | 'addons' | 'footprint';
+
+type UserRole = 'staff' | 'welfare' | 'traveler';
+
+interface NavItem {
+  id: ViewKey;
+  label: string;
+  icon: React.ReactNode;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const STAFF_NAV: NavGroup[] = [
+  {
+    label: '總覽',
+    items: [
+      { id: 'dashboard', label: '營運儀表板', icon: <LayoutDashboard className="w-5 h-5" /> },
+      { id: 'operations', label: '營運中心', icon: <Activity className="w-5 h-5" /> },
+    ],
+  },
+  {
+    label: '旅程管理',
+    items: [
+      { id: 'sessions', label: '團次管理', icon: <Calendar className="w-5 h-5" /> },
+      { id: 'planner', label: '行程規劃', icon: <Map className="w-5 h-5" /> },
+      { id: 'passport', label: '護照管理', icon: <FileText className="w-5 h-5" /> },
+    ],
+  },
+  {
+    label: '客戶關係',
+    items: [
+      { id: 'crm', label: '客戶管理', icon: <Users className="w-5 h-5" /> },
+      { id: 'payments', label: '收款管理', icon: <CreditCard className="w-5 h-5" /> },
+      { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-5 h-5" /> },
+    ],
+  },
+  {
+    label: '業務工具',
+    items: [
+      { id: 'quotation', label: '報價計算', icon: <Calculator className="w-5 h-5" /> },
+      { id: 'estimator', label: '快速估價', icon: <Sparkles className="w-5 h-5" /> },
+      { id: 'costing', label: '成本分析', icon: <Receipt className="w-5 h-5" /> },
+      { id: 'insurance', label: '保險管理', icon: <Shield className="w-5 h-5" /> },
+      { id: 'expense', label: '領隊報帳', icon: <Receipt className="w-5 h-5" /> },
+    ],
+  },
+];
+
+const WELFARE_NAV: NavGroup[] = [
+  {
+    label: '福委專區',
+    items: [
+      { id: 'welfare', label: '活動管理', icon: <Building2 className="w-5 h-5" /> },
+      { id: 'sessions', label: '行程瀏覽', icon: <Calendar className="w-5 h-5" /> },
+    ],
+  },
+];
+
+const CLIENT_NAV: NavGroup[] = [
+  {
+    label: '旅客功能',
+    items: [
+      { id: 'traveler', label: '我的行程', icon: <LayoutDashboard className="w-5 h-5" /> },
+      { id: 'itinerary', label: '行程表', icon: <Calendar className="w-5 h-5" /> },
+      { id: 'voting', label: '投票', icon: <Users className="w-5 h-5" /> },
+      { id: 'briefing', label: '行前說明', icon: <FileText className="w-5 h-5" /> },
+      { id: 'addons', label: '加購項目', icon: <CreditCard className="w-5 h-5" /> },
+      { id: 'footprint', label: '旅遊足跡', icon: <Map className="w-5 h-5" /> },
+    ],
+  },
+];
+
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('staff');
+  const [currentView, setCurrentView] = useState<ViewKey>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleLogin = (role: UserRole) => {
+    setUserRole(role);
+    setIsLoggedIn(true);
+    setCurrentView(role === 'staff' ? 'dashboard' : role === 'welfare' ? 'welfare' : 'traveler');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserRole('staff');
+    setCurrentView('dashboard');
+  };
+
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
+  const navGroups = userRole === 'staff' ? STAFF_NAV : userRole === 'welfare' ? WELFARE_NAV : CLIENT_NAV;
+
+  const renderView = () => {
+    switch (currentView) {
+      // Admin/Staff Views
+      case 'dashboard': return <ERPInsights />;
+      case 'sessions': return <SessionManager />;
+      case 'planner': return <VisualPlanner />;
+      case 'crm': return <CustomerCDP />;
+      case 'payments': return <PaymentMonitor />;
+      case 'passport': return <PassportKanban />;
+      case 'costing': return <CostingDashboard />;
+      case 'insurance': return <InsuranceExport />;
+      case 'quotation': return <QuotationBuilder />;
+      case 'operations': return <OperationHub />;
+      case 'expense': return <LeaderExpenseApp />;
+      case 'chat': return <LineChatMonitor />;
+      case 'estimator': return <MiniTourEstimator />;
+      case 'map': return <InteractiveMap />;
+      case 'welfare': return <WelfareDashboard />;
+      // Client Views
+      case 'traveler': return <TravelerApp />;
+      case 'itinerary': return <ItineraryView />;
+      case 'voting': return <VotingPage />;
+      case 'briefing': return <DigitalBriefing />;
+      case 'addons': return <TourAddons />;
+      case 'footprint': return <TravelFootprint />;
+      default: return <ERPInsights />;
+    }
+  };
+
+  // Mobile client view
+  if (userRole === 'traveler') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {renderView()}
+        <EdgeAssistant />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        ${isSidebarOpen ? 'w-72' : 'w-20'}
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        bg-black text-white flex flex-col transition-all duration-300
+      `}>
+        {/* Logo */}
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Plane className="w-5 h-5 text-white" />
+          </div>
+          {isSidebarOpen && (
+            <div className="animate-fade-in">
+              <h1 className="font-bold text-lg">TravelMaster</h1>
+              <p className="text-xs text-gray-500">v2.0</p>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
+          {navGroups.map((group, groupIdx) => (
+            <div key={groupIdx} className="mb-6">
+              {isSidebarOpen && (
+                <p className="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+                  {group.label}
+                </p>
+              )}
+              <div className="space-y-1">
+                {group.items.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setCurrentView(item.id);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all
+                      ${currentView === item.id 
+                        ? 'bg-white text-black' 
+                        : 'text-gray-400 hover:bg-white/10 hover:text-white'
+                      }
+                    `}
+                  >
+                    {item.icon}
+                    {isSidebarOpen && (
+                      <span className="font-medium text-sm">{item.label}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* User & Logout */}
+        <div className="p-4 border-t border-gray-800">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-400 hover:bg-white/10 hover:text-white transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            {isSidebarOpen && <span className="font-medium text-sm">登出</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
+              <span className="text-sm font-medium text-gray-600">系統運作中</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="relative p-2 hover:bg-gray-100 rounded-lg">
+              <Bell className="w-5 h-5 text-gray-500" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            </button>
+            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-sm font-bold text-gray-600">
+                {userRole === 'staff' ? '職' : userRole === 'welfare' ? '福' : '客'}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-auto">
+          {renderView()}
+        </main>
+      </div>
+
+      {/* AI Assistant */}
+      <EdgeAssistant />
+    </div>
+  );
+}
+
+
+主要組件內容：
+
+--- EdgeAssistant.tsx ---
+import React, { useState } from 'react';
+import { Bot, Send, X, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
+export default function EdgeAssistant() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>([
+    { id: '1', role: 'assistant', content: '您好！我是 TravelMaster AI 助理，有什麼可以幫助您的嗎？', timestamp: new Date() }
+  ]);
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    
+    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: getAIResponse(input),
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiResponse]);
+    }, 1000);
+  };
+
+  const getAIResponse = (query: string): string => {
+    if (query.includes('行程') || query.includes('推薦')) {
+      return '根據您的需求，我推薦「東京五日深度遊」行程，包含淺草、晴空塔、築地市場等熱門景點，目前3月15日出發的團次還有8個名額。';
+    }
+    if (query.includes('客戶') || query.includes('VIP')) {
+      return '目前系統中有 4 位白金會員，其中李小華的總消費金額最高，達 NT$ 520,000。建議可以針對 VIP 客戶推送專屬優惠。';
+    }
+    if (query.includes('報價') || query.includes('價格')) {
+      return '5天4夜東京行程建議報價：機票 NT$15,000 + 住宿 NT$12,000 + 其他 NT$10,500 = 總計 NT$37,500/人。加上 15% 利潤後售價為 NT$43,125。';
+    }
+    return '好的，我已了解您的需求。請問還有什麼需要協助的嗎？';
+  };
+
+  if (!isOpen) {
+    return (
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform z-50"
+      >
+        <Sparkles className="w-6 h-6" />
+      </button>
+    );
+  }
+
+  return (
+    <div className={`fixed ${isExpanded ? 'inset-4' : 'bottom-6 right-6 w-96 h-[500px]'} bg-white rounded-2xl shadow-2xl flex flex-col z-50 transition-all`}>
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+            <Bot className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900">AI 助理</h3>
+            <p className="text-xs text-gray-500">隨時為您服務</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 hover:bg-gray-100 rounded-lg">
+            {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+          <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message) => (
+          <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[80%] px-4 py-3 rounded-2xl ${message.role === 'user' ? 'bg-black text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'}`}>
+              <p className="text-sm">{message.content}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-4 border-t border-gray-100">
+        <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+          {['推薦熱門行程', '查詢客戶資料', '計算報價'].map((quick) => (
+            <button
+              key={quick}
+              onClick={() => setInput(quick)}
+              className="px-3 py-1.5 bg-gray-100 rounded-full text-xs font-medium text-gray-700 whitespace-nowrap hover:bg-gray-200 transition-colors"
+            >
+              {quick}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="輸入訊息..."
+            className="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <button onClick={handleSend} className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center hover:bg-gray-800 transition-colors">
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+--- mockSupabase.ts ---
+
+import { TourSession, Booking, PublicTourData, LineChatLog, CompanyBudget, Poll, PollOption, ChangeRequest, Incident, TourOption, UserFootprint } from '../types';
+
+const MOCK_TOUR_OPTIONS: TourOption[] = [
+    { id: 'opt_fit_1', session_id: 's_demo', day_number: 3, title: '札幌啤酒博物館 & 螃蟹大餐', description: '參觀歷史悠久的啤酒廠，晚餐享受北海道三大蟹吃到飽。', price_add_on: 2500, capacity_limit: 20, quota_used: 12, image_url: 'https://picsum.photos/300/200?random=50' },
+    { id: 'opt_fit_2', session_id: 's_demo', day_number: 4, title: '小樽運河手作音樂盒體驗', description: '專業老師帶領製作專屬音樂盒，含小樽甜點午茶券。', price_add_on: 1200, capacity_limit: 15, quota_used: 5, image_url: 'https://picsum.photos/300/200?random=51' },
+    { id: 'opt_fit_3', session_id: 's_demo', day_number: 5, title: '千歲 Outlet Rera 購物巡禮', description: '免費接駁車服務，含 500 日圓折價券。', price_add_on: 0, capacity_limit: 40, quota_used: 28, image_url: 'https://picsum.photos/300/200?random=52' },
+];
+
+const MOCK_FOOTPRINT: UserFootprint = {
+    user_id: 'me',
+    email: 'traveler@foxconn.com',
+    visited_countries: ['JP', 'TH', 'VN', 'SG', 'KR'],
+    trip_count: 8
+};
+
+const MOCK_PUBLIC_TOUR: PublicTourData = {
+    id: 't1',
+    title: '北海道絕景五日遊',
+    days: 5,
+    base_price: 39900,
+    cover_image: 'https://picsum.photos/800/400?random=10',
+    description: '嚴選北海道道央主要景點，包含小樽運河、富良野花田。\n特別安排入住星野度假村，享受奢華一泊二食。',
+    share_token: 'share-123',
+    itinerary_json: [
+        {
+            hotel: 'Sapporo Grand Hotel',
+            points: [
+                { time: '09:00', name: '新千歲機場集合', desc: '專車接送前往市區', image: 'https://picsum.photos/200/200?random=11' },
+                { time: '14:00', name: '小樽運河散策', desc: '感受異國情調的浪漫運河', image: 'https://picsum.photos/200/200?random=12' }
+            ]
+        },
+        {
+            hotel: 'Hoshino Resorts TOMAMU',
+            points: [
+                { time: '10:00', name: '富良野花田', desc: '欣賞七彩花海', image: 'https://picsum.photos/200/200?random=13' },
+                { time: '16:00', name: '入住星野度假村', desc: '享受渡假村設施' }
+            ]
+        }
+    ]
+};
+
+const MOCK_UNPAID_BOOKINGS: Booking[] = [
+    { id: 'b_u1', session_id: 's_demo', user_id: 'u1', customer_name: 'Wang Xiao-Ming', total_amount: 39900, status: 'pending_payment', email: 'wang@example.com' },
+    { id: 'b_u2', session_id: 's_demo', user_id: 'u2', customer_name: 'Chen Da-Wen', total_amount: 79800, status: 'verifying', email: 'chen@example.com', payment_proof_url: 'mock_proof.jpg' },
+];
+
+const MOCK_COMPANY_BUDGET: CompanyBudget = {
+    id: 'comp_1',
+    company_name: '鴻海科技集團 (Foxconn)',
+    total_budget: 5000000,
+    used_budget: 4150000, 
+    last_updated: new Date().toISOString()
+};
+
+const MOCK_POLLS: Poll[] = [
+    { 
+        id: 'poll_1', 
+        title: '2025 年度員工旅遊地點票選', 
+        description: '請大家踴躍投票，結果將作為福委會最終採購依據。本投票採「匿名盲選」制，避免人情壓力。',
+        deadline: '2024-12-31', 
+        status: 'active',
+        total_votes: 156,
+        ai_summary: '根據目前的投票趨勢，超過 60% 的員工傾向選擇「北海道滑雪」行程，主要考量為「獨特性」與「公司全額補助」。建議福委會優先與旅行社洽談 1/15 出發之團體機位。'
+    }
+];
+
+const MOCK_POLL_OPTIONS: PollOption[] = [
+    { id: 'opt_1', poll_id: 'poll_1', text: '日本北海道滑雪五日', image_url: 'https://picsum.photos/300/200?random=20', tags: ['預算 5萬', '免請假'], vote_count: 98, is_winner: true },
+    { id: 'opt_2', poll_id: 'poll_1', text: '泰國曼谷渡假五日', image_url: 'https://picsum.photos/300/200?random=21', tags: ['預算 3萬', '需請假3天'], vote_count: 42 },
+    { id: 'opt_3', poll_id: 'poll_1', text: '國內環島豪華列車', image_url: 'https://picsum.photos/300/200?random=22', tags: ['預算 2萬', '親子友善'], vote_count: 16 },
+];
+
+const MOCK_CHANGE_REQUESTS: ChangeRequest[] = [
+    {
+        id: 'cr_1',
+        requester_name: '福委會 - 陳經理',
+        category: 'meal',
+        description: 'D2 晚餐原定飯店自助餐，希望能改成當地的居酒屋，讓大家體驗一下氣氛。預算可微調。',
+        status: 'op_review',
+        cost_impact: 0, 
+        created_at: new Date(Date.now() - 86400000).toISOString()
+    }
+];
+
+const MOCK_INCIDENTS: Incident[] = [
+    {
+        id: 'inc_1',
+        title: '北海道大雪影響行程',
+        severity: 'high',
+        status_message: '目前新千歲機場暫時關閉，全團已帶回飯店休息，預計明日 10:00 重新確認航班。全員平安。',
+        timestamp: new Date().toISOString(),
+        is_active: true
+    }
+];
+
+class MockSupabase {
+  private listeners: Record<string, Function[]> = {};
+  private receiptCounter = 1;
+  private lineLogs: LineChatLog[] = [];
+  private changeRequests: ChangeRequest[] = MOCK_CHANGE_REQUESTS;
+  private incidents: Incident[] = MOCK_INCIDENTS;
+  private bookings: Booking[] = MOCK_UNPAID_BOOKINGS;
+
+  from(table: string) {
+    let filters: Record<string, any> = {};
+    let isSingle = false;
+    let pendingOp: 'select' | 'insert' | 'update' = 'select';
+    let pendingData: any = null;
+
+    const execute = async () => {
+        let data: any = [];
+        let error = null;
+
+        if (pendingOp === 'insert') {
+            if (table === 'booking_selections') {
+                return { data: pendingData, error: null };
+            }
+            if (table === 'change_requests') {
+                const newItem = { ...pendingData, id: Math.random().toString(), status: 'pending', created_at: new Date().toISOString() };
+                this.changeRequests.unshift(newItem);
+                return { data: [newItem], error: null };
+            }
+            if (table === 'incidents') {
+                const newItem = { ...pendingData, id: Math.random().toString(), timestamp: new Date().toISOString(), is_active: true };
+                this.incidents.unshift(newItem);
+                return { data: [newItem], error: null };
+            }
+            if (table === 'line_chat_logs') {
+                const newLog = { ...pendingData, id: Math.random().toString(), timestamp: new Date().toISOString() };
+                this.lineLogs.unshift(newLog); 
+                this.emit('line_chat_update', newLog);
+                return { error: null };
+            }
+            if (table === 'poll_votes') {
+                const option = MOCK_POLL_OPTIONS.find(o => o.id === pendingData.option_id);
+                if (option) option.vote_count++;
+                return { error: null };
+            }
+            if (table === 'bookings') {
+                const newItem = { ...pendingData, id: 'b_new_' + Math.random().toString(36).substr(2, 5) };
+                this.bookings.push(newItem);
+                return { data: [newItem], error: null };
+            }
+            return { data: pendingData, error: null };
+        }
+
+        if (pendingOp === 'update') {
+            if (table === 'change_requests' && filters['id']) {
+                this.changeRequests = this.changeRequests.map(r => r.id === filters['id'] ? { ...r, ...pendingData } : r);
+            }
+            if (table === 'bookings' && filters['id']) {
+                this.bookings = this.bookings.map(b => b.id === filters['id'] ? { ...b, ...pendingData } : b);
+            }
+            return { data: pendingData, error: null };
+        }
+
+        if (table === 'tour_series') {
+            data = MOCK_PUBLIC_TOUR;
+        } else if (table === 'view_unpaid_bookings' || table === 'bookings') {
+            data = this.bookings;
+        } else if (table === 'line_chat_logs') {
+            data = this.lineLogs;
+        } else if (table === 'company_budgets') {
+            data = MOCK_COMPANY_BUDGET;
+        } else if (table === 'polls') {
+            data = MOCK_POLLS;
+        } else if (table === 'poll_options') {
+            data = MOCK_POLL_OPTIONS;
+        } else if (table === 'change_requests') {
+            data = this.changeRequests;
+        } else if (table === 'incidents') {
+            data = this.incidents;
+        } else if (table === 'tour_options') {
+            data = MOCK_TOUR_OPTIONS;
+        } else if (table === 'view_user_footprints') {
+            data = MOCK_FOOTPRINT;
+        }
+
+        if (isSingle) {
+            if (Array.isArray(data)) {
+                data = data.length > 0 ? data[0] : null;
+            }
+        } else {
+            if (!Array.isArray(data) && data !== null) {
+                data = [data];
+            } else if (data === null) {
+                data = [];
+            }
+        }
+        return { data, error };
+    };
+
+    const builder = {
+        select: (columns?: string) => {
+            pendingOp = 'select';
+            return builder;
+        },
+        eq: (column: string, value: any) => {
+            filters[column] = value;
+            return builder;
+        },
+        single: () => {
+            isSingle = true;
+            return builder;
+        },
+        insert: (data: any) => {
+            pendingOp = 'insert';
+            pendingData = data;
+            return builder;
+        },
+        update: (data: any) => {
+            pendingOp = 'update';
+            pendingData = data;
+            return builder;
+        },
+        then: (onfulfilled?: (value: any) => any, onrejected?: (reason: any) => any) => {
+            return execute().then(onfulfilled, onrejected);
+        }
+    };
+    
+    return builder;
+  }
+
+  async rpc(functionName: string, params?: any) {
+    if (functionName === 'generate_receipt_number') {
+        const date = new Date();
+        const year = date.getFullYear().toString().substr(-2);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const sequence = this.receiptCounter.toString().padStart(5, '0');
+        this.receiptCounter++;
+        return { data: `TR-${year}${month}-${sequence}`, error: null };
+    }
+    return { data: null, error: 'Function not found' };
+  }
+
+  channel(name: string) {
+    return {
+      on: (event: string, filter: any, callback: Function) => {
+        if (!this.listeners[name]) this.listeners[name] = [];
+        this.listeners[name].push(callback);
+        return { subscribe: () => {} };
+      }
+    };
+  }
+
+  removeChannel(channel: any) {}
+
+  emit(event: string, payload: any) {
+    Object.values(this.listeners).forEach(callbacks => {
+      callbacks.forEach(cb => cb(payload));
+    });
+  }
+}
+
+export const supabase = new MockSupabase();
+
+
+--- legalKnowledge.ts ---
+
+export const LEGAL_KNOWLEDGE = {
+  // --- 首次申請護照親辦一站式服務 (2024/10 最新細則) ---
+  PASSPORT_FIRST_TIME: `
+首次申請護照親辦（一站式服務）詳細規範：
+1. 適用對象：在臺設有戶籍國民，且為「首次申請」（從未領過護照）。
+2. 應備文件與規費表：
+   - 滿 18 歲以上：身分證正本、照片2張。規費 1,300 元。
+   - 滿 14 歲至未滿 18 歲：身分證正本、照片2張、法定代理人身分證及同意書。規費 1,300 元。
+   - 未滿 14 歲：照片2張、法定代理人身分證及同意書。*戶所會產生電子戶籍謄本，無須備戶口名簿*。規費 900 元。
+   - 受監護宣告：監護人陪同或委任，檢附相關證件。規費 1,300 元。
+3. 關鍵流程與時效：
+   - 繳費期限：送件後 7 天內 須至五大超商(7-11/全家/萊爾富/OK/美廉社)、郵局或農漁會繳款。
+   - 製發時間：自繳費起 14 個工作天 領照。
+   - 手續費：每筆另付 15 元通路手續費。
+4. 領照方式：
+   - 途徑 A：至原戶所領取。
+   - 途徑 B：郵寄至指定地址（快遞費：同縣市 110 元、不同縣市 150 元、離島 170 元）。
+5. 注意事項：一站式服務不適用急件。急件須親至領務局辦理。
+`,
+
+  // --- 國際航空與公約 ---
+  WARSAW_CONVENTION: `
+華沙公約 (1929)：適用於所有以航空器運送旅客、行李或貨物之國際運輸。責任限額採法郎制。
+`,
+
+  MONTREAL_CONVENTION: `
+1999 年蒙特利爾公約 (MC99) - 2024 最新責任限額 (2024/12/28 生效)：
+- 死亡/傷害：151,880 SDR。
+- 運輸延誤：6,303 SDR。
+- 行李損毀/遺失：1,519 SDR。
+`,
+
+  CONSUMER_PROTECTION: `
+消費者保護法：提供合理審閱期，疑義時應為有利於消費者之解釋。
+`,
+
+  PROFESSIONAL_STAFF: `
+導遊領隊規則：須佩掛執業證。發生意外須於24小時內報備。
+`,
+
+  HOTEL_MANAGEMENT: `
+旅館業管理：登記旅客個資保存半年。房價須置於客房明顯處。
+`,
+
+  AUTO_INSURANCE: `
+強制汽車責任保險法：受害人請求權時效為2年。
+`,
+
+  INSURANCE_TERMS: `
+旅行業責任保險：承保意外致傷害、失能或死亡，含必要醫療費用。
+`,
+
+  TRAVEL_CONTRACT: `
+國外旅遊定型化契約：領隊違規未派，賠償每日1,500元之3倍。
+`,
+
+  DOMESTIC_TRAVEL_CONTRACT: `
+國內旅遊定型化契約：棄置旅客須賠償5倍違約金。
+`
+};
+
+
+--- geoUtils.ts ---
+
+/**
+ * 計算兩點間的直線距離 (Haversine formula)
+ */
+export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // 地球半徑 (km)
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+/**
+ * 根據距離預估交通時間 (分鐘)
+ * 假設平均時速：城市 30km/h, 山區 20km/h
+ */
+export function estimateTravelTime(distanceKm: number, type: string): number {
+  const speed = type === '山區' ? 20 : 35;
+  return Math.round((distanceKm / speed) * 60) + 10; // 加 10 分鐘緩衝
+}
+
+
+package.json 內容：
+{
+  "name": "travelmaster-os",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^9.39.2",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.2.0",
+    "vite": "^7.3.1"
+  }
+}
