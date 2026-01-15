@@ -362,3 +362,14 @@ export interface GroupRoster {
     percentage: number;
   };
 }
+
+// 房間分配（用於名單表）
+export interface RoomAssignment {
+  roomNumber: string;
+  roomType: 'single' | 'double' | 'twin' | 'family' | 'suite';
+  hotelName: string;
+  occupants: { id: string; name: string }[];
+  checkIn: string;
+  checkOut: string;
+  notes?: string;
+}

@@ -7,7 +7,7 @@ import {
   Award, Shield, DollarSign, Info, ChevronDown, Plus, Minus,
   ThumbsUp, ThumbsDown, MessageSquare, ExternalLink, Bed
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 // ============================================
 // Types

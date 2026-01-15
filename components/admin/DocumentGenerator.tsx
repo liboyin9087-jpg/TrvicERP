@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Download, Mail, Send, FileDown, Users, Bed, Bus,
-  Calendar, MapPin, Phone, Printer, X
+  Calendar, MapPin, Phone, Printer, X, CheckCircle, Loader2
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, RoomAssignment, MeetingInfo } from '../../types';
+import { LineService, LineSendTarget } from '@/core/services/lineService';
 
 // ============================================
 // Types
@@ -36,6 +37,8 @@ export default function DocumentGenerator({
 }: DocumentGeneratorProps) {
   const [selectedDoc, setSelectedDoc] = useState<DocumentType | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [sendingLine, setSendingLine] = useState(false);
+  const [lineSendResult, setLineSendResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const documents: { type: DocumentType; label: string; icon: React.ReactNode; description: string }[] = [
     {
@@ -90,9 +93,45 @@ export default function DocumentGenerator({
     alert(`匯出 ${documents.find(d => d.type === type)?.label} Excel 功能開發中`);
   };
 
-  const handleSendLine = (type: DocumentType) => {
-    // TODO: 實作 Line 發送
-    alert(`發送 ${documents.find(d => d.type === type)?.label} 至 Line 功能開發中`);
+  const handleSendLine = async (type: DocumentType) => {
+    setSendingLine(true);
+    setLineSendResult(null);
+
+    try {
+      // 從訂單中提取 Line 發送目標
+      const targets: LineSendTarget[] = LineService.extractLineTargetsFromBookings(bookings);
+
+      if (targets.length === 0) {
+        setLineSendResult({
+          success: false,
+          message: '沒有可發送的用戶（需要用戶 ID）',
+        });
+        return;
+      }
+
+      const result = await LineService.sendDocumentNotification({
+        sessionId: session.id,
+        documentType: type,
+        recipients: targets,
+        customMessage: `團號：${session.group_number || session.series_id}`,
+      });
+
+      setLineSendResult({
+        success: result.success,
+        message: result.success
+          ? `已成功發送至 ${result.sentCount} 位用戶`
+          : `發送失敗：${result.errors?.[0]?.error || '未知錯誤'}`,
+      });
+    } catch (error) {
+      setLineSendResult({
+        success: false,
+        message: `發送錯誤：${error}`,
+      });
+    } finally {
+      setSendingLine(false);
+      // 3 秒後清除結果提示
+      setTimeout(() => setLineSendResult(null), 3000);
+    }
   };
 
   const generateHTML = (type: DocumentType): string => {

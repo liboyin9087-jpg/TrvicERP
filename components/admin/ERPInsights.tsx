@@ -4,7 +4,7 @@ import {
   TrendingUp, Users, Target, ArrowDownCircle, DollarSign, Wallet,
   Sparkles, BarChart3, ArrowUpRight, Activity, Globe, Zap
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 // Animation variants
 const containerVariants = {

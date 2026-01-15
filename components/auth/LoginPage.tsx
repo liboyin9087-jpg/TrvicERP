@@ -1,10 +1,29 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QrCode, Eye, EyeOff, X, CheckCircle, AlertCircle, Building2, Users, Briefcase } from 'lucide-react';
-import { login as authLogin, type LoginCredentials } from '../../src/services/authService';
+import { AuthService } from '@/core/services/authService';
+import type { LoginCredentials, UserRole } from '@/core/services/authService';
 
 interface LoginPageProps {
   onLogin: (role: 'staff' | 'welfare' | 'traveler', userId?: string, userName?: string) => void;
+}
+
+// Map detailed roles to app-level roles
+function mapUserRoleToAppRole(role: UserRole): 'staff' | 'welfare' | 'traveler' {
+  switch (role) {
+    case 'admin':
+    case 'manager':
+    case 'sales':
+    case 'operator':
+    case 'finance':
+      return 'staff';
+    case 'welfare':
+      return 'welfare';
+    case 'traveler':
+      return 'traveler';
+    default:
+      return 'staff';
+  }
 }
 
 type ToastType = 'success' | 'error';
@@ -93,12 +112,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      const result = await authLogin({ email, password });
+      const result = await AuthService.login({ email, password });
 
       if (result.success && result.user) {
         showNotification('登入成功！', 'success');
         setTimeout(() => {
-          onLogin(result.user!.role, result.user!.id, result.user!.name);
+          onLogin(mapUserRoleToAppRole(result.user!.role), result.user!.id, result.user!.name);
         }, 500);
       } else {
         showNotification(result.error || '登入失敗', 'error');

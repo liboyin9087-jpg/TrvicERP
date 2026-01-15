@@ -4,7 +4,7 @@ import {
   Search, Users, User, Phone, Mail, Star, Calendar, TrendingUp,
   Tag, ChevronRight, Crown, Award, Medal, Shield, Plus, Filter
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface Customer {
   id: string;

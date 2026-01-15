@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scale, X, Send, BookOpen, Sparkles } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
-import { ragEngine, type LegalDocument } from '../../src/lib/ai/RAGEngine';
+import { cn } from '@/lib/utils';
+import { ragEngine, type LegalDocument } from '@/lib/ai/RAGEngine';
 
 interface Message {
   id: string;

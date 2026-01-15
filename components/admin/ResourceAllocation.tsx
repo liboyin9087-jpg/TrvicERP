@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2, Bus, User, Plus, Minus, Lock, Unlock, Edit, Trash2,
-  Save, X, Users, Bed, MapPin, Phone, Mail, Award
+  Save, X, Users, Bed, MapPin, Phone, Mail, Award, CheckCircle
 } from 'lucide-react';
 import { cn } from '../../src/lib/utils';
 import type { HotelRoomAllocation, SeatAssignment, TourLeader } from '../../types';

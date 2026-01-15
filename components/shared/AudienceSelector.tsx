@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, Heart, Baby, Camera, Mountain, Leaf, Compass, User } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 // All possible target audience values from the data
 export const AUDIENCE_OPTIONS = [

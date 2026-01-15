@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
           // Cache strategies for offline support
           runtimeCaching: [
             {
@@ -62,7 +63,14 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(__dirname, './src'),
+        '@/components': path.resolve(__dirname, './components'),
+        '@/core': path.resolve(__dirname, './src/core'),
+        '@/modules': path.resolve(__dirname, './src/modules'),
+        '@/lib': path.resolve(__dirname, './src/lib'),
+        '@/types': path.resolve(__dirname, './src/core/types'),
+        '@/store': path.resolve(__dirname, './src/store'),
+        '@/data': path.resolve(__dirname, './src/data'),
       },
     },
     optimizeDeps: {
