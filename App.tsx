@@ -1,53 +1,54 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, LayoutDashboard, Calendar, Map, Users, CreditCard, FileText,
   MessageCircle, LogOut, Menu, Bell, Layers, Search, Settings,
-  Calculator, Shield, Activity, Receipt, Sparkles, Building2, ChevronLeft, X
+  Calculator, Shield, Activity, Receipt, Sparkles, Building2, ChevronLeft, X,
+  Command
 } from 'lucide-react';
 import { cn } from './src/lib/utils';
 
 // Zustand Store
 import { useAppStore, type ViewKey, type UserRole } from './src/store/useAppStore';
 
-// Auth
+// Auth - Keep synchronous for initial load
 import LoginPage from './components/auth/LoginPage';
 
-// Admin Components
-import ERPInsights from './components/admin/ERPInsights';
-import SessionManager from './components/admin/SessionManager';
-import WelfareDashboard from './components/admin/WelfareDashboard';
-import PaymentMonitor from './components/admin/PaymentMonitor';
-import PassportKanban from './components/admin/PassportKanban';
-import CostingDashboard from './components/admin/CostingDashboard';
-
-// Staff Components
-import VisualPlanner from './components/staff/VisualPlanner';
-import CustomerCDP from './components/staff/CustomerCDP';
-import InsuranceExport from './components/staff/InsuranceExport';
-import QuotationBuilder from './components/staff/QuotationBuilder';
-import OperationHub from './components/staff/OperationHub';
-import LeaderExpenseApp from './components/staff/LeaderExpenseApp';
-import LineChatMonitor from './components/staff/LineChatMonitor';
-import MiniTourEstimator from './components/staff/MiniTourEstimator';
-import ItineraryBuilder from './components/staff/ItineraryBuilder';
-
-// Client Components
-import TravelerApp from './components/client/TravelerApp';
-import ItineraryView from './components/client/ItineraryView';
-import VotingPage from './components/client/VotingPage';
-import DigitalBriefing from './components/client/DigitalBriefing';
-import TourAddons from './components/client/TourAddons';
-import TravelFootprint from './components/client/TravelFootprint';
-
 // Shared Components
-import EdgeAssistant from './components/shared/EdgeAssistant';
-import InteractiveMap from './components/shared/InteractiveMap';
-import LegalAssistant from './components/shared/LegalAssistant';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
 import ViewSwitcher from './components/shared/ViewSwitcher';
+import Loading from './components/shared/Loading';
+
+// Lazy load components
+const ERPInsights = lazy(() => import('./components/admin/ERPInsights'));
+const SessionManager = lazy(() => import('./components/admin/SessionManager'));
+const WelfareDashboard = lazy(() => import('./components/admin/WelfareDashboard'));
+const PaymentMonitor = lazy(() => import('./components/admin/PaymentMonitor'));
+const PassportKanban = lazy(() => import('./components/admin/PassportKanban'));
+const CostingDashboard = lazy(() => import('./components/admin/CostingDashboard'));
+
+const VisualPlanner = lazy(() => import('./components/staff/VisualPlanner'));
+const CustomerCDP = lazy(() => import('./components/staff/CustomerCDP'));
+const InsuranceExport = lazy(() => import('./components/staff/InsuranceExport'));
+const QuotationBuilder = lazy(() => import('./components/staff/QuotationBuilder'));
+const OperationHub = lazy(() => import('./components/staff/OperationHub'));
+const LeaderExpenseApp = lazy(() => import('./components/staff/LeaderExpenseApp'));
+const LineChatMonitor = lazy(() => import('./components/staff/LineChatMonitor'));
+const MiniTourEstimator = lazy(() => import('./components/staff/MiniTourEstimator'));
+const ItineraryBuilder = lazy(() => import('./components/staff/ItineraryBuilder'));
+
+const TravelerApp = lazy(() => import('./components/client/TravelerApp'));
+const ItineraryView = lazy(() => import('./components/client/ItineraryView'));
+const VotingPage = lazy(() => import('./components/client/VotingPage'));
+const DigitalBriefing = lazy(() => import('./components/client/DigitalBriefing'));
+const TourAddons = lazy(() => import('./components/client/TourAddons'));
+const TravelFootprint = lazy(() => import('./components/client/TravelFootprint'));
+
+const EdgeAssistant = lazy(() => import('./components/shared/EdgeAssistant'));
+const InteractiveMap = lazy(() => import('./components/shared/InteractiveMap'));
+const LegalAssistant = lazy(() => import('./components/shared/LegalAssistant'));
 
 // ============================================
 // Navigation Configuration
@@ -66,61 +67,61 @@ interface NavGroup {
 
 const STAFF_NAV: NavGroup[] = [
   {
-    label: '總覽',
+    label: 'Overview',
     items: [
-      { id: 'dashboard', label: '營運儀表板', icon: <LayoutDashboard className="w-5 h-5" /> },
-      { id: 'operations', label: '營運中心', icon: <Activity className="w-5 h-5" /> },
+      { id: 'dashboard', label: '營運儀表板', icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: 'operations', label: '營運中心', icon: <Activity className="w-4 h-4" /> },
     ],
   },
   {
-    label: '旅程管理',
+    label: 'Journey',
     items: [
-      { id: 'sessions', label: '團次管理', icon: <Calendar className="w-5 h-5" /> },
-      { id: 'planner', label: '行程規劃', icon: <Map className="w-5 h-5" /> },
-      { id: 'builder', label: '行程配置器', icon: <Layers className="w-5 h-5" /> },
-      { id: 'passport', label: '護照管理', icon: <FileText className="w-5 h-5" /> },
+      { id: 'sessions', label: '團次管理', icon: <Calendar className="w-4 h-4" /> },
+      { id: 'planner', label: '行程規劃', icon: <Map className="w-4 h-4" /> },
+      // 'builder' 已整合到 'planner' 中，作為子功能
+      { id: 'passport', label: '護照管理', icon: <FileText className="w-4 h-4" /> },
     ],
   },
   {
-    label: '客戶關係',
+    label: 'Relations',
     items: [
-      { id: 'crm', label: '客戶管理', icon: <Users className="w-5 h-5" /> },
-      { id: 'payments', label: '收款管理', icon: <CreditCard className="w-5 h-5" /> },
-      { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-5 h-5" /> },
+      { id: 'crm', label: '客戶管理', icon: <Users className="w-4 h-4" /> },
+      { id: 'payments', label: '收款管理', icon: <CreditCard className="w-4 h-4" /> },
+      { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-4 h-4" /> },
     ],
   },
   {
-    label: '業務工具',
+    label: 'Finance & Tools',
     items: [
-      { id: 'quotation', label: '報價計算', icon: <Calculator className="w-5 h-5" /> },
-      { id: 'estimator', label: '快速估價', icon: <Sparkles className="w-5 h-5" /> },
-      { id: 'costing', label: '成本分析', icon: <Receipt className="w-5 h-5" /> },
-      { id: 'insurance', label: '保險管理', icon: <Shield className="w-5 h-5" /> },
-      { id: 'expense', label: '領隊報帳', icon: <Receipt className="w-5 h-5" /> },
+      { id: 'quotation', label: '報價計算', icon: <Calculator className="w-4 h-4" /> },
+      { id: 'estimator', label: '快速估價', icon: <Sparkles className="w-4 h-4" /> },
+      { id: 'costing', label: '成本分析', icon: <Receipt className="w-4 h-4" /> },
+      { id: 'insurance', label: '保險管理', icon: <Shield className="w-4 h-4" /> },
+      { id: 'expense', label: '領隊報帳', icon: <Receipt className="w-4 h-4" /> },
     ],
   },
 ];
 
 const WELFARE_NAV: NavGroup[] = [
   {
-    label: '福委專區',
+    label: 'Welfare',
     items: [
-      { id: 'welfare', label: '活動管理', icon: <Building2 className="w-5 h-5" /> },
-      { id: 'sessions', label: '行程瀏覽', icon: <Calendar className="w-5 h-5" /> },
+      { id: 'welfare', label: '活動管理', icon: <Building2 className="w-4 h-4" /> },
+      { id: 'sessions', label: '行程瀏覽', icon: <Calendar className="w-4 h-4" /> },
     ],
   },
 ];
 
 const CLIENT_NAV: NavGroup[] = [
   {
-    label: '旅客功能',
+    label: 'Traveler',
     items: [
-      { id: 'traveler', label: '我的行程', icon: <LayoutDashboard className="w-5 h-5" /> },
-      { id: 'itinerary', label: '行程表', icon: <Calendar className="w-5 h-5" /> },
-      { id: 'voting', label: '投票', icon: <Users className="w-5 h-5" /> },
-      { id: 'briefing', label: '行前說明', icon: <FileText className="w-5 h-5" /> },
-      { id: 'addons', label: '加購項目', icon: <CreditCard className="w-5 h-5" /> },
-      { id: 'footprint', label: '旅遊足跡', icon: <Map className="w-5 h-5" /> },
+      { id: 'traveler', label: '我的行程', icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: 'itinerary', label: '行程表', icon: <Calendar className="w-4 h-4" /> },
+      { id: 'voting', label: '投票', icon: <Users className="w-4 h-4" /> },
+      { id: 'briefing', label: '行前說明', icon: <FileText className="w-4 h-4" /> },
+      { id: 'addons', label: '加購項目', icon: <CreditCard className="w-4 h-4" /> },
+      { id: 'footprint', label: '旅遊足跡', icon: <Map className="w-4 h-4" /> },
     ],
   },
 ];
@@ -139,69 +140,59 @@ const getNavGroups = (role: UserRole): NavGroup[] => {
 // ============================================
 
 const sidebarVariants = {
-  open: { width: 280, transition: { type: 'spring' as const, stiffness: 300, damping: 30 } },
-  closed: { width: 80, transition: { type: 'spring' as const, stiffness: 300, damping: 30 } },
-};
-
-const navItemVariants = {
-  hidden: { opacity: 0, x: -10 },
-  visible: { opacity: 1, x: 0 },
+  open: { width: 260, transition: { type: 'spring' as const, stiffness: 400, damping: 40 } },
+  closed: { width: 72, transition: { type: 'spring' as const, stiffness: 400, damping: 40 } },
 };
 
 const contentVariants = {
   hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
 };
 
 // ============================================
-// View Renderer Component
+// Components
 // ============================================
 
 function ViewRenderer({ view }: { view: ViewKey }) {
-  switch (view) {
-    // Admin/Staff Views
-    case 'dashboard': return <ERPInsights />;
-    case 'sessions': return <SessionManager />;
-    case 'planner': return <VisualPlanner />;
-    case 'builder': return <ItineraryBuilder />;
-    case 'crm': return <CustomerCDP />;
-    case 'payments': return <PaymentMonitor />;
-    case 'passport': return <PassportKanban />;
-    case 'costing': return <CostingDashboard />;
-    case 'insurance': return <InsuranceExport />;
-    case 'quotation': return <QuotationBuilder />;
-    case 'operations': return <OperationHub />;
-    case 'expense': return <LeaderExpenseApp />;
-    case 'chat': return <LineChatMonitor />;
-    case 'estimator': return <MiniTourEstimator />;
-    case 'map': return <InteractiveMap />;
-    case 'welfare': return <WelfareDashboard />;
-    // Client Views
-    case 'traveler': return <TravelerApp />;
-    case 'itinerary': return <ItineraryView />;
-    case 'voting': return <VotingPage />;
-    case 'briefing': return <DigitalBriefing />;
-    case 'addons': return <TourAddons />;
-    case 'footprint': return <TravelFootprint />;
-    default: return <ERPInsights />;
-  }
+  const renderView = () => {
+    switch (view) {
+      case 'dashboard': return <ERPInsights />;
+      case 'sessions': return <SessionManager />;
+      case 'planner': return <VisualPlanner />;
+      case 'builder': return <ItineraryBuilder />;
+      case 'crm': return <CustomerCDP />;
+      case 'payments': return <PaymentMonitor />;
+      case 'passport': return <PassportKanban />;
+      case 'costing': return <CostingDashboard />;
+      case 'insurance': return <InsuranceExport />;
+      case 'quotation': return <QuotationBuilder />;
+      case 'operations': return <OperationHub />;
+      case 'expense': return <LeaderExpenseApp />;
+      case 'chat': return <LineChatMonitor />;
+      case 'estimator': return <MiniTourEstimator />;
+      case 'map': return <InteractiveMap />;
+      case 'welfare': return <WelfareDashboard />;
+      case 'traveler': return <TravelerApp />;
+      case 'itinerary': return <ItineraryView />;
+      case 'voting': return <VotingPage />;
+      case 'briefing': return <DigitalBriefing />;
+      case 'addons': return <TourAddons />;
+      case 'footprint': return <TravelFootprint />;
+      default: return <ERPInsights />;
+    }
+  };
+
+  return (
+    <Suspense fallback={<Loading />}>
+      {renderView()}
+    </Suspense>
+  );
 }
 
-// ============================================
-// Floating Sidebar Component
-// ============================================
-
-interface FloatingSidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  currentView: ViewKey;
-  onNavigate: (view: ViewKey) => void;
-  navGroups: NavGroup[];
-  onLogout: () => void;
-  userRole: UserRole;
-}
-
-function FloatingSidebar({
+// ------------------------------------------------------------------
+// Modern Sidebar (Linear/Stripe Style)
+// ------------------------------------------------------------------
+function Sidebar({
   isOpen,
   onToggle,
   currentView,
@@ -209,86 +200,69 @@ function FloatingSidebar({
   navGroups,
   onLogout,
   userRole,
-}: FloatingSidebarProps) {
+}: any) {
   return (
     <motion.aside
       initial={false}
       animate={isOpen ? 'open' : 'closed'}
       variants={sidebarVariants}
-      className="fixed left-4 top-4 bottom-4 z-50 floating-sidebar flex flex-col overflow-hidden"
+      className="fixed left-0 top-0 bottom-0 z-40 flex flex-col bg-slate-950 border-r border-slate-800 shadow-2xl"
     >
-      {/* Logo Header */}
-      <div className="p-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <motion.div
-            whileHover={{ scale: 1.05, rotate: 5 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-11 h-11 bg-gradient-brand rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30"
-          >
+      {/* Brand Header */}
+      <div className="h-16 flex items-center px-4 border-b border-slate-800/50">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="w-9 h-9 bg-indigo-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 flex-shrink-0">
             <Plane className="w-5 h-5 text-white" />
-          </motion.div>
+          </div>
           <AnimatePresence>
             {isOpen && (
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col"
               >
-                <h1 className="font-bold text-lg text-white">TravelMaster</h1>
-                <p className="text-[11px] text-gray-400 font-medium">Enterprise v2.0</p>
+                <span className="font-bold text-white text-base tracking-tight">TrvicERP</span>
+                <span className="text-[10px] text-slate-400 font-medium">Enterprise OS</span>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={onToggle}
-          className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-        >
-          <ChevronLeft className={cn('w-4 h-4 transition-transform duration-300', !isOpen && 'rotate-180')} />
-        </motion.button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin">
-        {navGroups.map((group, groupIdx) => (
-          <div key={groupIdx} className="mb-5">
-            <AnimatePresence>
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-800">
+        {navGroups.map((group: NavGroup, idx: number) => (
+          <div key={idx}>
+             <AnimatePresence>
               {isOpen && (
-                <motion.p
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2"
+                  className="px-3 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider"
                 >
                   {group.label}
-                </motion.p>
+                </motion.div>
               )}
             </AnimatePresence>
-            <div className="space-y-1">
-              {group.items.map((item, itemIdx) => {
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
                 const isActive = currentView === item.id;
                 return (
-                  <motion.button
+                  <button
                     key={item.id}
-                    variants={navItemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    transition={{ delay: itemIdx * 0.05 }}
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
                     onClick={() => onNavigate(item.id)}
                     className={cn(
-                      'nav-item-glow w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
-                      isActive && 'active',
-                      !isActive && 'text-gray-400 hover:text-white hover:bg-white/5'
+                      'group w-full flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 outline-none',
+                      isActive 
+                        ? 'bg-indigo-500/10 text-indigo-400' 
+                        : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
                     )}
                   >
                     <span className={cn(
-                      'transition-colors duration-200',
-                      isActive ? 'text-brand-400' : 'text-gray-400'
+                      "flex items-center justify-center transition-colors",
+                      isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"
                     )}>
                       {item.icon}
                     </span>
@@ -298,16 +272,19 @@ function FloatingSidebar({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className={cn(
-                            'font-medium text-sm whitespace-nowrap',
-                            isActive ? 'text-white' : 'text-gray-300'
-                          )}
+                          className="text-sm font-medium whitespace-nowrap"
                         >
                           {item.label}
                         </motion.span>
                       )}
                     </AnimatePresence>
-                  </motion.button>
+                    {isActive && isOpen && (
+                      <motion.div
+                        layoutId="activeIndicator"
+                        className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.5)]"
+                      />
+                    )}
+                  </button>
                 );
               })}
             </div>
@@ -315,75 +292,58 @@ function FloatingSidebar({
         ))}
       </nav>
 
-      {/* User Section */}
-      <div className="p-4 border-t border-white/5">
-        {/* User Profile */}
-        <div className={cn('flex items-center gap-3 mb-3', !isOpen && 'justify-center')}>
-          <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
-              {userRole === 'staff' ? '職' : userRole === 'welfare' ? '福' : '客'}
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900" />
-          </div>
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 min-w-0"
-              >
-                <p className="text-sm font-medium text-white truncate">系統管理員</p>
-                <p className="text-xs text-gray-400">
-                  {userRole === 'staff' ? '員工' : userRole === 'welfare' ? '福委' : '旅客'}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Logout Button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onLogout}
-          className={cn(
-            'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-            'text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all',
-            !isOpen && 'justify-center'
-          )}
+      {/* Footer / Toggle */}
+      <div className="p-3 border-t border-slate-800/50 bg-slate-950">
+        <button
+          onClick={onToggle}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-slate-400 hover:bg-slate-900 hover:text-white transition-colors"
         >
-          <LogOut className="w-5 h-5" />
+          <div className={cn("transition-transform duration-300", !isOpen && "rotate-180")}>
+            <ChevronLeft className="w-4 h-4" />
+          </div>
           <AnimatePresence>
             {isOpen && (
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="font-medium text-sm"
+                className="text-sm font-medium"
               >
-                登出系統
+                收合選單
               </motion.span>
             )}
           </AnimatePresence>
-        </motion.button>
+        </button>
+        
+        <div className="mt-2 pt-2 border-t border-slate-800/50">
+           <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-slate-400 hover:bg-red-950/30 hover:text-red-400 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+             <AnimatePresence>
+              {isOpen && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-sm font-medium"
+                >
+                  登出
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
       </div>
     </motion.aside>
   );
 }
 
-// ============================================
-// Glass Header Component
-// ============================================
-
-interface GlassHeaderProps {
-  onMobileMenuOpen: () => void;
-  currentView: ViewKey;
-  showViewSwitcher?: boolean;
-}
-
-function GlassHeader({ onMobileMenuOpen, currentView, showViewSwitcher = false }: GlassHeaderProps) {
-  // Get current view title
+// ------------------------------------------------------------------
+// Modern Header (Clean & Minimal)
+// ------------------------------------------------------------------
+function Header({ onMobileMenuOpen, currentView, showViewSwitcher }: any) {
   const viewTitles: Record<string, string> = {
     dashboard: '營運儀表板',
     sessions: '團次管理',
@@ -403,171 +363,130 @@ function GlassHeader({ onMobileMenuOpen, currentView, showViewSwitcher = false }
   };
 
   return (
-    <header className="h-16 glass-panel border-b-0 rounded-none flex items-center justify-between px-6 flex-shrink-0">
+    <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 px-6 flex items-center justify-between">
       <div className="flex items-center gap-4">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+        <button
           onClick={onMobileMenuOpen}
-          className="lg:hidden p-2.5 hover:bg-black/5 rounded-xl transition-colors"
+          className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-md"
         >
-          <Menu className="w-5 h-5 text-gray-600" />
-        </motion.button>
+          <Menu className="w-5 h-5" />
+        </button>
 
-        <div className="hidden lg:flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {viewTitles[currentView] || 'Dashboard'}
-          </h2>
-          <span className="px-2 py-1 bg-brand-50 text-brand-600 text-xs font-medium rounded-full">
-            即時同步
-          </span>
-        </div>
-
-        {/* View Mode Switcher */}
-        {showViewSwitcher && (
-          <ViewSwitcher className="hidden md:flex" />
-        )}
-
-        {/* Search Bar */}
-        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/50 rounded-xl border border-gray-200/50">
-          <Search className="w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="搜尋功能或資料..."
-            className="bg-transparent border-none outline-none text-sm text-gray-600 placeholder-gray-400 w-48"
-          />
-          <kbd className="hidden lg:inline-flex px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded font-mono">
-            ⌘K
-          </kbd>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-semibold text-slate-900 tracking-tight">
+              {viewTitles[currentView] || 'Dashboard'}
+            </h1>
+            <span className="hidden sm:inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-medium rounded-full">
+              Live
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Status Indicator */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-full">
-          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-xs font-medium text-green-700">系統正常</span>
+        {showViewSwitcher && <ViewSwitcher className="hidden md:flex" />}
+        
+        {/* Search Input */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all w-64">
+          <Search className="w-3.5 h-3.5 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Search..." 
+            className="bg-transparent border-none outline-none text-sm text-slate-700 placeholder:text-slate-400 w-full"
+          />
+          <div className="flex items-center gap-1">
+             <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-500">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </div>
         </div>
 
-        {/* Notifications */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="relative p-2.5 hover:bg-black/5 rounded-xl transition-colors"
-        >
-          <Bell className="w-5 h-5 text-gray-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
-        </motion.button>
+        <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 
-        {/* Settings */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="p-2.5 hover:bg-black/5 rounded-xl transition-colors"
-        >
-          <Settings className="w-5 h-5 text-gray-600" />
-        </motion.button>
+        <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-md transition-colors">
+          <Bell className="w-4 h-4" />
+          <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full ring-2 ring-white" />
+        </button>
+        <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-md transition-colors">
+          <Settings className="w-4 h-4" />
+        </button>
       </div>
     </header>
   );
 }
 
-// ============================================
-// Mobile Menu Component
-// ============================================
-
-interface MobileMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentView: ViewKey;
-  onNavigate: (view: ViewKey) => void;
-  navGroups: NavGroup[];
-  onLogout: () => void;
-}
-
-function MobileMenu({ isOpen, onClose, currentView, onNavigate, navGroups, onLogout }: MobileMenuProps) {
+// ------------------------------------------------------------------
+// Mobile Menu (Drawer)
+// ------------------------------------------------------------------
+function MobileMenu({ isOpen, onClose, currentView, onNavigate, navGroups, onLogout }: any) {
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 lg:hidden"
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 lg:hidden"
           />
-
-          {/* Menu Panel */}
           <motion.div
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 bottom-0 w-80 bg-slate-900 z-50 lg:hidden flex flex-col"
+            className="fixed left-0 top-0 bottom-0 w-80 bg-slate-950 border-r border-slate-800 z-50 lg:hidden flex flex-col"
           >
-            {/* Header */}
-            <div className="p-5 flex items-center justify-between border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-brand rounded-xl flex items-center justify-center">
-                  <Plane className="w-5 h-5 text-white" />
+            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+               <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+                  <Plane className="w-4 h-4 text-white" />
                 </div>
-                <div>
-                  <h1 className="font-bold text-white">TravelMaster</h1>
-                  <p className="text-xs text-gray-400">Enterprise v2.0</p>
-                </div>
+                <span className="font-bold text-white">TrvicERP</span>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg text-gray-400">
+              <button onClick={onClose} className="p-2 text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto p-4">
-              {navGroups.map((group, groupIdx) => (
-                <div key={groupIdx} className="mb-6">
-                  <p className="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+            
+            <nav className="flex-1 overflow-y-auto p-4 space-y-6">
+              {navGroups.map((group: NavGroup, idx: number) => (
+                <div key={idx}>
+                  <p className="px-2 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     {group.label}
                   </p>
                   <div className="space-y-1">
-                    {group.items.map((item) => {
-                      const isActive = currentView === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            onNavigate(item.id);
-                            onClose();
-                          }}
-                          className={cn(
-                            'nav-item-glow w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all',
-                            isActive && 'active',
-                            !isActive && 'text-gray-400 hover:text-white hover:bg-white/5'
-                          )}
-                        >
-                          <span className={isActive ? 'text-brand-400' : 'text-gray-400'}>
-                            {item.icon}
-                          </span>
-                          <span className={cn('font-medium text-sm', isActive ? 'text-white' : 'text-gray-300')}>
-                            {item.label}
-                          </span>
-                        </button>
-                      );
-                    })}
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          onNavigate(item.id);
+                          onClose();
+                        }}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-sm font-medium',
+                          currentView === item.id 
+                            ? 'bg-indigo-500/10 text-indigo-400' 
+                            : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                        )}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               ))}
             </nav>
 
-            {/* Logout */}
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-slate-800">
               <button
                 onClick={onLogout}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-slate-400 hover:bg-red-950/30 hover:text-red-400 transition-colors"
               >
                 <LogOut className="w-5 h-5" />
-                <span className="font-medium text-sm">登出系統</span>
+                <span className="text-sm font-medium">登出系統</span>
               </button>
             </div>
           </motion.div>
@@ -578,13 +497,11 @@ function MobileMenu({ isOpen, onClose, currentView, onNavigate, navGroups, onLog
 }
 
 // ============================================
-// Main App Content (inside Router)
+// Main App Content
 // ============================================
 
 function AppContent() {
   const location = useLocation();
-
-  // Zustand store - all state management centralized
   const {
     isLoggedIn,
     userRole,
@@ -598,173 +515,60 @@ function AppContent() {
     setMobileMenuOpen,
   } = useAppStore();
 
-  // Handle login from LoginPage
-  const handleLogin = (role: UserRole) => {
-    login(role);
-  };
+  const handleLogin = (role: UserRole) => login(role);
 
-  // Show login page if not authenticated
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
+  if (!isLoggedIn) return <LoginPage onLogin={handleLogin} />;
 
   const navGroups = getNavGroups(userRole);
-
-  // Determine current view mode from URL
   const isProposalMode = location.pathname.startsWith('/proposal');
   const isLineMode = location.pathname.startsWith('/line');
-  const showViewSwitcher = userRole === 'staff';
 
-  // Mobile client view (simplified layout)
+  // Special Modes (Traveler, Proposal, Line) - Keeping simplified layouts
   if (userRole === 'traveler') {
     return (
       <ErrorBoundary>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-          {/* Traveler Header with Logout */}
-          <header className="h-16 bg-white/80 backdrop-blur-lg border-b border-slate-200/50 flex items-center justify-between px-6 sticky top-0 z-50">
+        <div className="min-h-screen bg-slate-50">
+          <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-50 px-4 md:px-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-brand rounded-xl flex items-center justify-center">
-                <Plane className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+                <Plane className="w-4 h-4 text-white" />
               </div>
-              <div>
-                <h1 className="font-bold text-gray-800">TravelMaster</h1>
-                <p className="text-xs text-gray-500">員工旅遊平台</p>
-              </div>
+              <h1 className="font-bold text-slate-800 hidden sm:block">TrvicERP</h1>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={logout}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-sm font-medium">登出</span>
-            </motion.button>
+            <button onClick={logout} className="text-sm font-medium text-slate-500 hover:text-red-500">
+              登出
+            </button>
           </header>
+          <main className="max-w-screen-xl mx-auto">
+             <ViewRenderer view={currentView} />
+          </main>
+           <ToastContainer />
+        </div>
+      </ErrorBoundary>
+    );
+  }
+
+  if (isProposalMode || isLineMode) {
+    // ... Keeping these modes clean for external sharing
+    return (
+      <ErrorBoundary>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
           <ViewRenderer view={currentView} />
-          <EdgeAssistant />
-          <LegalAssistant />
         </div>
         <ToastContainer />
       </ErrorBoundary>
     );
   }
 
-  // Proposal Mode - Clean presentation view
-  if (isProposalMode) {
-    return (
-      <ErrorBoundary>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-          {/* Minimal Header for Proposal Mode */}
-          <header className="h-16 bg-white/80 backdrop-blur-lg border-b border-slate-200/50 flex items-center justify-between px-6 sticky top-0 z-50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-brand rounded-xl flex items-center justify-center">
-                <Plane className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="font-bold text-gray-800">TravelMaster</h1>
-                <p className="text-xs text-gray-500">提案預覽模式</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <ViewSwitcher />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={logout}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-              </motion.button>
-            </div>
-          </header>
-
-          {/* Proposal Content */}
-          <main className="max-w-6xl mx-auto p-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-xl p-8"
-            >
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">行程提案書</h2>
-                <p className="text-gray-500">專業旅遊規劃 · 用心服務</p>
-              </div>
-              <ViewRenderer view={currentView} />
-            </motion.div>
-          </main>
-        </div>
-        <ToastContainer />
-      </ErrorBoundary>
-    );
-  }
-
-  // LINE Mode - Chat-style presentation
-  if (isLineMode) {
-    return (
-      <ErrorBoundary>
-        <div className="min-h-screen bg-[#7494A5]">
-          {/* LINE Style Header */}
-          <header className="h-14 bg-[#00B900] flex items-center justify-between px-4 sticky top-0 z-50">
-            <div className="flex items-center gap-3">
-              <MessageCircle className="w-6 h-6 text-white" />
-              <h1 className="font-bold text-white">旅遊行程對話</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <ViewSwitcher className="!bg-white/20 [&_button]:!text-white" />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={logout}
-                className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </motion.button>
-            </div>
-          </header>
-
-          {/* LINE Style Content */}
-          <main className="max-w-lg mx-auto p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-3"
-            >
-              {/* Welcome Message Bubble */}
-              <div className="flex gap-2">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                  <Plane className="w-5 h-5 text-[#00B900]" />
-                </div>
-                <div className="bg-white rounded-2xl rounded-tl-none p-4 max-w-[80%] shadow-sm">
-                  <p className="text-gray-800 text-sm">歡迎使用 LINE 風格預覽！</p>
-                  <p className="text-gray-500 text-xs mt-1">這個模式適合分享給客戶查看行程</p>
-                </div>
-              </div>
-
-              {/* Content Bubble */}
-              <div className="flex gap-2">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                  <Plane className="w-5 h-5 text-[#00B900]" />
-                </div>
-                <div className="bg-white rounded-2xl rounded-tl-none p-4 max-w-[85%] shadow-sm">
-                  <ViewRenderer view={currentView} />
-                </div>
-              </div>
-            </motion.div>
-          </main>
-        </div>
-        <ToastContainer />
-      </ErrorBoundary>
-    );
-  }
-
-  // Default Edit Mode - Desktop/Tablet layout with floating sidebar
+  // ------------------------------------------------------------------
+  // Main Desktop Layout (Refactored)
+  // ------------------------------------------------------------------
   return (
     <ErrorBoundary>
-      <div className="min-h-screen flex">
-        {/* Floating Sidebar - Desktop */}
-        <div className="hidden lg:block">
-          <FloatingSidebar
+      <div className="min-h-screen bg-slate-50/50 flex font-sans text-slate-900">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block z-40">
+          <Sidebar
             isOpen={isSidebarOpen}
             onToggle={toggleSidebar}
             currentView={currentView}
@@ -787,55 +591,64 @@ function AppContent() {
 
         {/* Main Content Area */}
         <motion.div
-          animate={{
-            marginLeft: isSidebarOpen ? 296 : 96, // 280 + 16 or 80 + 16
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="flex-1 flex flex-col min-w-0 lg:mr-4 lg:my-4"
+          animate={{ marginLeft: isSidebarOpen ? 260 : 72 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+          className="flex-1 flex flex-col min-w-0 hidden lg:flex"
         >
-          {/* Glass Header */}
-          <div className="lg:rounded-t-2xl overflow-hidden">
-            <GlassHeader
-              onMobileMenuOpen={() => setMobileMenuOpen(true)}
-              currentView={currentView}
-              showViewSwitcher={showViewSwitcher}
-            />
-          </div>
-
-          {/* Content */}
-          <motion.main
-            key={currentView}
-            initial="hidden"
-            animate="visible"
-            variants={contentVariants}
-            className="flex-1 overflow-auto lg:glass-panel lg:rounded-b-2xl lg:border-t-0"
-          >
-            <ViewRenderer view={currentView} />
-          </motion.main>
+          <Header
+            onMobileMenuOpen={() => setMobileMenuOpen(true)}
+            currentView={currentView}
+            showViewSwitcher={userRole === 'staff'}
+          />
+          
+          <main className="flex-1 p-6 overflow-auto">
+            <motion.div
+              key={currentView}
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0, y: 24 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.35, ease: "easeInOut" }
+                }
+              }}
+              className="max-w-[1600px] mx-auto"
+            >
+              <ViewRenderer view={currentView} />
+            </motion.div>
+          </main>
         </motion.div>
 
-        {/* AI Assistant */}
-        <EdgeAssistant />
+        {/* Mobile Layout Fallback (No Margin Animation) */}
+        <div className="flex-1 flex flex-col min-w-0 lg:hidden">
+          <Header
+            onMobileMenuOpen={() => setMobileMenuOpen(true)}
+            currentView={currentView}
+            showViewSwitcher={userRole === 'staff'}
+          />
+          <main className="flex-1 p-4 overflow-auto">
+             <ViewRenderer view={currentView} />
+          </main>
+        </div>
 
-        {/* Legal Assistant Chatbot */}
-        <LegalAssistant />
+        {/* Assistants */}
+        <Suspense fallback={null}>
+          <EdgeAssistant />
+          <LegalAssistant />
+        </Suspense>
       </div>
       <ToastContainer />
     </ErrorBoundary>
   );
 }
 
-// ============================================
-// Main App Component with Router
-// ============================================
-
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/*" element={<AppContent />} />
-        <Route path="/proposal/*" element={<AppContent />} />
-        <Route path="/line/*" element={<AppContent />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion';
-import { useToastStore } from '../../src/store/useToastStore';
+import { useToastStore } from '@/store/useToastStore';
 import Toast from './Toast';
 
 export default function ToastContainer() {

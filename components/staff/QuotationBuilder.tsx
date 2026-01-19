@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calculator, Plus, Minus, FileText, Send, DollarSign, Mail, Eye } from 'lucide-react';
 import Modal from '../shared/Modal';
 import { ButtonLoading } from '../shared/Loading';
-import { useToast } from '../../src/store/useToastStore';
+import { useToast } from '@/store/useToastStore';
 import PDFPreviewModal from '../shared/PDFPreviewModal';
 
 interface QuoteItem {
@@ -150,7 +150,7 @@ export default function QuotationBuilder() {
       </head>
       <body>
         <div class="header">
-          <div class="logo">TravelMaster</div>
+          <div class="logo">TrvicERP</div>
           <div class="logo-sub">專業旅遊規劃報價單</div>
         </div>
 
@@ -199,7 +199,7 @@ export default function QuotationBuilder() {
         </div>
 
         <div class="footer">
-          此報價單由 TravelMaster Enterprise 系統產生 | ${new Date().toLocaleString('zh-TW')}
+          此報價單由 TrvicERP 系統產生 | ${new Date().toLocaleString('zh-TW')}
         </div>
       </body>
       </html>

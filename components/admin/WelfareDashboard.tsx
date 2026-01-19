@@ -7,7 +7,7 @@ import {
   Edit, Trash2, Eye, Send, FileDown, PieChart, DollarSign,
   ClipboardList, UserPlus, Shield, Award, Baby, Heart, Users2
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 // ============================================
 // Types
@@ -139,7 +139,7 @@ function StatCard({ icon, label, value, trend, trendUp }: {
       className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
     >
       <div className="flex items-start justify-between">
-        <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600">
+        <div className="w-12 h-12 bg-neutral-200 rounded-xl flex items-center justify-center text-slate-600">
           {icon}
         </div>
         {trend && (
@@ -214,7 +214,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('groups')}
-          className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl text-white shadow-lg"
+          className="flex items-center gap-4 p-6 bg-brand-600 rounded-2xl text-white shadow-lg"
         >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <Plus className="w-6 h-6" />
@@ -229,7 +229,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('registration')}
-          className="flex items-center gap-4 p-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl text-white shadow-lg"
+          className="flex items-center gap-4 p-6 bg-brand-600 rounded-2xl text-white shadow-lg"
         >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <ClipboardList className="w-6 h-6" />
@@ -244,7 +244,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('reports')}
-          className="flex items-center gap-4 p-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl text-white shadow-lg"
+          className="flex items-center gap-4 p-6 bg-brand-600 rounded-2xl text-white shadow-lg"
         >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <BarChart3 className="w-6 h-6" />
@@ -1197,7 +1197,7 @@ export default function WelfareDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-neutral-50">
       <div className="p-8 max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <motion.div
@@ -1206,7 +1206,7 @@ export default function WelfareDashboard() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <div className="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
               <Building2 className="w-7 h-7 text-white" />
             </div>
             <div>

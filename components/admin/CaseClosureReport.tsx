@@ -5,7 +5,7 @@ import {
   Star, MessageSquare, TrendingUp, Clock, Printer, Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TourSession, Booking } from '../../types';
+import type { TourSession, Booking } from '@/types';
 
 // ============================================
 // Types
@@ -319,7 +319,7 @@ export default function CaseClosureReport({
         </div>
 
         <div class="footer">
-          本報告由 TravelMaster OS 自動生成 | ${new Date().toLocaleString('zh-TW')}
+          本報告由 TrvicERP 自動生成 | ${new Date().toLocaleString('zh-TW')}
         </div>
       </body>
       </html>

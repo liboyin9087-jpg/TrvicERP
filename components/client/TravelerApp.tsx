@@ -238,7 +238,7 @@ function TabBar({ activeTab, onTabChange, notificationCount }: {
 
 function EligibilityCard({ user }: { user: UserProfile }) {
   return (
-    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
+    <div className="bg-brand-r from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -289,7 +289,7 @@ function TripCard({ trip, onRegister }: { trip: AvailableTrip; onRegister: () =>
     >
       <div className="relative h-40">
         <img src={trip.image} alt={trip.name} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="absolute inset-0 bg-brand-t from-black/70 to-transparent" />
         <div className="absolute top-3 right-3">
           <span className={cn(
             'px-2 py-1 rounded-full text-xs font-semibold',
@@ -417,7 +417,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
           <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
           <p className="text-sm text-gray-500">{user.department} · {user.employeeId}</p>
         </div>
-        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
+        <div className="w-14 h-14 bg-brand-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
           {user.name[0]}
         </div>
       </div>
@@ -430,7 +430,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
         <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
           <div className="relative h-32">
             <img src={upcomingTrip.image} alt={upcomingTrip.tripName} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+            <div className="absolute inset-0 bg-brand-t from-black/80 to-transparent" />
             <div className="absolute bottom-3 left-3 right-3 text-white">
               <span className="text-xs bg-green-500 px-2 py-0.5 rounded-full font-semibold">即將出發</span>
               <h3 className="font-bold mt-1">{upcomingTrip.tripName}</h3>
@@ -466,7 +466,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('explore')}
-          className="bg-gradient-to-r from-emerald-500 to-green-600 p-4 rounded-2xl text-white text-left"
+          className="bg-brand-r from-emerald-500 to-green-600 p-4 rounded-2xl text-white text-left"
         >
           <MapPin className="w-6 h-6 mb-2" />
           <p className="font-bold">探索行程</p>
@@ -477,7 +477,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('mytrips')}
-          className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 rounded-2xl text-white text-left"
+          className="bg-brand-r from-purple-500 to-indigo-600 p-4 rounded-2xl text-white text-left"
         >
           <Calendar className="w-6 h-6 mb-2" />
           <p className="font-bold">我的行程</p>
@@ -977,7 +977,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
               <div key={reg.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div className="relative h-32">
                   <img src={reg.image} alt={reg.tripName} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute inset-0 bg-brand-t from-black/70 to-transparent" />
                   <div className="absolute top-3 right-3">
                     <span className={cn('px-2 py-1 rounded-full text-xs font-semibold', status.color)}>
                       {status.label}

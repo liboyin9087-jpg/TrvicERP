@@ -4,7 +4,7 @@ import {
   CreditCard, DollarSign, Clock, CheckCircle, XCircle, RefreshCw,
   Download, Building2, Smartphone, TrendingUp, Search, Filter
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface Payment {
   id: string;
@@ -81,7 +81,7 @@ export default function PaymentMonitor() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
@@ -94,7 +94,7 @@ export default function PaymentMonitor() {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="btn-pill btn-pill-primary gap-2"
+          className="trvic-btn trvic-btn-primary gap-2"
         >
           <Download className="w-4 h-4" />
           匯出報表
@@ -107,19 +107,16 @@ export default function PaymentMonitor() {
           icon={DollarSign}
           label="今日收款"
           value={`NT$ ${stats.todayAmount.toLocaleString()}`}
-          color="emerald"
         />
         <StatCard
           icon={Clock}
           label="待收款"
           value={`NT$ ${stats.pendingAmount.toLocaleString()}`}
-          color="amber"
         />
         <StatCard
           icon={TrendingUp}
           label="本月收款"
           value={`NT$ ${stats.monthAmount.toLocaleString()}`}
-          color="blue"
         />
         <StatCard
           icon={CreditCard}
@@ -137,7 +134,7 @@ export default function PaymentMonitor() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜尋訂單編號或客戶名稱..."
-            className="input-modern w-full pl-12 pr-4"
+            className="trvic-input w-full pl-12 pr-4"
           />
         </div>
         <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
@@ -159,7 +156,7 @@ export default function PaymentMonitor() {
       </motion.div>
 
       {/* Payments Table */}
-      <motion.div variants={itemVariants} className="glass-card overflow-hidden">
+      <motion.div variants={itemVariants} className="trvic-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -194,7 +191,7 @@ export default function PaymentMonitor() {
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-xl bg-neutral-200 flex items-center justify-center">
                           <span className="text-sm font-bold text-slate-600">
                             {payment.customerName.charAt(0)}
                           </span>
@@ -251,31 +248,31 @@ interface StatCardProps {
   icon: React.ElementType;
   label: string;
   value: string;
-  color?: 'emerald' | 'amber' | 'blue';
+  color?: string;
 }
 
 function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
   const colorStyles = {
-    emerald: 'from-emerald-500 to-teal-500',
-    amber: 'from-amber-500 to-orange-500',
-    blue: 'from-blue-500 to-indigo-500',
+    emerald: 'bg-brand-600',
+    amber: 'bg-brand-500',
+    blue: 'bg-brand-600',
   };
 
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="glass-card p-4"
+      className="trvic-card p-4"
     >
       <div className="flex items-center gap-3">
         <div className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center',
-          color ? `bg-gradient-to-br ${colorStyles[color]}` : 'bg-slate-100'
+          color ? colorStyles[color] : 'bg-neutral-100'
         )}>
-          <Icon className={cn('w-5 h-5', color ? 'text-white' : 'text-slate-600')} />
+          <Icon className={cn('w-5 h-5', color ? 'text-white' : 'text-neutral-600')} />
         </div>
         <div>
-          <p className="text-xs text-slate-500">{label}</p>
-          <p className="text-lg font-bold text-slate-900">{value}</p>
+          <p className="text-xs text-neutral-500">{label}</p>
+          <p className="text-lg font-bold text-neutral-900">{value}</p>
         </div>
       </div>
     </motion.div>

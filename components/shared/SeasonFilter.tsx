@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sun, Flower2, Leaf, Snowflake, CalendarDays } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 export type SeasonType = 'all' | 'spring' | 'summer' | 'autumn' | 'winter';
 

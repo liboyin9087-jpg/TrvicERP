@@ -41,10 +41,10 @@ export default defineConfig(({ mode }) => {
           ],
         },
         manifest: {
-          name: 'TravelMaster OS',
-          short_name: 'TravelMaster',
-          description: 'Enterprise travel management system',
-          theme_color: '#06c167',
+          name: 'TrvicERP',
+          short_name: 'TrvicERP',
+          description: '旅遊企業資源規劃系統',
+          theme_color: '#0d9488',
           background_color: '#000000',
           display: 'standalone',
           icons: [
@@ -75,6 +75,35 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       exclude: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Vendor chunks
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'ui-vendor': ['framer-motion', 'lucide-react'],
+            'chart-vendor': ['recharts'],
+            'pdf-vendor': ['@react-pdf/renderer'],
+            // Feature chunks
+            'admin': [
+              './components/admin/ERPInsights',
+              './components/admin/SessionManager',
+              './components/admin/PaymentMonitor',
+            ],
+            'staff': [
+              './components/staff/VisualPlanner',
+              './components/staff/CustomerCDP',
+              './components/staff/QuotationBuilder',
+            ],
+            'client': [
+              './components/client/TravelerApp',
+              './components/client/ItineraryView',
+            ],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
     },
   };
 });

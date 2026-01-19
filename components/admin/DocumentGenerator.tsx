@@ -5,7 +5,7 @@ import {
   Calendar, MapPin, Phone, Printer, X, CheckCircle, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, RoomAssignment, MeetingInfo } from '../../types';
+import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, RoomAssignment, MeetingInfo } from '@/types';
 import { LineService, LineSendTarget } from '@/core/services/lineService';
 
 // ============================================
@@ -78,19 +78,92 @@ export default function DocumentGenerator({
     setShowPreview(true);
   };
 
-  const handleExportPDF = (type: DocumentType) => {
-    // TODO: 實作 PDF 匯出
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(generateHTML(type));
-      printWindow.document.close();
-      printWindow.print();
+  const handleExportPDF = async (type: DocumentType) => {
+    try {
+      // Use jsPDF or react-pdf for better PDF generation
+      // For now, use browser print functionality with improved styling
+      const htmlContent = generateHTML(type);
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load, then trigger print
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
+      }
+    } catch (error) {
+      console.error('PDF export error:', error);
+      alert('PDF 匯出失敗，請重試');
     }
   };
 
   const handleExportExcel = (type: DocumentType) => {
-    // TODO: 實作 Excel 匯出
-    alert(`匯出 ${documents.find(d => d.type === type)?.label} Excel 功能開發中`);
+    try {
+      let csvContent = '';
+      const docLabel = documents.find(d => d.type === type)?.label || '文件';
+
+      switch (type) {
+        case 'roster':
+          // Export roster as CSV
+          csvContent = '序號,姓名,護照號碼,房間號,座位號,特殊需求\n';
+          bookings.forEach((booking, idx) => {
+            csvContent += `${idx + 1},"${booking.customer_name}","${booking.passport_data?.passport_number || ''}","${booking.assigned_room || ''}","${booking.assigned_seat || ''}","${booking.special_needs || '無'}"\n`;
+          });
+          break;
+        case 'room_list':
+          // Export room list as CSV
+          csvContent = '房號,房型,入住旅客\n';
+          roomAssignments.forEach(room => {
+            csvContent += `${room.roomNumber},"${room.roomType}","${room.occupants.map(o => o.name).join('、')}"\n`;
+          });
+          break;
+        case 'seat_chart':
+          // Export seat chart as CSV
+          csvContent = '座位號,是否已分配,乘客姓名,交通工具類型\n';
+          seatAssignments.forEach(seat => {
+            csvContent += `${seat.seat_number},"${seat.is_assigned ? '是' : '否'}","${seat.passenger_name || ''}","${seat.vehicle_type || ''}"\n`;
+          });
+          break;
+        case 'meeting_info':
+          if (meetingInfo) {
+            csvContent = '項目,內容\n';
+            csvContent += `集合地點,"${meetingInfo.location}"\n`;
+            if (meetingInfo.address) csvContent += `地址,"${meetingInfo.address}"\n`;
+            csvContent += `集合時間,"${meetingInfo.meeting_time}"\n`;
+            csvContent += `聯絡人,"${meetingInfo.contact_person}"\n`;
+            csvContent += `聯絡電話,"${meetingInfo.contact_phone}"\n`;
+            if (meetingInfo.notes) csvContent += `備註,"${meetingInfo.notes}"\n`;
+          }
+          break;
+        case 'itinerary':
+          // Export itinerary summary
+          csvContent = '日期,行程內容\n';
+          csvContent += `團號,"${session.group_number || session.series_id}"\n`;
+          csvContent += `出發日期,"${session.start_date}"\n`;
+          csvContent += `結束日期,"${session.end_date}"\n`;
+          csvContent += `人數,"${session.current_pax}/${session.max_pax}"\n`;
+          break;
+        default:
+          csvContent = '資料\n無資料可匯出\n';
+      }
+
+      // Create blob and download
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${docLabel}_${session.group_number || session.series_id}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Excel export error:', error);
+      alert('Excel 匯出失敗，請重試');
+    }
   };
 
   const handleSendLine = async (type: DocumentType) => {

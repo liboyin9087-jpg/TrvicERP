@@ -1,3 +1,10 @@
+// Import core types from session module
+import type {
+  HotelRoomAllocation as CoreHotelRoomAllocation,
+  SeatAssignment as CoreSeatAssignment,
+  TourLeader as CoreTourLeader,
+  MeetingInfo as CoreMeetingInfo,
+} from './src/core/types/session';
 
 export interface Attraction {
   id: string;
@@ -48,37 +55,28 @@ export interface TourSession {
   updated_at?: string;
 }
 
-// 飯店房型分配
-export interface HotelRoomAllocation {
-  id: string;
-  hotel_name: string;
-  room_type: 'single' | 'double' | 'twin' | 'family' | 'suite';
-  room_type_label: string; // 顯示用：單人房、雙人房等
-  total_count: number; // 總房數
-  locked_count: number; // 已鎖定房數
-  available_count: number; // 可用房數
+// 飯店房型分配 - 兼容 camelCase + snake_case
+export interface HotelRoomAllocation extends CoreHotelRoomAllocation {
+  hotel_name?: string;
+  room_type?: 'single' | 'double' | 'twin' | 'family' | 'suite';
+  room_type_label?: string;
+  total_count?: number;
+  locked_count?: number;
+  available_count?: number;
   price_per_night?: number;
-  nights?: number;
 }
 
-// 座位分配
-export interface SeatAssignment {
-  id: string;
-  vehicle_type: 'bus' | 'train' | 'plane' | 'ferry';
-  vehicle_number?: string; // 車號/航班號
-  seat_number: string; // 座位號
-  passenger_id?: string;
+// 座位分配 - 兼容 camelCase + snake_case
+export interface SeatAssignment extends CoreSeatAssignment {
+  vehicle_type?: 'bus' | 'train' | 'plane' | 'ferry';
+  vehicle_number?: string;
+  seat_number?: string;
   passenger_name?: string;
-  booking_id?: string;
-  is_assigned: boolean;
+  is_assigned?: boolean;
 }
 
-// 導遊/領隊
-export interface TourLeader {
-  id: string;
-  name: string;
-  phone: string;
-  email?: string;
+// 導遊/領隊 - 兼容 camelCase + snake_case
+export interface TourLeader extends CoreTourLeader {
   license_number?: string;
   experience_years?: number;
 }
@@ -92,14 +90,11 @@ export interface ItineraryVersion {
   itinerary_data: any; // 行程資料快照
 }
 
-// 集合資訊
-export interface MeetingInfo {
-  location: string; // 集合地點
-  address?: string; // 詳細地址
-  meeting_time: string; // 集合時間
-  contact_person: string; // 聯絡人
-  contact_phone: string; // 聯絡電話
-  notes?: string; // 備註
+// 集合資訊 - 兼容 camelCase + snake_case
+export interface MeetingInfo extends CoreMeetingInfo {
+  meeting_time?: string;
+  contact_person?: string;
+  contact_phone?: string;
 }
 
 // --- Weapon 3: Semi-FIT Options ---
@@ -363,13 +358,18 @@ export interface GroupRoster {
   };
 }
 
-// 房間分配（用於名單表）
+// 房間分配（用於名單表）- 兼容 camelCase + snake_case
 export interface RoomAssignment {
   roomNumber: string;
+  room_number?: string;
   roomType: 'single' | 'double' | 'twin' | 'family' | 'suite';
+  room_type?: 'single' | 'double' | 'twin' | 'family' | 'suite';
   hotelName: string;
+  hotel_name?: string;
   occupants: { id: string; name: string }[];
   checkIn: string;
+  check_in?: string;
   checkOut: string;
+  check_out?: string;
   notes?: string;
 }

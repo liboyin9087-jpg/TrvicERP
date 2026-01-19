@@ -4,8 +4,8 @@ import {
   Users, Bed, Bus, AlertCircle, Download, FileText, TrendingUp,
   UserCheck, UserX, Filter, Search, X
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
-import type { TourSession, Booking, RoomAssignment, SeatAssignment, SpecialNeedsSummary } from '../../types';
+import { cn } from '@/lib/utils';
+import type { TourSession, Booking, RoomAssignment, SeatAssignment, SpecialNeedsSummary } from '@/types';
 
 // ============================================
 // Types

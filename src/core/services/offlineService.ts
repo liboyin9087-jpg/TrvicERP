@@ -6,7 +6,7 @@
 /**
  * IndexedDB 資料庫名稱
  */
-const DB_NAME = 'TravelMasterDB';
+const DB_NAME = 'TrvicERPDB';
 const DB_VERSION = 1;
 
 /**
@@ -38,6 +38,30 @@ export interface SyncQueueItem {
   status: SyncStatus;
   retryCount: number;
   error?: string;
+  localVersion?: number; // 本地版本號
+  serverVersion?: number; // 伺服器版本號
+}
+
+/**
+ * 衝突解決策略
+ */
+export type ConflictResolutionStrategy = 
+  | 'local-wins' // 本地優先
+  | 'server-wins' // 伺服器優先
+  | 'merge' // 合併
+  | 'manual'; // 手動解決
+
+/**
+ * 衝突資訊
+ */
+export interface ConflictInfo {
+  id: string;
+  table: string;
+  localData: any;
+  serverData: any;
+  localVersion: number;
+  serverVersion: number;
+  timestamp: string;
 }
 
 /**
@@ -263,6 +287,68 @@ export class OfflineService {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  }
+
+  /**
+   * 解決衝突
+   */
+  async resolveConflict(
+    conflict: ConflictInfo,
+    strategy: ConflictResolutionStrategy,
+    mergeFunction?: (local: any, server: any) => any
+  ): Promise<any> {
+    switch (strategy) {
+      case 'local-wins':
+        return conflict.localData;
+      
+      case 'server-wins':
+        return conflict.serverData;
+      
+      case 'merge':
+        if (mergeFunction) {
+          return mergeFunction(conflict.localData, conflict.serverData);
+        }
+        // 預設合併策略：合併兩個物件的所有欄位，本地優先
+        return { ...conflict.serverData, ...conflict.localData };
+      
+      case 'manual':
+        // 手動解決需要返回用戶選擇的數據
+        // 這裡只是標記，實際解決需要在 UI 層實現
+        throw new Error('Manual conflict resolution required');
+      
+      default:
+        return conflict.serverData;
+    }
+  }
+
+  /**
+   * 檢測衝突（比較版本號）
+   */
+  hasConflict(localVersion: number, serverVersion: number): boolean {
+    return localVersion !== serverVersion;
+  }
+
+  /**
+   * 儲存衝突資訊
+   */
+  async saveConflict(conflict: ConflictInfo): Promise<void> {
+    const conflicts = await this.getAll<ConflictInfo>('conflicts');
+    conflicts.push(conflict);
+    await this.save('conflicts', conflict);
+  }
+
+  /**
+   * 取得所有待解決的衝突
+   */
+  async getConflicts(): Promise<ConflictInfo[]> {
+    return this.getAll<ConflictInfo>('conflicts');
+  }
+
+  /**
+   * 清除已解決的衝突
+   */
+  async clearConflict(id: string): Promise<void> {
+    await this.delete('conflicts', id);
   }
 }
 

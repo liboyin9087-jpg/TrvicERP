@@ -19,12 +19,14 @@
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["./components/*"],
       "@/core/*": ["./src/core/*"],
       "@/modules/*": ["./src/modules/*"],
       "@/lib/*": ["./src/lib/*"],
+      "@/types": ["./src/core/types/index.ts"],
       "@/types/*": ["./src/core/types/*"],
       "@/store/*": ["./src/store/*"],
       "@/data/*": ["./src/data/*"]

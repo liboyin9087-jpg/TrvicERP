@@ -132,7 +132,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Left Side - Background Image */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-900 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-primary-900 relative overflow-hidden">
         {/* Background Image with Grayscale */}
         <div
           className="absolute inset-0 bg-cover bg-center grayscale"
@@ -142,7 +142,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         />
 
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/90 via-gray-900/70 to-gray-900/90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-950/90 via-primary-900/70 to-primary-950/90" />
 
         {/* Content */}
         <div className="relative z-10 flex items-center justify-center w-full p-12">
@@ -187,7 +187,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* Logo */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">歡迎回來</h2>
-            <p className="text-gray-600">登入以繼續使用 TravelMaster</p>
+            <p className="text-gray-600">登入以繼續使用 TrvicERP</p>
           </div>
 
           {/* Demo Role Quick Select */}
@@ -203,8 +203,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   onClick={() => handleDemoLogin(role)}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all ${
                     selectedDemoRole === role
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-200 hover:border-gray-400 text-gray-600 hover:text-gray-900'
+                      ? 'border-primary-900 bg-primary-900 text-white'
+                      : 'border-neutral-200 hover:border-primary-500 text-neutral-600 hover:text-primary-900'
                   }`}
                 >
                   {account.icon}
@@ -233,11 +233,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder=" "
-                className="peer w-full px-0 py-3 border-0 border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:border-gray-900 focus:outline-none focus:ring-0 transition-colors"
+                className="peer w-full px-0 py-3 border-0 border-b-2 border-neutral-300 text-neutral-900 placeholder-transparent focus:border-primary-900 focus:outline-none focus:ring-0 transition-colors"
               />
               <label
                 htmlFor="email"
-                className="absolute left-0 -top-4 text-gray-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-4 peer-focus:text-gray-900 peer-focus:text-sm"
+                className="absolute left-0 -top-4 text-neutral-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 peer-focus:-top-4 peer-focus:text-primary-900 peer-focus:text-sm"
               >
                 電子郵件
               </label>
@@ -251,11 +251,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder=" "
-                className="peer w-full px-0 py-3 pr-10 border-0 border-b-2 border-gray-300 text-gray-900 placeholder-transparent focus:border-gray-900 focus:outline-none focus:ring-0 transition-colors"
+                className="peer w-full px-0 py-3 pr-10 border-0 border-b-2 border-neutral-300 text-neutral-900 placeholder-transparent focus:border-primary-900 focus:outline-none focus:ring-0 transition-colors"
               />
               <label
                 htmlFor="password"
-                className="absolute left-0 -top-4 text-gray-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-4 peer-focus:text-gray-900 peer-focus:text-sm"
+                className="absolute left-0 -top-4 text-neutral-600 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 peer-focus:-top-4 peer-focus:text-primary-900 peer-focus:text-sm"
               >
                 密碼
               </label>
@@ -271,10 +271,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center">
-                <input type="checkbox" className="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900" />
+                <input type="checkbox" className="w-4 h-4 text-primary-900 border-neutral-300 rounded focus:ring-primary-900" />
                 <span className="ml-2 text-sm text-gray-600">記住我</span>
               </label>
-              <a href="#" className="text-sm text-gray-900 hover:underline">
+              <a href="#" className="text-sm text-primary-900 hover:underline">
                 忘記密碼？
               </a>
             </div>
@@ -285,7 +285,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-primary-900 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -315,9 +315,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </form>
 
           {/* Footer */}
-          <p className="text-center text-sm text-gray-600 mt-8">
+          <p className="text-center text-sm text-neutral-600 mt-8">
             還沒有帳號？{' '}
-            <a href="#" className="text-gray-900 font-semibold hover:underline">
+            <a href="#" className="text-primary-900 font-semibold hover:underline">
               註冊
             </a>
           </p>

@@ -33,7 +33,7 @@ export default function TravelFootprint() {
             <div key={footprint.id} className="bg-white rounded-xl overflow-hidden border border-gray-100">
               <div className="relative aspect-square">
                 <img src={footprint.image} alt={footprint.location} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute inset-0 bg-black/60" />
                 <div className="absolute bottom-3 left-3 right-3 text-white">
                   <p className="font-semibold text-sm">{footprint.location}</p>
                   <p className="text-xs opacity-80 flex items-center gap-1 mt-1"><Calendar className="w-3 h-3" />{footprint.date}</p>

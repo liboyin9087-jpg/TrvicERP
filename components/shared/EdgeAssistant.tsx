@@ -13,7 +13,7 @@ export default function EdgeAssistant() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: '您好！我是 TravelMaster AI 助理，有什麼可以幫助您的嗎？', timestamp: new Date() }
+    { id: '1', role: 'assistant', content: '您好！我是 TrvicERP AI 助理，有什麼可以幫助您的嗎？', timestamp: new Date() }
   ]);
 
   const handleSend = () => {

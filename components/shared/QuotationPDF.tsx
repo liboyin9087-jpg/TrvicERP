@@ -218,7 +218,7 @@ export default function QuotationPDF({
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.logo}>TravelMaster</Text>
+          <Text style={styles.logo}>TrvicERP</Text>
           <Text style={styles.logoSub}>專業旅遊規劃報價單</Text>
         </View>
 
@@ -272,7 +272,7 @@ export default function QuotationPDF({
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            此報價單由 TravelMaster Enterprise 系統產生 | {currentDate}
+            此報價單由 TrvicERP 系統產生 | {currentDate}
           </Text>
         </View>
       </Page>

@@ -4,8 +4,8 @@ import {
   Building2, Bus, User, Plus, Minus, Lock, Unlock, Edit, Trash2,
   Save, X, Users, Bed, MapPin, Phone, Mail, Award, CheckCircle
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
-import type { HotelRoomAllocation, SeatAssignment, TourLeader } from '../../types';
+import { cn } from '@/lib/utils';
+import type { HotelRoomAllocation, SeatAssignment, TourLeader } from '@/types';
 
 // ============================================
 // Types
@@ -64,13 +64,20 @@ function HotelAllocationTab({ rooms, onUpdate }: {
   const handleAddRoom = (data: Partial<HotelRoomAllocation>) => {
     const newRoom: HotelRoomAllocation = {
       id: `room_${Date.now()}`,
-      hotel_name: data.hotel_name || '',
-      room_type: data.room_type || 'double',
-      room_type_label: data.room_type_label || '雙人房',
-      total_count: data.total_count || 0,
+      hotelName: data.hotel_name || data.hotelName || '',
+      hotel_name: data.hotel_name || data.hotelName || '',
+      roomType: (data.room_type || data.roomType || 'double') as 'single' | 'double' | 'twin' | 'family' | 'suite',
+      room_type: data.room_type || data.roomType || 'double',
+      roomTypeLabel: data.room_type_label || data.roomTypeLabel || '雙人房',
+      room_type_label: data.room_type_label || data.roomTypeLabel || '雙人房',
+      totalCount: data.total_count || data.totalCount || 0,
+      total_count: data.total_count || data.totalCount || 0,
+      lockedCount: 0,
       locked_count: 0,
-      available_count: data.total_count || 0,
-      price_per_night: data.price_per_night,
+      availableCount: data.total_count || data.totalCount || 0,
+      available_count: data.total_count || data.totalCount || 0,
+      pricePerNight: data.price_per_night || data.pricePerNight,
+      price_per_night: data.price_per_night || data.pricePerNight,
       nights: data.nights,
     };
     onUpdate([...rooms, newRoom]);
@@ -88,7 +95,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm"
+          className="flex items-center gap-2 px-4 py-2.5 bg-neutral-900 text-white rounded-xl font-medium text-sm"
         >
           <Plus className="w-4 h-4" />
           新增飯店
@@ -105,7 +112,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+                  <Building2 className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{room.hotel_name}</h4>
@@ -127,7 +134,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">已鎖定</span>
-                <span className="font-semibold text-blue-600">{room.locked_count} 間</span>
+                <span className="font-semibold text-brand-600">{room.locked_count} 間</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">可用</span>
@@ -143,7 +150,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   {room.nights && (
                     <div className="flex items-center justify-between text-sm mt-1">
                       <span className="text-gray-500">總價（{room.nights}晚）</span>
-                      <span className="font-semibold text-blue-600">
+                      <span className="font-semibold text-brand-600">
                         NT${(room.price_per_night * room.nights).toLocaleString()}
                       </span>
                     </div>
@@ -158,7 +165,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   className={cn(
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1',
                     room.available_count > 0
-                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      ? 'bg-blue-100 text-brand-700 hover:bg-brand-200'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   )}
                 >
@@ -171,7 +178,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   className={cn(
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1',
                     room.locked_count > 0
-                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                      ? 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   )}
                 >
@@ -230,7 +237,7 @@ function AddHotelModal({ onClose, onSubmit }: {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card w-full max-w-md"
+        className="trvic-card w-full max-w-md"
       >
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">新增飯店</h2>
@@ -245,7 +252,7 @@ function AddHotelModal({ onClose, onSubmit }: {
               type="text"
               value={formData.hotel_name || ''}
               onChange={(e) => setFormData({ ...formData, hotel_name: e.target.value })}
-              className="input-modern w-full"
+              className="trvic-input w-full"
               required
             />
           </div>
@@ -261,7 +268,7 @@ function AddHotelModal({ onClose, onSubmit }: {
                   room_type_label: selected?.label || '',
                 });
               }}
-              className="input-modern w-full"
+              className="trvic-input w-full"
             >
               {roomTypes.map(t => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -279,7 +286,7 @@ function AddHotelModal({ onClose, onSubmit }: {
                 total_count: parseInt(e.target.value),
                 available_count: parseInt(e.target.value),
               })}
-              className="input-modern w-full"
+              className="trvic-input w-full"
               required
             />
           </div>
@@ -291,7 +298,7 @@ function AddHotelModal({ onClose, onSubmit }: {
                 min="0"
                 value={formData.price_per_night || ''}
                 onChange={(e) => setFormData({ ...formData, price_per_night: parseInt(e.target.value) || undefined })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
               />
             </div>
             <div>
@@ -301,15 +308,15 @@ function AddHotelModal({ onClose, onSubmit }: {
                 min="1"
                 value={formData.nights || ''}
                 onChange={(e) => setFormData({ ...formData, nights: parseInt(e.target.value) || undefined })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
               />
             </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="btn-pill btn-pill-secondary flex-1">
+            <button type="button" onClick={onClose} className="trvic-btn trvic-btn-secondary flex-1">
               取消
             </button>
-            <button type="submit" className="btn-pill btn-pill-primary flex-1 gap-2">
+            <button type="submit" className="trvic-btn trvic-btn-primary flex-1 gap-2">
               <Save className="w-4 h-4" />
               新增
             </button>
@@ -335,11 +342,16 @@ function TransportAllocationTab({ seats, onUpdate }: {
   const generateSeats = () => {
     const newSeats: SeatAssignment[] = [];
     for (let i = 1; i <= totalSeats; i++) {
+      const seatNum = String(i).padStart(2, '0');
       newSeats.push({
         id: `seat_${i}`,
+        vehicleType: vehicleType,
         vehicle_type: vehicleType,
+        vehicleNumber: vehicleNumber,
         vehicle_number: vehicleNumber,
-        seat_number: String(i).padStart(2, '0'),
+        seatNumber: seatNum,
+        seat_number: seatNum,
+        isAssigned: false,
         is_assigned: false,
       });
     }
@@ -367,7 +379,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
             <select
               value={vehicleType}
               onChange={(e) => setVehicleType(e.target.value as SeatAssignment['vehicle_type'])}
-              className="input-modern w-full"
+              className="trvic-input w-full"
             >
               <option value="bus">遊覽車</option>
               <option value="train">火車</option>
@@ -382,7 +394,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
               value={vehicleNumber}
               onChange={(e) => setVehicleNumber(e.target.value)}
               placeholder="例：BUS-001"
-              className="input-modern w-full"
+              className="trvic-input w-full"
             />
           </div>
           <div>
@@ -392,7 +404,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
               min="1"
               value={totalSeats}
               onChange={(e) => setTotalSeats(parseInt(e.target.value))}
-              className="input-modern w-full"
+              className="trvic-input w-full"
             />
           </div>
         </div>
@@ -400,7 +412,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={generateSeats}
-          className="mt-4 btn-pill btn-pill-primary gap-2"
+          className="mt-4 trvic-btn trvic-btn-primary gap-2"
         >
           <Plus className="w-4 h-4" />
           產生座位表
@@ -433,8 +445,8 @@ function TransportAllocationTab({ seats, onUpdate }: {
                   className={cn(
                     'aspect-square rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all',
                     seat.is_assigned
-                      ? 'bg-blue-100 border-blue-300 text-blue-700'
-                      : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                      ? 'bg-brand-100 border-brand-300 text-brand-700'
+                      : 'bg-neutral-50 border-neutral-200 text-neutral-700 hover:bg-neutral-100'
                   )}
                   onClick={() => {
                     const updated = seats.map(s =>
@@ -487,7 +499,7 @@ function TourLeaderTab({ leaderId, onUpdate }: {
             className={cn(
               'p-6 rounded-2xl border-2 text-left transition-all',
               leaderId === leader.id
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-brand-500 bg-brand-50'
                 : 'border-gray-200 bg-white hover:border-gray-300'
             )}
           >
@@ -497,7 +509,7 @@ function TourLeaderTab({ leaderId, onUpdate }: {
                   'w-12 h-12 rounded-xl flex items-center justify-center',
                   leaderId === leader.id ? 'bg-blue-100' : 'bg-gray-100'
                 )}>
-                  <User className={cn('w-6 h-6', leaderId === leader.id ? 'text-blue-600' : 'text-gray-600')} />
+                  <User className={cn('w-6 h-6', leaderId === leader.id ? 'text-brand-600' : 'text-gray-600')} />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{leader.name}</h4>
@@ -505,7 +517,7 @@ function TourLeaderTab({ leaderId, onUpdate }: {
                 </div>
               </div>
               {leaderId === leader.id && (
-                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
               )}
@@ -531,12 +543,12 @@ function TourLeaderTab({ leaderId, onUpdate }: {
       </div>
 
       {selectedLeader && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+        <div className="bg-brand-50 border border-blue-200 rounded-2xl p-6">
           <div className="flex items-center gap-3">
-            <CheckCircle className="w-6 h-6 text-blue-600" />
+            <CheckCircle className="w-6 h-6 text-brand-600" />
             <div>
               <p className="font-semibold text-blue-900">已指派：{selectedLeader.name}</p>
-              <p className="text-sm text-blue-700">聯絡電話：{selectedLeader.phone}</p>
+              <p className="text-sm text-brand-700">聯絡電話：{selectedLeader.phone}</p>
             </div>
           </div>
         </div>
@@ -586,7 +598,7 @@ export default function ResourceAllocation({
             className={cn(
               'flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors',
               activeTab === tab.key
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-brand-500 text-brand-600'
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             )}
           >

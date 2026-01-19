@@ -6,8 +6,8 @@ import {
   CheckCircle, FileText, Download, Copy, Settings, UserCheck, Bed,
   Bus, User, Phone, Mail, Save
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
-import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, TourLeader, MeetingInfo } from '../../types';
+import { cn } from '@/lib/utils';
+import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, TourLeader, MeetingInfo } from '@/types';
 
 // ============================================
 // Types
@@ -128,13 +128,13 @@ function StatCard({ icon, label, value, trend, trendUp }: {
       className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
     >
       <div className="flex items-start justify-between">
-        <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600">
+        <div className="w-12 h-12 bg-neutral-200 rounded-xl flex items-center justify-center text-slate-600">
           {icon}
         </div>
         {trend && (
           <span className={cn(
             'text-xs font-medium px-2 py-1 rounded-full',
-            trendUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            trendUp ? 'bg-brand-100 text-brand-700' : 'bg-neutral-100 text-neutral-700'
           )}>
             {trend}
           </span>
@@ -174,7 +174,7 @@ function DashboardTab({ groups, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('create')}
-          className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl text-white shadow-lg"
+          className="flex items-center gap-4 p-6 bg-brand-600 rounded-2xl text-white shadow-lg"
         >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <Plus className="w-6 h-6" />
@@ -189,7 +189,7 @@ function DashboardTab({ groups, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('groups')}
-          className="flex items-center gap-4 p-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl text-white shadow-lg"
+          className="flex items-center gap-4 p-6 bg-brand-600 rounded-2xl text-white shadow-lg"
         >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <Calendar className="w-6 h-6" />
@@ -205,7 +205,7 @@ function DashboardTab({ groups, onNavigate }: {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onNavigate('groups')}
-            className="flex items-center gap-4 p-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl text-white shadow-lg"
+            className="flex items-center gap-4 p-6 bg-brand-600 rounded-2xl text-white shadow-lg"
           >
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
               <UserCheck className="w-6 h-6" />
@@ -224,7 +224,7 @@ function DashboardTab({ groups, onNavigate }: {
           <h3 className="font-bold text-gray-900">開放團體列表</h3>
           <button
             onClick={() => onNavigate('groups')}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1"
           >
             查看全部 <ChevronRight className="w-4 h-4" />
           </button>
@@ -244,13 +244,13 @@ function DashboardTab({ groups, onNavigate }: {
               <AlertCircle className="w-6 h-6 text-amber-600" />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-amber-900">待審核福委團</h4>
-              <p className="text-sm text-amber-700 mt-1">
+              <h4 className="font-bold text-brand-900">待審核福委團</h4>
+              <p className="text-sm text-brand-700 mt-1">
                 有 {totalPendingWelfare} 個福委團的報名申請等待審核
               </p>
               <button
                 onClick={() => onNavigate('groups')}
-                className="mt-3 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
+                className="mt-3 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
               >
                 立即處理
               </button>
@@ -448,8 +448,8 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                   <td className="px-6 py-4">
                     <span className={cn(
                       'px-2 py-1 rounded-full text-xs font-medium',
-                      group.status === 'soliciting' && 'bg-green-100 text-green-700',
-                      group.status === 'guaranteed' && 'bg-blue-100 text-blue-700',
+                      group.status === 'soliciting' && 'bg-brand-100 text-brand-700',
+                      group.status === 'guaranteed' && 'bg-brand-100 text-brand-700',
                       group.status === 'closed' && 'bg-gray-100 text-gray-600',
                     )}>
                       {group.status === 'soliciting' && '招募中'}
@@ -467,13 +467,13 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                       </button>
                       <button
                         onClick={() => onEdit(group.id)}
-                        className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                        className="p-1.5 bg-brand-100 text-brand-600 rounded-lg hover:bg-blue-200 transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onDelete(group.id)}
-                        className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                        className="p-1.5 bg-neutral-100 text-neutral-600 rounded-lg hover:bg-red-200 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -485,6 +485,327 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// Edit Group Modal
+// ============================================
+
+function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Partial<TourSession>) => void;
+  group: GroupListItem;
+}) {
+  const [formData, setFormData] = useState<Partial<TourSession>>({
+    series_id: group.series_id,
+    group_number: group.group_number,
+    group_type: group.group_type,
+    status: group.status,
+    start_date: group.start_date,
+    end_date: group.end_date,
+    min_pax: group.min_pax,
+    max_pax: group.max_pax,
+    seat_release_date: group.seat_release_date,
+    price_twd: group.price_twd,
+    agent_commission: group.agent_commission,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="trvic-card w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center">
+              <Edit className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">編輯團體</h2>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">行程系列</label>
+              <input
+                type="text"
+                placeholder="例：東京經典五日遊"
+                value={formData.series_id || ''}
+                onChange={(e) => setFormData({ ...formData, series_id: e.target.value })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">團號</label>
+              <input
+                type="text"
+                placeholder="例：GRP-2025-001"
+                value={formData.group_number || ''}
+                onChange={(e) => setFormData({ ...formData, group_number: e.target.value })}
+                className="trvic-input w-full"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">團型</label>
+              <select
+                value={formData.group_type || 'regular'}
+                onChange={(e) => setFormData({ ...formData, group_type: e.target.value as 'welfare' | 'regular' })}
+                className="trvic-input w-full"
+              >
+                <option value="regular">一般團</option>
+                <option value="welfare">福委團</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">狀態</label>
+              <select
+                value={formData.status || 'soliciting'}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as TourSession['status'] })}
+                className="trvic-input w-full"
+              >
+                <option value="soliciting">招募中</option>
+                <option value="guaranteed">已成團</option>
+                <option value="closed">已截止</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">出發日期</label>
+              <input
+                type="date"
+                value={formData.start_date || ''}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">結束日期</label>
+              <input
+                type="date"
+                value={formData.end_date || ''}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">最低成團人數</label>
+              <input
+                type="number"
+                min="1"
+                value={formData.min_pax || 20}
+                onChange={(e) => setFormData({ ...formData, min_pax: parseInt(e.target.value) })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">最高人數</label>
+              <input
+                type="number"
+                min="1"
+                value={formData.max_pax || 40}
+                onChange={(e) => setFormData({ ...formData, max_pax: parseInt(e.target.value) })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">座位釋放日期</label>
+              <input
+                type="date"
+                value={formData.seat_release_date || ''}
+                onChange={(e) => setFormData({ ...formData, seat_release_date: e.target.value })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">價格（TWD）</label>
+              <input
+                type="number"
+                min="0"
+                value={formData.price_twd || 0}
+                onChange={(e) => setFormData({ ...formData, price_twd: parseInt(e.target.value) })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">業務佣金率</label>
+              <input
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value={formData.agent_commission || 0.15}
+                onChange={(e) => setFormData({ ...formData, agent_commission: parseFloat(e.target.value) })}
+                className="trvic-input w-full"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onClose}
+              className="btn-pill btn-pill-secondary flex-1"
+            >
+              取消
+            </motion.button>
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="btn-pill btn-pill-primary flex-1 gap-2"
+            >
+              <Save className="w-4 h-4" />
+              儲存變更
+            </motion.button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+}
+
+// ============================================
+// View Group Modal
+// ============================================
+
+function ViewGroupModal({ isOpen, onClose, group }: {
+  isOpen: boolean;
+  onClose: () => void;
+  group: GroupListItem;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="trvic-card w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+      >
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center">
+              <Eye className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">團體詳情</h2>
+              <p className="text-sm text-gray-500">{group.group_number}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">行程系列</p>
+              <p className="font-semibold text-gray-900">{group.series_name || group.series_id || '未命名'}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">團型</p>
+              <span className={cn(
+                'px-3 py-1 rounded-full text-sm font-medium',
+                group.group_type === 'welfare' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+              )}>
+                {group.group_type === 'welfare' ? '福委團' : '一般團'}
+              </span>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">出發日期</p>
+              <p className="font-semibold text-gray-900">{group.start_date}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">結束日期</p>
+              <p className="font-semibold text-gray-900">{group.end_date}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">報名進度</p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-brand-600 rounded-full transition-all"
+                    style={{ width: `${(group.current_pax / group.max_pax) * 100}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-900">
+                  {group.current_pax}/{group.max_pax}
+                </span>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">狀態</p>
+              <span className={cn(
+                'px-3 py-1 rounded-full text-sm font-medium',
+                group.status === 'soliciting' && 'bg-brand-100 text-brand-700',
+                group.status === 'guaranteed' && 'bg-green-100 text-green-700',
+                group.status === 'closed' && 'bg-gray-100 text-gray-600',
+              )}>
+                {group.status === 'soliciting' && '招募中'}
+                {group.status === 'guaranteed' && '已成團'}
+                {group.status === 'closed' && '已截止'}
+              </span>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">價格</p>
+              <p className="font-semibold text-gray-900">NT$ {group.price_twd?.toLocaleString() || 0}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">業務佣金率</p>
+              <p className="font-semibold text-gray-900">{(group.agent_commission * 100).toFixed(1)}%</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">座位釋放日期</p>
+              <p className="font-semibold text-gray-900">{group.seat_release_date || '未設定'}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-500 mb-1">建立日期</p>
+              <p className="font-semibold text-gray-900">{group.created_at}</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -521,11 +842,11 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="glass-card w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="trvic-card w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-bold text-gray-900">建立新團體</h2>
@@ -544,7 +865,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 placeholder="例：東京經典五日遊"
                 value={formData.series_id || ''}
                 onChange={(e) => setFormData({ ...formData, series_id: e.target.value })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -555,7 +876,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 placeholder="例：GRP-2025-001"
                 value={formData.group_number || ''}
                 onChange={(e) => setFormData({ ...formData, group_number: e.target.value })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
               />
             </div>
           </div>
@@ -566,7 +887,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <select
                 value={formData.group_type || 'regular'}
                 onChange={(e) => setFormData({ ...formData, group_type: e.target.value as 'welfare' | 'regular' })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
               >
                 <option value="regular">一般團</option>
                 <option value="welfare">福委團</option>
@@ -577,7 +898,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <select
                 value={formData.status || 'soliciting'}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as TourSession['status'] })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
               >
                 <option value="soliciting">招募中</option>
                 <option value="guaranteed">已成團</option>
@@ -593,7 +914,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 type="date"
                 value={formData.start_date || ''}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -603,7 +924,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 type="date"
                 value={formData.end_date || ''}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -617,7 +938,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 min="1"
                 value={formData.min_pax || 20}
                 onChange={(e) => setFormData({ ...formData, min_pax: parseInt(e.target.value) })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -628,7 +949,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 min="1"
                 value={formData.max_pax || 40}
                 onChange={(e) => setFormData({ ...formData, max_pax: parseInt(e.target.value) })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -638,7 +959,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 type="date"
                 value={formData.seat_release_date || ''}
                 onChange={(e) => setFormData({ ...formData, seat_release_date: e.target.value })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -652,7 +973,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 min="0"
                 value={formData.price_twd || 0}
                 onChange={(e) => setFormData({ ...formData, price_twd: parseInt(e.target.value) })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -665,7 +986,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 step="0.01"
                 value={formData.agent_commission || 0.15}
                 onChange={(e) => setFormData({ ...formData, agent_commission: parseFloat(e.target.value) })}
-                className="input-modern w-full"
+                className="trvic-input w-full"
                 required
               />
             </div>
@@ -705,6 +1026,9 @@ export default function SessionManager() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [groups, setGroups] = useState<GroupListItem[]>(MOCK_GROUPS);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<GroupListItem | null>(null);
 
   const handleCreateGroup = (data: Partial<TourSession>) => {
     const newGroup: GroupListItem = {
@@ -728,8 +1052,22 @@ export default function SessionManager() {
   };
 
   const handleEdit = (id: string) => {
-    // TODO: 實作編輯功能
-    console.log('Edit group:', id);
+    const group = groups.find(g => g.id === id);
+    if (group) {
+      setSelectedGroup(group);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleUpdateGroup = (data: Partial<TourSession>) => {
+    if (!selectedGroup) return;
+    setGroups(groups.map(g => 
+      g.id === selectedGroup.id 
+        ? { ...g, ...data } 
+        : g
+    ));
+    setShowEditModal(false);
+    setSelectedGroup(null);
   };
 
   const handleDelete = (id: string) => {
@@ -739,8 +1077,11 @@ export default function SessionManager() {
   };
 
   const handleView = (id: string) => {
-    // TODO: 實作查看詳情功能
-    console.log('View group:', id);
+    const group = groups.find(g => g.id === id);
+    if (group) {
+      setSelectedGroup(group);
+      setShowViewModal(true);
+    }
   };
 
   const tabs: { key: TabKey; label: string; icon: React.ReactNode; badge?: number }[] = [
@@ -750,7 +1091,7 @@ export default function SessionManager() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-neutral-50">
       <div className="p-8 max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <motion.div
@@ -759,7 +1100,7 @@ export default function SessionManager() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <div className="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
               <Calendar className="w-7 h-7 text-white" />
             </div>
             <div>
@@ -822,6 +1163,35 @@ export default function SessionManager() {
             isOpen={showCreateModal}
             onClose={() => setShowCreateModal(false)}
             onSubmit={handleCreateGroup}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Edit Group Modal */}
+      <AnimatePresence>
+        {showEditModal && selectedGroup && (
+          <EditGroupModal
+            isOpen={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedGroup(null);
+            }}
+            onSubmit={handleUpdateGroup}
+            group={selectedGroup}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* View Group Modal */}
+      <AnimatePresence>
+        {showViewModal && selectedGroup && (
+          <ViewGroupModal
+            isOpen={showViewModal}
+            onClose={() => {
+              setShowViewModal(false);
+              setSelectedGroup(null);
+            }}
+            group={selectedGroup}
           />
         )}
       </AnimatePresence>

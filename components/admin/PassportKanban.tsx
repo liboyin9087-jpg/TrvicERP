@@ -11,7 +11,7 @@ import {
   Calendar, MoreHorizontal, RefreshCw, Plus, Phone, Mail,
   Inbox, Eye, CheckCheck
 } from 'lucide-react';
-import { cn } from '../../src/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface PassportItem {
   id: string;
@@ -155,7 +155,7 @@ export default function PassportKanban() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-brand-br from-indigo-500 to-purple-600 flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
@@ -204,12 +204,12 @@ export default function PassportKanban() {
             const filteredItems = getFilteredItems(columns[column.id]);
 
             return (
-              <div key={column.id} className="glass-card p-4 min-h-[500px] flex flex-col">
+              <div key={column.id} className="trvic-card p-4 min-h-[500px] flex flex-col">
                 {/* Column Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
                     <div className={cn(
-                      'w-9 h-9 rounded-lg bg-gradient-to-br flex items-center justify-center',
+                      'w-9 h-9 rounded-lg bg-brand-br flex items-center justify-center',
                       column.gradient
                     )}>
                       <ColumnIcon className="w-4.5 h-4.5 text-white" />
@@ -249,7 +249,7 @@ export default function PassportKanban() {
                             >
                               <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white font-bold">
+                                  <div className="w-10 h-10 rounded-xl bg-brand-br from-slate-700 to-slate-900 flex items-center justify-center text-white font-bold">
                                     {item.name.charAt(0)}
                                   </div>
                                   <div>
@@ -350,14 +350,14 @@ function StatCard({ icon: Icon, label, value, color, warning }: StatCardProps) {
     <motion.div
       whileHover={{ y: -2 }}
       className={cn(
-        'glass-card p-4',
+        'trvic-card p-4',
         warning && value > 0 && 'ring-2 ring-red-200'
       )}
     >
       <div className="flex items-center gap-3">
         <div className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center',
-          color ? `bg-gradient-to-br ${colorStyles[color]}` : 'bg-slate-100'
+          color ? `bg-brand-br ${colorStyles[color]}` : 'bg-slate-100'
         )}>
           <Icon className={cn('w-5 h-5', color ? 'text-white' : 'text-slate-600')} />
         </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingBag, Plus, Check, Star, CheckCircle } from 'lucide-react';
 import Modal from '../shared/Modal';
 import { ButtonLoading } from '../shared/Loading';
-import { useToast } from '../../src/store/useToastStore';
+import { useToast } from '@/store/useToastStore';
 
 interface Addon { id: string; name: string; description: string; price: number; image: string; popular: boolean; selected: boolean; }
 

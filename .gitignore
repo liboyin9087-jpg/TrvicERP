@@ -23,3 +23,15 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# 臨時檔案與分析檔案
+_trash_terminal_artifacts/
+_qwen_packets/
+*.textClipping
+*.py
+repomix-output.xml
+project_analysis.txt
+tsc
+
+# 獨立專案目錄
+trvicerp-ai-trainer*/

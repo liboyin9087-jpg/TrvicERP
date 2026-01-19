@@ -26,6 +26,7 @@ export * from './tour';
 
 // 從根目錄 types.ts 匯出的類型（逐步遷移中）
 // 以下類型已遷移到對應模組，保留 re-export 以維持相容性
+// 注意：SeatAssignment, HotelRoomAllocation, TourLeader, MeetingInfo 在 types.ts 中有兼容版本
 export type {
   ItineraryItem,
   ItineraryState,
@@ -59,4 +60,10 @@ export type {
   Incident,
   SpecialNeedsSummary,
   GroupRoster,
+  RoomAssignment,
+  // 兼容类型（覆盖 session.ts 中的定义）
+  SeatAssignment,
+  HotelRoomAllocation,
+  TourLeader,
+  MeetingInfo,
 } from '../../../types';
