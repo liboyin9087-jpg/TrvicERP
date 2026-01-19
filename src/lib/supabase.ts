@@ -1,6 +1,8 @@
 /**
  * Supabase Client Configuration
  * Supabase 客戶端配置
+ * 
+ * 統一使用 Supabase 作為後端服務，支援自動更新和實時同步
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -27,7 +29,7 @@ function validateSupabaseConfig(): boolean {
 
 /**
  * 建立 Supabase 客戶端
- * 如果配置不完整，返回 null（應用程式將回退到 REST API）
+ * 配置自動更新、實時同步和會話管理
  */
 export function createSupabaseClient(): SupabaseClient | null {
   if (!validateSupabaseConfig()) {
@@ -40,12 +42,37 @@ export function createSupabaseClient(): SupabaseClient | null {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'pkce', // 使用 PKCE 流程提高安全性
       },
       realtime: {
         params: {
           eventsPerSecond: 10,
         },
+        // 自動重連配置
+        heartbeatIntervalMs: 30000,
+        reconnectAfterMs: (tries: number) => Math.min(tries * 1000, 30000),
       },
+      global: {
+        headers: {
+          'x-client-info': 'trvic-erp-web@2.0.0',
+        },
+      },
+      db: {
+        schema: 'public',
+      },
+    });
+
+    // 監聽連接狀態變化
+    client.realtime.onOpen(() => {
+      console.log('[Supabase] Realtime connection opened');
+    });
+
+    client.realtime.onClose(() => {
+      console.log('[Supabase] Realtime connection closed');
+    });
+
+    client.realtime.onError((error) => {
+      console.error('[Supabase] Realtime error:', error);
     });
 
     return client;
@@ -70,6 +97,16 @@ export function getSupabaseClient(): SupabaseClient | null {
     supabaseClient = createSupabaseClient();
   }
   return supabaseClient;
+}
+
+/**
+ * 重置 Supabase 客戶端（用於重新連接）
+ */
+export function resetSupabaseClient(): void {
+  if (supabaseClient) {
+    supabaseClient.realtime.disconnect();
+    supabaseClient = null;
+  }
 }
 
 /**

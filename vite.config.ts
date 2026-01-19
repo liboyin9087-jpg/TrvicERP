@@ -21,10 +21,23 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
+        // 自動更新模式：當有新版本時自動更新
         registerType: 'autoUpdate',
+        // 立即更新策略
+        strategies: 'injectManifest',
+        // 開發模式也啟用
+        devOptions: {
+          enabled: true,
+          type: 'module',
+        },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+          // 跳過等待，立即激活新版本
+          skipWaiting: true,
+          clientsClaim: true,
+          // 清理舊緩存
+          cleanupOutdatedCaches: true,
           // Cache strategies for offline support
           runtimeCaching: [
             {
@@ -38,15 +51,31 @@ export default defineConfig(({ mode }) => {
                 },
               },
             },
+            // Supabase API 緩存策略
+            {
+              urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'supabase-api-cache',
+                networkTimeoutSeconds: 3,
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 5, // 5 分鐘
+                },
+              },
+            },
           ],
         },
         manifest: {
-          name: 'TrvicERP',
+          name: 'TrvicERP - 旅遊企業資源規劃系統',
           short_name: 'TrvicERP',
-          description: '旅遊企業資源規劃系統',
+          description: '現代化的旅遊業 ERP 系統',
           theme_color: '#0d9488',
           background_color: '#000000',
           display: 'standalone',
+          orientation: 'portrait',
+          start_url: '/',
+          scope: '/',
           icons: [
             {
               src: 'favicon.ico',

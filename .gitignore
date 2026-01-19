@@ -8,6 +8,9 @@ build/
 .next/
 out/
 
+# Vercel 配置（不應提交）
+.vercel/
+
 # 環境變數與秘密
 .env
 .env.local
