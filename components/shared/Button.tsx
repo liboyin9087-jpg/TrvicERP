@@ -1,4 +1,4 @@
-import { forwardRef, memo } from 'react';
+import { forwardRef, memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
@@ -14,6 +14,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   rightIcon?: React.ReactNode;
   'aria-label'?: string;
   'aria-busy'?: boolean;
+  'aria-disabled'?: boolean;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
@@ -69,11 +70,17 @@ export const Button = memo(forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       'aria-label': ariaLabel,
       'aria-busy': ariaBusy,
+      'aria-disabled': ariaDisabled,
       ...props
     },
     ref
   ) => {
     const isDisabled = disabled || loading;
+    const buttonAriaLabel = useMemo(() => {
+      if (ariaLabel) return ariaLabel;
+      if (typeof children === 'string') return children;
+      return undefined;
+    }, [ariaLabel, children]);
 
     return (
       <button
@@ -91,8 +98,9 @@ export const Button = memo(forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         disabled={isDisabled}
-        aria-label={ariaLabel}
+        aria-label={buttonAriaLabel}
         aria-busy={ariaBusy || loading}
+        aria-disabled={ariaDisabled || isDisabled}
         {...props}
       >
         {loading ? (
@@ -117,10 +125,10 @@ export interface FABProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 
 export const FAB = memo(forwardRef<HTMLButtonElement, FABProps>(
   ({ className, icon, label, position = 'bottom-right', ...props }, ref) => {
-    const positionStyles = {
+    const positionStyles = useMemo(() => ({
       'bottom-right': 'bottom-6 right-6',
       'bottom-left': 'bottom-6 left-6',
-    };
+    }), []);
 
     return (
       <button
@@ -163,13 +171,15 @@ export const ButtonGroup = memo(({
   direction = 'horizontal',
   'aria-label': ariaLabel,
 }: ButtonGroupProps) => {
+  const groupClasses = useMemo(() => cn(
+    'flex gap-2',
+    direction === 'vertical' && 'flex-col',
+    className
+  ), [className, direction]);
+
   return (
     <div
-      className={cn(
-        'flex gap-2',
-        direction === 'vertical' && 'flex-col',
-        className
-      )}
+      className={groupClasses}
       aria-label={ariaLabel}
       role="group"
     >

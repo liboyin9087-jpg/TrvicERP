@@ -8,7 +8,7 @@ export interface Column<T> {
   width?: string;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
-  render?: (value: any, record: T, index: number) => React.ReactNode;
+  render?: (value: unknown, record: T, index: number) => React.ReactNode;
 }
 
 export interface DataTableProps<T extends { id?: string | number }> {
@@ -230,7 +230,7 @@ const DataTable = memo(<T extends { id?: string | number }>({
                     </td>
                   )}
                   {columns.map((column) => {
-                    const value = (record as any)[column.key];
+                    const value = (record as Record<string, unknown>)[column.key];
                     return (
                       <td
                         key={column.key}

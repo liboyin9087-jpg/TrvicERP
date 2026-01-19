@@ -71,6 +71,7 @@ export const Card = memo(forwardRef<HTMLDivElement, CardProps>(
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledby}
         role={variant === 'interactive' ? 'button' : 'region'}
+        tabIndex={variant === 'interactive' ? 0 : undefined}
         {...props}
       >
         {children}
@@ -111,7 +112,7 @@ export const CardHeader = memo(function CardHeader({
     >
       <div className="flex-1 min-w-0">
         {title && (
-          <h3 className="text-lg font-bold text-neutral-900 truncate" aria-label={title}>
+          <h3 className="text-lg font-bold text-neutral-900 truncate" aria-label={title} role="heading" aria-level={3}>
             {title}
           </h3>
         )}
@@ -126,6 +127,8 @@ export const CardHeader = memo(function CardHeader({
     </div>
   );
 });
+
+CardHeader.displayName = 'CardHeader';
 
 export interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {
   'aria-label'?: string;
@@ -150,6 +153,8 @@ export const CardBody = memo(function CardBody({
     </div>
   );
 });
+
+CardBody.displayName = 'CardBody';
 
 export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   bordered?: boolean;
@@ -180,6 +185,8 @@ export const CardFooter = memo(function CardFooter({
     </div>
   );
 });
+
+CardFooter.displayName = 'CardFooter';
 
 export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -243,4 +250,7 @@ export const StatCard = memo(function StatCard({
   );
 });
 
+StatCard.displayName = 'StatCard';
+
 export default Card;
+
