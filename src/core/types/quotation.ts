@@ -1,12 +1,12 @@
-type QuotationId = string & { readonly __brand: 'QuotationId' };
-type CustomerId = string & { readonly __brand: 'CustomerId' };
-type SessionId = string & { readonly __brand: 'SessionId' };
-type OrderId = string & { readonly __brand: 'OrderId' };
-type UserId = string & { readonly __brand: 'UserId' };
-type Amount = number & { readonly __brand: 'Amount' };
-type Percentage = number & { readonly __brand: 'Percentage' };
+export type QuotationId = string & { readonly __brand: 'QuotationId' };
+export type CustomerId = string & { readonly __brand: 'CustomerId' };
+export type SessionId = string & { readonly __brand: 'SessionId' };
+export type OrderId = string & { readonly __brand: 'OrderId' };
+export type UserId = string & { readonly __brand: 'UserId' };
+export type Amount = number & { readonly __brand: 'Amount' };
+export type Percentage = number & { readonly __brand: 'Percentage' };
 
-enum QuotationStatus {
+export enum QuotationStatus {
   DRAFT = 'draft',
   SENT = 'sent',
   ACCEPTED = 'accepted',
@@ -14,12 +14,12 @@ enum QuotationStatus {
   EXPIRED = 'expired'
 }
 
-enum CostType {
+export enum CostType {
   FIXED = 'fixed',
   PER_PAX = 'per_pax'
 }
 
-enum ItemCategory {
+export enum ItemCategory {
   FLIGHT = 'flight',
   HOTEL = 'hotel',
   TRANSPORT = 'transport',
@@ -28,7 +28,7 @@ enum ItemCategory {
   OTHER = 'other'
 }
 
-enum Currency {
+export enum Currency {
   TWD = 'TWD',
   USD = 'USD',
   JPY = 'JPY',
@@ -36,7 +36,7 @@ enum Currency {
   EUR = 'EUR'
 }
 
-interface QuotationItem {
+export interface QuotationItem {
   id: string;
   category: ItemCategory;
   name: string;
@@ -47,14 +47,14 @@ interface QuotationItem {
   description: string;
 }
 
-interface CostBreakdown {
+export interface CostBreakdown {
   fixed: Amount;
   variable: Amount;
   total: Amount;
   currency: Currency;
 }
 
-interface Quotation {
+export interface Quotation {
   id: QuotationId;
   quotationNumber: string;
   version: number;
@@ -77,7 +77,7 @@ interface Quotation {
   createdBy: UserId;
 }
 
-interface CreateQuotationData {
+export interface CreateQuotationData {
   customerId: CustomerId;
   customerName: string;
   sessionId: SessionId | null;
@@ -89,7 +89,7 @@ interface CreateQuotationData {
   notes: string;
 }
 
-interface UpdateQuotationData {
+export interface UpdateQuotationData {
   items: QuotationItem[];
   profitMargin: Percentage;
   paxCount: number;
@@ -100,12 +100,12 @@ interface UpdateQuotationData {
   totalAmount: Amount;
 }
 
-interface ConvertQuotationToOrderData {
+export interface ConvertQuotationToOrderData {
   orderNumber: string;
   notes: string;
 }
 
-function calculateQuotationCost(
+export function calculateQuotationCost(
   items: QuotationItem[],
   paxCount: number
 ): CostBreakdown {
@@ -130,13 +130,13 @@ function calculateQuotationCost(
   };
 }
 
-function calculateSellingPrice(
+export function calculateSellingPrice(
   totalCost: Amount,
   profitMargin: Percentage
 ): Amount {
   return Math.round(totalCost * (1 + profitMargin / 100)) as Amount;
 }
 
-function isQuotationExpired(validUntil: string): boolean {
+export function isQuotationExpired(validUntil: string): boolean {
   return new Date(validUntil) < new Date();
 }

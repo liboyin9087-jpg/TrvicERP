@@ -21,7 +21,6 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
       "@/components/*": ["./components/*"],
       "@/core/*": ["./src/core/*"],
       "@/modules/*": ["./src/modules/*"],
@@ -29,7 +28,8 @@
       "@/types": ["./src/core/types/index.ts"],
       "@/types/*": ["./src/core/types/*"],
       "@/store/*": ["./src/store/*"],
-      "@/data/*": ["./src/data/*"]
+      "@/data/*": ["./src/data/*"],
+      "@/*": ["./src/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true,

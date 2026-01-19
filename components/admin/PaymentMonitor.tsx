@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { useOrders } from '@/modules/orders/hooks/useOrders';
 import type { Order, OrderStatus } from '@/core/types/order';
 import { OrderStatus as CoreOrderStatus } from '@/core/types/order';
-import Loading from '@/components/shared/Loading';
+import { Loading } from '@/components/shared/Loading';
 import { formatCurrency } from '@/lib/utils/formatting';
 
 interface Payment {

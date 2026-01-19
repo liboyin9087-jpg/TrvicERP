@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { useSessions } from '@/modules/sessions/hooks/useSessions';
 import { useOrders } from '@/modules/orders/hooks/useOrders';
 import { AuthService } from '@/core/services/authService';
-import Loading from '@/components/shared/Loading';
+import { Loading } from '@/components/shared/Loading';
 import type { Session } from '@/core/types/session';
 import { SessionStatus, GroupType } from '@/core/types/session';
 

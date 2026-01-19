@@ -1,6 +1,6 @@
 import React, { useState, useMemo, memo } from 'react';
 import { Calculator, Plus, Minus, FileText, Send, DollarSign, Mail, Eye } from 'lucide-react';
-import Modal from '../shared/Modal';
+import { Modal } from '../shared/Modal';
 import { ButtonLoading } from '../shared/Loading';
 import { useToast } from '@/store/useToastStore';
 import PDFPreviewModal from '../shared/PDFPreviewModal';

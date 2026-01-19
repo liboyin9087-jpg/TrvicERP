@@ -12,7 +12,7 @@ import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, TourLea
 import { useSessions, useCreateSession, useUpdateSession, useDeleteSession } from '@/modules/sessions/hooks/useSessions';
 import type { Session, SessionStatus, GroupType } from '@/core/types/session';
 import { SessionStatus as CoreSessionStatus, GroupType as CoreGroupType } from '@/core/types/session';
-import Loading from '@/components/shared/Loading';
+import { Loading } from '@/components/shared/Loading';
 import { useAppStore } from '@/store/useAppStore';
 import { AuthService } from '@/core/services/authService';
 

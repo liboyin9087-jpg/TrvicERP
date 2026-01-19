@@ -4,11 +4,6 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "framework": "vite",
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",

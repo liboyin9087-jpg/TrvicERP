@@ -18,8 +18,8 @@ import LoginPage from './components/auth/LoginPage';
 // Shared Components
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
-import ViewSwitcher from './components/shared/ViewSwitcher';
-import Loading from './components/shared/Loading';
+import { ViewSwitcher } from './components/shared/ViewSwitcher';
+import { Loading } from './components/shared/Loading';
 
 // Lazy load components
 const ERPInsights = lazy(() => import('./components/admin/ERPInsights'));

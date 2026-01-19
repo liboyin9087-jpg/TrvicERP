@@ -1,6 +1,6 @@
 import React, { useState, memo, useMemo } from 'react';
 import { ShoppingBag, Plus, Check, Star, CheckCircle } from 'lucide-react';
-import Modal from '../shared/Modal';
+import { Modal } from '../shared/Modal';
 import { ButtonLoading } from '../shared/Loading';
 import { useToast } from '@/store/useToastStore';
 

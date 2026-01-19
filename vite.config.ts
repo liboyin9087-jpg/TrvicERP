@@ -23,12 +23,13 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         // 自動更新模式：當有新版本時自動更新
         registerType: 'autoUpdate',
-        // 立即更新策略
-        strategies: 'injectManifest',
-        // 開發模式也啟用
+        // 若 build 過程遇到 SW 錯誤，可先關閉 PWA（後續再啟用）
+        disable: true,
+        // 使用自動生成 Service Worker（generateSW）
+        strategies: 'generateSW',
+        // 開發模式關閉 PWA
         devOptions: {
-          enabled: true,
-          type: 'module',
+          enabled: false,
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
@@ -91,8 +92,8 @@ export default defineConfig(({ mode }) => {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
     resolve: {
+      // NOTE: Put more specific aliases first to avoid '@' catching them
       alias: {
-        '@': path.resolve(__dirname, './src'),
         '@/components': path.resolve(__dirname, './components'),
         '@/core': path.resolve(__dirname, './src/core'),
         '@/modules': path.resolve(__dirname, './src/modules'),
@@ -100,6 +101,7 @@ export default defineConfig(({ mode }) => {
         '@/types': path.resolve(__dirname, './src/core/types'),
         '@/store': path.resolve(__dirname, './src/store'),
         '@/data': path.resolve(__dirname, './src/data'),
+        '@': path.resolve(__dirname, './src'),
       },
     },
     optimizeDeps: {

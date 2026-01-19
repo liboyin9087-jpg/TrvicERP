@@ -39,11 +39,11 @@ export type {
 } from './Badge';
 
 // Modal
-export { default as Modal, ConfirmDialog } from './Modal';
+export { Modal, ConfirmDialog } from './Modal';
 export type { ModalProps, ModalSize, ConfirmDialogProps } from './Modal';
 
 // Loading
-export { default as Loading } from './Loading';
+export { Loading, ButtonLoading } from './Loading';
 
 // Toast
 export { default as Toast } from './Toast';
