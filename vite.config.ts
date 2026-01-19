@@ -23,8 +23,10 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         // 自動更新模式：當有新版本時自動更新
         registerType: 'autoUpdate',
-        // 若 build 過程遇到 SW 錯誤，可先關閉 PWA（後續再啟用）
-        disable: true,
+        // 啟用 PWA，使用自動生成的 service worker
+        disable: false,
+        // 避免 workbox/terser 在某些情況下報錯
+        minify: false,
         // 使用自動生成 Service Worker（generateSW）
         strategies: 'generateSW',
         // 開發模式關閉 PWA
