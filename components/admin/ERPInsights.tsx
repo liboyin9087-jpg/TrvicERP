@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Users, Target, ArrowDownCircle, DollarSign, Wallet,
@@ -6,7 +6,37 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Animation variants
+interface FunnelStage {
+  label: string;
+  count: number;
+  color: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface KPICardProps {
+  title: string;
+  value: string;
+  trend: string;
+  icon: React.ReactNode;
+  color: 'indigo' | 'purple' | 'blue' | 'emerald';
+  delay: number;
+}
+
+interface RankingItemProps {
+  rank: number;
+  label: string;
+  value: string;
+  percent: number;
+}
+
+interface QuickStatProps {
+  label: string;
+  value: string;
+  change: string;
+  suffix?: string;
+  isNegativeGood?: boolean;
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -24,9 +54,8 @@ const cardHover = {
   hover: { y: -4, transition: { duration: 0.2 } }
 };
 
-export default function ERPInsights() {
-  // 模擬數據 (未來可替換為 React Query data)
-  const funnelData = [
+const ERPInsights: React.FC = memo(() => {
+  const funnelData: FunnelStage[] = [
     { label: '潛在客戶', count: 1250, color: 'bg-slate-300', icon: Globe },
     { label: '意向詢價', count: 420, color: 'bg-indigo-300', icon: Activity },
     { label: '支付訂金', count: 156, color: 'bg-indigo-500', icon: Wallet },
@@ -39,8 +68,8 @@ export default function ERPInsights() {
       initial="hidden"
       animate="visible"
       className="space-y-6"
+      aria-label="營收與通路分析儀表板"
     >
-      {/* Header Section */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -51,14 +80,14 @@ export default function ERPInsights() {
               Live Dashboard
             </span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">營收與通路分析</h2>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">營收與通路分析</h1>
           <p className="text-slate-500 mt-1 text-sm">即時監控全通路轉化率與營收表現</p>
         </div>
         
-        {/* Status Indicator Card */}
         <motion.div
           whileHover={{ scale: 1.02 }}
           className="bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-2.5 flex items-center gap-3"
+          aria-live="polite"
         >
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -71,7 +100,6 @@ export default function ERPInsights() {
         </motion.div>
       </motion.div>
 
-      {/* KPI Cards Grid */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="本月預估營收"
@@ -107,21 +135,21 @@ export default function ERPInsights() {
         />
       </motion.div>
 
-      {/* Main Content Split: Funnel (Left) + Ranking (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left: Funnel Chart */}
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm h-full">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="font-bold text-slate-900 flex items-center gap-2 text-lg">
+                <h2 className="font-bold text-slate-900 flex items-center gap-2 text-lg">
                   <ArrowDownCircle className="text-indigo-500 w-5 h-5" />
                   銷售轉化漏斗
-                </h3>
+                </h2>
                 <p className="text-xs text-slate-400 mt-1">追蹤從潛在客戶到成交的每個階段</p>
               </div>
-              <button className="text-xs font-medium text-slate-500 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-md transition-colors">
+              <button 
+                className="text-xs font-medium text-slate-500 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-md transition-colors"
+                aria-label="切換本週數據"
+              >
                 本週數據
               </button>
             </div>
@@ -138,9 +166,9 @@ export default function ERPInsights() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.15, duration: 0.5 }}
                     className="group relative"
+                    aria-label={`${stage.label}階段: ${stage.count}人, 轉化率${percentage.toFixed(0)}%`}
                   >
                     <div className="flex items-center gap-4 z-10 relative">
-                      {/* Label Section */}
                       <div className="w-24 flex-shrink-0 text-right">
                         <div className="flex items-center justify-end gap-1.5 mb-0.5">
                           <span className="text-xs font-medium text-slate-500">{stage.label}</span>
@@ -150,7 +178,6 @@ export default function ERPInsights() {
                         </div>
                       </div>
 
-                      {/* Bar Section */}
                       <div className="flex-1 h-10 relative bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
                         <motion.div
                           initial={{ width: 0 }}
@@ -161,7 +188,6 @@ export default function ERPInsights() {
                             stage.color
                           )}
                         >
-                          {/* Shine Effect */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] animate-[shimmer_2s_infinite]" />
                         </motion.div>
                         
@@ -176,7 +202,6 @@ export default function ERPInsights() {
                         </div>
                       </div>
 
-                      {/* Conversion Rate Badge */}
                       <div className="w-16 flex-shrink-0 text-right">
                         {i > 0 && (
                           <span className={cn(
@@ -191,7 +216,6 @@ export default function ERPInsights() {
                       </div>
                     </div>
                     
-                    {/* Connecting Line (Visual Decor) */}
                     {i < funnelData.length - 1 && (
                       <div className="absolute left-[6.5rem] top-8 bottom-[-1rem] w-px bg-slate-200 border-l border-dashed border-slate-300 z-0" />
                     )}
@@ -202,17 +226,15 @@ export default function ERPInsights() {
           </div>
         </motion.div>
 
-        {/* Right: Ranking & AI Panel (Dark Theme) */}
         <motion.div variants={itemVariants}>
           <div className="bg-slate-900 text-white p-6 rounded-2xl h-full shadow-xl shadow-slate-900/10 flex flex-col relative overflow-hidden">
-            {/* Background Glow */}
             <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/20 blur-[80px] rounded-full pointer-events-none" />
             
             <div className="flex items-center justify-between mb-8 relative z-10">
-              <h3 className="font-bold flex items-center gap-2 text-lg">
+              <h2 className="font-bold flex items-center gap-2 text-lg">
                 <TrendingUp className="w-5 h-5 text-indigo-400" />
                 熱銷通路排行
-              </h3>
+              </h2>
               <span className="text-[10px] font-bold text-indigo-200 bg-indigo-500/20 px-2 py-1 rounded-full border border-indigo-500/30">
                 TOP 3
               </span>
@@ -224,7 +246,6 @@ export default function ERPInsights() {
               <RankingItem rank={3} label="隙頂咖啡工坊" value="$62,000" percent={28} />
             </div>
 
-            {/* AI Suggestion Box */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -247,7 +268,6 @@ export default function ERPInsights() {
         </motion.div>
       </div>
 
-      {/* Footer Stats */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <QuickStat label="今日詢價" value="24" change="+8" />
         <QuickStat label="待處理訂單" value="12" change="-3" isNegativeGood />
@@ -256,22 +276,9 @@ export default function ERPInsights() {
       </motion.div>
     </motion.div>
   );
-}
+});
 
-// ============================================
-// Sub Components
-// ============================================
-
-interface KPICardProps {
-  title: string;
-  value: string;
-  trend: string;
-  icon: React.ReactNode;
-  color: 'indigo' | 'purple' | 'blue' | 'emerald';
-  delay: number;
-}
-
-function KPICard({ title, value, trend, icon, color, delay }: KPICardProps) {
+const KPICard: React.FC<KPICardProps> = memo(({ title, value, trend, icon, color, delay }) => {
   const colorStyles = {
     indigo: {
       iconBg: 'bg-indigo-600',
@@ -305,6 +312,7 @@ function KPICard({ title, value, trend, icon, color, delay }: KPICardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-default group"
+      aria-label={`${title}: ${value}, 趨勢: ${trend}`}
     >
       <div className="flex justify-between items-start mb-4">
         <div className={cn(
@@ -320,18 +328,19 @@ function KPICard({ title, value, trend, icon, color, delay }: KPICardProps) {
       </div>
       <div>
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{title}</p>
-        <h4 className="text-2xl font-bold text-slate-900 font-mono tracking-tight">{value}</h4>
+        <h3 className="text-2xl font-bold text-slate-900 font-mono tracking-tight">{value}</h3>
       </div>
     </motion.div>
   );
-}
+});
 
-function RankingItem({ rank, label, value, percent }: { rank: number; label: string; value: string; percent: number }) {
+const RankingItem: React.FC<RankingItemProps> = memo(({ rank, label, value, percent }) => {
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: rank * 0.15 }}
+      aria-label={`第${rank}名: ${label}, 營收: ${value}`}
     >
       <div className="flex items-center justify-between text-sm mb-2.5">
         <div className="flex items-center gap-3">
@@ -359,9 +368,9 @@ function RankingItem({ rank, label, value, percent }: { rank: number; label: str
       </div>
     </motion.div>
   );
-}
+});
 
-function QuickStat({ label, value, change, suffix, isNegativeGood }: any) {
+const QuickStat: React.FC<QuickStatProps> = memo(({ label, value, change, suffix, isNegativeGood }) => {
   const isPositive = change.startsWith('+');
   const isNeutral = change === '0';
   const isGood = isNegativeGood ? !isPositive : isPositive;
@@ -370,6 +379,7 @@ function QuickStat({ label, value, change, suffix, isNegativeGood }: any) {
     <motion.div
       whileHover={{ y: -2 }}
       className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm"
+      aria-label={`${label}: ${value}${suffix || ''}, 變化: ${change}`}
     >
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
       <div className="flex items-baseline gap-2">
@@ -386,4 +396,6 @@ function QuickStat({ label, value, change, suffix, isNegativeGood }: any) {
       </div>
     </motion.div>
   );
-}
+});
+
+export default ERPInsights;

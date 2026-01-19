@@ -1,17 +1,4 @@
-/**
- * TrvicERP DataTable Component
- *
- * Enterprise data table with:
- * - 48px row height
- * - Zebra striping
- * - Row selection
- * - Sortable columns
- * - Batch operations
- *
- * @see DESIGN_SYSTEM.md Section 5.3
- */
-
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronUp, ChevronDown, ChevronsUpDown, Check } from 'lucide-react';
 
@@ -41,7 +28,7 @@ export interface DataTableProps<T extends { id?: string | number }> {
   stickyHeader?: boolean;
 }
 
-export function DataTable<T extends { id?: string | number }>({
+const DataTable = memo(<T extends { id?: string | number }>({
   columns,
   data,
   rowKey = 'id',
@@ -56,16 +43,11 @@ export function DataTable<T extends { id?: string | number }>({
   emptyText = '沒有資料',
   className,
   stickyHeader = false,
-}: DataTableProps<T>) {
-  // Internal selection state (used when uncontrolled)
-  const [internalSelectedRows, setInternalSelectedRows] = useState<Set<string | number>>(
-    new Set()
-  );
-
+}: DataTableProps<T>) => {
+  const [internalSelectedRows, setInternalSelectedRows] = useState<Set<string | number>>(new Set());
   const selectedRows = controlledSelectedRows ?? internalSelectedRows;
   const setSelectedRows = onSelectionChange ?? setInternalSelectedRows;
 
-  // Get row key
   const getRowKey = useCallback(
     (record: T, index: number): string | number => {
       if (typeof rowKey === 'function') {
@@ -80,25 +62,23 @@ export function DataTable<T extends { id?: string | number }>({
     [rowKey]
   );
 
-  // All row keys
   const allRowKeys = useMemo(
     () => data.map((record, index) => getRowKey(record, index)),
     [data, getRowKey]
   );
 
-  // Selection handlers
   const isAllSelected = data.length > 0 && allRowKeys.every((key) => selectedRows.has(key));
   const isPartiallySelected = allRowKeys.some((key) => selectedRows.has(key)) && !isAllSelected;
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     if (isAllSelected) {
       setSelectedRows(new Set());
     } else {
       setSelectedRows(new Set(allRowKeys));
     }
-  };
+  }, [isAllSelected, allRowKeys, setSelectedRows]);
 
-  const handleSelectRow = (key: string | number) => {
+  const handleSelectRow = useCallback((key: string | number) => {
     const newSelected = new Set(selectedRows);
     if (newSelected.has(key)) {
       newSelected.delete(key);
@@ -106,33 +86,28 @@ export function DataTable<T extends { id?: string | number }>({
       newSelected.add(key);
     }
     setSelectedRows(newSelected);
-  };
+  }, [selectedRows, setSelectedRows]);
 
-  // Sort handler
-  const handleSort = (columnKey: string) => {
+  const handleSort = useCallback((columnKey: string) => {
     if (!onSort) return;
-
-    const newDirection =
-      sortColumn === columnKey && sortDirection === 'asc' ? 'desc' : 'asc';
+    const newDirection = sortColumn === columnKey && sortDirection === 'asc' ? 'desc' : 'asc';
     onSort(columnKey, newDirection);
-  };
+  }, [onSort, sortColumn, sortDirection]);
 
-  // Render sort icon
-  const renderSortIcon = (columnKey: string) => {
+  const renderSortIcon = useCallback((columnKey: string) => {
     if (sortColumn !== columnKey) {
-      return <ChevronsUpDown className="w-4 h-4 text-neutral-400" />;
+      return <ChevronsUpDown className="w-4 h-4 text-neutral-400" aria-hidden="true" />;
     }
     return sortDirection === 'asc' ? (
-      <ChevronUp className="w-4 h-4 text-primary-900" />
+      <ChevronUp className="w-4 h-4 text-primary-900" aria-hidden="true" />
     ) : (
-      <ChevronDown className="w-4 h-4 text-primary-900" />
+      <ChevronDown className="w-4 h-4 text-primary-900" aria-hidden="true" />
     );
-  };
+  }, [sortColumn, sortDirection]);
 
   return (
-    <div className={cn('overflow-x-auto', className)}>
+    <div className={cn('overflow-x-auto', className)} role="region" aria-label="資料表格">
       <table className="w-full border-collapse">
-        {/* Header */}
         <thead
           className={cn(
             'bg-neutral-100 border-b border-neutral-300',
@@ -153,9 +128,10 @@ export function DataTable<T extends { id?: string | number }>({
                       : 'border-neutral-400 bg-white hover:border-primary-900'
                   )}
                   aria-label={isAllSelected ? '取消全選' : '全選'}
+                  aria-pressed={isAllSelected}
                 >
                   {(isAllSelected || isPartiallySelected) && (
-                    <Check className="w-3 h-3" strokeWidth={3} />
+                    <Check className="w-3 h-3" strokeWidth={3} aria-hidden="true" />
                   )}
                 </button>
               </th>
@@ -172,6 +148,7 @@ export function DataTable<T extends { id?: string | number }>({
                 )}
                 style={{ width: column.width }}
                 onClick={column.sortable ? () => handleSort(column.key) : undefined}
+                aria-sort={column.sortable ? (sortColumn === column.key ? sortDirection : 'none') : undefined}
               >
                 <div
                   className={cn(
@@ -188,7 +165,6 @@ export function DataTable<T extends { id?: string | number }>({
           </tr>
         </thead>
 
-        {/* Body */}
         <tbody>
           {loading ? (
             <tr>
@@ -196,8 +172,8 @@ export function DataTable<T extends { id?: string | number }>({
                 colSpan={columns.length + (selectable ? 1 : 0)}
                 className="px-4 py-12 text-center"
               >
-                <div className="flex items-center justify-center gap-2 text-neutral-500">
-                  <div className="w-5 h-5 border-2 border-neutral-300 border-t-primary-900 rounded-full animate-spin" />
+                <div className="flex items-center justify-center gap-2 text-neutral-500" aria-live="polite">
+                  <div className="w-5 h-5 border-2 border-neutral-300 border-t-primary-900 rounded-full animate-spin" aria-hidden="true" />
                   <span>載入中...</span>
                 </div>
               </td>
@@ -207,6 +183,7 @@ export function DataTable<T extends { id?: string | number }>({
               <td
                 colSpan={columns.length + (selectable ? 1 : 0)}
                 className="px-4 py-12 text-center text-neutral-500"
+                aria-live="polite"
               >
                 {emptyText}
               </td>
@@ -228,6 +205,7 @@ export function DataTable<T extends { id?: string | number }>({
                     !isSelected && 'hover:bg-primary-50'
                   )}
                   onClick={() => onRowClick?.(record, index)}
+                  aria-selected={selectable ? isSelected : undefined}
                 >
                   {selectable && (
                     <td className="px-4 py-3 text-center">
@@ -245,8 +223,9 @@ export function DataTable<T extends { id?: string | number }>({
                             : 'border-neutral-400 bg-white hover:border-primary-900'
                         )}
                         aria-label={isSelected ? '取消選擇' : '選擇'}
+                        aria-pressed={isSelected}
                       >
-                        {isSelected && <Check className="w-3 h-3" strokeWidth={3} />}
+                        {isSelected && <Check className="w-3 h-3" strokeWidth={3} aria-hidden="true" />}
                       </button>
                     </td>
                   )}
@@ -274,7 +253,6 @@ export function DataTable<T extends { id?: string | number }>({
         </tbody>
       </table>
 
-      {/* Batch Actions Bar */}
       {selectable && selectedRows.size > 0 && (
         <BatchActionsBar
           selectedCount={selectedRows.size}
@@ -285,11 +263,8 @@ export function DataTable<T extends { id?: string | number }>({
       )}
     </div>
   );
-}
+}) as <T extends { id?: string | number }>(props: DataTableProps<T>) => JSX.Element;
 
-/**
- * Batch Actions Bar - Shows when rows are selected
- */
 interface BatchActionsBarProps {
   selectedCount: number;
   totalCount: number;
@@ -298,15 +273,15 @@ interface BatchActionsBarProps {
   children?: React.ReactNode;
 }
 
-export function BatchActionsBar({
+const BatchActionsBar = memo(({
   selectedCount,
   totalCount,
   onSelectAll,
   onClearSelection,
   children,
-}: BatchActionsBarProps) {
+}: BatchActionsBarProps) => {
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-primary-50 border-t border-primary-200 px-4 py-3 flex items-center gap-4">
+    <div className="sticky bottom-0 left-0 right-0 bg-primary-50 border-t border-primary-200 px-4 py-3 flex items-center gap-4" role="toolbar" aria-label="批次操作工具列">
       <span className="text-sm font-medium text-primary-900">
         已選擇 {selectedCount} 筆
       </span>
@@ -316,6 +291,7 @@ export function BatchActionsBar({
           type="button"
           onClick={onSelectAll}
           className="text-sm text-primary-900 hover:underline"
+          aria-label={`全選 ${totalCount} 筆`}
         >
           全選 {totalCount} 筆
         </button>
@@ -325,6 +301,7 @@ export function BatchActionsBar({
         type="button"
         onClick={onClearSelection}
         className="text-sm text-neutral-600 hover:underline"
+        aria-label="取消選擇"
       >
         取消選擇
       </button>
@@ -334,11 +311,8 @@ export function BatchActionsBar({
       {children}
     </div>
   );
-}
+});
 
-/**
- * Pagination Component
- */
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -348,14 +322,14 @@ interface PaginationProps {
   className?: string;
 }
 
-export function Pagination({
+const Pagination = memo(({
   currentPage,
   totalPages,
   totalItems,
   pageSize,
   onPageChange,
   className,
-}: PaginationProps) {
+}: PaginationProps) => {
   const startItem = (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
@@ -396,6 +370,8 @@ export function Pagination({
         'flex items-center justify-between py-3 px-4 border-t border-neutral-200',
         className
       )}
+      role="navigation"
+      aria-label="分頁導航"
     >
       <span className="text-sm text-neutral-600">
         第 {startItem}-{endItem} 筆，共 {totalItems} 筆
@@ -413,13 +389,15 @@ export function Pagination({
               ? 'text-neutral-400 cursor-not-allowed'
               : 'text-neutral-700 hover:bg-neutral-100'
           )}
+          aria-label="上一頁"
+          aria-disabled={currentPage === 1}
         >
           上一頁
         </button>
 
         {pages.map((page, index) =>
           page === 'ellipsis' ? (
-            <span key={`ellipsis-${index}`} className="px-2 text-neutral-400">
+            <span key={`ellipsis-${index}`} className="px-2 text-neutral-400" aria-hidden="true">
               ...
             </span>
           ) : (
@@ -434,6 +412,8 @@ export function Pagination({
                   ? 'bg-primary-900 text-white'
                   : 'text-neutral-700 hover:bg-neutral-100'
               )}
+              aria-label={`第 ${page} 頁`}
+              aria-current={currentPage === page ? 'page' : undefined}
             >
               {page}
             </button>
@@ -451,12 +431,14 @@ export function Pagination({
               ? 'text-neutral-400 cursor-not-allowed'
               : 'text-neutral-700 hover:bg-neutral-100'
           )}
+          aria-label="下一頁"
+          aria-disabled={currentPage === totalPages}
         >
           下一頁
         </button>
       </div>
     </div>
   );
-}
+});
 
-export default DataTable;
+export { DataTable, BatchActionsBar, Pagination };

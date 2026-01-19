@@ -1,17 +1,7 @@
-/**
- * TrvicERP Input Component
- *
- * Form input with 44px minimum height (WCAG touch target)
- * Supports labels, helper text, error states
- *
- * @see DESIGN_SYSTEM.md Section 5.4
- */
-
-import { forwardRef, useId } from 'react';
+import { forwardRef, useId, memo } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   helperText?: string;
   error?: string;
@@ -27,7 +17,7 @@ const sizeStyles = {
   lg: 'h-12 text-base px-4',
 };
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+export const Input = memo(forwardRef<HTMLInputElement, InputProps>(
   (
     {
       className,
@@ -74,19 +64,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={id}
             className={cn(
-              // Base styles
               'w-full rounded-md border-2 bg-white',
               'font-sans text-neutral-800',
               'transition-all duration-150 ease-in-out',
               'placeholder:text-neutral-400',
-              // Focus styles
               'focus:outline-none focus:border-primary-900 focus:ring-2 focus:ring-primary-900/10',
-              // Size
               sizeStyles[size],
-              // Icons padding
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
-              // States
               hasError
                 ? 'border-error focus:border-error focus:ring-error/10'
                 : 'border-neutral-300',
@@ -95,6 +80,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             )}
             disabled={disabled}
             aria-invalid={hasError}
+            aria-required={required}
             aria-describedby={
               hasError ? `${id}-error` : helperText ? `${id}-helper` : undefined
             }
@@ -122,22 +108,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       </div>
     );
   }
-);
+));
 
 Input.displayName = 'Input';
 
-/**
- * Textarea Component
- */
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   helperText?: string;
   error?: string;
   fullWidth?: boolean;
 }
 
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+export const Textarea = memo(forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
     {
       className,
@@ -188,11 +170,16 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           )}
           disabled={disabled}
           aria-invalid={hasError}
+          aria-required={required}
+          aria-describedby={
+            hasError ? `${id}-error` : helperText ? `${id}-helper` : undefined
+          }
           {...props}
         />
 
         {(error || helperText) && (
           <p
+            id={hasError ? `${id}-error` : `${id}-helper`}
             className={cn(
               'text-xs',
               hasError ? 'text-error' : 'text-neutral-500'
@@ -204,21 +191,17 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       </div>
     );
   }
-);
+));
 
 Textarea.displayName = 'Textarea';
 
-/**
- * Select Component
- */
 export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
 }
 
-export interface SelectProps
-  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   label?: string;
   helperText?: string;
   error?: string;
@@ -228,7 +211,7 @@ export interface SelectProps
   fullWidth?: boolean;
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+export const Select = memo(forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
       className,
@@ -283,6 +266,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             )}
             disabled={disabled}
             aria-invalid={hasError}
+            aria-required={required}
+            aria-describedby={
+              hasError ? `${id}-error` : helperText ? `${id}-helper` : undefined
+            }
             {...props}
           >
             {placeholder && (
@@ -301,13 +288,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ))}
           </select>
 
-          {/* Dropdown chevron */}
           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-400">
             <svg
               className="w-4 h-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -321,6 +308,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
         {(error || helperText) && (
           <p
+            id={hasError ? `${id}-error` : `${id}-helper`}
             className={cn(
               'text-xs',
               hasError ? 'text-error' : 'text-neutral-500'
@@ -332,20 +320,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       </div>
     );
   }
-);
+));
 
 Select.displayName = 'Select';
 
-/**
- * Checkbox Component
- */
-export interface CheckboxProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label?: string;
 }
 
-export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ className, label, id: providedId, ...props }, ref) => {
+export const Checkbox = memo(forwardRef<HTMLInputElement, CheckboxProps>(
+  ({ className, label, id: providedId, required, ...props }, ref) => {
     const generatedId = useId();
     const id = providedId || generatedId;
 
@@ -361,6 +345,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             'cursor-pointer',
             className
           )}
+          aria-required={required}
           {...props}
         />
         {label && (
@@ -374,7 +359,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       </div>
     );
   }
-);
+));
 
 Checkbox.displayName = 'Checkbox';
 

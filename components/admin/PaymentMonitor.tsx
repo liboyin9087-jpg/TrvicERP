@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   CreditCard, DollarSign, Clock, CheckCircle, XCircle, RefreshCw,
-  Download, Building2, Smartphone, TrendingUp, Search, Filter
+  Download, Building2, Smartphone, TrendingUp, Search, Filter, AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useOrders } from '@/modules/orders/hooks/useOrders';
+import type { Order, OrderStatus } from '@/core/types/order';
+import { OrderStatus as CoreOrderStatus } from '@/core/types/order';
+import Loading from '@/components/shared/Loading';
+import { formatCurrency } from '@/lib/utils/formatting';
 
 interface Payment {
   id: string;
@@ -16,13 +21,56 @@ interface Payment {
   createdAt: string;
 }
 
-const MOCK_PAYMENTS: Payment[] = [
-  { id: 'P001', orderId: 'ORD-2025-001', customerName: '王大明', amount: 91600, status: 'completed', method: 'credit_card', createdAt: '2025-01-08 10:30' },
-  { id: 'P002', orderId: 'ORD-2025-002', customerName: '李小華', amount: 117800, status: 'completed', method: 'bank_transfer', createdAt: '2025-01-07 14:20' },
-  { id: 'P003', orderId: 'ORD-2025-003', customerName: '張美玲', amount: 65600, status: 'pending', method: 'line_pay', createdAt: '2025-01-10 09:15' },
-  { id: 'P004', orderId: 'ORD-2025-004', customerName: '陳志明', amount: 45800, status: 'processing', method: 'credit_card', createdAt: '2025-01-10 11:00' },
-  { id: 'P005', orderId: 'ORD-2025-005', customerName: '林雅婷', amount: 38500, status: 'failed', method: 'credit_card', createdAt: '2025-01-09 16:45' },
-];
+/**
+ * Convert Order to Payment display format
+ * 將 Order 類型轉換為 Payment 顯示格式
+ */
+function convertOrderToPayment(order: Order): Payment {
+  // Map order status to payment status
+  const statusMap: Record<OrderStatus, 'pending' | 'processing' | 'completed' | 'failed'> = {
+    [CoreOrderStatus.PENDING]: 'pending',
+    [CoreOrderStatus.CONFIRMED]: 'processing',
+    [CoreOrderStatus.PAID]: 'completed',
+    [CoreOrderStatus.PENDING_PAYMENT]: 'pending',
+    [CoreOrderStatus.VERIFYING]: 'processing',
+    [CoreOrderStatus.COMPLETED]: 'completed',
+    [CoreOrderStatus.CANCELLED]: 'failed',
+    [CoreOrderStatus.REFUNDED]: 'failed',
+  };
+
+  // Determine payment method from order (default to credit_card)
+  // TODO: Add payment method to Order type if available
+  const paymentMethod = 'credit_card'; // Default, should come from order data
+
+  // Calculate payment status based on paid amount
+  let paymentStatus: 'pending' | 'processing' | 'completed' | 'failed' = statusMap[order.status];
+  
+  if (order.status === CoreOrderStatus.PAID && order.paidAmount >= order.totalAmount) {
+    paymentStatus = 'completed';
+  } else if (order.status === CoreOrderStatus.PENDING_PAYMENT) {
+    paymentStatus = 'pending';
+  } else if (order.status === CoreOrderStatus.VERIFYING) {
+    paymentStatus = 'processing';
+  } else if (order.status === CoreOrderStatus.CANCELLED || order.status === CoreOrderStatus.REFUNDED) {
+    paymentStatus = 'failed';
+  }
+
+  return {
+    id: order.id as string,
+    orderId: order.orderNumber,
+    customerName: order.customerName,
+    amount: order.totalAmount,
+    status: paymentStatus,
+    method: paymentMethod,
+    createdAt: new Date(order.createdAt).toLocaleString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  };
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -54,21 +102,73 @@ const FILTERS = [
   { id: 'failed', label: '失敗' },
 ];
 
-export default function PaymentMonitor() {
-  const [payments] = useState<Payment[]>(MOCK_PAYMENTS);
+interface PaymentMonitorProps {
+  onExport?: () => void;
+}
+
+const PaymentMonitor: React.FC<PaymentMonitorProps> = memo(({ onExport }) => {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
 
-  const filteredPayments = payments
-    .filter(p => filter === 'all' || p.status === filter)
-    .filter(p => p.customerName.includes(search) || p.orderId.includes(search));
+  // Connect to service layer
+  const { orders, loading: ordersLoading, error: ordersError, refetch: refetchOrders } = useOrders();
 
-  const stats = {
+  // Convert orders to payments
+  const payments: Payment[] = useMemo(() => {
+    if (!orders || orders.length === 0) return [];
+    return orders.map(convertOrderToPayment);
+  }, [orders]);
+
+  const filteredPayments = useMemo(() => payments
+    .filter(p => filter === 'all' || p.status === filter)
+    .filter(p => p.customerName.includes(search) || p.orderId.includes(search)), [payments, filter, search]);
+
+  const stats = useMemo(() => ({
     todayAmount: payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.amount, 0) * 0.3,
     pendingAmount: payments.filter(p => p.status === 'pending' || p.status === 'processing').reduce((sum, p) => sum + p.amount, 0),
     monthAmount: payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.amount, 0),
     totalCount: payments.length,
+  }), [payments]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
   };
+
+  const handleFilterChange = (filterId: string) => {
+    setFilter(filterId);
+  };
+
+  const handleExportClick = () => {
+    onExport?.();
+  };
+
+  // Show loading state
+  if (ordersLoading && payments.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <Loading text="載入付款資料中..." />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (ordersError && payments.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg font-semibold text-gray-900 mb-2">載入失敗</p>
+          <p className="text-gray-600 mb-4">{ordersError.message || '無法載入付款資料'}</p>
+          <button
+            onClick={() => refetchOrders()}
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            重新載入
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -76,8 +176,8 @@ export default function PaymentMonitor() {
       initial="hidden"
       animate="visible"
       className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6"
+      aria-label="付款管理面板"
     >
-      {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -88,66 +188,74 @@ export default function PaymentMonitor() {
               Payments
             </span>
           </div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900">收款管理</h2>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">收款管理</h1>
           <p className="text-slate-500 mt-1">即時監控所有付款狀態</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="trvic-btn trvic-btn-primary gap-2"
+          onClick={handleExportClick}
+          aria-label="匯出付款報表"
         >
           <Download className="w-4 h-4" />
           匯出報表
         </motion.button>
       </motion.div>
 
-      {/* Stats */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={DollarSign}
           label="今日收款"
-          value={`NT$ ${stats.todayAmount.toLocaleString()}`}
+          value={formatCurrency(stats.todayAmount)}
+          aria-label={`今日收款金額：${formatCurrency(stats.todayAmount)}`}
         />
         <StatCard
           icon={Clock}
           label="待收款"
-          value={`NT$ ${stats.pendingAmount.toLocaleString()}`}
+          value={formatCurrency(stats.pendingAmount)}
+          aria-label={`待收款金額：${formatCurrency(stats.pendingAmount)}`}
         />
         <StatCard
           icon={TrendingUp}
           label="本月收款"
           value={`NT$ ${stats.monthAmount.toLocaleString()}`}
+          aria-label={`本月收款金額：NT$ ${stats.monthAmount.toLocaleString()}`}
         />
         <StatCard
           icon={CreditCard}
           label="交易筆數"
           value={stats.totalCount.toString()}
+          aria-label={`總交易筆數：${stats.totalCount}筆`}
         />
       </motion.div>
 
-      {/* Filters */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" aria-hidden="true" />
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             placeholder="搜尋訂單編號或客戶名稱..."
             className="trvic-input w-full pl-12 pr-4"
+            aria-label="搜尋付款記錄"
           />
         </div>
-        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
+        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl" role="tablist">
           {FILTERS.map((f) => (
             <button
               key={f.id}
-              onClick={() => setFilter(f.id)}
+              onClick={() => handleFilterChange(f.id)}
               className={cn(
                 'px-4 py-2 rounded-lg text-sm font-medium transition-all',
                 filter === f.id
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               )}
+              role="tab"
+              aria-selected={filter === f.id}
+              aria-controls={`${f.id}-tab`}
             >
               {f.label}
             </button>
@@ -155,18 +263,17 @@ export default function PaymentMonitor() {
         </div>
       </motion.div>
 
-      {/* Payments Table */}
       <motion.div variants={itemVariants} className="trvic-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" aria-label="付款記錄表格">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">訂單編號</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">客戶</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">金額</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">付款方式</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">狀態</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">時間</th>
+                <th scope="col" className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">訂單編號</th>
+                <th scope="col" className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">客戶</th>
+                <th scope="col" className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">金額</th>
+                <th scope="col" className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">付款方式</th>
+                <th scope="col" className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">狀態</th>
+                <th scope="col" className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">時間</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -183,15 +290,16 @@ export default function PaymentMonitor() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     className="group hover:bg-slate-50/50 transition-colors"
+                    aria-labelledby={`payment-${payment.id}-label`}
                   >
                     <td className="px-6 py-5">
-                      <span className="font-mono text-sm font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                      <span id={`payment-${payment.id}-label`} className="font-mono text-sm font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
                         {payment.orderId}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-neutral-200 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-xl bg-neutral-200 flex items-center justify-center" aria-hidden="true">
                           <span className="text-sm font-bold text-slate-600">
                             {payment.customerName.charAt(0)}
                           </span>
@@ -201,12 +309,12 @@ export default function PaymentMonitor() {
                     </td>
                     <td className="px-6 py-5">
                       <span className="text-base font-bold text-slate-900">
-                        NT$ {payment.amount.toLocaleString()}
+                        {formatCurrency(payment.amount)}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-2">
-                        <div className={cn('w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center', method.color)}>
+                        <div className={cn('w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center', method.color)} aria-hidden="true">
                           <MethodIcon className="w-4 h-4" />
                         </div>
                         <span className="text-sm text-slate-600">{method.label}</span>
@@ -233,7 +341,7 @@ export default function PaymentMonitor() {
 
         {filteredPayments.length === 0 && (
           <div className="py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4" aria-hidden="true">
               <Search className="w-8 h-8 text-slate-300" />
             </div>
             <p className="text-slate-500">沒有符合條件的交易記錄</p>
@@ -242,16 +350,17 @@ export default function PaymentMonitor() {
       </motion.div>
     </motion.div>
   );
-}
+});
 
 interface StatCardProps {
   icon: React.ElementType;
   label: string;
   value: string;
   color?: string;
+  'aria-label'?: string;
 }
 
-function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
+const StatCard: React.FC<StatCardProps> = memo(({ icon: Icon, label, value, color, 'aria-label': ariaLabel }) => {
   const colorStyles = {
     emerald: 'bg-brand-600',
     amber: 'bg-brand-500',
@@ -262,6 +371,7 @@ function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
     <motion.div
       whileHover={{ y: -2 }}
       className="trvic-card p-4"
+      aria-label={ariaLabel}
     >
       <div className="flex items-center gap-3">
         <div className={cn(
@@ -277,4 +387,6 @@ function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
       </div>
     </motion.div>
   );
-}
+});
+
+export default PaymentMonitor;

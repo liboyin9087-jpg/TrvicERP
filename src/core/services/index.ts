@@ -10,7 +10,6 @@ export * from './realtimeService';
 export * from './configService';
 export * from './backupService';
 
-// 明確導出 notificationService 以避免類型衝突
 export {
   notificationService,
   type Notification,

@@ -27,13 +27,12 @@ export interface Spot {
   name: string;
   category: SpotCategory[];
   county: string;
-  // 地理資訊物件
   location: {
     lat: number;
     lng: number;
     address: string;
   };
-  duration: number; // minutes
+  duration: number;
   description?: string;
   image: string;
   price: number;
@@ -44,7 +43,7 @@ export interface Spot {
 }
 
 export interface ScheduledSpot extends Spot {
-  instanceId: string; // 在行程中的唯一 ID
+  instanceId: string;
   startTime?: string;
 }
 
@@ -55,6 +54,8 @@ export interface DayPlan {
   spots: ScheduledSpot[];
 }
 
+export type Status = 'draft' | 'soliciting' | 'guaranteed' | 'departed' | 'cancelled';
+
 export interface TravelPlan {
   id: string;
   name: string;
@@ -62,26 +63,47 @@ export interface TravelPlan {
   days: DayPlan[];
   versions?: any[];
   current_version?: number;
+  status: Status;
+  auditLog: Array<{
+    timestamp: string;
+    action: string;
+    fromStatus?: Status;
+    toStatus?: Status;
+    user: string;
+  }>;
 }
 
 // ============================================
-// 2. Mock Data
+// 2. State Machine & Helpers
 // ============================================
 
-// 導入轉換函數（動態導入以避免循環依賴）
+const STATE_MACHINE = {
+  draft: ['soliciting'],
+  soliciting: ['guaranteed', 'cancelled'],
+  guaranteed: ['departed', 'cancelled'],
+  departed: [],
+  cancelled: []
+} as const;
+
+function canTransition(from: Status, to: Status): boolean {
+  return STATE_MACHINE[from]?.includes(to) ?? false;
+}
+
+// ============================================
+// 3. Mock Data
+// ============================================
+
 let convertedSpots: Spot[] | null = null;
 
 function getMockSpots(): Spot[] {
   if (convertedSpots) return convertedSpots;
   
   try {
-    // 動態導入轉換函數
     const { convertSpotsData } = require('../utils/convertSpotsData');
     convertedSpots = convertSpotsData();
     return convertedSpots;
   } catch (error) {
     console.warn('無法載入完整景點數據，使用預設數據', error);
-    // 降級到預設數據
     return [
       {
         id: 'spot-1',
@@ -127,7 +149,7 @@ function getMockSpots(): Spot[] {
 const MOCK_SPOTS: Spot[] = getMockSpots();
 
 // ============================================
-// 3. Store Implementation
+// 4. Store Implementation
 // ============================================
 
 interface ItineraryBuilderState {
@@ -139,6 +161,7 @@ interface ItineraryBuilderState {
   audienceFilter: string[];
   isDragging: boolean;
   activeDragId?: string;
+  lastError: Error | null;
 
   createNewPlan: (name: string, destination: string, daysCount: number) => void;
   loadPlan: (id: string) => void;
@@ -157,6 +180,8 @@ interface ItineraryBuilderState {
   setAudienceFilter: (a: string[]) => void;
   getFilteredSpots: () => Spot[];
   setDragging: (isDragging: boolean, activeId?: string) => void;
+  changeStatus: (newStatus: Status) => Promise<void>;
+  rollbackPlan: () => void;
 }
 
 export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get) => ({
@@ -167,6 +192,7 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
   seasonFilter: [],
   audienceFilter: [],
   isDragging: false,
+  lastError: null,
 
   createNewPlan: (name, destination, daysCount) => {
     const days: DayPlan[] = Array.from({ length: daysCount }, (_, i) => ({
@@ -175,7 +201,23 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
       title: `Day ${i + 1}`,
       spots: []
     }));
-    set({ currentPlan: { id: uuidv4(), name, destination, days, versions: [], current_version: 1 } });
+    set({ 
+      currentPlan: { 
+        id: uuidv4(), 
+        name, 
+        destination, 
+        days, 
+        versions: [], 
+        current_version: 1,
+        status: 'draft',
+        auditLog: [{
+          timestamp: new Date().toISOString(),
+          action: 'create',
+          user: 'system',
+          toStatus: 'draft'
+        }]
+      } 
+    });
   },
 
   loadPlan: (id) => {
@@ -188,6 +230,7 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
   savePlan: (note) => {
     const { currentPlan, savedPlans } = get();
     if (!currentPlan) return;
+    
     const newVersion = {
       version: (currentPlan.current_version || 0) + 1,
       changes: note || '手動儲存',
@@ -195,13 +238,26 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
       created_by: '系統管理員',
       data: JSON.parse(JSON.stringify(currentPlan))
     };
+
     const updatedPlan = {
       ...currentPlan,
       current_version: newVersion.version,
-      versions: [...(currentPlan.versions || []), newVersion]
+      versions: [...(currentPlan.versions || []), newVersion],
+      auditLog: [
+        ...currentPlan.auditLog,
+        {
+          timestamp: new Date().toISOString(),
+          action: 'save',
+          user: 'user',
+          changes: note
+        }
+      ]
     };
-    set({ savedPlans: [updatedPlan, ...savedPlans.filter(p => p.id !== currentPlan.id)], currentPlan: updatedPlan });
-    alert('行程儲存成功！');
+
+    set({ 
+      savedPlans: [updatedPlan, ...savedPlans.filter(p => p.id !== currentPlan.id)], 
+      currentPlan: updatedPlan 
+    });
   },
 
   loadVersion: (v) => console.log(v),
@@ -213,16 +269,39 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
       return {
         currentPlan: {
           ...state.currentPlan,
-          days: [...state.currentPlan.days, { id: uuidv4(), dayNumber: nextNum, title: `Day ${nextNum}`, spots: [] }]
+          days: [...state.currentPlan.days, { id: uuidv4(), dayNumber: nextNum, title: `Day ${nextNum}`, spots: [] }],
+          auditLog: [
+            ...state.currentPlan.auditLog,
+            {
+              timestamp: new Date().toISOString(),
+              action: 'add_day',
+              user: 'user'
+            }
+          ]
         }
       };
     });
   },
 
   removeDay: (id) => {
-    set(state => ({
-      currentPlan: state.currentPlan ? { ...state.currentPlan, days: state.currentPlan.days.filter(d => d.id !== id) } : null
-    }));
+    set(state => {
+      if (!state.currentPlan) return state;
+      return {
+        currentPlan: {
+          ...state.currentPlan,
+          days: state.currentPlan.days.filter(d => d.id !== id),
+          auditLog: [
+            ...state.currentPlan.auditLog,
+            {
+              timestamp: new Date().toISOString(),
+              action: 'remove_day',
+              user: 'user',
+              dayId: id
+            }
+          ]
+        }
+      };
+    });
   },
 
   addSpotToDay: (dayId, spot, index) => {
@@ -236,7 +315,22 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
         else newSpots.push(newSpot);
         return { ...day, spots: newSpots };
       });
-      return { currentPlan: { ...state.currentPlan, days: newDays } };
+      return { 
+        currentPlan: { 
+          ...state.currentPlan, 
+          days: newDays,
+          auditLog: [
+            ...state.currentPlan.auditLog,
+            {
+              timestamp: new Date().toISOString(),
+              action: 'add_spot',
+              user: 'user',
+              spotId: spot.id,
+              dayId
+            }
+          ]
+        } 
+      };
     });
   },
 
@@ -247,7 +341,22 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
         if (day.id !== dayId) return day;
         return { ...day, spots: day.spots.filter(s => s.instanceId !== instanceId) };
       });
-      return { currentPlan: { ...state.currentPlan, days: newDays } };
+      return { 
+        currentPlan: { 
+          ...state.currentPlan, 
+          days: newDays,
+          auditLog: [
+            ...state.currentPlan.auditLog,
+            {
+              timestamp: new Date().toISOString(),
+              action: 'remove_spot',
+              user: 'user',
+              instanceId,
+              dayId
+            }
+          ]
+        } 
+      };
     });
   },
 
@@ -271,10 +380,27 @@ export const useItineraryBuilderStore = create<ItineraryBuilderState>((set, get)
         }
         return d;
       });
-      return { currentPlan: { ...state.currentPlan, days: finalDays } };
+      return { 
+        currentPlan: { 
+          ...state.currentPlan, 
+          days: finalDays,
+          auditLog: [
+            ...state.currentPlan.auditLog,
+            {
+              timestamp: new Date().toISOString(),
+              action: 'move_spot',
+              user: 'user',
+              instanceId,
+              fromDayId,
+              toDayId
+            }
+          ]
+        } 
+      };
     });
   },
-reorderSpots: (dayId, oldIdx, newIdx) => {
+
+  reorderSpots: (dayId, oldIdx, newIdx) => {
     set(state => {
       if (!state.currentPlan) return state;
       const newDays = state.currentPlan.days.map(d => {
@@ -284,11 +410,26 @@ reorderSpots: (dayId, oldIdx, newIdx) => {
         newSpots.splice(newIdx, 0, moved);
         return { ...d, spots: newSpots };
       });
-      return { currentPlan: { ...state.currentPlan, days: newDays } };
+      return { 
+        currentPlan: { 
+          ...state.currentPlan, 
+          days: newDays,
+          auditLog: [
+            ...state.currentPlan.auditLog,
+            {
+              timestamp: new Date().toISOString(),
+              action: 'reorder_spots',
+              user: 'user',
+              dayId,
+              oldIndex: oldIdx,
+              newIndex: newIdx
+            }
+          ]
+        } 
+      };
     });
   },
 
-  // ✨ 補齊以下漏掉的 Actions
   setSearchQuery: (q) => set({ searchQuery: q }),
   
   setCategoryFilter: (c) => set({ categoryFilter: c }),
@@ -307,4 +448,66 @@ reorderSpots: (dayId, oldIdx, newIdx) => {
   },
 
   setDragging: (d, id) => set({ isDragging: d, activeDragId: id }),
-})); // <-- 確保這裡有兩個右括號與一個分號
+
+  changeStatus: async (newStatus) => {
+    const { currentPlan } = get();
+    if (!currentPlan) return;
+
+    if (!canTransition(currentPlan.status, newStatus)) {
+      throw new Error(`Invalid status transition from ${currentPlan.status} to ${newStatus}`);
+    }
+
+    const originalStatus = currentPlan.status;
+    const originalPlan = JSON.parse(JSON.stringify(currentPlan));
+
+    try {
+      set({
+        currentPlan: {
+          ...currentPlan,
+          status: newStatus,
+          auditLog: [
+            ...currentPlan.auditLog,
+            {
+              timestamp: new Date().toISOString(),
+              action: 'status_change',
+              fromStatus: originalStatus,
+              toStatus: newStatus,
+              user: 'user'
+            }
+          ]
+        }
+      });
+
+      // Simulate async operation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (error) {
+      set({ 
+        currentPlan: originalPlan,
+        lastError: error as Error 
+      });
+      throw error;
+    }
+  },
+
+  rollbackPlan: () => {
+    const { currentPlan } = get();
+    if (!currentPlan || !currentPlan.versions || currentPlan.versions.length === 0) return;
+
+    const lastVersion = currentPlan.versions[currentPlan.versions.length - 1];
+    set({
+      currentPlan: {
+        ...lastVersion.data,
+        versions: currentPlan.versions.slice(0, -1),
+        auditLog: [
+          ...currentPlan.auditLog,
+          {
+            timestamp: new Date().toISOString(),
+            action: 'rollback',
+            user: 'user',
+            version: lastVersion.version
+          }
+        ]
+      }
+    });
+  }
+}));

@@ -1,7 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { MapPin, Clock, Camera, Utensils, Bus, ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface ItineraryItem { id: string; time: string; title: string; location: string; type: 'attraction' | 'meal' | 'transport' | 'hotel'; duration: number; image?: string; }
+interface ItineraryItem { 
+  id: string; 
+  time: string; 
+  title: string; 
+  location: string; 
+  type: 'attraction' | 'meal' | 'transport' | 'hotel'; 
+  duration: number; 
+  image?: string; 
+}
+
+interface ItineraryViewProps {
+  tourName?: string;
+}
 
 const MOCK_ITINERARY: Record<number, ItineraryItem[]> = {
   1: [
@@ -17,55 +29,87 @@ const MOCK_ITINERARY: Record<number, ItineraryItem[]> = {
   ],
 };
 
-export default function ItineraryView() {
+const ItineraryView: React.FC<ItineraryViewProps> = memo(({ tourName = '東京五日深度遊' }) => {
   const [currentDay, setCurrentDay] = useState(1);
   const totalDays = Object.keys(MOCK_ITINERARY).length;
-  const dayItems = MOCK_ITINERARY[currentDay] || [];
+  const dayItems = useMemo(() => MOCK_ITINERARY[currentDay] || [], [currentDay]);
 
   const getTypeIcon = (type: string) => {
     const icons: Record<string, React.ReactNode> = {
-      attraction: <Camera className="w-4 h-4" />,
-      meal: <Utensils className="w-4 h-4" />,
-      transport: <Bus className="w-4 h-4" />,
-      hotel: <MapPin className="w-4 h-4" />,
+      attraction: <Camera className="w-4 h-4" aria-hidden="true" />,
+      meal: <Utensils className="w-4 h-4" aria-hidden="true" />,
+      transport: <Bus className="w-4 h-4" aria-hidden="true" />,
+      hotel: <MapPin className="w-4 h-4" aria-hidden="true" />,
     };
-    return icons[type] || <MapPin className="w-4 h-4" />;
+    return icons[type] || <MapPin className="w-4 h-4" aria-hidden="true" />;
   };
 
+  const handleDayChange = (day: number) => () => setCurrentDay(day);
+  const handlePrevDay = () => setCurrentDay(Math.max(1, currentDay - 1));
+  const handleNextDay = () => setCurrentDay(Math.min(totalDays, currentDay + 1));
+
   return (
-    <div className="min-h-screen bg-gray-50 animate-fade-in">
-      {/* Day Selector */}
+    <div className="min-h-screen bg-gray-50 animate-fade-in" role="region" aria-label="行程表">
       <div className="bg-black text-white px-6 py-4">
         <div className="flex items-center justify-between">
-          <button onClick={() => setCurrentDay(Math.max(1, currentDay - 1))} disabled={currentDay === 1} className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30"><ChevronLeft className="w-5 h-5" /></button>
-          <div className="text-center"><p className="text-sm text-gray-400">東京五日深度遊</p><h2 className="text-xl font-bold">Day {currentDay}</h2></div>
-          <button onClick={() => setCurrentDay(Math.min(totalDays, currentDay + 1))} disabled={currentDay === totalDays} className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30"><ChevronRight className="w-5 h-5" /></button>
+          <button 
+            onClick={handlePrevDay} 
+            disabled={currentDay === 1} 
+            className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30"
+            aria-label="前一天"
+          >
+            <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+          </button>
+          <div className="text-center">
+            <p className="text-sm text-gray-400">{tourName}</p>
+            <h2 className="text-xl font-bold" aria-live="polite">Day {currentDay}</h2>
+          </div>
+          <button 
+            onClick={handleNextDay} 
+            disabled={currentDay === totalDays} 
+            className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30"
+            aria-label="後一天"
+          >
+            <ChevronRight className="w-5 h-5" aria-hidden="true" />
+          </button>
         </div>
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-2 mt-4" role="tablist">
           {Array.from({ length: totalDays }).map((_, idx) => (
-            <button key={idx} onClick={() => setCurrentDay(idx + 1)} className={`w-8 h-8 rounded-full font-semibold text-sm ${currentDay === idx + 1 ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}>{idx + 1}</button>
+            <button 
+              key={idx} 
+              onClick={handleDayChange(idx + 1)} 
+              className={`w-8 h-8 rounded-full font-semibold text-sm ${currentDay === idx + 1 ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}
+              role="tab"
+              aria-selected={currentDay === idx + 1}
+              aria-controls={`day-${idx + 1}-tab`}
+            >
+              {idx + 1}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="p-6">
+      <div className="p-6" id={`day-${currentDay}-tab`} role="tabpanel">
         <div className="relative">
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
+          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" aria-hidden="true" />
           <div className="space-y-6">
             {dayItems.map((item, idx) => (
               <div key={item.id} className="relative pl-10">
-                <div className={`absolute left-2.5 w-3 h-3 rounded-full ${idx === 0 ? 'bg-brand-500' : 'bg-gray-300'} ring-4 ring-white`} />
+                <div className={`absolute left-2.5 w-3 h-3 rounded-full ${idx === 0 ? 'bg-brand-500' : 'bg-gray-300'} ring-4 ring-white`} aria-hidden="true" />
                 <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
                   {item.image && <img src={item.image} alt={item.title} className="w-full h-32 object-cover" />}
                   <div className="p-4">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                      <Clock className="w-4 h-4" /><span>{item.time}</span>
-                      <span className="text-gray-300">•</span>
+                      <Clock className="w-4 h-4" aria-hidden="true" />
+                      <span>{item.time}</span>
+                      <span className="text-gray-300" aria-hidden="true">•</span>
                       <span>{item.duration} 分鐘</span>
                     </div>
                     <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                    <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">{getTypeIcon(item.type)}{item.location}</p>
+                    <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                      {getTypeIcon(item.type)}
+                      {item.location}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -75,4 +119,6 @@ export default function ItineraryView() {
       </div>
     </div>
   );
-}
+});
+
+export default ItineraryView;

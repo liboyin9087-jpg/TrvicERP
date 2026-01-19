@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { z } from 'zod';
 import { QrCode, Eye, EyeOff, X, CheckCircle, AlertCircle, Building2, Users, Briefcase } from 'lucide-react';
 import { AuthService } from '@/core/services/authService';
 import type { LoginCredentials, UserRole } from '@/core/services/authService';
+
+const loginSchema = z.object({
+  email: z.string().email('請輸入有效的電子郵件'),
+  password: z.string().min(8, '密碼至少需要8個字元')
+});
 
 interface LoginPageProps {
   onLogin: (role: 'staff' | 'welfare' | 'traveler', userId?: string, userName?: string) => void;
 }
 
-// Map detailed roles to app-level roles
 function mapUserRoleToAppRole(role: UserRole): 'staff' | 'welfare' | 'traveler' {
   switch (role) {
     case 'admin':
@@ -29,26 +34,37 @@ function mapUserRoleToAppRole(role: UserRole): 'staff' | 'welfare' | 'traveler' 
 type ToastType = 'success' | 'error';
 type DemoRole = 'staff' | 'welfare' | 'traveler';
 
-// Demo 帳號資訊
-const DEMO_ACCOUNTS: Record<DemoRole, { email: string; password: string; label: string; icon: React.ReactNode }> = {
-  staff: {
-    email: 'admin@travelmaster.com',
-    password: 'admin123',
-    label: '旅行社管理端',
-    icon: <Briefcase className="w-5 h-5" />,
-  },
-  welfare: {
-    email: 'hr@company.com',
-    password: 'hr123',
-    label: '福委會/HR',
-    icon: <Building2 className="w-5 h-5" />,
-  },
-  traveler: {
-    email: 'employee@company.com',
-    password: 'emp123',
-    label: '員工端',
-    icon: <Users className="w-5 h-5" />,
-  },
+/**
+ * Get demo accounts configuration - only available when VITE_DEMO_MODE is enabled
+ * @returns Demo accounts object or null if demo mode is disabled
+ */
+const getDemoAccounts = (): Record<DemoRole, { email: string; password: string; label: string; icon: React.ReactNode }> | null => {
+  const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
+  
+  if (!isDemoMode) {
+    return null;
+  }
+
+  return {
+    staff: {
+      email: import.meta.env.VITE_DEMO_STAFF_EMAIL || '',
+      password: import.meta.env.VITE_DEMO_STAFF_PASSWORD || '',
+      label: '旅行社管理端',
+      icon: <Briefcase className="w-5 h-5" />,
+    },
+    welfare: {
+      email: import.meta.env.VITE_DEMO_WELFARE_EMAIL || '',
+      password: import.meta.env.VITE_DEMO_WELFARE_PASSWORD || '',
+      label: '福委會/HR',
+      icon: <Building2 className="w-5 h-5" />,
+    },
+    traveler: {
+      email: import.meta.env.VITE_DEMO_TRAVELER_EMAIL || '',
+      password: import.meta.env.VITE_DEMO_TRAVELER_PASSWORD || '',
+      label: '員工端',
+      icon: <Users className="w-5 h-5" />,
+    },
+  };
 };
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
@@ -62,8 +78,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDemoRole, setSelectedDemoRole] = useState<DemoRole | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Toast notification function
   const showNotification = (message: string, type: ToastType) => {
     setToastMessage(message);
     setToastType(type);
@@ -71,48 +87,44 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Handle QR Code login
   const handleQRLogin = () => {
     setIsScanning(true);
-    // Simulate scanning for 3 seconds
     setTimeout(() => {
       setShowQRModal(false);
       setIsScanning(false);
       showNotification('QR Code 登入成功！', 'success');
-      // Auto login after successful QR scan
       setTimeout(() => {
         onLogin('staff', 'qr_user', 'QR 登入用戶');
       }, 500);
     }, 3000);
   };
 
-  // Handle demo account selection
   const handleDemoLogin = (role: DemoRole) => {
-    const account = DEMO_ACCOUNTS[role];
-    setEmail(account.email);
-    setPassword(account.password);
-    setSelectedDemoRole(role);
+    const demoAccounts = getDemoAccounts();
+    if (!demoAccounts) {
+      showNotification('Demo 模式未啟用', 'error');
+      return;
+    }
+
+    const account = demoAccounts[role];
+    if (account.email && account.password) {
+      setEmail(account.email);
+      setPassword(account.password);
+      setSelectedDemoRole(role);
+    } else {
+      showNotification('Demo 帳號未設定', 'error');
+    }
   };
 
-  // Handle form login
   const handleFormLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!email || !password) {
-      showNotification('請填寫所有欄位', 'error');
-      return;
-    }
-
-    // Simple validation
-    if (!email.includes('@')) {
-      showNotification('請輸入有效的電子郵件', 'error');
-      return;
-    }
-
-    setIsLoading(true);
+    setFormErrors({});
 
     try {
-      const result = await AuthService.login({ email, password });
+      const validatedData = loginSchema.parse({ email, password });
+      
+      setIsLoading(true);
+      const result = await AuthService.login(validatedData);
 
       if (result.success && result.user) {
         showNotification('登入成功！', 'success');
@@ -120,10 +132,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           onLogin(mapUserRoleToAppRole(result.user!.role), result.user!.id, result.user!.name);
         }, 500);
       } else {
-        showNotification(result.error || '登入失敗', 'error');
+        showNotification('登入失敗，請檢查您的憑證', 'error');
       }
-    } catch {
-      showNotification('網路連線錯誤', 'error');
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors = error.flatten().fieldErrors;
+        setFormErrors({
+          email: errors.email?.[0] || '',
+          password: errors.password?.[0] || ''
+        });
+      } else {
+        showNotification('登入過程中發生錯誤', 'error');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -131,20 +151,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Left Side - Background Image */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary-900 relative overflow-hidden">
-        {/* Background Image with Grayscale */}
         <div
           className="absolute inset-0 bg-cover bg-center grayscale"
           style={{
             backgroundImage: 'url(https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200)',
           }}
         />
-
-        {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-950/90 via-primary-900/70 to-primary-950/90" />
-
-        {/* Content */}
         <div className="relative z-10 flex items-center justify-center w-full p-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -176,7 +190,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
       <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -184,17 +197,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          {/* Logo */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">歡迎回來</h2>
             <p className="text-gray-600">登入以繼續使用 TrvicERP</p>
           </div>
 
-          {/* Demo Role Quick Select */}
-          <div className="mb-6">
-            <p className="text-sm text-gray-500 mb-3 text-center">快速登入 Demo 帳號</p>
-            <div className="grid grid-cols-3 gap-2">
-              {(Object.entries(DEMO_ACCOUNTS) as [DemoRole, typeof DEMO_ACCOUNTS.staff][]).map(([role, account]) => (
+          {(() => {
+            const demoAccounts = getDemoAccounts();
+            if (!demoAccounts) return null;
+            
+            return (
+              <div className="mb-6">
+                <p className="text-sm text-gray-500 mb-3 text-center">快速登入 Demo 帳號</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.entries(demoAccounts) as [DemoRole, typeof demoAccounts[DemoRole]][]).map(([role, account]) => (
                 <motion.button
                   key={role}
                   type="button"
@@ -210,9 +226,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   {account.icon}
                   <span className="text-xs font-medium">{account.label}</span>
                 </motion.button>
-              ))}
-            </div>
-          </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
@@ -223,9 +241,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           </div>
 
-          {/* Login Form */}
           <form onSubmit={handleFormLogin} className="space-y-8">
-            {/* Email Input with Floating Label */}
             <div className="relative">
               <input
                 type="text"
@@ -241,9 +257,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               >
                 電子郵件
               </label>
+              {formErrors.email && <p className="mt-1 text-sm text-red-500">{formErrors.email}</p>}
             </div>
 
-            {/* Password Input with Floating Label and Toggle */}
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -266,9 +282,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
+              {formErrors.password && <p className="mt-1 text-sm text-red-500">{formErrors.password}</p>}
             </div>
 
-            {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center">
                 <input type="checkbox" className="w-4 h-4 text-primary-900 border-neutral-300 rounded focus:ring-primary-900" />
@@ -279,9 +295,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               </a>
             </div>
 
-            {/* Login Buttons */}
             <div className="space-y-3">
-              {/* Standard Login Button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -301,7 +315,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 )}
               </button>
 
-              {/* QR Code Login Button */}
               <button
                 type="button"
                 onClick={() => setShowQRModal(true)}
@@ -314,7 +327,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           </form>
 
-          {/* Footer */}
           <p className="text-center text-sm text-neutral-600 mt-8">
             還沒有帳號？{' '}
             <a href="#" className="text-primary-900 font-semibold hover:underline">
@@ -324,7 +336,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </motion.div>
       </div>
 
-      {/* QR Code Modal */}
       <AnimatePresence>
         {showQRModal && (
           <motion.div
@@ -341,7 +352,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               onClick={(e) => e.stopPropagation()}
               className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl relative"
             >
-              {/* Close Button */}
               {!isScanning && (
                 <button
                   onClick={() => setShowQRModal(false)}
@@ -351,12 +361,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 </button>
               )}
 
-              {/* Modal Content */}
               <div className="text-center">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">掃描 QR Code</h3>
                 <p className="text-gray-600 mb-6">使用手機掃描以快速登入</p>
 
-                {/* QR Code Placeholder */}
                 <div className="bg-gray-100 rounded-xl p-8 mb-6 flex items-center justify-center">
                   {isScanning ? (
                     <div className="text-center">
@@ -372,7 +380,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   )}
                 </div>
 
-                {/* Scan Button */}
                 {!isScanning && (
                   <button
                     onClick={handleQRLogin}
@@ -391,7 +398,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         )}
       </AnimatePresence>
 
-      {/* Toast Notification */}
       <AnimatePresence>
         {showToast && (
           <motion.div

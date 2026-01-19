@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, Calendar, MapPin, Users, Bell, User, ChevronRight, Clock,
@@ -8,6 +8,12 @@ import {
   ThumbsUp, ThumbsDown, MessageSquare, ExternalLink, Bed
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSessions } from '@/modules/sessions/hooks/useSessions';
+import { useOrders } from '@/modules/orders/hooks/useOrders';
+import { AuthService } from '@/core/services/authService';
+import Loading from '@/components/shared/Loading';
+import type { Session } from '@/core/types/session';
+import { SessionStatus, GroupType } from '@/core/types/session';
 
 // ============================================
 // Types
@@ -1201,12 +1207,94 @@ function FeedbackTab() {
 
 export default function TravelerApp() {
   const [activeTab, setActiveTab] = useState<TabKey>('home');
-  const [user] = useState<UserProfile>(MOCK_USER);
-  const [availableTrips] = useState<AvailableTrip[]>(MOCK_AVAILABLE_TRIPS);
-  const [registrations, setRegistrations] = useState<MyRegistration[]>(MOCK_MY_REGISTRATIONS);
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [showRegistration, setShowRegistration] = useState(false);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+
+  // Connect to service layer
+  const currentUser = AuthService.getCurrentUser();
+  const { sessions, loading: sessionsLoading, error: sessionsError } = useSessions({
+    groupType: GroupType.WELFARE, // Filter for welfare trips
+    status: SessionStatus.SOLICITING, // Only show open sessions
+  });
+  const { orders, loading: ordersLoading } = useOrders({
+    customerId: currentUser?.id as any || null,
+  });
+
+  // Convert user data
+  const user: UserProfile = useMemo(() => {
+    if (currentUser) {
+      return {
+        name: currentUser.name,
+        department: '員工', // TODO: Get from user profile
+        employeeId: currentUser.id,
+        seniority: 0, // TODO: Get from user profile
+        email: currentUser.email,
+        isEligible: true,
+        subsidyTier: '員工',
+        maxSubsidy: 15000, // TODO: Get from user profile
+      };
+    }
+    return MOCK_USER; // Fallback to mock if no user
+  }, [currentUser]);
+
+  // Convert sessions to AvailableTrip format
+  const availableTrips: AvailableTrip[] = useMemo(() => {
+    if (!sessions || sessions.length === 0) {
+      // Fallback to mock data if no sessions available
+      return MOCK_AVAILABLE_TRIPS;
+    }
+
+    return sessions
+      .filter(s => s.groupType === GroupType.WELFARE && s.status === SessionStatus.SOLICITING)
+      .map(session => ({
+        id: session.id as string,
+        name: session.groupNumber || '未命名行程',
+        destination: '目的地', // TODO: Get from tour data
+        startDate: session.startDate,
+        endDate: session.endDate,
+        image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800', // TODO: Get from tour data
+        price: session.priceTwd,
+        maxSubsidy: 15000, // TODO: Get from welfare budget
+        subsidyType: 'fixed' as const,
+        subsidyAmount: 15000,
+        description: `團號：${session.groupNumber}`,
+        highlights: [],
+        registrationDeadline: session.seatReleaseDate,
+        spotsLeft: session.maxPax - session.currentPax,
+        totalSpots: session.maxPax,
+        status: session.status === SessionStatus.SOLICITING ? 'open' as const : 'closed' as const,
+      }));
+  }, [sessions]);
+
+  // Convert orders to MyRegistration format
+  const registrations: MyRegistration[] = useMemo(() => {
+    if (!orders || orders.length === 0) {
+      return MOCK_MY_REGISTRATIONS; // Fallback to mock
+    }
+
+    return orders.map(order => {
+      const session = sessions?.find(s => s.id === order.sessionId);
+      return {
+        id: order.id as string,
+        tripId: order.sessionId as string,
+        tripName: session?.groupNumber || '未命名行程',
+        destination: '目的地', // TODO: Get from tour data
+        startDate: session?.startDate || '',
+        endDate: session?.endDate || '',
+        image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
+        status: order.status === 'confirmed' ? 'approved' as const : 'pending' as const,
+        registeredAt: order.createdAt,
+        roomType: '雙人房', // TODO: Get from order data
+        companions: [],
+        subsidyAmount: 15000, // TODO: Calculate from order
+        selfPay: order.totalAmount - 15000,
+        specialNeeds: order.notes || '',
+      };
+    });
+  }, [orders, sessions]);
+
+  // Mock notifications for now (TODO: Implement notification service)
+  const [notifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
 
   const unreadCount = notifications.filter(n => !n.read).length;
   const selectedTrip = availableTrips.find(t => t.id === selectedTripId);
@@ -1216,7 +1304,16 @@ export default function TravelerApp() {
     setShowRegistration(true);
   };
 
-  const handleRegistrationSubmit = (data: any) => {
+  // Show loading state
+  if (sessionsLoading && availableTrips.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <Loading text="載入行程資料中..." />
+      </div>
+    );
+  }
+
+  const handleRegistrationSubmit = async (data: any) => {
     const trip = availableTrips.find(t => t.id === data.tripId);
     if (!trip) return;
 

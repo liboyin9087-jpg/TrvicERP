@@ -1,13 +1,5 @@
-/**
- * TrvicERP Badge & Status Components
- *
- * Badge variants for labels and status indicators
- * Status indicators for tour/order workflows
- *
- * @see DESIGN_SYSTEM.md Section 5.2 (Status Colors)
- */
-
 import { cn } from '@/lib/utils';
+import React, { memo } from 'react';
 
 export type BadgeVariant =
   | 'primary'
@@ -22,6 +14,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant;
   size?: 'sm' | 'md';
   dot?: boolean;
+  'aria-label'?: string;
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
@@ -39,12 +32,13 @@ const sizeStyles = {
   md: 'text-xs px-2.5 py-1',
 };
 
-export function Badge({
+export const Badge = memo(function Badge({
   className,
   variant = 'neutral',
   size = 'md',
   dot = false,
   children,
+  'aria-label': ariaLabel,
   ...props
 }: BadgeProps) {
   return (
@@ -55,6 +49,8 @@ export function Badge({
         sizeStyles[size],
         className
       )}
+      aria-label={ariaLabel || (typeof children === 'string' ? children : undefined)}
+      role="status"
       {...props}
     >
       {dot && (
@@ -63,16 +59,14 @@ export function Badge({
             'w-1.5 h-1.5 rounded-full bg-current',
             size === 'sm' && 'w-1 h-1'
           )}
+          aria-hidden="true"
         />
       )}
       {children}
     </span>
   );
-}
+});
 
-/**
- * Tour/Order Status Types
- */
 export type TourStatus =
   | 'draft'
   | 'quoted'
@@ -83,9 +77,6 @@ export type TourStatus =
 
 export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'overdue';
 
-/**
- * Tour Status Badge
- */
 interface TourStatusBadgeProps extends Omit<BadgeProps, 'variant'> {
   status: TourStatus;
 }
@@ -102,28 +93,25 @@ const tourStatusConfig: Record<
   cancelled: { label: '已取消', variant: 'error' },
 };
 
-export function TourStatusBadge({
+export const TourStatusBadge = memo(function TourStatusBadge({
   status,
   className,
   ...props
 }: TourStatusBadgeProps) {
   const config = tourStatusConfig[status];
-
   return (
     <Badge
       variant={config.variant}
       dot
       className={className}
+      aria-label={`狀態: ${config.label}`}
       {...props}
     >
       {config.label}
     </Badge>
   );
-}
+});
 
-/**
- * Payment Status Badge
- */
 interface PaymentStatusBadgeProps extends Omit<BadgeProps, 'variant'> {
   status: PaymentStatus;
 }
@@ -138,28 +126,25 @@ const paymentStatusConfig: Record<
   overdue: { label: '逾期', variant: 'error' },
 };
 
-export function PaymentStatusBadge({
+export const PaymentStatusBadge = memo(function PaymentStatusBadge({
   status,
   className,
   ...props
 }: PaymentStatusBadgeProps) {
   const config = paymentStatusConfig[status];
-
   return (
     <Badge
       variant={config.variant}
       dot
       className={className}
+      aria-label={`付款狀態: ${config.label}`}
       {...props}
     >
       {config.label}
     </Badge>
   );
-}
+});
 
-/**
- * Status Indicator (larger, with dot)
- */
 export type StatusIndicatorVariant =
   | 'draft'
   | 'quoted'
@@ -191,14 +176,13 @@ const statusIndicatorLabels: Record<StatusIndicatorVariant, string> = {
   cancelled: '已取消',
 };
 
-export function StatusIndicator({
+export const StatusIndicator = memo(function StatusIndicator({
   status,
   label,
   className,
   ...props
 }: StatusIndicatorProps) {
   const displayLabel = label || statusIndicatorLabels[status];
-
   return (
     <span
       className={cn(
@@ -206,28 +190,30 @@ export function StatusIndicator({
         statusIndicatorStyles[status],
         className
       )}
+      aria-label={`狀態: ${displayLabel}`}
+      role="status"
       {...props}
     >
-      <span className="w-2 h-2 rounded-full bg-current" />
+      <span className="w-2 h-2 rounded-full bg-current" aria-hidden="true" />
       {displayLabel}
     </span>
   );
-}
+});
 
-/**
- * Count Badge (for notifications, etc.)
- */
 interface CountBadgeProps {
   count: number;
   max?: number;
   className?: string;
 }
 
-export function CountBadge({ count, max = 99, className }: CountBadgeProps) {
+export const CountBadge = memo(function CountBadge({
+  count,
+  max = 99,
+  className,
+}: CountBadgeProps) {
   if (count === 0) return null;
 
   const displayCount = count > max ? `${max}+` : count;
-
   return (
     <span
       className={cn(
@@ -236,15 +222,14 @@ export function CountBadge({ count, max = 99, className }: CountBadgeProps) {
         'bg-error text-white text-[10px] font-bold rounded-full',
         className
       )}
+      aria-label={`${displayCount} 個通知`}
+      role="status"
     >
       {displayCount}
     </span>
   );
-}
+});
 
-/**
- * Trend Indicator (for KPI changes)
- */
 interface TrendIndicatorProps {
   value: number;
   label?: string;
@@ -252,7 +237,7 @@ interface TrendIndicatorProps {
   className?: string;
 }
 
-export function TrendIndicator({
+export const TrendIndicator = memo(function TrendIndicator({
   value,
   label,
   showSign = true,
@@ -260,6 +245,7 @@ export function TrendIndicator({
 }: TrendIndicatorProps) {
   const isPositive = value >= 0;
   const displayValue = Math.abs(value);
+  const trendLabel = isPositive ? '上升' : '下降';
 
   return (
     <span
@@ -268,8 +254,10 @@ export function TrendIndicator({
         isPositive ? 'text-success' : 'text-error',
         className
       )}
+      aria-label={`${trendLabel} ${displayValue}%${label ? ` ${label}` : ''}`}
+      role="status"
     >
-      <span>{isPositive ? '\u2191' : '\u2193'}</span>
+      <span aria-hidden="true">{isPositive ? '\u2191' : '\u2193'}</span>
       <span className="font-medium tabular-nums">
         {showSign && (isPositive ? '+' : '-')}
         {displayValue}%
@@ -277,6 +265,4 @@ export function TrendIndicator({
       {label && <span className="text-neutral-500">{label}</span>}
     </span>
   );
-}
-
-export default Badge;
+});

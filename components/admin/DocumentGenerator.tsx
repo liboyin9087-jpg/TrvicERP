@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Download, Mail, Send, FileDown, Users, Bed, Bus,
@@ -7,10 +7,6 @@ import {
 import { cn } from '@/lib/utils';
 import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, RoomAssignment, MeetingInfo } from '@/types';
 import { LineService, LineSendTarget } from '@/core/services/lineService';
-
-// ============================================
-// Types
-// ============================================
 
 interface DocumentGeneratorProps {
   session: TourSession;
@@ -23,55 +19,63 @@ interface DocumentGeneratorProps {
 
 type DocumentType = 'itinerary' | 'room_list' | 'seat_chart' | 'roster' | 'meeting_info';
 
-// ============================================
-// Document Generator Component
-// ============================================
+interface DocumentOption {
+  type: DocumentType;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+}
 
-export default function DocumentGenerator({
+interface LineSendResult {
+  success: boolean;
+  message: string;
+}
+
+const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
   session,
   bookings,
   hotelRooms = [],
   roomAssignments = [],
   seatAssignments = [],
   meetingInfo,
-}: DocumentGeneratorProps) {
+}) => {
   const [selectedDoc, setSelectedDoc] = useState<DocumentType | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [sendingLine, setSendingLine] = useState(false);
-  const [lineSendResult, setLineSendResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [lineSendResult, setLineSendResult] = useState<LineSendResult | null>(null);
 
-  const documents: { type: DocumentType; label: string; icon: React.ReactNode; description: string }[] = [
+  const documents: DocumentOption[] = useMemo(() => [
     {
       type: 'itinerary',
       label: '團體行程表',
-      icon: <FileText className="w-5 h-5" />,
+      icon: <FileText className="w-5 h-5" aria-hidden="true" />,
       description: '包含每日行程、景點、餐食、住宿資訊',
     },
     {
       type: 'room_list',
       label: '分房表',
-      icon: <Bed className="w-5 h-5" />,
+      icon: <Bed className="w-5 h-5" aria-hidden="true" />,
       description: '房間分配清單，顯示每位旅客的房間號',
     },
     {
       type: 'seat_chart',
       label: '座位表',
-      icon: <Bus className="w-5 h-5" />,
+      icon: <Bus className="w-5 h-5" aria-hidden="true" />,
       description: '交通工具座位配置圖',
     },
     {
       type: 'roster',
       label: '名單清冊',
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="w-5 h-5" aria-hidden="true" />,
       description: '完整旅客名單與基本資料',
     },
     {
       type: 'meeting_info',
       label: '集合資訊',
-      icon: <MapPin className="w-5 h-5" />,
+      icon: <MapPin className="w-5 h-5" aria-hidden="true" />,
       description: '集合地點、時間與聯絡資訊',
     },
-  ];
+  ], []);
 
   const handleGenerate = (type: DocumentType) => {
     setSelectedDoc(type);
@@ -80,15 +84,12 @@ export default function DocumentGenerator({
 
   const handleExportPDF = async (type: DocumentType) => {
     try {
-      // Use jsPDF or react-pdf for better PDF generation
-      // For now, use browser print functionality with improved styling
       const htmlContent = generateHTML(type);
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.write(htmlContent);
         printWindow.document.close();
         
-        // Wait for content to load, then trigger print
         setTimeout(() => {
           printWindow.print();
         }, 250);
@@ -106,21 +107,18 @@ export default function DocumentGenerator({
 
       switch (type) {
         case 'roster':
-          // Export roster as CSV
           csvContent = '序號,姓名,護照號碼,房間號,座位號,特殊需求\n';
           bookings.forEach((booking, idx) => {
             csvContent += `${idx + 1},"${booking.customer_name}","${booking.passport_data?.passport_number || ''}","${booking.assigned_room || ''}","${booking.assigned_seat || ''}","${booking.special_needs || '無'}"\n`;
           });
           break;
         case 'room_list':
-          // Export room list as CSV
           csvContent = '房號,房型,入住旅客\n';
           roomAssignments.forEach(room => {
             csvContent += `${room.roomNumber},"${room.roomType}","${room.occupants.map(o => o.name).join('、')}"\n`;
           });
           break;
         case 'seat_chart':
-          // Export seat chart as CSV
           csvContent = '座位號,是否已分配,乘客姓名,交通工具類型\n';
           seatAssignments.forEach(seat => {
             csvContent += `${seat.seat_number},"${seat.is_assigned ? '是' : '否'}","${seat.passenger_name || ''}","${seat.vehicle_type || ''}"\n`;
@@ -138,7 +136,6 @@ export default function DocumentGenerator({
           }
           break;
         case 'itinerary':
-          // Export itinerary summary
           csvContent = '日期,行程內容\n';
           csvContent += `團號,"${session.group_number || session.series_id}"\n`;
           csvContent += `出發日期,"${session.start_date}"\n`;
@@ -149,7 +146,6 @@ export default function DocumentGenerator({
           csvContent = '資料\n無資料可匯出\n';
       }
 
-      // Create blob and download
       const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -171,7 +167,6 @@ export default function DocumentGenerator({
     setLineSendResult(null);
 
     try {
-      // 從訂單中提取 Line 發送目標
       const targets: LineSendTarget[] = LineService.extractLineTargetsFromBookings(bookings);
 
       if (targets.length === 0) {
@@ -202,7 +197,6 @@ export default function DocumentGenerator({
       });
     } finally {
       setSendingLine(false);
-      // 3 秒後清除結果提示
       setTimeout(() => setLineSendResult(null), 3000);
     }
   };
@@ -306,7 +300,6 @@ export default function DocumentGenerator({
   };
 
   const generateSeatChartHTML = (): string => {
-    const assignedSeats = seatAssignments.filter(s => s.is_assigned);
     return `
       <!DOCTYPE html>
       <html>
@@ -451,20 +444,20 @@ export default function DocumentGenerator({
         <p className="text-sm text-gray-500 mt-1">產生並發送團體相關文件</p>
       </div>
 
-      {/* Document Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {documents.map((doc) => (
           <motion.div
             key={doc.type}
             whileHover={{ y: -2 }}
             className="bg-white p-6 rounded-2xl border border-gray-100"
+            aria-labelledby={`doc-${doc.type}-title`}
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
                 {doc.icon}
               </div>
               <div>
-                <h4 className="font-bold text-gray-900">{doc.label}</h4>
+                <h4 id={`doc-${doc.type}-title`} className="font-bold text-gray-900">{doc.label}</h4>
                 <p className="text-xs text-gray-500">{doc.description}</p>
               </div>
             </div>
@@ -474,8 +467,9 @@ export default function DocumentGenerator({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleGenerate(doc.type)}
                 className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
+                aria-label={`預覽${doc.label}`}
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-4 h-4" aria-hidden="true" />
                 預覽
               </motion.button>
               <motion.button
@@ -483,8 +477,9 @@ export default function DocumentGenerator({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleExportPDF(doc.type)}
                 className="flex-1 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1"
+                aria-label={`匯出${doc.label}為PDF`}
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-4 h-4" aria-hidden="true" />
                 PDF
               </motion.button>
             </div>
@@ -494,8 +489,9 @@ export default function DocumentGenerator({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleExportExcel(doc.type)}
                 className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1"
+                aria-label={`匯出${doc.label}為Excel`}
               >
-                <FileDown className="w-4 h-4" />
+                <FileDown className="w-4 h-4" aria-hidden="true" />
                 Excel
               </motion.button>
               <motion.button
@@ -503,8 +499,14 @@ export default function DocumentGenerator({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleSendLine(doc.type)}
                 className="flex-1 py-2 bg-[#00B900] text-white rounded-lg text-sm font-medium hover:bg-[#009900] transition-colors flex items-center justify-center gap-1"
+                aria-label={`發送${doc.label}到Line`}
+                disabled={sendingLine}
               >
-                <Send className="w-4 h-4" />
+                {sendingLine ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Send className="w-4 h-4" aria-hidden="true" />
+                )}
                 Line
               </motion.button>
             </div>
@@ -512,30 +514,34 @@ export default function DocumentGenerator({
         ))}
       </div>
 
-      {/* Preview Modal */}
       {showPreview && selectedDoc && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preview-modal-title"
           >
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 id="preview-modal-title" className="text-xl font-bold text-gray-900">
                 {documents.find(d => d.type === selectedDoc)?.label} 預覽
               </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleExportPDF(selectedDoc)}
                   className="p-2 hover:bg-gray-100 rounded-lg"
+                  aria-label="列印預覽內容"
                 >
-                  <Printer className="w-5 h-5" />
+                  <Printer className="w-5 h-5" aria-hidden="true" />
                 </button>
                 <button
                   onClick={() => setShowPreview(false)}
                   className="p-2 hover:bg-gray-100 rounded-lg"
+                  aria-label="關閉預覽"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -547,4 +553,8 @@ export default function DocumentGenerator({
       )}
     </div>
   );
-}
+});
+
+DocumentGenerator.displayName = 'DocumentGenerator';
+
+export default DocumentGenerator;

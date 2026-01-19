@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Users, Heart, Baby, Camera, Mountain, Leaf, Compass, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// All possible target audience values from the data
 export const AUDIENCE_OPTIONS = [
   { value: '親子', label: '親子', icon: Baby },
   { value: '文青', label: '文青', icon: User },
@@ -14,14 +13,16 @@ export const AUDIENCE_OPTIONS = [
   { value: '銀髮', label: '銀髮', icon: Users },
 ] as const;
 
+type AudienceOption = typeof AUDIENCE_OPTIONS[number]['value'];
+
 interface AudienceSelectorProps {
-  value: string[];
-  onChange: (audiences: string[]) => void;
+  value: AudienceOption[];
+  onChange: (audiences: AudienceOption[]) => void;
   className?: string;
 }
 
-export default function AudienceSelector({ value, onChange, className }: AudienceSelectorProps) {
-  const toggleAudience = (audience: string) => {
+const AudienceSelector: React.FC<AudienceSelectorProps> = memo(({ value, onChange, className }) => {
+  const toggleAudience = (audience: AudienceOption) => {
     if (value.includes(audience)) {
       onChange(value.filter(a => a !== audience));
     } else {
@@ -29,18 +30,20 @@ export default function AudienceSelector({ value, onChange, className }: Audienc
     }
   };
 
-  const clearAll = () => {
+  const handleClearAll = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     onChange([]);
   };
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('space-y-2', className)} role="group" aria-labelledby="audience-label">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-500">客群篩選</span>
+        <span id="audience-label" className="text-xs text-slate-500">客群篩選</span>
         {value.length > 0 && (
           <button
-            onClick={clearAll}
+            onClick={handleClearAll}
             className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            aria-label="清除全部客群篩選"
           >
             清除全部
           </button>
@@ -59,8 +62,10 @@ export default function AudienceSelector({ value, onChange, className }: Audienc
                   ? 'bg-rose-500 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               )}
+              aria-pressed={isActive}
+              aria-label={`${label}客群`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-3.5 h-3.5" aria-hidden="true" />
               {label}
             </button>
           );
@@ -68,4 +73,8 @@ export default function AudienceSelector({ value, onChange, className }: Audienc
       </div>
     </div>
   );
-}
+});
+
+AudienceSelector.displayName = 'AudienceSelector';
+
+export default AudienceSelector;

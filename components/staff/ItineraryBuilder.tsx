@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -38,16 +38,25 @@ import {
 import SeasonFilter from '../shared/SeasonFilter';
 import AudienceSelector from '../shared/AudienceSelector';
 import { cn } from '@/lib/utils';
-// 引入我們剛建立的 AI 服務
 import { aiService } from '@/services/aiService';
 import { aiService as externalAiService } from '@/services/external/aiService';
 
-const containerVariants = {
+interface ContainerVariants {
+  hidden: { opacity: number };
+  visible: { opacity: number; transition: { staggerChildren: number } };
+}
+
+interface ItemVariants {
+  hidden: { opacity: number; y: number };
+  visible: { opacity: number; y: number };
+}
+
+const containerVariants: ContainerVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
 };
 
-const itemVariants = {
+const itemVariants: ItemVariants = {
   hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0 }
 };
@@ -71,13 +80,12 @@ const getCategoryIcon = (category: SpotCategory) => {
   }
 };
 
-// Resource Card (Left Panel)
 interface ResourceCardProps {
   spot: Spot;
   isDragOverlay?: boolean;
 }
 
-function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
+const ResourceCard = memo(({ spot, isDragOverlay }: ResourceCardProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `resource-${spot.id}`,
     data: { type: 'resource', spot },
@@ -103,6 +111,8 @@ function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
         isDragOverlay && 'shadow-2xl rotate-2 scale-105',
         isDragging && 'ring-2 ring-brand-500'
       )}
+      aria-label={`景點卡片: ${spot.name}`}
+      aria-describedby={`spot-${spot.id}-description`}
     >
       <div className="relative h-28 overflow-hidden">
         <img src={spot.image} alt={spot.name} className="w-full h-full object-cover" />
@@ -140,9 +150,8 @@ function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
       </div>
     </motion.div>
   );
-}
+});
 
-// Scheduled Spot Card (Right Panel)
 interface ScheduledSpotCardProps {
   spot: ScheduledSpot;
   dayId: string;
@@ -150,7 +159,7 @@ interface ScheduledSpotCardProps {
   onRemove: () => void;
 }
 
-function ScheduledSpotCard({ spot, dayId, index, onRemove }: ScheduledSpotCardProps) {
+const ScheduledSpotCard = memo(({ spot, dayId, index, onRemove }: ScheduledSpotCardProps) => {
   const {
     attributes,
     listeners,
@@ -181,11 +190,14 @@ function ScheduledSpotCard({ spot, dayId, index, onRemove }: ScheduledSpotCardPr
         'bg-white rounded-xl border border-slate-200 p-3 flex items-center gap-3 transition-all',
         isDragging && 'ring-2 ring-brand-500 shadow-lg'
       )}
+      aria-label={`行程景點: ${spot.name}`}
+      aria-describedby={`scheduled-spot-${spot.instanceId}-description`}
     >
       <div
         {...attributes}
         {...listeners}
         className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
+        aria-label="拖曳手柄"
       >
         <GripVertical className="w-5 h-5" />
       </div>
@@ -227,14 +239,14 @@ function ScheduledSpotCard({ spot, dayId, index, onRemove }: ScheduledSpotCardPr
         whileTap={{ scale: 0.9 }}
         onClick={onRemove}
         className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+        aria-label={`移除景點 ${spot.name}`}
       >
         <Trash2 className="w-4 h-4" />
       </motion.button>
     </motion.div>
   );
-}
+});
 
-// Day Container (Droppable)
 interface DayContainerProps {
   day: DayPlan;
   onRemoveSpot: (instanceId: string) => void;
@@ -242,13 +254,13 @@ interface DayContainerProps {
   canRemove: boolean;
 }
 
-function DayContainer({ day, onRemoveSpot, onRemoveDay, canRemove }: DayContainerProps) {
+const DayContainer = memo(({ day, onRemoveSpot, onRemoveDay, canRemove }: DayContainerProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${day.id}`,
     data: { type: 'day', dayId: day.id },
   });
 
-  const totalDuration = day.spots.reduce((sum, s) => sum + s.duration, 0);
+  const totalDuration = useMemo(() => day.spots.reduce((sum, s) => sum + s.duration, 0), [day.spots]);
 
   return (
     <motion.div
@@ -259,6 +271,7 @@ function DayContainer({ day, onRemoveSpot, onRemoveDay, canRemove }: DayContaine
         'trvic-card border-2 border-dashed transition-all',
         isOver ? 'border-brand-500 bg-brand-50/50' : 'border-slate-200'
       )}
+      aria-labelledby={`day-${day.id}-title`}
     >
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
@@ -266,7 +279,7 @@ function DayContainer({ day, onRemoveSpot, onRemoveDay, canRemove }: DayContaine
             {day.dayNumber}
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900">{day.title}</h3>
+            <h3 id={`day-${day.id}-title`} className="font-semibold text-slate-900">{day.title}</h3>
             <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
               <span>{day.spots.length} 個行程</span>
               <span className="w-1 h-1 bg-slate-300 rounded-full" />
@@ -283,6 +296,7 @@ function DayContainer({ day, onRemoveSpot, onRemoveDay, canRemove }: DayContaine
             whileTap={{ scale: 0.9 }}
             onClick={onRemoveDay}
             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            aria-label={`移除第 ${day.dayNumber} 天`}
           >
             <Trash2 className="w-4 h-4" />
           </motion.button>
@@ -321,16 +335,15 @@ function DayContainer({ day, onRemoveSpot, onRemoveDay, canRemove }: DayContaine
       </div>
     </motion.div>
   );
-}
+});
 
-// New Plan Modal
 interface NewPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (name: string, destination: string, days: number) => void;
 }
 
-function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
+const NewPlanModal = memo(({ isOpen, onClose, onCreate }: NewPlanModalProps) => {
   const [name, setName] = useState('');
   const [destination, setDestination] = useState('');
   const [days, setDays] = useState(3);
@@ -349,9 +362,28 @@ function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
       <motion.div className="trvic-card w-full max-w-md p-6">
         <h2 className="text-xl font-bold mb-4">建立新行程</h2>
         <div className="space-y-4">
-          <input type="text" placeholder="行程名稱" className="trvic-input w-full" value={name} onChange={e => setName(e.target.value)} />
-          <input type="text" placeholder="目的地" className="trvic-input w-full" value={destination} onChange={e => setDestination(e.target.value)} />
-          <select className="trvic-input w-full" value={days} onChange={e => setDays(Number(e.target.value))}>
+          <input 
+            type="text" 
+            placeholder="行程名稱" 
+            className="trvic-input w-full" 
+            value={name} 
+            onChange={e => setName(e.target.value)} 
+            aria-label="行程名稱"
+          />
+          <input 
+            type="text" 
+            placeholder="目的地" 
+            className="trvic-input w-full" 
+            value={destination} 
+            onChange={e => setDestination(e.target.value)} 
+            aria-label="目的地"
+          />
+          <select 
+            className="trvic-input w-full" 
+            value={days} 
+            onChange={e => setDays(Number(e.target.value))}
+            aria-label="天數"
+          >
             {[...Array(10)].map((_, i) => <option key={i} value={i+1}>{i+1} 天</option>)}
           </select>
         </div>
@@ -362,10 +394,11 @@ function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
       </motion.div>
     </div>
   );
-}
+});
 
-// Main Component
-export default function ItineraryBuilder() {
+interface ItineraryBuilderProps {}
+
+const ItineraryBuilder: React.FC<ItineraryBuilderProps> = memo(() => {
   const {
     currentPlan,
     searchQuery,
@@ -404,22 +437,18 @@ export default function ItineraryBuilder() {
   const [saveChangesNote, setSaveChangesNote] = useState('');
   const [showSaveModal, setShowSaveModal] = useState(false);
 
-  // 預設打開一個行程（如果沒有當前行程）
   React.useEffect(() => {
     if (!currentPlan && savedPlans.length === 0) {
-      // 創建一個預設行程：台灣小眾景點深度遊
       createNewPlan('台灣小眾景點深度遊', '台灣', 3);
     }
   }, [currentPlan, savedPlans.length, createNewPlan]);
 
-  // 🧠 整合 DeepSeek-V3 邏輯 (原有方法，保留用於彈窗顯示)
   const handleGetAiRecommendations = async () => {
     if (!currentPlan) return;
     setAiLoading(true);
     setShowAiPanel(true);
     
     try {
-      // 呼叫 SiliconFlow
       const planContext = {
         destination: currentPlan.destination,
         days: currentPlan.days.map(d => ({
@@ -433,7 +462,6 @@ export default function ItineraryBuilder() {
         `請推薦適合 ${currentPlan.destination} 的景點，避開已安排的點。`
       );
 
-      // 轉換格式
       const recommendations = result.suggestions.map((item: any, index: number) => ({
         id: `ai-${Date.now()}-${index}`,
         name: item.name,
@@ -457,7 +485,6 @@ export default function ItineraryBuilder() {
     }
   };
 
-  // 🧠 新的 AI 推薦方法：直接將結果添加到左側列表
   const handleAIRecommend = async () => {
     if (!currentPlan?.destination) {
       alert("請先設定行程目的地！");
@@ -466,17 +493,14 @@ export default function ItineraryBuilder() {
 
     setIsGenerating(true);
     try {
-      // 蒐集目前行程裡所有的景點
       const currentSpots = currentPlan.days.flatMap(d => d.spots);
 
-      // 呼叫 AI
       const recommendations = await externalAiService.getRecommendations(
         currentPlan.destination, 
         currentSpots
       );
 
       if (recommendations.length > 0) {
-        // 將 AI 推薦的結果轉換為完整的 Spot 格式並添加到狀態
         const fullSpots: Spot[] = recommendations.map((item, index) => ({
           id: item.id || `ai-rec-${Date.now()}-${index}`,
           name: item.name || '未命名景點',
@@ -492,7 +516,6 @@ export default function ItineraryBuilder() {
           target_audience: item.target_audience || ['大眾'],
         }));
 
-        // 將 AI 推薦的結果直接「塞」進左側列表的最上方
         setAiRecommendedSpots(prev => [...fullSpots, ...prev]);
         alert(`AI 已為您推薦 ${recommendations.length} 個景點！請查看左側列表頂端。`);
       } else {
@@ -506,7 +529,6 @@ export default function ItineraryBuilder() {
     }
   };
 
-  // 👁️ 整合 Qwen2-VL 視覺辨識
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -531,9 +553,8 @@ export default function ItineraryBuilder() {
     };
   };
 
-  const filteredSpots = getFilteredSpots();
-  // 合併 AI 推薦的景點到列表最上方
-  const allSpots = [...aiRecommendedSpots, ...filteredSpots];
+  const filteredSpots = useMemo(() => getFilteredSpots(), [getFilteredSpots, searchQuery, categoryFilter, seasonFilter, audienceFilter]);
+  const allSpots = useMemo(() => [...aiRecommendedSpots, ...filteredSpots], [aiRecommendedSpots, filteredSpots]);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -577,8 +598,8 @@ export default function ItineraryBuilder() {
       initial="hidden"
       animate="visible"
       className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100"
+      aria-label="行程配置器"
     >
-      {/* Header */}
       <motion.div variants={itemVariants} className="glass-panel border-b border-slate-200 px-6 py-4">
         <div className="flex items-center justify-between max-w-full">
           <div className="flex items-center gap-3">
@@ -599,6 +620,7 @@ export default function ItineraryBuilder() {
                   onClick={handleAIRecommend}
                   disabled={isGenerating}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-70"
+                  aria-label="AI推薦景點"
                 >
                   {isGenerating ? (
                     <>
@@ -617,17 +639,18 @@ export default function ItineraryBuilder() {
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowSaveModal(true)}
                   className="trvic-btn trvic-btn-primary gap-2"
+                  aria-label="儲存行程"
                 >
                   <Save className="w-4 h-4" />
                   儲存
                 </motion.button>
-                <motion.button onClick={clearCurrentPlan} className="trvic-btn trvic-btn-secondary gap-2">
+                <motion.button onClick={clearCurrentPlan} className="trvic-btn trvic-btn-secondary gap-2" aria-label="關閉行程">
                   <X className="w-4 h-4" /> 關閉
                 </motion.button>
               </>
             )}
             {!currentPlan && (
-               <motion.button onClick={() => setShowNewPlanModal(true)} className="trvic-btn trvic-btn-primary gap-2">
+               <motion.button onClick={() => setShowNewPlanModal(true)} className="trvic-btn trvic-btn-primary gap-2" aria-label="建立新行程">
                   <Plus className="w-4 h-4" /> 建立新行程
                </motion.button>
             )}
@@ -635,13 +658,12 @@ export default function ItineraryBuilder() {
         </div>
       </motion.div>
 
-      {/* Main Content */}
       {!currentPlan ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">開始規劃</h2>
-            <button onClick={() => setShowNewPlanModal(true)} className="trvic-btn trvic-btn-primary">
+            <button onClick={() => setShowNewPlanModal(true)} className="trvic-btn trvic-btn-primary" aria-label="建立新行程">
               <Plus className="w-5 h-5" /> 建立新行程
             </button>
           </div>
@@ -649,23 +671,33 @@ export default function ItineraryBuilder() {
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex-1 flex overflow-hidden">
-            {/* Left Panel */}
             <div className="w-80 glass-panel border-r border-slate-200 flex flex-col flex-shrink-0">
               <div className="p-4 border-b border-slate-100 space-y-3">
                 <div className="flex gap-2">
                    <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="搜尋..." className="trvic-input w-full pl-10 pr-4 text-sm" />
+                      <input 
+                        type="text" 
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        placeholder="搜尋..." 
+                        className="trvic-input w-full pl-10 pr-4 text-sm" 
+                        aria-label="搜尋景點"
+                      />
                    </div>
-                   <label className="cursor-pointer p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" title="AI 讀圖">
+                   <label className="cursor-pointer p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors" title="AI 讀圖" aria-label="上傳圖片進行AI辨識">
                       <Camera className="w-5 h-5 text-slate-600" />
                       <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                    </label>
                 </div>
-                {/* Filters */}
                 <div className="flex gap-1.5 flex-wrap">
                   {categories.map(cat => (
-                    <button key={cat} onClick={() => setCategoryFilter(cat)} className={cn('px-2 py-1 rounded text-xs', categoryFilter === cat ? 'bg-slate-900 text-white' : 'bg-slate-100')}>
+                    <button 
+                      key={cat} 
+                      onClick={() => setCategoryFilter(cat)} 
+                      className={cn('px-2 py-1 rounded text-xs', categoryFilter === cat ? 'bg-slate-900 text-white' : 'bg-slate-100')}
+                      aria-label={`篩選類別: ${cat === 'all' ? '全部' : CATEGORY_CONFIG[cat].label}`}
+                    >
                       {cat === 'all' ? '全部' : CATEGORY_CONFIG[cat].label}
                     </button>
                   ))}
@@ -676,14 +708,19 @@ export default function ItineraryBuilder() {
               </div>
             </div>
 
-            {/* Right Panel */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="flex justify-between items-center mb-4">
                  <h2 className="text-xl font-bold">{currentPlan.name}</h2>
-                 <button onClick={addDay} className="trvic-btn trvic-btn-secondary"><Plus className="w-4 h-4"/> 新增天數</button>
+                 <button onClick={addDay} className="trvic-btn trvic-btn-secondary" aria-label="新增天數"><Plus className="w-4 h-4"/> 新增天數</button>
               </div>
               {currentPlan.days.map(day => (
-                <DayContainer key={day.id} day={day} onRemoveSpot={(id) => removeSpotFromDay(day.id, id)} onRemoveDay={() => removeDay(day.id)} canRemove={currentPlan.days.length > 1} />
+                <DayContainer 
+                  key={day.id} 
+                  day={day} 
+                  onRemoveSpot={(id) => removeSpotFromDay(day.id, id)} 
+                  onRemoveDay={() => removeDay(day.id)} 
+                  canRemove={currentPlan.days.length > 1} 
+                />
               ))}
             </div>
           </div>
@@ -691,14 +728,13 @@ export default function ItineraryBuilder() {
         </DndContext>
       )}
 
-      {/* AI Panel Modal */}
       <AnimatePresence>
         {showAiPanel && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="trvic-card w-full max-w-2xl max-h-[80vh] flex flex-col bg-white">
               <div className="p-4 border-b flex justify-between items-center">
                  <h2 className="font-bold">AI 智慧推薦</h2>
-                 <button onClick={() => setShowAiPanel(false)}><X className="w-5 h-5"/></button>
+                 <button onClick={() => setShowAiPanel(false)} aria-label="關閉AI面板"><X className="w-5 h-5"/></button>
               </div>
               <div className="p-6 overflow-y-auto flex-1">
                  {aiLoading ? (
@@ -707,13 +743,19 @@ export default function ItineraryBuilder() {
                     <div className="grid grid-cols-2 gap-4">
                        {aiRecommendations.map((rec: any) => (
                           <div key={rec.id} className="border rounded-lg p-3">
-                             <img src={rec.image} className="w-full h-32 object-cover rounded mb-2"/>
+                             <img src={rec.image} className="w-full h-32 object-cover rounded mb-2" alt={rec.name}/>
                              <h4 className="font-bold">{rec.name}</h4>
                              <p className="text-sm text-gray-500">{rec.description}</p>
-                             <button onClick={() => { 
+                             <button 
+                               onClick={() => { 
                                  if (currentPlan) addSpotToDay(currentPlan.days[0].id, rec); 
                                  setShowAiPanel(false); 
-                             }} className="w-full mt-2 bg-purple-500 text-white py-1 rounded text-sm">加入行程</button>
+                               }} 
+                               className="w-full mt-2 bg-purple-500 text-white py-1 rounded text-sm"
+                               aria-label={`加入景點 ${rec.name}`}
+                             >
+                               加入行程
+                             </button>
                           </div>
                        ))}
                     </div>
@@ -728,14 +770,28 @@ export default function ItineraryBuilder() {
          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-xl w-96">
                <h2 className="font-bold mb-4">儲存行程</h2>
-               <textarea className="w-full border p-2 rounded mb-4" placeholder="備註..." value={saveChangesNote} onChange={e => setSaveChangesNote(e.target.value)}/>
+               <textarea 
+                 className="w-full border p-2 rounded mb-4" 
+                 placeholder="備註..." 
+                 value={saveChangesNote} 
+                 onChange={e => setSaveChangesNote(e.target.value)}
+                 aria-label="儲存備註"
+               />
                <div className="flex justify-end gap-2">
                   <button onClick={() => setShowSaveModal(false)} className="px-4 py-2 border rounded">取消</button>
-                  <button onClick={() => { savePlan(saveChangesNote); setShowSaveModal(false); }} className="px-4 py-2 bg-brand-500 text-white rounded">確認</button>
+                  <button 
+                    onClick={() => { savePlan(saveChangesNote); setShowSaveModal(false); }} 
+                    className="px-4 py-2 bg-brand-500 text-white rounded"
+                    aria-label="確認儲存"
+                  >
+                    確認
+                  </button>
                </div>
             </div>
          </div>
       )}
     </motion.div>
   );
-}
+});
+
+export default ItineraryBuilder;

@@ -1,38 +1,34 @@
-/**
- * 備份與恢復服務
- * Backup and Restore Service
- */
-
 import { offlineService } from './offlineService';
 
-/**
- * 備份數據結構
- */
+export interface TableData<T = unknown> {
+  id: string;
+  [key: string]: unknown;
+}
+
+export interface BackupTables {
+  orders?: TableData[];
+  quotations?: TableData[];
+  sessions?: TableData[];
+  customers?: TableData[];
+  itineraries?: TableData[];
+}
+
 export interface BackupData {
   version: string;
   timestamp: string;
-  tables: {
-    orders?: any[];
-    quotations?: any[];
-    sessions?: any[];
-    customers?: any[];
-    itineraries?: any[];
-  };
+  tables: BackupTables;
   metadata: {
     recordCount: number;
     totalSize: number;
   };
 }
 
-/**
- * 備份服務
- */
 export class BackupService {
-  /**
-   * 建立備份
-   */
+  private static readonly MAX_LOCAL_BACKUPS = 10;
+  private static readonly BACKUP_STORAGE_KEY = 'backups';
+
   async createBackup(): Promise<BackupData> {
-    const tables = {
+    const tables: BackupTables = {
       orders: await offlineService.getAll('orders'),
       quotations: await offlineService.getAll('quotations'),
       sessions: await offlineService.getAll('sessions'),
@@ -41,7 +37,7 @@ export class BackupService {
     };
 
     const recordCount = Object.values(tables).reduce(
-      (sum, records) => sum + records.length,
+      (sum, records) => sum + (records?.length || 0),
       0
     );
 
@@ -55,121 +51,108 @@ export class BackupService {
       },
     };
 
-    // 保存到本地存儲
     this.saveBackupToLocal(backup);
-
     return backup;
   }
 
-  /**
-   * 保存備份到本地存儲
-   */
   private saveBackupToLocal(backup: BackupData): void {
     try {
       const backups = this.getLocalBackups();
       backups.push(backup);
 
-      // 只保留最近 10 個備份
-      if (backups.length > 10) {
+      if (backups.length > BackupService.MAX_LOCAL_BACKUPS) {
         backups.shift();
       }
 
-      localStorage.setItem('backups', JSON.stringify(backups));
+      localStorage.setItem(BackupService.BACKUP_STORAGE_KEY, JSON.stringify(backups));
     } catch (error) {
       console.error('Failed to save backup:', error);
+      throw new Error('Failed to save backup to local storage');
     }
   }
 
-  /**
-   * 取得本地備份列表
-   */
   getLocalBackups(): BackupData[] {
     try {
-      const stored = localStorage.getItem('backups');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
+      const stored = localStorage.getItem(BackupService.BACKUP_STORAGE_KEY);
+      return stored ? (JSON.parse(stored) as BackupData[]) : [];
+    } catch (error) {
+      console.error('Failed to get local backups:', error);
       return [];
     }
   }
 
-  /**
-   * 恢復備份
-   */
   async restoreBackup(backup: BackupData): Promise<void> {
-    // 恢復各個表的數據
-    if (backup.tables.orders) {
-      for (const order of backup.tables.orders) {
-        await offlineService.save('orders', order);
-      }
-    }
+    try {
+      const restorePromises: Promise<void>[] = [];
 
-    if (backup.tables.quotations) {
-      for (const quotation of backup.tables.quotations) {
-        await offlineService.save('quotations', quotation);
+      for (const [tableName, records] of Object.entries(backup.tables)) {
+        if (records && records.length > 0) {
+          for (const record of records) {
+            restorePromises.push(offlineService.save(tableName, record));
+          }
+        }
       }
-    }
 
-    if (backup.tables.sessions) {
-      for (const session of backup.tables.sessions) {
-        await offlineService.save('sessions', session);
-      }
-    }
-
-    if (backup.tables.customers) {
-      for (const customer of backup.tables.customers) {
-        await offlineService.save('customers', customer);
-      }
-    }
-
-    if (backup.tables.itineraries) {
-      for (const itinerary of backup.tables.itineraries) {
-        await offlineService.save('itineraries', itinerary);
-      }
+      await Promise.all(restorePromises);
+    } catch (error) {
+      console.error('Failed to restore backup:', error);
+      throw new Error('Failed to restore backup');
     }
   }
 
-  /**
-   * 導出備份為 JSON 文件
-   */
   async exportBackup(backup: BackupData): Promise<void> {
-    const jsonContent = JSON.stringify(backup, null, 2);
-    const blob = new Blob([jsonContent], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `backup_${backup.timestamp.replace(/[:.]/g, '-')}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    try {
+      const jsonContent = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `backup_${backup.timestamp.replace(/[:.]/g, '-')}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export backup:', error);
+      throw new Error('Failed to export backup');
+    }
   }
 
-  /**
-   * 從 JSON 文件導入備份
-   */
   async importBackup(file: File): Promise<BackupData> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const backup = JSON.parse(e.target?.result as string) as BackupData;
+          const result = e.target?.result;
+          if (typeof result !== 'string') {
+            throw new Error('Invalid file content');
+          }
+          const backup = JSON.parse(result) as BackupData;
+          if (!backup.version || !backup.timestamp || !backup.tables) {
+            throw new Error('Invalid backup format');
+          }
           resolve(backup);
         } catch (error) {
+          console.error('Failed to parse backup file:', error);
           reject(new Error('Invalid backup file format'));
         }
       };
-      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.onerror = () => {
+        console.error('Failed to read backup file');
+        reject(new Error('Failed to read file'));
+      };
       reader.readAsText(file);
     });
   }
 
-  /**
-   * 刪除備份
-   */
   deleteBackup(timestamp: string): void {
-    const backups = this.getLocalBackups();
-    const filtered = backups.filter((b) => b.timestamp !== timestamp);
-    localStorage.setItem('backups', JSON.stringify(filtered));
+    try {
+      const backups = this.getLocalBackups();
+      const filtered = backups.filter((b) => b.timestamp !== timestamp);
+      localStorage.setItem(BackupService.BACKUP_STORAGE_KEY, JSON.stringify(filtered));
+    } catch (error) {
+      console.error('Failed to delete backup:', error);
+      throw new Error('Failed to delete backup');
+    }
   }
 }
 
-// 單例實例
 export const backupService = new BackupService();

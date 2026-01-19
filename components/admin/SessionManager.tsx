@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Users, Plus, Search, Filter, Edit, Trash2, Eye,
@@ -7,7 +7,14 @@ import {
   Bus, User, Phone, Mail, Save
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/formatting';
 import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, TourLeader, MeetingInfo } from '@/types';
+import { useSessions, useCreateSession, useUpdateSession, useDeleteSession } from '@/modules/sessions/hooks/useSessions';
+import type { Session, SessionStatus, GroupType } from '@/core/types/session';
+import { SessionStatus as CoreSessionStatus, GroupType as CoreGroupType } from '@/core/types/session';
+import Loading from '@/components/shared/Loading';
+import { useAppStore } from '@/store/useAppStore';
+import { AuthService } from '@/core/services/authService';
 
 // ============================================
 // Types
@@ -22,7 +29,7 @@ interface GroupListItem extends TourSession {
 }
 
 // ============================================
-// Mock Data
+// Mock Data (保留用於導遊選擇等輔助功能)
 // ============================================
 
 const MOCK_TOUR_LEADERS: TourLeader[] = [
@@ -31,63 +38,149 @@ const MOCK_TOUR_LEADERS: TourLeader[] = [
   { id: 'tl3', name: '王導遊', phone: '0912-345-680', email: 'guide3@travel.com', license_number: 'TL-2021-023', experience_years: 3 },
 ];
 
-const MOCK_GROUPS: GroupListItem[] = [
-  {
-    id: 's1',
-    series_id: 'series_tokyo_2025',
-    group_number: 'GRP-2025-001',
-    group_type: 'regular',
-    series_name: '東京經典五日遊',
-    start_date: '2025-03-15',
-    end_date: '2025-03-19',
-    status: 'soliciting',
-    min_pax: 20,
-    max_pax: 40,
-    current_pax: 28,
-    seat_release_date: '2025-02-28',
-    price_twd: 45000,
-    agent_commission: 0.15,
-    registration_progress: 70,
-    created_at: '2025-01-10',
-  },
-  {
-    id: 's2',
-    series_id: 'series_hokkaido_2025',
-    group_number: 'GRP-2025-002',
-    group_type: 'welfare',
-    series_name: '北海道絕景五日遊',
-    start_date: '2025-04-20',
-    end_date: '2025-04-24',
-    status: 'guaranteed',
-    min_pax: 30,
-    max_pax: 60,
-    current_pax: 45,
-    seat_release_date: '2025-03-15',
-    price_twd: 55000,
-    agent_commission: 0.12,
-    registration_progress: 75,
-    pending_welfare_count: 5,
-    created_at: '2025-01-15',
-  },
-  {
-    id: 's3',
-    series_id: 'series_bali_2025',
-    group_number: 'GRP-2025-003',
-    group_type: 'regular',
-    series_name: '峇里島豪華五日遊',
-    start_date: '2025-05-10',
-    end_date: '2025-05-14',
-    status: 'soliciting',
-    min_pax: 15,
-    max_pax: 30,
-    current_pax: 12,
-    seat_release_date: '2025-04-20',
-    price_twd: 42000,
-    agent_commission: 0.18,
-    registration_progress: 40,
-    created_at: '2025-02-01',
-  },
-];
+// ============================================
+// Type Conversion Utilities
+// ============================================
+
+/**
+ * Convert Session (camelCase) to GroupListItem (snake_case)
+ * 將 Session 類型轉換為 GroupListItem 類型
+ */
+function convertSessionToGroupListItem(session: Session): GroupListItem {
+  // Map status enum values
+  const statusMap: Record<SessionStatus, string> = {
+    [CoreSessionStatus.SOLICITING]: 'soliciting',
+    [CoreSessionStatus.GUARANTEED]: 'guaranteed',
+    [CoreSessionStatus.CLOSED]: 'closed',
+    [CoreSessionStatus.COMPLETED]: 'completed',
+    [CoreSessionStatus.CANCELLED]: 'cancelled',
+  };
+
+  // Map group type enum values
+  const groupTypeMap: Record<GroupType, string> = {
+    [CoreGroupType.WELFARE]: 'welfare',
+    [CoreGroupType.REGULAR]: 'regular',
+  };
+
+  // Calculate registration progress
+  const registrationProgress = session.maxPax > 0
+    ? Math.round((session.currentPax / session.maxPax) * 100)
+    : 0;
+
+  return {
+    id: session.id as string,
+    series_id: session.seriesId as string,
+    group_number: session.groupNumber,
+    group_type: groupTypeMap[session.groupType] as 'welfare' | 'regular',
+    start_date: session.startDate,
+    end_date: session.endDate,
+    status: statusMap[session.status] as 'soliciting' | 'guaranteed' | 'closed' | 'completed' | 'cancelled',
+    min_pax: session.minPax,
+    max_pax: session.maxPax,
+    current_pax: session.currentPax,
+    seat_release_date: session.seatReleaseDate,
+    price_twd: session.priceTwd,
+    agent_commission: session.agentCommission,
+    registration_progress: registrationProgress,
+    created_at: session.createdAt,
+    // Optional fields
+    series_name: undefined, // Will be populated from tour data if available
+    pending_welfare_count: session.groupType === CoreGroupType.WELFARE ? undefined : undefined,
+  };
+}
+
+/**
+ * Convert GroupListItem to CreateSessionData
+ */
+function convertGroupListItemToCreateSessionData(data: Partial<TourSession>): {
+  seriesId: string;
+  tourId: string;
+  groupNumber: string;
+  groupType: GroupType;
+  startDate: string;
+  endDate: string;
+  minPax: number;
+  maxPax: number;
+  seatReleaseDate: string;
+  priceTwd: number;
+  agentCommission: number;
+} {
+  const groupTypeMap: Record<string, GroupType> = {
+    'welfare': CoreGroupType.WELFARE,
+    'regular': CoreGroupType.REGULAR,
+  };
+
+  return {
+    seriesId: (data.series_id || '') as any,
+    tourId: (data.series_id || '') as any, // Using series_id as tourId fallback
+    groupNumber: data.group_number || '',
+    groupType: groupTypeMap[data.group_type || 'regular'] || CoreGroupType.REGULAR,
+    startDate: data.start_date || '',
+    endDate: data.end_date || '',
+    minPax: data.min_pax || 20,
+    maxPax: data.max_pax || 40,
+    seatReleaseDate: data.seat_release_date || '',
+    priceTwd: data.price_twd || 0,
+    agentCommission: data.agent_commission || 0.15,
+  };
+}
+
+/**
+ * Convert GroupListItem to UpdateSessionData
+ */
+function convertGroupListItemToUpdateSessionData(data: Partial<TourSession>, session?: Session): {
+  groupNumber: string;
+  groupType: GroupType;
+  startDate: string;
+  endDate: string;
+  status?: SessionStatus;
+  minPax: number;
+  maxPax: number;
+  currentPax: number;
+  seatReleaseDate: string;
+  priceTwd: number;
+  agentCommission: number;
+  tourLeaderId?: string;
+  tourLeaderName?: string;
+  meetingInfo?: {
+    location: string;
+    address: string;
+    meetingTime: string;
+    contactPerson: string;
+    contactPhone: string;
+    notes: string;
+  };
+} {
+  const groupTypeMap: Record<string, GroupType> = {
+    'welfare': CoreGroupType.WELFARE,
+    'regular': CoreGroupType.REGULAR,
+  };
+
+  const statusMap: Record<string, SessionStatus> = {
+    'soliciting': CoreSessionStatus.SOLICITING,
+    'guaranteed': CoreSessionStatus.GUARANTEED,
+    'closed': CoreSessionStatus.CLOSED,
+    'completed': CoreSessionStatus.COMPLETED,
+    'cancelled': CoreSessionStatus.CANCELLED,
+  };
+
+  return {
+    groupNumber: data.group_number || session?.groupNumber || '',
+    groupType: groupTypeMap[data.group_type || 'regular'] || CoreGroupType.REGULAR,
+    startDate: data.start_date || session?.startDate || '',
+    endDate: data.end_date || session?.endDate || '',
+    status: data.status ? statusMap[data.status] : undefined,
+    minPax: data.min_pax ?? session?.minPax ?? 20,
+    maxPax: data.max_pax ?? session?.maxPax ?? 40,
+    currentPax: data.current_pax ?? session?.currentPax ?? 0,
+    seatReleaseDate: data.seat_release_date || session?.seatReleaseDate || '',
+    priceTwd: data.price_twd ?? session?.priceTwd ?? 0,
+    agentCommission: data.agent_commission ?? session?.agentCommission ?? 0.15,
+    tourLeaderId: session?.tourLeaderId as string | undefined,
+    tourLeaderName: session?.tourLeaderName,
+    meetingInfo: session?.meetingInfo,
+  };
+}
 
 // ============================================
 // Helper Components
@@ -789,7 +882,7 @@ function ViewGroupModal({ isOpen, onClose, group }: {
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">價格</p>
-              <p className="font-semibold text-gray-900">NT$ {group.price_twd?.toLocaleString() || 0}</p>
+              <p className="font-semibold text-gray-900">{formatCurrency(group.price_twd || 0)}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">業務佣金率</p>
@@ -1024,31 +1117,39 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
 
 export default function SessionManager() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
-  const [groups, setGroups] = useState<GroupListItem[]>(MOCK_GROUPS);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<GroupListItem | null>(null);
 
-  const handleCreateGroup = (data: Partial<TourSession>) => {
-    const newGroup: GroupListItem = {
-      id: `s${Date.now()}`,
-      series_id: data.series_id || '',
-      group_number: data.group_number || `GRP-${new Date().getFullYear()}-${String(groups.length + 1).padStart(3, '0')}`,
-      group_type: data.group_type || 'regular',
-      start_date: data.start_date || '',
-      end_date: data.end_date || '',
-      status: data.status || 'soliciting',
-      min_pax: data.min_pax || 20,
-      max_pax: data.max_pax || 40,
-      current_pax: 0,
-      seat_release_date: data.seat_release_date || '',
-      price_twd: data.price_twd || 0,
-      agent_commission: data.agent_commission || 0.15,
-      registration_progress: 0,
-      created_at: new Date().toISOString().split('T')[0],
-    };
-    setGroups([...groups, newGroup]);
+  // Connect to service layer hooks
+  const { sessions, loading: sessionsLoading, error: sessionsError, refetch: refetchSessions } = useSessions();
+  const { createSession, loading: createLoading } = useCreateSession();
+  const { updateSession, loading: updateLoading } = useUpdateSession();
+  const { deleteSession, loading: deleteLoading } = useDeleteSession();
+
+  // Convert sessions to GroupListItem format
+  const groups: GroupListItem[] = useMemo(() => {
+    if (!sessions || sessions.length === 0) return [];
+    return sessions.map(convertSessionToGroupListItem);
+  }, [sessions]);
+
+  // Get current user ID for audit logging
+  const currentUser = AuthService.getCurrentUser();
+  const currentUserId = currentUser?.id || 'system';
+
+  const handleCreateGroup = async (data: Partial<TourSession>) => {
+    try {
+      const createData = convertGroupListItemToCreateSessionData(data);
+      const result = await createSession(createData);
+      
+      if (result.success && result.data) {
+        await refetchSessions();
+        setShowCreateModal(false);
+      }
+    } catch (error) {
+      console.error('Failed to create session:', error);
+    }
   };
 
   const handleEdit = (id: string) => {
@@ -1059,20 +1160,42 @@ export default function SessionManager() {
     }
   };
 
-  const handleUpdateGroup = (data: Partial<TourSession>) => {
+  const handleUpdateGroup = async (data: Partial<TourSession>) => {
     if (!selectedGroup) return;
-    setGroups(groups.map(g => 
-      g.id === selectedGroup.id 
-        ? { ...g, ...data } 
-        : g
-    ));
-    setShowEditModal(false);
-    setSelectedGroup(null);
+
+    try {
+      // Find the original session to get full data
+      const originalSession = sessions?.find(s => s.id === selectedGroup.id);
+      if (!originalSession) {
+        console.error('Original session not found');
+        return;
+      }
+
+      const updateData = convertGroupListItemToUpdateSessionData(data, originalSession);
+      // Note: updateSession hook doesn't expose userId parameter, so we need to call service directly
+      // For now, we'll use the hook and let the service handle userId internally
+      const result = await updateSession(selectedGroup.id, updateData);
+      
+      if (result.success) {
+        await refetchSessions();
+        setShowEditModal(false);
+        setSelectedGroup(null);
+      }
+    } catch (error) {
+      console.error('Failed to update session:', error);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('確定要刪除此團體嗎？')) {
-      setGroups(groups.filter(g => g.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('確定要刪除此團體嗎？')) return;
+
+    try {
+      const result = await deleteSession(id);
+      if (result.success) {
+        await refetchSessions();
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error);
     }
   };
 
@@ -1084,11 +1207,42 @@ export default function SessionManager() {
     }
   };
 
+  // Loading state
+  const isLoading = sessionsLoading || createLoading || updateLoading || deleteLoading;
+
   const tabs: { key: TabKey; label: string; icon: React.ReactNode; badge?: number }[] = [
     { key: 'dashboard', label: '儀表板', icon: <TrendingUp className="w-4 h-4" /> },
     { key: 'groups', label: '團體列表', icon: <Calendar className="w-4 h-4" /> },
     { key: 'create', label: '建立團體', icon: <Plus className="w-4 h-4" /> },
   ];
+
+  // Show loading state
+  if (isLoading && groups.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <Loading text="載入團次資料中..." />
+      </div>
+    );
+  }
+
+  // Show error state
+  if (sessionsError && groups.length === 0) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg font-semibold text-gray-900 mb-2">載入失敗</p>
+          <p className="text-gray-600 mb-4">{sessionsError.message || '無法載入團次資料'}</p>
+          <button
+            onClick={() => refetchSessions()}
+            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            重新載入
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50">

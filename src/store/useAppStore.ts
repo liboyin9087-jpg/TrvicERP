@@ -16,6 +16,29 @@ export type ViewKey =
 
 export type ViewMode = 'edit' | 'proposal' | 'line';
 
+// Status State Machine
+const STATE_MACHINE = {
+  draft: ['soliciting'],
+  soliciting: ['guaranteed', 'cancelled'],
+  guaranteed: ['departed', 'cancelled'],
+  departed: ['completed'],
+  cancelled: [],
+  completed: []
+} as const;
+
+function canTransition(from: keyof typeof STATE_MACHINE, to: keyof typeof STATE_MACHINE): boolean {
+  return STATE_MACHINE[from]?.includes(to) ?? false;
+}
+
+// Audit Log Type
+interface AuditLog {
+  timestamp: Date;
+  action: string;
+  prevState: any;
+  newState: any;
+  userId: string | null;
+}
+
 // Auth Slice Types
 interface AuthState {
   isLoggedIn: boolean;
@@ -44,9 +67,9 @@ interface UIActions {
   setMobileMenuOpen: (open: boolean) => void;
 }
 
-// Itinerary Slice Types (預留)
+// Itinerary Slice Types
 interface ItineraryState {
-  items: Record<string, ItineraryItem[]>; // key = dayId
+  items: Record<string, ItineraryItem[]>;
   selectedSessionId: string | null;
   isLoading: boolean;
 }
@@ -59,7 +82,7 @@ interface ItineraryActions {
   clearItinerary: () => void;
 }
 
-// Bookings Slice Types (預留)
+// Bookings Slice Types
 interface BookingsState {
   bookings: Booking[];
   currentBooking: Booking | null;
@@ -68,29 +91,33 @@ interface BookingsState {
     status: Booking['status'] | 'all';
     sessionId: string | null;
   };
+  auditLogs: AuditLog[];
 }
 
 interface BookingsActions {
   setBookings: (bookings: Booking[]) => void;
   addBooking: (booking: Booking) => void;
-  updateBooking: (id: string, updates: Partial<Booking>) => void;
+  updateBooking: (id: string, updates: Partial<Booking>) => Promise<void>;
   removeBooking: (id: string) => void;
   setCurrentBooking: (booking: Booking | null) => void;
   setBookingFilters: (filters: Partial<BookingsState['filters']>) => void;
   clearBookings: () => void;
+  rollbackBooking: (id: string, prevState: Booking) => void;
 }
 
-// Sessions Slice Types (預留)
+// Sessions Slice Types
 interface SessionsState {
   sessions: TourSession[];
   currentSession: TourSession | null;
   isLoading: boolean;
+  auditLogs: AuditLog[];
 }
 
 interface SessionsActions {
   setSessions: (sessions: TourSession[]) => void;
   setCurrentSession: (session: TourSession | null) => void;
-  updateSession: (id: string, updates: Partial<TourSession>) => void;
+  updateSession: (id: string, updates: Partial<TourSession>) => Promise<void>;
+  rollbackSession: (id: string, prevState: TourSession) => void;
 }
 
 // Combined Store Type
@@ -100,7 +127,6 @@ interface AppStore extends
   ItineraryState, ItineraryActions,
   BookingsState, BookingsActions,
   SessionsState, SessionsActions {
-  // Global actions
   resetStore: () => void;
 }
 
@@ -135,12 +161,14 @@ const initialBookingsState: BookingsState = {
     status: 'all',
     sessionId: null,
   },
+  auditLogs: [],
 };
 
 const initialSessionsState: SessionsState = {
   sessions: [],
   currentSession: null,
   isLoading: false,
+  auditLogs: [],
 };
 
 // ============================================
@@ -150,8 +178,11 @@ const initialSessionsState: SessionsState = {
 export const useAppStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      // ========== Auth State & Actions ==========
       ...initialAuthState,
+      ...initialUIState,
+      ...initialItineraryState,
+      ...initialBookingsState,
+      ...initialSessionsState,
 
       login: (role, userId, userName) => {
         const defaultView: ViewKey =
@@ -168,10 +199,7 @@ export const useAppStore = create<AppStore>()(
       },
 
       logout: () => {
-        // Clear localStorage to ensure clean state
         localStorage.removeItem('travelmaster-storage');
-
-        // Reset all state
         set({
           ...initialAuthState,
           ...initialUIState,
@@ -183,19 +211,10 @@ export const useAppStore = create<AppStore>()(
 
       setUserRole: (role) => set({ userRole: role }),
 
-      // ========== UI State & Actions ==========
-      ...initialUIState,
-
       setCurrentView: (view) => set({ currentView: view }),
-
       toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-
       setSidebarOpen: (open) => set({ isSidebarOpen: open }),
-
       setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
-
-      // ========== Itinerary State & Actions (預留) ==========
-      ...initialItineraryState,
 
       setItineraryItems: (dayId, items) =>
         set((state) => ({
@@ -219,18 +238,20 @@ export const useAppStore = create<AppStore>()(
         })),
 
       setSelectedSession: (sessionId) => set({ selectedSessionId: sessionId }),
-
       clearItinerary: () => set({ items: {}, selectedSessionId: null }),
 
-      // ========== Bookings State & Actions (預留) ==========
-      ...initialBookingsState,
-
       setBookings: (bookings) => set({ bookings }),
-
       addBooking: (booking) =>
         set((state) => ({ bookings: [...state.bookings, booking] })),
 
-      updateBooking: (id, updates) =>
+      updateBooking: async (id, updates) => {
+        const prevState = get().bookings.find(b => b.id === id);
+        if (!prevState) return;
+
+        if (updates.status && !canTransition(prevState.status, updates.status)) {
+          throw new Error(`Invalid status transition from ${prevState.status} to ${updates.status}`);
+        }
+
         set((state) => ({
           bookings: state.bookings.map((b) =>
             b.id === id ? { ...b, ...updates } : b
@@ -239,7 +260,42 @@ export const useAppStore = create<AppStore>()(
             state.currentBooking?.id === id
               ? { ...state.currentBooking, ...updates }
               : state.currentBooking,
-        })),
+          auditLogs: [...state.auditLogs, {
+            timestamp: new Date(),
+            action: 'updateBooking',
+            prevState,
+            newState: { ...prevState, ...updates },
+            userId: state.userId
+          }]
+        }));
+
+        try {
+          // Simulate API call
+          // await api.updateBooking(id, updates);
+        } catch (error) {
+          get().rollbackBooking(id, prevState);
+          throw error;
+        }
+      },
+
+      rollbackBooking: (id, prevState) => {
+        set((state) => ({
+          bookings: state.bookings.map((b) =>
+            b.id === id ? prevState : b
+          ),
+          currentBooking:
+            state.currentBooking?.id === id
+              ? prevState
+              : state.currentBooking,
+          auditLogs: [...state.auditLogs, {
+            timestamp: new Date(),
+            action: 'rollbackBooking',
+            prevState: state.bookings.find(b => b.id === id),
+            newState: prevState,
+            userId: state.userId
+          }]
+        }));
+      },
 
       removeBooking: (id) =>
         set((state) => ({
@@ -249,12 +305,10 @@ export const useAppStore = create<AppStore>()(
         })),
 
       setCurrentBooking: (booking) => set({ currentBooking: booking }),
-
       setBookingFilters: (filters) =>
         set((state) => ({
           filters: { ...state.filters, ...filters },
         })),
-
       clearBookings: () =>
         set({
           bookings: [],
@@ -262,14 +316,17 @@ export const useAppStore = create<AppStore>()(
           filters: initialBookingsState.filters,
         }),
 
-      // ========== Sessions State & Actions (預留) ==========
-      ...initialSessionsState,
-
       setSessions: (sessions) => set({ sessions }),
-
       setCurrentSession: (session) => set({ currentSession: session }),
 
-      updateSession: (id, updates) =>
+      updateSession: async (id, updates) => {
+        const prevState = get().sessions.find(s => s.id === id);
+        if (!prevState) return;
+
+        if (updates.status && !canTransition(prevState.status, updates.status)) {
+          throw new Error(`Invalid status transition from ${prevState.status} to ${updates.status}`);
+        }
+
         set((state) => ({
           sessions: state.sessions.map((s) =>
             s.id === id ? { ...s, ...updates } : s
@@ -278,9 +335,43 @@ export const useAppStore = create<AppStore>()(
             state.currentSession?.id === id
               ? { ...state.currentSession, ...updates }
               : state.currentSession,
-        })),
+          auditLogs: [...state.auditLogs, {
+            timestamp: new Date(),
+            action: 'updateSession',
+            prevState,
+            newState: { ...prevState, ...updates },
+            userId: state.userId
+          }]
+        }));
 
-      // ========== Global Actions ==========
+        try {
+          // Simulate API call
+          // await api.updateSession(id, updates);
+        } catch (error) {
+          get().rollbackSession(id, prevState);
+          throw error;
+        }
+      },
+
+      rollbackSession: (id, prevState) => {
+        set((state) => ({
+          sessions: state.sessions.map((s) =>
+            s.id === id ? prevState : s
+          ),
+          currentSession:
+            state.currentSession?.id === id
+              ? prevState
+              : state.currentSession,
+          auditLogs: [...state.auditLogs, {
+            timestamp: new Date(),
+            action: 'rollbackSession',
+            prevState: state.sessions.find(s => s.id === id),
+            newState: prevState,
+            userId: state.userId
+          }]
+        }));
+      },
+
       resetStore: () =>
         set({
           ...initialAuthState,
@@ -293,26 +384,19 @@ export const useAppStore = create<AppStore>()(
     {
       name: 'travelmaster-storage',
       storage: createJSONStorage(() => localStorage),
-      // Only persist essential data, not UI transient state
       partialize: (state) => ({
-        // Auth - always persist
         isLoggedIn: state.isLoggedIn,
         userRole: state.userRole,
         userId: state.userId,
         userName: state.userName,
-        // UI - persist view preference
         currentView: state.currentView,
         isSidebarOpen: state.isSidebarOpen,
-        // Don't persist: isMobileMenuOpen, isLoading states
       }),
       version: 1,
       migrate: (persistedState: any, version: number) => {
-        // Handle future migrations here
         if (version === 0) {
-          // Migration from version 0 to 1
           return {
             ...persistedState,
-            // Add any new fields with defaults
           };
         }
         return persistedState as AppStore;
@@ -322,10 +406,9 @@ export const useAppStore = create<AppStore>()(
 );
 
 // ============================================
-// Selector Hooks (for optimized re-renders)
+// Selector Hooks
 // ============================================
 
-// Auth selectors
 export const useAuth = () =>
   useAppStore((state) => ({
     isLoggedIn: state.isLoggedIn,
@@ -339,7 +422,6 @@ export const useAuth = () =>
 export const useIsLoggedIn = () => useAppStore((state) => state.isLoggedIn);
 export const useUserRole = () => useAppStore((state) => state.userRole);
 
-// UI selectors
 export const useUI = () =>
   useAppStore((state) => ({
     currentView: state.currentView,
@@ -352,7 +434,6 @@ export const useUI = () =>
 
 export const useCurrentView = () => useAppStore((state) => state.currentView);
 
-// Bookings selectors
 export const useBookings = () =>
   useAppStore((state) => ({
     bookings: state.bookings,
@@ -365,9 +446,9 @@ export const useBookings = () =>
     removeBooking: state.removeBooking,
     setCurrentBooking: state.setCurrentBooking,
     setBookingFilters: state.setBookingFilters,
+    rollbackBooking: state.rollbackBooking,
   }));
 
-// Sessions selectors
 export const useSessions = () =>
   useAppStore((state) => ({
     sessions: state.sessions,
@@ -375,9 +456,9 @@ export const useSessions = () =>
     setSessions: state.setSessions,
     setCurrentSession: state.setCurrentSession,
     updateSession: state.updateSession,
+    rollbackSession: state.rollbackSession,
   }));
 
-// Itinerary selectors
 export const useItinerary = () =>
   useAppStore((state) => ({
     items: state.items,

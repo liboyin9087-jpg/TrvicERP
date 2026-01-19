@@ -1,21 +1,34 @@
 import OpenAI from 'openai';
 
-// 初始化 SiliconFlow Client
-// 注意：正式上線建議透過後端 Proxy 以保護 Key
+interface Suggestion {
+  name: string;
+  region: string;
+  duration: number;
+  reason: string;
+  tags: string[];
+}
+
+interface Plan {
+  [key: string]: unknown;
+}
+
+interface AIResponse {
+  suggestions: Suggestion[];
+}
+
+// 使用環境變數或預設 API Key（生產環境建議使用環境變數）
+// 注意：SiliconFlow 使用 api.siliconflow.com（國際版）或 api.siliconflow.cn（中國版）
 const client = new OpenAI({
-  apiKey: import.meta.env.VITE_SILICONFLOW_API_KEY, 
-  baseURL: 'https://api.siliconflow.cn/v1',
-  dangerouslyAllowBrowser: true // 允許前端直接呼叫
+  apiKey: import.meta.env.VITE_SILICONFLOW_API_KEY || 'sk-datneleaegsucsfbqrlsdgzppzcoxhzgeurtseabxeposdvg', 
+  baseURL: 'https://api.siliconflow.com/v1', // 使用國際版 API
+  dangerouslyAllowBrowser: true
 });
 
 export const aiService = {
-  /**
-   * 🧠 邏輯大腦：使用 DeepSeek-V3 生成行程建議
-   */
   async getDeepSeekSuggestions(
-    currentPlan: any, 
+    currentPlan: Plan, 
     userPreference: string = '喜歡深度文化體驗，不要太趕'
-  ) {
+  ): Promise<AIResponse> {
     try {
       const response = await client.chat.completions.create({
         model: 'deepseek-ai/DeepSeek-V3',
@@ -34,19 +47,18 @@ export const aiService = {
         temperature: 0.7,
       });
 
-      const content = response.choices[0].message.content || '{"suggestions": []}';
-      return JSON.parse(content);
+      const content = response.choices[0]?.message?.content || '{"suggestions": []}';
+      return JSON.parse(content) as AIResponse;
     } catch (error) {
       console.error('DeepSeek AI Error:', error);
-      // 發生錯誤時回傳空陣列，避免前端崩潰
       return { suggestions: [] };
     }
   },
 
-  /**
-   * 👁️ 視覺眼睛：使用 Qwen2-VL 解析圖片 (門票、菜單、景點照)
-   */
-  async analyzeImageWithQwen(imageBase64: string, prompt: string = '這張圖片裡有什麼旅遊資訊？') {
+  async analyzeImageWithQwen(
+    imageBase64: string, 
+    prompt: string = '這張圖片裡有什麼旅遊資訊？'
+  ): Promise<string | null> {
     try {
       const response = await client.chat.completions.create({
         model: 'Qwen/Qwen2-VL-72B-Instruct',
@@ -67,10 +79,10 @@ export const aiService = {
         max_tokens: 1024,
       });
 
-      return response.choices[0].message.content;
+      return response.choices[0]?.message?.content || null;
     } catch (error) {
       console.error('Qwen Vision Error:', error);
-      throw error;
+      throw new Error('圖片分析失敗');
     }
   }
 };

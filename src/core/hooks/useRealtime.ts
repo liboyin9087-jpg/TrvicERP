@@ -1,8 +1,3 @@
-/**
- * 即時通訊 Hook
- * Real-time Communication Hook
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import {
   RealtimeService,
@@ -10,11 +5,10 @@ import {
   RealtimeNotification,
   LocationUpdate,
   ConnectionStatus,
+  NotificationType,
+  NotificationSeverity,
 } from '../services/realtimeService';
 
-/**
- * 即時連接 Hook
- */
 export function useRealtimeConnection() {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
 
@@ -24,8 +18,6 @@ export function useRealtimeConnection() {
     };
 
     realtimeService.on('status_change', handleStatusChange);
-
-    // 自動連接
     realtimeService.connect();
 
     return () => {
@@ -44,9 +36,6 @@ export function useRealtimeConnection() {
   return { status, connect, disconnect };
 }
 
-/**
- * 團次即時更新 Hook
- */
 export function useSessionRealtime(sessionId: string | null) {
   const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
   const [locations, setLocations] = useState<Map<string, LocationUpdate>>(new Map());
@@ -83,10 +72,10 @@ export function useSessionRealtime(sessionId: string | null) {
 
   const sendNotification = useCallback(
     (
-      type: RealtimeNotification['type'],
+      type: NotificationType,
       title: string,
       message: string,
-      severity: RealtimeNotification['severity'] = 'info'
+      severity: NotificationSeverity = 'info'
     ) => {
       if (!sessionId) return;
       realtimeService.sendNotification({
@@ -130,16 +119,18 @@ export function useSessionRealtime(sessionId: string | null) {
   };
 }
 
-/**
- * 領隊位置追蹤 Hook
- */
 export function useLeaderLocation(sessionId: string | null, userId: string, userName: string) {
-  const [isTracking, setIsTracking] = useState(false);
+  const [isTracking, setIsTracking] = useState<boolean>(false);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const startTracking = useCallback(() => {
-    if (!sessionId || !navigator.geolocation) {
+    if (!sessionId) {
+      setError('無效的團次ID');
+      return;
+    }
+
+    if (!navigator.geolocation) {
       setError('不支援地理位置功能');
       return;
     }
@@ -157,7 +148,7 @@ export function useLeaderLocation(sessionId: string | null, userId: string, user
         });
         setError(null);
       },
-      (err) => {
+      (err: GeolocationPositionError) => {
         setError(err.message);
       },
       {

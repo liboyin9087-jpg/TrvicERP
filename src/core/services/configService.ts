@@ -1,62 +1,63 @@
-/**
- * 系統配置服務
- * System Configuration Service
- */
-
 import { api, API_ENDPOINTS, type ApiResponse } from '@/lib/api';
 
-/**
- * 系統配置
- */
-export interface SystemConfig {
+export type ConfigCategory = 'general' | 'notification' | 'integration' | 'security' | 'ui';
+
+export interface SystemConfig<T = unknown> {
   id: string;
   key: string;
-  value: any;
-  category: 'general' | 'notification' | 'integration' | 'security' | 'ui';
+  value: T;
+  category: ConfigCategory;
   description?: string;
   updatedAt: string;
   updatedBy: string;
 }
 
-/**
- * 配置服務
- */
+export interface ApiError {
+  code: string;
+  message: string;
+}
+
 export class ConfigService {
   private static cache: Map<string, SystemConfig> = new Map();
-  private static cacheExpiry = 5 * 60 * 1000; // 5 分鐘
+  private static cacheExpiry = 5 * 60 * 1000;
   private static lastFetch = 0;
 
-  /**
-   * 取得所有配置
-   */
+  private static isCacheValid(): boolean {
+    return Date.now() - this.lastFetch < this.cacheExpiry && this.cache.size > 0;
+  }
+
   static async getAllConfigs(): Promise<ApiResponse<SystemConfig[]>> {
-    // 檢查緩存
-    if (Date.now() - this.lastFetch < this.cacheExpiry && this.cache.size > 0) {
+    if (this.isCacheValid()) {
       return {
         data: Array.from(this.cache.values()),
         error: null,
       };
     }
 
-    const result = await api.get<SystemConfig[]>(`${API_ENDPOINTS.users.list}/config`);
-    
-    if (result.data) {
-      // 更新緩存
-      this.cache.clear();
-      result.data.forEach((config) => {
-        this.cache.set(config.key, config);
-      });
-      this.lastFetch = Date.now();
-    }
+    try {
+      const result = await api.get<SystemConfig[]>(`${API_ENDPOINTS.users.list}/config`);
+      
+      if (result.data) {
+        this.cache.clear();
+        result.data.forEach((config) => {
+          this.cache.set(config.key, config);
+        });
+        this.lastFetch = Date.now();
+      }
 
-    return result;
+      return result;
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          code: 'FETCH_FAILED',
+          message: 'Failed to fetch configurations',
+        },
+      };
+    }
   }
 
-  /**
-   * 取得單一配置
-   */
   static async getConfig(key: string): Promise<ApiResponse<SystemConfig>> {
-    // 檢查緩存
     if (this.cache.has(key)) {
       return {
         data: this.cache.get(key)!,
@@ -64,8 +65,7 @@ export class ConfigService {
       };
     }
 
-    // 如果緩存過期，重新載入
-    if (Date.now() - this.lastFetch >= this.cacheExpiry) {
+    if (!this.isCacheValid()) {
       await this.getAllConfigs();
     }
 
@@ -79,14 +79,11 @@ export class ConfigService {
       error: {
         code: 'NOT_FOUND',
         message: `Configuration key "${key}" not found`,
-      } as any,
+      },
     };
   }
 
-  /**
-   * 取得配置值（帶預設值）
-   */
-  static async getConfigValue<T = any>(
+  static async getConfigValue<T = unknown>(
     key: string,
     defaultValue?: T
   ): Promise<T | undefined> {
@@ -94,29 +91,32 @@ export class ConfigService {
     return result.data?.value ?? defaultValue;
   }
 
-  /**
-   * 更新配置
-   */
-  static async updateConfig(
+  static async updateConfig<T = unknown>(
     key: string,
-    value: any
-  ): Promise<ApiResponse<SystemConfig>> {
-    const result = await api.patch<SystemConfig>(
-      `${API_ENDPOINTS.users.list}/config/${key}`,
-      { value }
-    );
+    value: T
+  ): Promise<ApiResponse<SystemConfig<T>>> {
+    try {
+      const result = await api.patch<SystemConfig<T>>(
+        `${API_ENDPOINTS.users.list}/config/${key}`,
+        { value }
+      );
 
-    if (result.data) {
-      // 更新緩存
-      this.cache.set(key, result.data);
+      if (result.data) {
+        this.cache.set(key, result.data);
+      }
+
+      return result;
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          code: 'UPDATE_FAILED',
+          message: `Failed to update configuration for key "${key}"`,
+        },
+      };
     }
-
-    return result;
   }
 
-  /**
-   * 清除緩存
-   */
   static clearCache(): void {
     this.cache.clear();
     this.lastFetch = 0;

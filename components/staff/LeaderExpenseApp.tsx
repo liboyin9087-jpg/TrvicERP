@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Receipt, Plus, Camera, DollarSign, Calendar, Check, Clock } from 'lucide-react';
 
 interface Expense {
@@ -10,6 +10,16 @@ interface Expense {
   status: 'pending' | 'approved' | 'rejected';
 }
 
+interface StatusStyle {
+  bg: string;
+  text: string;
+  label: string;
+}
+
+interface LeaderExpenseAppProps {
+  initialExpenses?: Expense[];
+}
+
 const MOCK_EXPENSES: Expense[] = [
   { id: '1', category: '餐飲', description: '團體午餐 - 淺草燒肉', amount: 48000, date: '2025-01-10', status: 'approved' },
   { id: '2', category: '交通', description: '包車費用', amount: 25000, date: '2025-01-10', status: 'pending' },
@@ -17,11 +27,11 @@ const MOCK_EXPENSES: Expense[] = [
   { id: '4', category: '其他', description: '急用醫療用品', amount: 1500, date: '2025-01-09', status: 'pending' },
 ];
 
-export default function LeaderExpenseApp() {
-  const [expenses] = useState<Expense[]>(MOCK_EXPENSES);
+const LeaderExpenseApp: React.FC<LeaderExpenseAppProps> = memo(({ initialExpenses = MOCK_EXPENSES }) => {
+  const [expenses] = useState<Expense[]>(initialExpenses);
 
-  const getStatusStyle = (status: string) => {
-    const styles: Record<string, { bg: string; text: string; label: string }> = {
+  const getStatusStyle = (status: string): StatusStyle => {
+    const styles: Record<string, StatusStyle> = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: '待審核' },
       approved: { bg: 'bg-brand-100', text: 'text-brand-700', label: '已核准' },
       rejected: { bg: 'bg-red-100', text: 'text-red-700', label: '已拒絕' },
@@ -29,44 +39,54 @@ export default function LeaderExpenseApp() {
     return styles[status] || styles.pending;
   };
 
-  const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const approvedAmount = expenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + e.amount, 0);
+  const totalAmount = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses]);
+  const approvedAmount = useMemo(() => expenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + e.amount, 0), [expenses]);
+  const pendingCount = useMemo(() => expenses.filter(e => e.status === 'pending').length, [expenses]);
+
+  const handleAddExpense = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // TODO: Implement add expense logic
+  };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-6 animate-fade-in">
+    <div className="p-8 max-w-4xl mx-auto space-y-6 animate-fade-in" role="main" aria-label="領隊報帳管理系統">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">領隊報帳</h2>
+          <h1 className="text-2xl font-bold text-gray-900">領隊報帳</h1>
           <p className="text-gray-500 mt-1">管理出團費用申報</p>
         </div>
-        <button className="bg-black text-white px-5 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors">
+        <button 
+          className="bg-black text-white px-5 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors"
+          onClick={handleAddExpense}
+          aria-label="新增支出"
+        >
           <Plus className="w-5 h-5" /> 新增支出
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
-          <p className="text-sm text-gray-500">總支出</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">NT$ {totalAmount.toLocaleString()}</p>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100" aria-labelledby="total-expense-label">
+          <p id="total-expense-label" className="text-sm text-gray-500">總支出</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1" aria-live="polite">NT$ {totalAmount.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
-          <p className="text-sm text-gray-500">已核准</p>
-          <p className="text-2xl font-bold text-brand-600 mt-1">NT$ {approvedAmount.toLocaleString()}</p>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100" aria-labelledby="approved-expense-label">
+          <p id="approved-expense-label" className="text-sm text-gray-500">已核准</p>
+          <p className="text-2xl font-bold text-brand-600 mt-1" aria-live="polite">NT$ {approvedAmount.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
-          <p className="text-sm text-gray-500">待審核</p>
-          <p className="text-2xl font-bold text-yellow-600 mt-1">{expenses.filter(e => e.status === 'pending').length} 筆</p>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100" aria-labelledby="pending-expense-label">
+          <p id="pending-expense-label" className="text-sm text-gray-500">待審核</p>
+          <p className="text-2xl font-bold text-yellow-600 mt-1" aria-live="polite">{pendingCount} 筆</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100">
+      <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100" role="list" aria-label="支出清單">
         {expenses.map((expense) => {
           const status = getStatusStyle(expense.status);
           return (
-            <div key={expense.id} className="p-4 hover:bg-gray-50 transition-colors">
+            <div key={expense.id} className="p-4 hover:bg-gray-50 transition-colors" role="listitem">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center" aria-hidden="true">
                     <Receipt className="w-6 h-6 text-gray-500" />
                   </div>
                   <div>
@@ -79,7 +99,9 @@ export default function LeaderExpenseApp() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-gray-900">NT$ {expense.amount.toLocaleString()}</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status.bg} ${status.text}`}>{status.label}</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status.bg} ${status.text}`}>
+                    {status.label}
+                  </span>
                 </div>
               </div>
             </div>
@@ -88,4 +110,6 @@ export default function LeaderExpenseApp() {
       </div>
     </div>
   );
-}
+});
+
+export default LeaderExpenseApp;

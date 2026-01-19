@@ -1,13 +1,5 @@
-/**
- * 報表服務層
- * Report Service Layer
- */
-
 import { api, API_ENDPOINTS } from '../../../lib/api';
 
-/**
- * 營收報表查詢條件
- */
 export interface RevenueReportQuery {
   dateFrom: string;
   dateTo: string;
@@ -16,9 +8,6 @@ export interface RevenueReportQuery {
   sessionId?: string;
 }
 
-/**
- * 營收報表資料
- */
 export interface RevenueReportData {
   period: string;
   totalRevenue: number;
@@ -29,9 +18,6 @@ export interface RevenueReportData {
   averageOrderValue: number;
 }
 
-/**
- * 客戶統計報表資料
- */
 export interface CustomerReportData {
   customerId: string;
   customerName: string;
@@ -42,9 +28,6 @@ export interface CustomerReportData {
   favoriteDestinations: string[];
 }
 
-/**
- * 團隊績效報表資料
- */
 export interface TeamReportData {
   teamMemberId: string;
   teamMemberName: string;
@@ -55,92 +38,122 @@ export interface TeamReportData {
   averageOrderValue: number;
 }
 
-/**
- * 報表服務
- */
+interface ApiResponse<T> {
+  data: T | null;
+  error: {
+    code: string;
+    message: string;
+    statusCode?: number;
+  } | null;
+}
+
+interface ExportParams {
+  dateFrom?: string;
+  dateTo?: string;
+  groupBy?: string;
+  customerId?: string;
+  sessionId?: string;
+  minSpent?: number;
+  limit?: number;
+  role?: string;
+}
+
 export class ReportService {
-  /**
-   * 取得營收報表
-   */
   static async getRevenueReport(
     query: RevenueReportQuery
-  ): Promise<{
-    data: RevenueReportData[] | null;
-    error: any;
-  }> {
-    const params = new URLSearchParams();
-    params.append('dateFrom', query.dateFrom);
-    params.append('dateTo', query.dateTo);
-    if (query.groupBy) params.append('groupBy', query.groupBy);
-    if (query.customerId) params.append('customerId', query.customerId);
-    if (query.sessionId) params.append('sessionId', query.sessionId);
+  ): Promise<ApiResponse<RevenueReportData[]>> {
+    try {
+      const params = new URLSearchParams();
+      params.append('dateFrom', query.dateFrom);
+      params.append('dateTo', query.dateTo);
+      if (query.groupBy) params.append('groupBy', query.groupBy);
+      if (query.customerId) params.append('customerId', query.customerId);
+      if (query.sessionId) params.append('sessionId', query.sessionId);
 
-    const endpoint = `${API_ENDPOINTS.reports.revenue}?${params.toString()}`;
-    return api.get<RevenueReportData[]>(endpoint);
+      const endpoint = `${API_ENDPOINTS.reports.revenue}?${params.toString()}`;
+      const response = await api.get<RevenueReportData[]>(endpoint);
+      return response;
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          code: 'API_ERROR',
+          message: error instanceof Error ? error.message : '取得營收報表失敗'
+        }
+      };
+    }
   }
 
-  /**
-   * 取得客戶統計報表
-   */
   static async getCustomerReport(params?: {
     dateFrom?: string;
     dateTo?: string;
     minSpent?: number;
     limit?: number;
-  }): Promise<{
-    data: CustomerReportData[] | null;
-    error: any;
-  }> {
-    const queryParams = new URLSearchParams();
-    if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
-    if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
-    if (params?.minSpent) queryParams.append('minSpent', params.minSpent.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
+  }): Promise<ApiResponse<CustomerReportData[]>> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
+      if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
+      if (params?.minSpent) queryParams.append('minSpent', params.minSpent.toString());
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    const endpoint = `${API_ENDPOINTS.reports.customers}?${queryParams.toString()}`;
-    return api.get<CustomerReportData[]>(endpoint);
+      const endpoint = `${API_ENDPOINTS.reports.customers}?${queryParams.toString()}`;
+      const response = await api.get<CustomerReportData[]>(endpoint);
+      return response;
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          code: 'API_ERROR',
+          message: error instanceof Error ? error.message : '取得客戶報表失敗'
+        }
+      };
+    }
   }
 
-  /**
-   * 取得團隊績效報表
-   */
   static async getTeamReport(params?: {
     dateFrom?: string;
     dateTo?: string;
     role?: string;
-  }): Promise<{
-    data: TeamReportData[] | null;
-    error: any;
-  }> {
-    const queryParams = new URLSearchParams();
-    if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
-    if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
-    if (params?.role) queryParams.append('role', params.role);
+  }): Promise<ApiResponse<TeamReportData[]>> {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.dateFrom) queryParams.append('dateFrom', params.dateFrom);
+      if (params?.dateTo) queryParams.append('dateTo', params.dateTo);
+      if (params?.role) queryParams.append('role', params.role);
 
-    const endpoint = `${API_ENDPOINTS.reports.teams}?${queryParams.toString()}`;
-    return api.get<TeamReportData[]>(endpoint);
+      const endpoint = `${API_ENDPOINTS.reports.teams}?${queryParams.toString()}`;
+      const response = await api.get<TeamReportData[]>(endpoint);
+      return response;
+    } catch (error) {
+      return {
+        data: null,
+        error: {
+          code: 'API_ERROR',
+          message: error instanceof Error ? error.message : '取得團隊報表失敗'
+        }
+      };
+    }
   }
 
-  /**
-   * 匯出報表（Excel/PDF）
-   */
   static async exportReport(
     type: 'revenue' | 'customers' | 'teams',
     format: 'excel' | 'pdf',
-    params?: Record<string, any>
-  ): Promise<{
-    data: Blob | null;
-    error: any;
-  }> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('format', format);
-    Object.entries(params || {}).forEach(([key, value]) => {
-      queryParams.append(key, String(value));
-    });
-
-    const endpoint = `${API_ENDPOINTS.reports.export(type)}?${queryParams.toString()}`;
-    
+    params?: ExportParams
+  ): Promise<ApiResponse<Blob>> {
     try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('format', format);
+      
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) {
+            queryParams.append(key, String(value));
+          }
+        });
+      }
+
+      const endpoint = `${API_ENDPOINTS.reports.export(type)}?${queryParams.toString()}`;
       const token = localStorage.getItem('auth_token');
       const response = await fetch(endpoint, {
         method: 'GET',

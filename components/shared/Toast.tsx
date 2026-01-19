@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
+import { memo } from 'react';
 import type { Toast as ToastType } from '@/store/useToastStore';
 
 interface ToastProps {
@@ -11,15 +12,15 @@ const iconMap = {
   success: CheckCircle,
   error: AlertCircle,
   info: Info,
-};
+} as const;
 
 const colorMap = {
   success: 'bg-emerald-500',
   error: 'bg-red-500',
   info: 'bg-blue-500',
-};
+} as const;
 
-export default function Toast({ toast, onClose }: ToastProps) {
+const Toast = memo(({ toast, onClose }: ToastProps) => {
   const Icon = iconMap[toast.type];
   const bgColor = colorMap[toast.type];
 
@@ -30,24 +31,31 @@ export default function Toast({ toast, onClose }: ToastProps) {
       exit={{ opacity: 0, x: 100, scale: 0.9 }}
       transition={{ type: 'spring', damping: 20, stiffness: 300 }}
       className={`${bgColor} text-white rounded-xl shadow-2xl overflow-hidden min-w-[300px] max-w-md`}
+      role="alert"
+      aria-live="assertive"
     >
       <div className="flex items-center gap-3 px-4 py-3">
-        <Icon className="w-5 h-5 flex-shrink-0" />
+        <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
         <p className="flex-1 font-medium text-sm">{toast.message}</p>
         <button
           onClick={() => onClose(toast.id)}
           className="p-1 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
+          aria-label="關閉通知"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
-      {/* Progress bar */}
       <motion.div
         initial={{ scaleX: 1 }}
         animate={{ scaleX: 0 }}
         transition={{ duration: toast.duration / 1000, ease: 'linear' }}
         className="h-1 bg-white/30 origin-left"
+        aria-hidden="true"
       />
     </motion.div>
   );
-}
+});
+
+Toast.displayName = 'Toast';
+
+export default Toast;

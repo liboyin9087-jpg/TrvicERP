@@ -1,22 +1,29 @@
-/**
- * Line 訊息發送 Hook
- * Line Messaging Hook
- */
-
 import { useState, useCallback } from 'react';
 import { LineService, LineSendTarget, LineSendResult, DocumentSendOptions } from '../services/lineService';
 import { useToast } from '../../store/useToastStore';
 
-/**
- * Line 訊息發送 Hook
- */
+interface MeetingInfo {
+  title: string;
+  time: string;
+  location: string;
+  notes?: string;
+}
+
+interface ItineraryChange {
+  tourId: string;
+  changeType: 'date' | 'location' | 'cancellation';
+  oldValue: string;
+  newValue: string;
+  reason?: string;
+}
+
 export function useLineSend() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [lastResult, setLastResult] = useState<LineSendResult | null>(null);
   const toast = useToast();
 
   const sendText = useCallback(
-    async (targets: LineSendTarget[], text: string) => {
+    async (targets: LineSendTarget[], text: string): Promise<LineSendResult> => {
       setLoading(true);
       try {
         const result = await LineService.sendTextMessage(targets, text);
@@ -34,7 +41,7 @@ export function useLineSend() {
           success: false,
           sentCount: 0,
           failedCount: targets.length,
-          errors: [{ targetId: 'all', error: String(error) }],
+          errors: [{ targetId: 'all', error: error instanceof Error ? error.message : String(error) }],
         };
         setLastResult(errorResult);
         toast.error('發送失敗');
@@ -47,7 +54,7 @@ export function useLineSend() {
   );
 
   const sendDocument = useCallback(
-    async (options: DocumentSendOptions) => {
+    async (options: DocumentSendOptions): Promise<LineSendResult> => {
       setLoading(true);
       try {
         const result = await LineService.sendDocumentNotification(options);
@@ -65,7 +72,7 @@ export function useLineSend() {
           success: false,
           sentCount: 0,
           failedCount: options.recipients.length,
-          errors: [{ targetId: 'all', error: String(error) }],
+          errors: [{ targetId: 'all', error: error instanceof Error ? error.message : String(error) }],
         };
         setLastResult(errorResult);
         toast.error('發送失敗');
@@ -78,10 +85,7 @@ export function useLineSend() {
   );
 
   const sendMeetingReminder = useCallback(
-    async (
-      targets: LineSendTarget[],
-      meetingInfo: Parameters<typeof LineService.sendMeetingReminder>[1]
-    ) => {
+    async (targets: LineSendTarget[], meetingInfo: MeetingInfo): Promise<LineSendResult> => {
       setLoading(true);
       try {
         const result = await LineService.sendMeetingReminder(targets, meetingInfo);
@@ -99,7 +103,7 @@ export function useLineSend() {
           success: false,
           sentCount: 0,
           failedCount: targets.length,
-          errors: [{ targetId: 'all', error: String(error) }],
+          errors: [{ targetId: 'all', error: error instanceof Error ? error.message : String(error) }],
         };
         setLastResult(errorResult);
         toast.error('發送失敗');
@@ -112,10 +116,7 @@ export function useLineSend() {
   );
 
   const sendItineraryChange = useCallback(
-    async (
-      targets: LineSendTarget[],
-      change: Parameters<typeof LineService.sendItineraryChangeNotification>[1]
-    ) => {
+    async (targets: LineSendTarget[], change: ItineraryChange): Promise<LineSendResult> => {
       setLoading(true);
       try {
         const result = await LineService.sendItineraryChangeNotification(targets, change);
@@ -133,7 +134,7 @@ export function useLineSend() {
           success: false,
           sentCount: 0,
           failedCount: targets.length,
-          errors: [{ targetId: 'all', error: String(error) }],
+          errors: [{ targetId: 'all', error: error instanceof Error ? error.message : String(error) }],
         };
         setLastResult(errorResult);
         toast.error('發送失敗');

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scale, X, Send, BookOpen, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,7 +12,12 @@ interface Message {
   timestamp: Date;
 }
 
-const QUICK_QUESTIONS = [
+interface LegalAssistantProps {
+  initialMessages?: Message[];
+  quickQuestions?: string[];
+}
+
+const DEFAULT_QUICK_QUESTIONS = [
   '護照首次申請要準備什麼？',
   '旅遊取消的退費規定？',
   '航班延誤賠償標準？',
@@ -20,7 +25,6 @@ const QUICK_QUESTIONS = [
   '遊覽車駕駛工時限制？',
 ];
 
-// Animation variants
 const chatWindowVariants = {
   hidden: { opacity: 0, scale: 0.9, y: 20 },
   visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring' as const, damping: 25, stiffness: 300 } },
@@ -38,8 +42,7 @@ const buttonVariants = {
   exit: { scale: 0, opacity: 0 }
 };
 
-// Typing indicator component
-function TypingIndicator() {
+const TypingIndicator = memo(() => {
   return (
     <div className="flex items-center gap-1.5 px-4 py-3">
       {[0, 1, 2].map((i) => (
@@ -48,22 +51,24 @@ function TypingIndicator() {
           className="w-2 h-2 bg-gray-400 rounded-full"
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+          aria-hidden="true"
         />
       ))}
     </div>
   );
-}
+});
 
-export default function LegalAssistant() {
+const LegalAssistant: React.FC<LegalAssistantProps> = memo(({
+  initialMessages = [{
+    id: 'welcome',
+    role: 'assistant',
+    content: '您好！我是法規小助理\n\n我可以幫您查詢旅遊相關法規，包括：\n• 護照申請規定\n• 旅遊契約條款\n• 航空公約賠償\n• 消費者保護法\n\n請問有什麼可以幫您的？',
+    timestamp: new Date(),
+  }],
+  quickQuestions = DEFAULT_QUICK_QUESTIONS
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: '您好！我是法規小助理\n\n我可以幫您查詢旅遊相關法規，包括：\n• 護照申請規定\n• 旅遊契約條款\n• 航空公約賠償\n• 消費者保護法\n\n請問有什麼可以幫您的？',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -76,7 +81,8 @@ export default function LegalAssistant() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
+  const handleSend = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -90,10 +96,8 @@ export default function LegalAssistant() {
     setInput('');
     setIsLoading(true);
 
-    // Simulate AI thinking delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Get answer from RAG engine
     const { documents, summary } = ragEngine.getLegalAnswer(input.trim());
 
     const assistantMessage: Message = {
@@ -112,16 +116,17 @@ export default function LegalAssistant() {
     setInput(question);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  const visibleQuickQuestions = useMemo(() => quickQuestions.slice(0, 3), [quickQuestions]);
+
   return (
     <>
-      {/* Floating Button */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -133,6 +138,7 @@ export default function LegalAssistant() {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center justify-center"
+            aria-label="開啟法規小助理"
           >
             <Scale className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
@@ -142,7 +148,6 @@ export default function LegalAssistant() {
         )}
       </AnimatePresence>
 
-      {/* Chat Window - iMessage Style */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -151,8 +156,10 @@ export default function LegalAssistant() {
             animate="visible"
             exit="exit"
             className="fixed bottom-6 right-6 z-50 w-[380px] h-[580px] glass-panel rounded-3xl flex flex-col overflow-hidden shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="legal-assistant-title"
           >
-            {/* Header */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <motion.div
@@ -162,9 +169,9 @@ export default function LegalAssistant() {
                   <Scale className="w-5 h-5" />
                 </motion.div>
                 <div>
-                  <h3 className="font-semibold text-lg">法規小助理</h3>
+                  <h3 id="legal-assistant-title" className="font-semibold text-lg">法規小助理</h3>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" aria-hidden="true" />
                     <p className="text-xs text-white/80">AI 線上服務中</p>
                   </div>
                 </div>
@@ -174,12 +181,12 @@ export default function LegalAssistant() {
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsOpen(false)}
                 className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                aria-label="關閉法規小助理"
               >
                 <X className="w-5 h-5" />
               </motion.button>
             </div>
 
-            {/* Messages - iMessage Style */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-slate-50/50 to-white/30 scrollbar-thin">
               {messages.map((message, index) => (
                 <motion.div
@@ -189,6 +196,7 @@ export default function LegalAssistant() {
                   animate="visible"
                   transition={{ delay: index * 0.05 }}
                   className={cn('flex', message.role === 'user' ? 'justify-end' : 'justify-start')}
+                  aria-live={index === messages.length - 1 ? 'polite' : 'off'}
                 >
                   <div
                     className={cn(
@@ -200,7 +208,6 @@ export default function LegalAssistant() {
                   >
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
 
-                    {/* Document References */}
                     {message.documents && message.documents.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-200/50">
                         <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
@@ -232,7 +239,6 @@ export default function LegalAssistant() {
                 </motion.div>
               ))}
 
-              {/* Typing indicator */}
               {isLoading && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -248,7 +254,6 @@ export default function LegalAssistant() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Questions */}
             <AnimatePresence>
               {messages.length <= 2 && (
                 <motion.div
@@ -259,7 +264,7 @@ export default function LegalAssistant() {
                 >
                   <p className="text-xs text-gray-500 mb-2 font-medium">快速提問</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {QUICK_QUESTIONS.slice(0, 3).map((q, idx) => (
+                    {visibleQuickQuestions.map((q, idx) => (
                       <motion.button
                         key={idx}
                         whileHover={{ scale: 1.02 }}
@@ -275,35 +280,38 @@ export default function LegalAssistant() {
               )}
             </AnimatePresence>
 
-            {/* Input - iOS Style */}
             <div className="p-4 bg-white/80 backdrop-blur border-t border-gray-200/50">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 relative">
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="輸入您的法規問題..."
-                    className="w-full px-4 py-3 bg-gray-100/80 rounded-2xl focus:ring-2 focus:ring-indigo-500/30 focus:bg-white border-0 text-sm transition-all outline-none"
-                    disabled={isLoading}
-                  />
+              <form onSubmit={handleSend}>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="輸入您的法規問題..."
+                      className="w-full px-4 py-3 bg-gray-100/80 rounded-2xl focus:ring-2 focus:ring-indigo-500/30 focus:bg-white border-0 text-sm transition-all outline-none"
+                      disabled={isLoading}
+                      aria-label="法規問題輸入框"
+                    />
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    type="submit"
+                    disabled={!input.trim() || isLoading}
+                    className={cn(
+                      'w-11 h-11 rounded-xl flex items-center justify-center transition-all',
+                      input.trim() && !isLoading
+                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
+                        : 'bg-gray-200 text-gray-400'
+                    )}
+                    aria-label="傳送問題"
+                  >
+                    <Send className="w-4 h-4" />
+                  </motion.button>
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSend}
-                  disabled={!input.trim() || isLoading}
-                  className={cn(
-                    'w-11 h-11 rounded-xl flex items-center justify-center transition-all',
-                    input.trim() && !isLoading
-                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
-                      : 'bg-gray-200 text-gray-400'
-                  )}
-                >
-                  <Send className="w-4 h-4" />
-                </motion.button>
-              </div>
+              </form>
               <p className="text-[10px] text-gray-400 text-center mt-2">
                 AI 回答僅供參考，實際情況請以主管機關公告為準
               </p>
@@ -313,4 +321,8 @@ export default function LegalAssistant() {
       </AnimatePresence>
     </>
   );
-}
+});
+
+LegalAssistant.displayName = 'LegalAssistant';
+
+export default LegalAssistant;

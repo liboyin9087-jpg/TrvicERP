@@ -1,17 +1,4 @@
-/**
- * TrvicERP Button Component
- *
- * 5-tier button hierarchy per design spec:
- * - primary: Main actions (confirm, submit, save)
- * - secondary: Secondary actions (cancel, back)
- * - danger: Destructive actions (delete, cancel order)
- * - tertiary/ghost: Low emphasis actions
- * - fab: Floating action button
- *
- * @see DESIGN_SYSTEM.md Section 5.1
- */
-
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
@@ -25,6 +12,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   fullWidth?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  'aria-label'?: string;
+  'aria-busy'?: boolean;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
@@ -66,7 +55,7 @@ const sizeStyles: Record<ButtonSize, string> = {
   lg: 'h-btn-lg px-8 text-base min-h-[48px]',
 };
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = memo(forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
@@ -78,6 +67,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       leftIcon,
       rightIcon,
       children,
+      'aria-label': ariaLabel,
+      'aria-busy': ariaBusy,
       ...props
     },
     ref
@@ -88,49 +79,43 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          // Base styles
           'inline-flex items-center justify-center gap-2',
           'rounded-md font-semibold',
           'transition-all duration-200 ease-in-out',
           'focus:outline-none focus:ring-2 focus:ring-primary-900/20 focus:ring-offset-2',
           'disabled:cursor-not-allowed disabled:opacity-60',
           'whitespace-nowrap',
-          // Variant styles
           variantStyles[variant],
-          // Size styles
           sizeStyles[size],
-          // Full width
           fullWidth && 'w-full',
           className
         )}
         disabled={isDisabled}
+        aria-label={ariaLabel}
+        aria-busy={ariaBusy || loading}
         {...props}
       >
         {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         ) : (
-          leftIcon && <span className="flex-shrink-0">{leftIcon}</span>
+          leftIcon && <span className="flex-shrink-0" aria-hidden="true">{leftIcon}</span>
         )}
         <span>{children}</span>
-        {!loading && rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+        {!loading && rightIcon && <span className="flex-shrink-0" aria-hidden="true">{rightIcon}</span>}
       </button>
     );
   }
-);
+));
 
 Button.displayName = 'Button';
 
-/**
- * Floating Action Button (FAB)
- * Fixed position button for primary quick actions
- */
 export interface FABProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactNode;
   label?: string;
   position?: 'bottom-right' | 'bottom-left';
 }
 
-export const FAB = forwardRef<HTMLButtonElement, FABProps>(
+export const FAB = memo(forwardRef<HTMLButtonElement, FABProps>(
   ({ className, icon, label, position = 'bottom-right', ...props }, ref) => {
     const positionStyles = {
       'bottom-right': 'bottom-6 right-6',
@@ -161,24 +146,23 @@ export const FAB = forwardRef<HTMLButtonElement, FABProps>(
       </button>
     );
   }
-);
+));
 
 FAB.displayName = 'FAB';
 
-/**
- * Button Group for related actions
- */
 export interface ButtonGroupProps {
   children: React.ReactNode;
   className?: string;
   direction?: 'horizontal' | 'vertical';
+  'aria-label'?: string;
 }
 
-export function ButtonGroup({
+export const ButtonGroup = memo(({
   children,
   className,
   direction = 'horizontal',
-}: ButtonGroupProps) {
+  'aria-label': ariaLabel,
+}: ButtonGroupProps) => {
   return (
     <div
       className={cn(
@@ -186,10 +170,12 @@ export function ButtonGroup({
         direction === 'vertical' && 'flex-col',
         className
       )}
+      aria-label={ariaLabel}
+      role="group"
     >
       {children}
     </div>
   );
-}
+});
 
-export default Button;
+ButtonGroup.displayName = 'ButtonGroup';

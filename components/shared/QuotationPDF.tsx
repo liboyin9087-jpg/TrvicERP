@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Document,
   Page,
@@ -8,7 +8,6 @@ import {
   Font,
 } from '@react-pdf/renderer';
 
-// Register Chinese font from Google Fonts
 Font.register({
   family: 'NotoSansTC',
   fonts: [
@@ -23,7 +22,6 @@ Font.register({
   ],
 });
 
-// Types
 export interface QuoteItem {
   id: string;
   category: string;
@@ -42,7 +40,6 @@ export interface QuotationPDFProps {
   profit: number;
 }
 
-// Styles
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -191,13 +188,9 @@ const styles = StyleSheet.create({
   },
 });
 
-// Helper function to format currency
-const formatCurrency = (amount: number): string => {
-  return `NT$ ${amount.toLocaleString()}`;
-};
+import { formatCurrency } from '@/lib/utils/formatting';
 
-// PDF Document Component
-export default function QuotationPDF({
+const QuotationPDF: React.FC<QuotationPDFProps> = memo(({
   tripName,
   paxCount,
   items,
@@ -206,7 +199,7 @@ export default function QuotationPDF({
   sellingPrice,
   totalRevenue,
   profit,
-}: QuotationPDFProps) {
+}) => {
   const currentDate = new Date().toLocaleDateString('zh-TW', {
     year: 'numeric',
     month: 'long',
@@ -214,63 +207,58 @@ export default function QuotationPDF({
   });
 
   return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>TrvicERP</Text>
-          <Text style={styles.logoSub}>專業旅遊規劃報價單</Text>
+    <Document aria-label="旅遊報價單">
+      <Page size="A4" style={styles.page} aria-label="報價單內容">
+        <View style={styles.header} aria-label="標題區">
+          <Text style={styles.logo} aria-label="系統名稱">TrvicERP</Text>
+          <Text style={styles.logoSub} aria-label="文件類型">專業旅遊規劃報價單</Text>
         </View>
 
-        {/* Trip Info */}
-        <View style={styles.tripInfo}>
-          <Text style={styles.tripName}>{tripName}</Text>
+        <View style={styles.tripInfo} aria-label="行程資訊">
+          <Text style={styles.tripName} aria-label="行程名稱">{tripName}</Text>
           <View style={styles.metaRow}>
-            <Text style={styles.metaText}>預估人數：{paxCount} 人</Text>
-            <Text style={styles.metaText}>製作日期：{currentDate}</Text>
+            <Text style={styles.metaText} aria-label="預估人數">預估人數：{paxCount} 人</Text>
+            <Text style={styles.metaText} aria-label="製作日期">製作日期：{currentDate}</Text>
           </View>
         </View>
 
-        {/* Cost Items */}
-        <View style={styles.itemsContainer}>
+        <View style={styles.itemsContainer} aria-label="成本明細">
           <Text style={styles.sectionTitle}>成本明細</Text>
           {items.map((item) => (
-            <View key={item.id} style={styles.itemRow}>
+            <View key={item.id} style={styles.itemRow} aria-label={`項目-${item.name}`}>
               <View style={styles.itemLeft}>
-                <Text style={styles.itemCategory}>{item.category}</Text>
-                <Text style={styles.itemName}>{item.name}</Text>
+                <Text style={styles.itemCategory} aria-label="項目類別">{item.category}</Text>
+                <Text style={styles.itemName} aria-label="項目名稱">{item.name}</Text>
               </View>
-              <Text style={styles.itemPrice}>{formatCurrency(item.unitPrice)}</Text>
+              <Text style={styles.itemPrice} aria-label="項目價格">{formatCurrency(item.unitPrice)}</Text>
             </View>
           ))}
         </View>
 
-        {/* Summary */}
-        <View style={styles.summary}>
+        <View style={styles.summary} aria-label="總結資訊">
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>成本/人</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(totalCost)}</Text>
+            <Text style={styles.summaryValue} aria-label="每人成本">{formatCurrency(totalCost)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>利潤率</Text>
-            <Text style={styles.summaryValue}>{marginRate}%</Text>
+            <Text style={styles.summaryValue} aria-label="利潤率">{marginRate}%</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>售價/人</Text>
-            <Text style={styles.summaryValueAccent}>{formatCurrency(sellingPrice)}</Text>
+            <Text style={styles.summaryValueAccent} aria-label="每人售價">{formatCurrency(sellingPrice)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>預估營收</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(totalRevenue)}</Text>
+            <Text style={styles.summaryValue} aria-label="預估營收">{formatCurrency(totalRevenue)}</Text>
           </View>
           <View style={[styles.summaryTotal, styles.summaryDivider]}>
             <Text style={styles.summaryTotalLabel}>預估利潤</Text>
-            <Text style={styles.summaryTotalValue}>{formatCurrency(profit)}</Text>
+            <Text style={styles.summaryTotalValue} aria-label="預估利潤">{formatCurrency(profit)}</Text>
           </View>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
+        <View style={styles.footer} aria-label="頁尾資訊">
           <Text style={styles.footerText}>
             此報價單由 TrvicERP 系統產生 | {currentDate}
           </Text>
@@ -278,4 +266,6 @@ export default function QuotationPDF({
       </Page>
     </Document>
   );
-}
+});
+
+export default QuotationPDF;

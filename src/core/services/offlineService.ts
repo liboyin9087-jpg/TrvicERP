@@ -1,7 +1,4 @@
-/**
- * 離線服務（IndexedDB + 雙向同步）
- * Offline Service (IndexedDB + Bidirectional Sync)
- */
+import { Order, Quotation, Session, Customer, Itinerary } from '../types';
 
 /**
  * IndexedDB 資料庫名稱
@@ -18,8 +15,12 @@ const STORES = {
   SESSIONS: 'sessions',
   CUSTOMERS: 'customers',
   ITINERARIES: 'itineraries',
-  SYNC_QUEUE: 'sync_queue', // 同步佇列
+  SYNC_QUEUE: 'sync_queue',
+  CONFLICTS: 'conflicts'
 } as const;
+
+type StoreKey = keyof typeof STORES;
+type StoreName = typeof STORES[StoreKey];
 
 /**
  * 同步狀態
@@ -29,56 +30,50 @@ export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'error';
 /**
  * 同步佇列項目
  */
-export interface SyncQueueItem {
+export interface SyncQueueItem<T = unknown> {
   id: string;
-  table: string;
+  table: StoreName;
   operation: 'create' | 'update' | 'delete';
-  data: any;
+  data: T;
   timestamp: number;
   status: SyncStatus;
   retryCount: number;
   error?: string;
-  localVersion?: number; // 本地版本號
-  serverVersion?: number; // 伺服器版本號
+  localVersion?: number;
+  serverVersion?: number;
 }
 
 /**
  * 衝突解決策略
  */
 export type ConflictResolutionStrategy = 
-  | 'local-wins' // 本地優先
-  | 'server-wins' // 伺服器優先
-  | 'merge' // 合併
-  | 'manual'; // 手動解決
+  | 'local-wins'
+  | 'server-wins'
+  | 'merge'
+  | 'manual';
 
 /**
  * 衝突資訊
  */
-export interface ConflictInfo {
+export interface ConflictInfo<T = unknown> {
   id: string;
-  table: string;
-  localData: any;
-  serverData: any;
+  table: StoreName;
+  localData: T;
+  serverData: T;
   localVersion: number;
   serverVersion: number;
   timestamp: string;
 }
 
-/**
- * 離線服務
- */
 export class OfflineService {
   private db: IDBDatabase | null = null;
 
-  /**
-   * 初始化資料庫
-   */
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
-        reject(new Error('無法開啟 IndexedDB'));
+        reject(new Error('Failed to open IndexedDB'));
       };
 
       request.onsuccess = () => {
@@ -89,23 +84,16 @@ export class OfflineService {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
 
-        // 建立資料表
         if (!db.objectStoreNames.contains(STORES.ORDERS)) {
-          const ordersStore = db.createObjectStore(STORES.ORDERS, {
-            keyPath: 'id',
-          });
+          const ordersStore = db.createObjectStore(STORES.ORDERS, { keyPath: 'id' });
           ordersStore.createIndex('sessionId', 'sessionId', { unique: false });
           ordersStore.createIndex('customerId', 'customerId', { unique: false });
           ordersStore.createIndex('status', 'status', { unique: false });
         }
 
         if (!db.objectStoreNames.contains(STORES.QUOTATIONS)) {
-          const quotationsStore = db.createObjectStore(STORES.QUOTATIONS, {
-            keyPath: 'id',
-          });
-          quotationsStore.createIndex('customerId', 'customerId', {
-            unique: false,
-          });
+          const quotationsStore = db.createObjectStore(STORES.QUOTATIONS, { keyPath: 'id' });
+          quotationsStore.createIndex('customerId', 'customerId', { unique: false });
           quotationsStore.createIndex('status', 'status', { unique: false });
         }
 
@@ -122,26 +110,26 @@ export class OfflineService {
         }
 
         if (!db.objectStoreNames.contains(STORES.SYNC_QUEUE)) {
-          const syncQueueStore = db.createObjectStore(STORES.SYNC_QUEUE, {
-            keyPath: 'id',
-          });
+          const syncQueueStore = db.createObjectStore(STORES.SYNC_QUEUE, { keyPath: 'id' });
           syncQueueStore.createIndex('status', 'status', { unique: false });
-          syncQueueStore.createIndex('timestamp', 'timestamp', {
-            unique: false,
-          });
+          syncQueueStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains(STORES.CONFLICTS)) {
+          db.createObjectStore(STORES.CONFLICTS, { keyPath: 'id' });
         }
       };
     });
   }
 
-  /**
-   * 儲存資料到 IndexedDB
-   */
-  async save<T>(table: string, data: T): Promise<void> {
+  private async ensureDB(): Promise<void> {
     if (!this.db) {
       await this.init();
     }
+  }
 
+  async save<T>(table: StoreName, data: T & { id: string }): Promise<void> {
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([table], 'readwrite');
       const store = transaction.objectStore(table);
@@ -152,14 +140,8 @@ export class OfflineService {
     });
   }
 
-  /**
-   * 從 IndexedDB 讀取資料
-   */
-  async get<T>(table: string, id: string): Promise<T | null> {
-    if (!this.db) {
-      await this.init();
-    }
-
+  async get<T>(table: StoreName, id: string): Promise<T | null> {
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([table], 'readonly');
       const store = transaction.objectStore(table);
@@ -170,14 +152,8 @@ export class OfflineService {
     });
   }
 
-  /**
-   * 從 IndexedDB 讀取所有資料
-   */
-  async getAll<T>(table: string): Promise<T[]> {
-    if (!this.db) {
-      await this.init();
-    }
-
+  async getAll<T>(table: StoreName): Promise<T[]> {
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([table], 'readonly');
       const store = transaction.objectStore(table);
@@ -188,14 +164,8 @@ export class OfflineService {
     });
   }
 
-  /**
-   * 從 IndexedDB 刪除資料
-   */
-  async delete(table: string, id: string): Promise<void> {
-    if (!this.db) {
-      await this.init();
-    }
-
+  async delete(table: StoreName, id: string): Promise<void> {
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([table], 'readwrite');
       const store = transaction.objectStore(table);
@@ -206,13 +176,10 @@ export class OfflineService {
     });
   }
 
-  /**
-   * 加入同步佇列
-   */
-  async addToSyncQueue(item: Omit<SyncQueueItem, 'id' | 'timestamp' | 'status' | 'retryCount'>): Promise<void> {
-    const syncItem: SyncQueueItem = {
+  async addToSyncQueue<T>(item: Omit<SyncQueueItem<T>, 'id' | 'timestamp' | 'status' | 'retryCount'>): Promise<void> {
+    const syncItem: SyncQueueItem<T> = {
       ...item,
-      id: `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `sync_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       timestamp: Date.now(),
       status: 'pending',
       retryCount: 0,
@@ -221,14 +188,8 @@ export class OfflineService {
     await this.save(STORES.SYNC_QUEUE, syncItem);
   }
 
-  /**
-   * 取得待同步項目
-   */
   async getPendingSyncItems(): Promise<SyncQueueItem[]> {
-    if (!this.db) {
-      await this.init();
-    }
-
+    await this.ensureDB();
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORES.SYNC_QUEUE], 'readonly');
       const store = transaction.objectStore(STORES.SYNC_QUEUE);
@@ -237,7 +198,6 @@ export class OfflineService {
 
       request.onsuccess = () => {
         const items = request.result as SyncQueueItem[];
-        // 按時間排序
         items.sort((a, b) => a.timestamp - b.timestamp);
         resolve(items);
       };
@@ -245,9 +205,6 @@ export class OfflineService {
     });
   }
 
-  /**
-   * 更新同步項目狀態
-   */
   async updateSyncItemStatus(
     id: string,
     status: SyncStatus,
@@ -256,25 +213,20 @@ export class OfflineService {
     const item = await this.get<SyncQueueItem>(STORES.SYNC_QUEUE, id);
     if (!item) return;
 
-    item.status = status;
-    if (error) {
-      item.error = error;
-      item.retryCount += 1;
-    }
+    const updatedItem: SyncQueueItem = {
+      ...item,
+      status,
+      retryCount: error ? item.retryCount + 1 : item.retryCount,
+      ...(error && { error })
+    };
 
-    await this.save(STORES.SYNC_QUEUE, item);
+    await this.save(STORES.SYNC_QUEUE, updatedItem);
   }
 
-  /**
-   * 檢查是否在線
-   */
   isOnline(): boolean {
     return navigator.onLine;
   }
 
-  /**
-   * 監聽線上/離線狀態
-   */
   onOnlineStatusChange(callback: (isOnline: boolean) => void): () => void {
     const handleOnline = () => callback(true);
     const handleOffline = () => callback(false);
@@ -282,75 +234,49 @@ export class OfflineService {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // 返回清理函數
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }
 
-  /**
-   * 解決衝突
-   */
-  async resolveConflict(
-    conflict: ConflictInfo,
+  async resolveConflict<T>(
+    conflict: ConflictInfo<T>,
     strategy: ConflictResolutionStrategy,
-    mergeFunction?: (local: any, server: any) => any
-  ): Promise<any> {
+    mergeFunction?: (local: T, server: T) => T
+  ): Promise<T> {
     switch (strategy) {
       case 'local-wins':
         return conflict.localData;
-      
       case 'server-wins':
         return conflict.serverData;
-      
       case 'merge':
         if (mergeFunction) {
           return mergeFunction(conflict.localData, conflict.serverData);
         }
-        // 預設合併策略：合併兩個物件的所有欄位，本地優先
         return { ...conflict.serverData, ...conflict.localData };
-      
       case 'manual':
-        // 手動解決需要返回用戶選擇的數據
-        // 這裡只是標記，實際解決需要在 UI 層實現
         throw new Error('Manual conflict resolution required');
-      
       default:
         return conflict.serverData;
     }
   }
 
-  /**
-   * 檢測衝突（比較版本號）
-   */
   hasConflict(localVersion: number, serverVersion: number): boolean {
     return localVersion !== serverVersion;
   }
 
-  /**
-   * 儲存衝突資訊
-   */
-  async saveConflict(conflict: ConflictInfo): Promise<void> {
-    const conflicts = await this.getAll<ConflictInfo>('conflicts');
-    conflicts.push(conflict);
-    await this.save('conflicts', conflict);
+  async saveConflict<T>(conflict: ConflictInfo<T>): Promise<void> {
+    await this.save(STORES.CONFLICTS, conflict);
   }
 
-  /**
-   * 取得所有待解決的衝突
-   */
-  async getConflicts(): Promise<ConflictInfo[]> {
-    return this.getAll<ConflictInfo>('conflicts');
+  async getConflicts<T>(): Promise<ConflictInfo<T>[]> {
+    return this.getAll<ConflictInfo<T>>(STORES.CONFLICTS);
   }
 
-  /**
-   * 清除已解決的衝突
-   */
   async clearConflict(id: string): Promise<void> {
-    await this.delete('conflicts', id);
+    await this.delete(STORES.CONFLICTS, id);
   }
 }
 
-// 匯出單例
 export const offlineService = new OfflineService();

@@ -1,8 +1,3 @@
-/**
- * 客戶管理服務層
- * Customer Management Service Layer
- */
-
 import { api, API_ENDPOINTS } from '../../../lib/api';
 import type {
   Customer,
@@ -11,19 +6,12 @@ import type {
   UpdateCustomerData,
   CustomerQuery,
   CustomerInteraction,
+  ApiResponse,
+  ApiError,
 } from '../../../core/types/customer';
 
-/**
- * 客戶服務
- */
 export class CustomerService {
-  /**
-   * 取得客戶列表
-   */
-  static async getCustomers(query?: CustomerQuery): Promise<{
-    data: Customer[] | null;
-    error: any;
-  }> {
+  static async getCustomers(query?: CustomerQuery): Promise<ApiResponse<Customer[]>> {
     const params = new URLSearchParams();
     if (query?.type) params.append('type', query.type);
     if (query?.tier) {
@@ -40,98 +28,86 @@ export class CustomerService {
     if (query?.limit) params.append('limit', query.limit.toString());
 
     const endpoint = `${API_ENDPOINTS.customers.list}?${params.toString()}`;
-    return api.get<Customer[]>(endpoint);
+    try {
+      return await api.get<Customer[]>(endpoint);
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 取得單一客戶
-   */
-  static async getCustomer(id: string): Promise<{
-    data: Customer | null;
-    error: any;
-  }> {
-    return api.get<Customer>(API_ENDPOINTS.customers.detail(id));
+  static async getCustomer(id: string): Promise<ApiResponse<Customer>> {
+    try {
+      return await api.get<Customer>(API_ENDPOINTS.customers.detail(id));
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 取得客戶完整資料 (CDP)
-   */
-  static async getCustomerProfile(id: string): Promise<{
-    data: CustomerProfile | null;
-    error: any;
-  }> {
-    return api.get<CustomerProfile>(`${API_ENDPOINTS.customers.detail(id)}/profile`);
+  static async getCustomerProfile(id: string): Promise<ApiResponse<CustomerProfile>> {
+    try {
+      return await api.get<CustomerProfile>(`${API_ENDPOINTS.customers.detail(id)}/profile`);
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 建立客戶
-   */
-  static async createCustomer(data: CreateCustomerData): Promise<{
-    data: Customer | null;
-    error: any;
-  }> {
-    return api.post<Customer>(API_ENDPOINTS.customers.create, data);
+  static async createCustomer(data: CreateCustomerData): Promise<ApiResponse<Customer>> {
+    try {
+      return await api.post<Customer>(API_ENDPOINTS.customers.create, data);
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 更新客戶
-   */
   static async updateCustomer(
     id: string,
     data: UpdateCustomerData
-  ): Promise<{
-    data: Customer | null;
-    error: any;
-  }> {
-    return api.patch<Customer>(API_ENDPOINTS.customers.update(id), data);
+  ): Promise<ApiResponse<Customer>> {
+    try {
+      return await api.patch<Customer>(API_ENDPOINTS.customers.update(id), data);
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 刪除客戶
-   */
-  static async deleteCustomer(id: string): Promise<{
-    data: null;
-    error: any;
-  }> {
-    return api.delete(API_ENDPOINTS.customers.delete(id));
+  static async deleteCustomer(id: string): Promise<ApiResponse<null>> {
+    try {
+      return await api.delete(API_ENDPOINTS.customers.delete(id));
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 取得客戶互動記錄
-   */
-  static async getCustomerInteractions(customerId: string): Promise<{
-    data: CustomerInteraction[] | null;
-    error: any;
-  }> {
-    return api.get<CustomerInteraction[]>(
-      `${API_ENDPOINTS.customers.detail(customerId)}/interactions`
-    );
+  static async getCustomerInteractions(customerId: string): Promise<ApiResponse<CustomerInteraction[]>> {
+    try {
+      return await api.get<CustomerInteraction[]>(
+        `${API_ENDPOINTS.customers.detail(customerId)}/interactions`
+      );
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 新增客戶互動記錄
-   */
   static async addCustomerInteraction(
     customerId: string,
     interaction: Omit<CustomerInteraction, 'id' | 'customerId' | 'createdAt'>
-  ): Promise<{
-    data: CustomerInteraction | null;
-    error: any;
-  }> {
-    return api.post<CustomerInteraction>(
-      `${API_ENDPOINTS.customers.detail(customerId)}/interactions`,
-      interaction
-    );
+  ): Promise<ApiResponse<CustomerInteraction>> {
+    try {
+      return await api.post<CustomerInteraction>(
+        `${API_ENDPOINTS.customers.detail(customerId)}/interactions`,
+        interaction
+      );
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 
-  /**
-   * 搜尋客戶
-   */
-  static async searchCustomers(keyword: string): Promise<{
-    data: Customer[] | null;
-    error: any;
-  }> {
-    return this.getCustomers({ search: keyword, limit: 20 });
+  static async searchCustomers(keyword: string): Promise<ApiResponse<Customer[]>> {
+    try {
+      return await this.getCustomers({ search: keyword, limit: 20 });
+    } catch (error) {
+      return { data: null, error: error as ApiError };
+    }
   }
 }
 

@@ -1,8 +1,3 @@
-/**
- * 客戶管理 Hooks
- * Customer Management Hooks
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { CustomerService } from '../services/customerService';
 import type {
@@ -14,28 +9,33 @@ import type {
   CustomerInteraction,
 } from '../../../core/types/customer';
 import { useToast } from '../../../store/useToastStore';
+import { ServiceError } from '../../../core/types/service';
 
-/**
- * 取得客戶列表 Hook
- */
 export function useCustomers(query?: CustomerQuery) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<ServiceError | null>(null);
   const toast = useToast();
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const result = await CustomerService.getCustomers(query);
-    if (result.error) {
-      setError(result.error);
-      toast.error(result.error.message || '取得客戶列表失敗');
-    } else {
-      setCustomers(result.data || []);
+    try {
+      const result = await CustomerService.getCustomers(query);
+      if (result.error) {
+        setError(result.error);
+        toast.error(result.error.message || '取得客戶列表失敗');
+      } else {
+        setCustomers(result.data || []);
+      }
+    } catch (err) {
+      const error = err as ServiceError;
+      setError(error);
+      toast.error(error.message || '取得客戶列表失敗');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [query, toast]);
 
   useEffect(() => {
@@ -45,13 +45,10 @@ export function useCustomers(query?: CustomerQuery) {
   return { customers, loading, error, refetch: fetchCustomers };
 }
 
-/**
- * 取得單一客戶 Hook
- */
 export function useCustomer(id: string | null) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<ServiceError | null>(null);
   const toast = useToast();
 
   const fetchCustomer = useCallback(async () => {
@@ -64,14 +61,21 @@ export function useCustomer(id: string | null) {
     setLoading(true);
     setError(null);
 
-    const result = await CustomerService.getCustomer(id);
-    if (result.error) {
-      setError(result.error);
-      toast.error(result.error.message || '取得客戶失敗');
-    } else {
-      setCustomer(result.data);
+    try {
+      const result = await CustomerService.getCustomer(id);
+      if (result.error) {
+        setError(result.error);
+        toast.error(result.error.message || '取得客戶失敗');
+      } else {
+        setCustomer(result.data);
+      }
+    } catch (err) {
+      const error = err as ServiceError;
+      setError(error);
+      toast.error(error.message || '取得客戶失敗');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [id, toast]);
 
   useEffect(() => {
@@ -81,13 +85,10 @@ export function useCustomer(id: string | null) {
   return { customer, loading, error, refetch: fetchCustomer };
 }
 
-/**
- * 取得客戶完整資料 Hook (CDP)
- */
 export function useCustomerProfile(id: string | null) {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<ServiceError | null>(null);
   const toast = useToast();
 
   const fetchProfile = useCallback(async () => {
@@ -100,14 +101,21 @@ export function useCustomerProfile(id: string | null) {
     setLoading(true);
     setError(null);
 
-    const result = await CustomerService.getCustomerProfile(id);
-    if (result.error) {
-      setError(result.error);
-      toast.error(result.error.message || '取得客戶資料失敗');
-    } else {
-      setProfile(result.data);
+    try {
+      const result = await CustomerService.getCustomerProfile(id);
+      if (result.error) {
+        setError(result.error);
+        toast.error(result.error.message || '取得客戶資料失敗');
+      } else {
+        setProfile(result.data);
+      }
+    } catch (err) {
+      const error = err as ServiceError;
+      setError(error);
+      toast.error(error.message || '取得客戶資料失敗');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [id, toast]);
 
   useEffect(() => {
@@ -117,9 +125,6 @@ export function useCustomerProfile(id: string | null) {
   return { profile, loading, error, refetch: fetchProfile };
 }
 
-/**
- * 建立客戶 Hook
- */
 export function useCreateCustomer() {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -127,16 +132,21 @@ export function useCreateCustomer() {
   const createCustomer = useCallback(
     async (data: CreateCustomerData) => {
       setLoading(true);
-      const result = await CustomerService.createCustomer(data);
-      setLoading(false);
-
-      if (result.error) {
-        toast.error(result.error.message || '建立客戶失敗');
-        return { success: false, error: result.error };
+      try {
+        const result = await CustomerService.createCustomer(data);
+        if (result.error) {
+          toast.error(result.error.message || '建立客戶失敗');
+          return { success: false, error: result.error };
+        }
+        toast.success('客戶建立成功');
+        return { success: true, data: result.data };
+      } catch (err) {
+        const error = err as ServiceError;
+        toast.error(error.message || '建立客戶失敗');
+        return { success: false, error };
+      } finally {
+        setLoading(false);
       }
-
-      toast.success('客戶建立成功');
-      return { success: true, data: result.data };
     },
     [toast]
   );
@@ -144,9 +154,6 @@ export function useCreateCustomer() {
   return { createCustomer, loading };
 }
 
-/**
- * 更新客戶 Hook
- */
 export function useUpdateCustomer() {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -154,16 +161,21 @@ export function useUpdateCustomer() {
   const updateCustomer = useCallback(
     async (id: string, data: UpdateCustomerData) => {
       setLoading(true);
-      const result = await CustomerService.updateCustomer(id, data);
-      setLoading(false);
-
-      if (result.error) {
-        toast.error(result.error.message || '更新客戶失敗');
-        return { success: false, error: result.error };
+      try {
+        const result = await CustomerService.updateCustomer(id, data);
+        if (result.error) {
+          toast.error(result.error.message || '更新客戶失敗');
+          return { success: false, error: result.error };
+        }
+        toast.success('客戶更新成功');
+        return { success: true, data: result.data };
+      } catch (err) {
+        const error = err as ServiceError;
+        toast.error(error.message || '更新客戶失敗');
+        return { success: false, error };
+      } finally {
+        setLoading(false);
       }
-
-      toast.success('客戶更新成功');
-      return { success: true, data: result.data };
     },
     [toast]
   );
@@ -171,9 +183,6 @@ export function useUpdateCustomer() {
   return { updateCustomer, loading };
 }
 
-/**
- * 刪除客戶 Hook
- */
 export function useDeleteCustomer() {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -181,16 +190,21 @@ export function useDeleteCustomer() {
   const deleteCustomer = useCallback(
     async (id: string) => {
       setLoading(true);
-      const result = await CustomerService.deleteCustomer(id);
-      setLoading(false);
-
-      if (result.error) {
-        toast.error(result.error.message || '刪除客戶失敗');
-        return { success: false, error: result.error };
+      try {
+        const result = await CustomerService.deleteCustomer(id);
+        if (result.error) {
+          toast.error(result.error.message || '刪除客戶失敗');
+          return { success: false, error: result.error };
+        }
+        toast.success('客戶已刪除');
+        return { success: true };
+      } catch (err) {
+        const error = err as ServiceError;
+        toast.error(error.message || '刪除客戶失敗');
+        return { success: false, error };
+      } finally {
+        setLoading(false);
       }
-
-      toast.success('客戶已刪除');
-      return { success: true };
     },
     [toast]
   );
@@ -198,13 +212,10 @@ export function useDeleteCustomer() {
   return { deleteCustomer, loading };
 }
 
-/**
- * 客戶互動記錄 Hook
- */
 export function useCustomerInteractions(customerId: string | null) {
   const [interactions, setInteractions] = useState<CustomerInteraction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<ServiceError | null>(null);
   const toast = useToast();
 
   const fetchInteractions = useCallback(async () => {
@@ -217,14 +228,21 @@ export function useCustomerInteractions(customerId: string | null) {
     setLoading(true);
     setError(null);
 
-    const result = await CustomerService.getCustomerInteractions(customerId);
-    if (result.error) {
-      setError(result.error);
-      toast.error(result.error.message || '取得互動記錄失敗');
-    } else {
-      setInteractions(result.data || []);
+    try {
+      const result = await CustomerService.getCustomerInteractions(customerId);
+      if (result.error) {
+        setError(result.error);
+        toast.error(result.error.message || '取得互動記錄失敗');
+      } else {
+        setInteractions(result.data || []);
+      }
+    } catch (err) {
+      const error = err as ServiceError;
+      setError(error);
+      toast.error(error.message || '取得互動記錄失敗');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [customerId, toast]);
 
   useEffect(() => {
@@ -234,12 +252,10 @@ export function useCustomerInteractions(customerId: string | null) {
   return { interactions, loading, error, refetch: fetchInteractions };
 }
 
-/**
- * 搜尋客戶 Hook
- */
 export function useCustomerSearch() {
   const [results, setResults] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<ServiceError | null>(null);
 
   const search = useCallback(async (keyword: string) => {
     if (!keyword.trim()) {
@@ -248,10 +264,18 @@ export function useCustomerSearch() {
     }
 
     setLoading(true);
-    const result = await CustomerService.searchCustomers(keyword);
-    setResults(result.data || []);
-    setLoading(false);
+    setError(null);
+
+    try {
+      const result = await CustomerService.searchCustomers(keyword);
+      setResults(result.data || []);
+    } catch (err) {
+      const error = err as ServiceError;
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { results, loading, search };
+  return { results, loading, error, search };
 }

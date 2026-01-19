@@ -1,8 +1,3 @@
-/**
- * 訂單管理服務層
- * Order Management Service Layer
- */
-
 import { api, API_ENDPOINTS } from '../../../lib/api';
 import type {
   Order,
@@ -13,6 +8,12 @@ import type {
   OrderStatus,
 } from '../../../core/types/order';
 import { isValidOrderTransition } from '../../../core/types/order';
+import { ApiError } from '../../../core/types/api';
+
+interface ApiResponse<T> {
+  data: T | null;
+  error: ApiError | null;
+}
 
 /**
  * 訂單服務
@@ -21,10 +22,7 @@ export class OrderService {
   /**
    * 取得訂單列表
    */
-  static async getOrders(query?: OrderQuery): Promise<{
-    data: Order[] | null;
-    error: any;
-  }> {
+  static async getOrders(query?: OrderQuery): Promise<ApiResponse<Order[]>> {
     const params = new URLSearchParams();
     if (query?.status) {
       if (Array.isArray(query.status)) {
@@ -49,20 +47,14 @@ export class OrderService {
   /**
    * 取得單一訂單
    */
-  static async getOrder(id: string): Promise<{
-    data: Order | null;
-    error: any;
-  }> {
+  static async getOrder(id: string): Promise<ApiResponse<Order>> {
     return api.get<Order>(API_ENDPOINTS.orders.detail(id));
   }
 
   /**
    * 建立訂單
    */
-  static async createOrder(data: CreateOrderData): Promise<{
-    data: Order | null;
-    error: any;
-  }> {
+  static async createOrder(data: CreateOrderData): Promise<ApiResponse<Order>> {
     return api.post<Order>(API_ENDPOINTS.orders.create, data);
   }
 
@@ -72,14 +64,10 @@ export class OrderService {
   static async updateOrder(
     id: string,
     data: UpdateOrderData
-  ): Promise<{
-    data: Order | null;
-    error: any;
-  }> {
-    // 驗證狀態轉換
+  ): Promise<ApiResponse<Order>> {
     if (data.status) {
       const currentOrder = await this.getOrder(id);
-      if (currentOrder.data && currentOrder.error) {
+      if (currentOrder.error) {
         return currentOrder;
       }
       if (currentOrder.data) {
@@ -108,10 +96,7 @@ export class OrderService {
   static async cancelOrder(
     id: string,
     data: CancelOrderData
-  ): Promise<{
-    data: Order | null;
-    error: any;
-  }> {
+  ): Promise<ApiResponse<Order>> {
     return api.post<Order>(API_ENDPOINTS.orders.cancel(id), data);
   }
 
@@ -121,10 +106,7 @@ export class OrderService {
   static async refundOrder(
     id: string,
     refundAmount?: number
-  ): Promise<{
-    data: Order | null;
-    error: any;
-  }> {
+  ): Promise<ApiResponse<Order>> {
     return api.post<Order>(API_ENDPOINTS.orders.refund(id), {
       refundAmount,
     });
@@ -133,10 +115,7 @@ export class OrderService {
   /**
    * 刪除訂單
    */
-  static async deleteOrder(id: string): Promise<{
-    data: null;
-    error: any;
-  }> {
+  static async deleteOrder(id: string): Promise<ApiResponse<null>> {
     return api.delete(API_ENDPOINTS.orders.delete(id));
   }
 
@@ -146,20 +125,22 @@ export class OrderService {
   static async convertQuotationToOrder(
     quotationId: string,
     orderNumber?: string
-  ): Promise<{
-    data: Order | null;
-    error: any;
-  }> {
+  ): Promise<ApiResponse<Order>> {
     const quotationEndpoint = API_ENDPOINTS.quotations.convert(quotationId);
     const result = await api.post<{ orderId: string }>(quotationEndpoint, {
       orderNumber,
     });
 
     if (result.error || !result.data) {
-      return result as any;
+      return {
+        data: null,
+        error: result.error || {
+          code: 'CONVERSION_FAILED',
+          message: '報價轉換為訂單失敗'
+        }
+      };
     }
 
-    // 取得建立的訂單
     return this.getOrder(result.data.orderId);
   }
 }

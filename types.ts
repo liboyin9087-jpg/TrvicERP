@@ -1,4 +1,3 @@
-// Import core types from session module
 import type {
   HotelRoomAllocation as CoreHotelRoomAllocation,
   SeatAssignment as CoreSeatAssignment,
@@ -6,346 +5,476 @@ import type {
   MeetingInfo as CoreMeetingInfo,
 } from './src/core/types/session';
 
-export interface Attraction {
-  id: string;
+type ID = string & { readonly __brand: 'ID' };
+type TWD = number & { readonly __brand: 'TWD' };
+type DateTimeString = string & { readonly __brand: 'DateTimeString' };
+type Email = string & { readonly __brand: 'Email' };
+type URLString = string & { readonly __brand: 'URLString' };
+
+enum AttractionType {
+  LANDMARK = 'landmark',
+  MUSEUM = 'museum',
+  PARK = 'park',
+  SHOPPING = 'shopping',
+  DINING = 'dining',
+  ACTIVITY = 'activity'
+}
+
+enum TourGroupType {
+  WELFARE = 'welfare',
+  REGULAR = 'regular'
+}
+
+enum TourStatus {
+  SOLICITING = 'soliciting',
+  GUARANTEED = 'guaranteed',
+  CLOSED = 'closed',
+  COMPLETED = 'completed'
+}
+
+enum RoomType {
+  SINGLE = 'single',
+  DOUBLE = 'double',
+  TWIN = 'twin',
+  FAMILY = 'family',
+  SUITE = 'suite'
+}
+
+enum VehicleType {
+  BUS = 'bus',
+  TRAIN = 'train',
+  PLANE = 'plane',
+  FERRY = 'ferry'
+}
+
+enum BookingStatus {
+  CONFIRMED = 'confirmed',
+  PENDING = 'pending',
+  PAID = 'paid',
+  PENDING_PAYMENT = 'pending_payment',
+  VERIFYING = 'verifying'
+}
+
+enum MealPreference {
+  NORMAL = 'normal',
+  VEGETARIAN = 'vegetarian',
+  HALAL = 'halal',
+  OTHER = 'other'
+}
+
+enum SupplierCategory {
+  HOTEL = 'hotel',
+  AIRLINE = 'airline',
+  TRANSPORT = 'transport',
+  RESTAURANT = 'restaurant'
+}
+
+enum CostType {
+  FIXED = 'fixed',
+  PER_PAX = 'per_pax'
+}
+
+enum CostStatus {
+  ESTIMATED = 'estimated',
+  COMMITTED = 'committed',
+  PAID = 'paid'
+}
+
+enum PassportStatus {
+  CUSTOMER = 'customer',
+  SALES = 'sales',
+  OP_SAFE = 'op_safe',
+  EMBASSY = 'embassy',
+  TOUR_LEADER = 'tour_leader',
+  RETURNED = 'returned'
+}
+
+enum ExpenseCategory {
+  MEAL = 'meal',
+  TICKET = 'ticket',
+  TRANSPORT = 'transport',
+  TIP = 'tip',
+  OTHER = 'other'
+}
+
+enum QuoteItemType {
+  FLIGHT = 'flight',
+  HOTEL = 'hotel',
+  TRANSPORT = 'transport',
+  ACTIVITY = 'activity',
+  GUIDE = 'guide'
+}
+
+enum InteractionType {
+  LINE = 'line',
+  CALL = 'call',
+  EMAIL = 'email',
+  COUNTER = 'counter'
+}
+
+enum InteractionSentiment {
+  POSITIVE = 'positive',
+  NEUTRAL = 'neutral',
+  NEGATIVE = 'negative'
+}
+
+enum PollStatus {
+  ACTIVE = 'active',
+  CLOSED = 'closed'
+}
+
+enum ChangeRequestCategory {
+  ITINERARY = 'itinerary',
+  HOTEL = 'hotel',
+  MEAL = 'meal',
+  PAX_COUNT = 'pax_count'
+}
+
+enum ChangeRequestStatus {
+  PENDING = 'pending',
+  OP_REVIEW = 'op_review',
+  CLIENT_REVIEW = 'client_review',
+  APPROVED = 'approved',
+  REJECTED = 'rejected'
+}
+
+enum IncidentSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
+
+enum RelationshipType {
+  SPOUSE = 'spouse',
+  CHILD = 'child',
+  PARENT = 'parent',
+  OTHER = 'other'
+}
+
+interface Attraction {
+  id: ID;
   name: string;
-  image_url: string;
-  type: string;
+  image_url: URLString;
+  type: AttractionType;
   duration_minutes: number;
-  lat?: number; // 緯度
-  lng?: number; // 經度
-  description?: string; // 景點描述
-  address?: string; // 地址
+  lat: number;
+  lng: number;
+  description: string;
+  address: string;
 }
 
-export interface ItineraryItem extends Attraction {
-  time?: string;
-  instanceId?: string; 
+interface ItineraryItem extends Attraction {
+  time: DateTimeString;
+  instanceId: ID;
 }
 
-export interface ItineraryState {
+interface ItineraryState {
   [key: string]: ItineraryItem[];
 }
 
-export interface TourSession {
-  id: string;
-  series_id: string;
-  group_number?: string; // 團號
-  group_type?: 'welfare' | 'regular'; // 團型：福委團/一般團
-  start_date: string;
-  end_date: string;
-  status: 'soliciting' | 'guaranteed' | 'closed' | 'completed';
+interface TourSession {
+  id: ID;
+  series_id: ID;
+  group_number: string;
+  group_type: TourGroupType;
+  start_date: DateTimeString;
+  end_date: DateTimeString;
+  status: TourStatus;
   min_pax: number;
   max_pax: number;
   current_pax: number;
-  seat_release_date: string;
-  price_twd: number; 
-  agent_commission: number;
-  // 資源分配
-  hotel_rooms?: HotelRoomAllocation[];
-  transportation_seats?: SeatAssignment[];
-  tour_leader_id?: string;
-  tour_leader_name?: string;
-  // 版本控制
-  itinerary_version?: number;
-  itinerary_versions?: ItineraryVersion[];
-  // 出團前文件
-  meeting_info?: MeetingInfo;
-  created_at?: string;
-  updated_at?: string;
+  seat_release_date: DateTimeString;
+  price_twd: TWD;
+  agent_commission: TWD;
+  hotel_rooms: HotelRoomAllocation[];
+  transportation_seats: SeatAssignment[];
+  tour_leader_id: ID;
+  tour_leader_name: string;
+  itinerary_version: number;
+  itinerary_versions: ItineraryVersion[];
+  meeting_info: MeetingInfo;
+  created_at: DateTimeString;
+  updated_at: DateTimeString;
 }
 
-// 飯店房型分配 - 兼容 camelCase + snake_case
-export interface HotelRoomAllocation extends CoreHotelRoomAllocation {
-  hotel_name?: string;
-  room_type?: 'single' | 'double' | 'twin' | 'family' | 'suite';
-  room_type_label?: string;
-  total_count?: number;
-  locked_count?: number;
-  available_count?: number;
-  price_per_night?: number;
+interface HotelRoomAllocation extends CoreHotelRoomAllocation {
+  hotel_name: string;
+  room_type: RoomType;
+  room_type_label: string;
+  total_count: number;
+  locked_count: number;
+  available_count: number;
+  price_per_night: TWD;
 }
 
-// 座位分配 - 兼容 camelCase + snake_case
-export interface SeatAssignment extends CoreSeatAssignment {
-  vehicle_type?: 'bus' | 'train' | 'plane' | 'ferry';
-  vehicle_number?: string;
-  seat_number?: string;
-  passenger_name?: string;
-  is_assigned?: boolean;
+interface SeatAssignment extends CoreSeatAssignment {
+  vehicle_type: VehicleType;
+  vehicle_number: string;
+  seat_number: string;
+  passenger_name: string;
+  is_assigned: boolean;
 }
 
-// 導遊/領隊 - 兼容 camelCase + snake_case
-export interface TourLeader extends CoreTourLeader {
-  license_number?: string;
-  experience_years?: number;
+interface TourLeader extends CoreTourLeader {
+  license_number: string;
+  experience_years: number;
 }
 
-// 行程版本
-export interface ItineraryVersion {
+interface ItineraryVersion {
   version: number;
-  created_at: string;
-  created_by: string;
-  changes: string; // 變更說明
-  itinerary_data: any; // 行程資料快照
+  created_at: DateTimeString;
+  created_by: ID;
+  changes: string;
+  itinerary_data: unknown;
 }
 
-// 集合資訊 - 兼容 camelCase + snake_case
-export interface MeetingInfo extends CoreMeetingInfo {
-  meeting_time?: string;
-  contact_person?: string;
-  contact_phone?: string;
+interface MeetingInfo extends CoreMeetingInfo {
+  meeting_time: DateTimeString;
+  contact_person: string;
+  contact_phone: string;
 }
 
-// --- Weapon 3: Semi-FIT Options ---
-export interface TourOption {
-  id: string;
-  session_id: string;
+interface TourOption {
+  id: ID;
+  session_id: ID;
   day_number: number;
   title: string;
   description: string;
-  price_add_on: number;
+  price_add_on: TWD;
   capacity_limit: number;
   quota_used: number;
-  image_url?: string;
+  image_url: URLString;
 }
 
-export interface BookingSelection {
-  id: string;
-  booking_id: string;
-  option_id: string;
+interface BookingSelection {
+  id: ID;
+  booking_id: ID;
+  option_id: ID;
   pax_count: number;
-  total_price: number;
+  total_price: TWD;
 }
 
-export interface Announcement {
-  id: string;
+interface Announcement {
+  id: ID;
   message: string;
-  created_at: string;
+  created_at: DateTimeString;
 }
 
-export interface PassportData {
+interface PassportData {
   name: string;
   passport_number: string;
-  expiry_date: string;
+  expiry_date: DateTimeString;
   nationality: string;
-  birthday?: string;
-  personal_id?: string;
+  birthday: DateTimeString;
+  personal_id: string;
 }
 
-export interface Booking {
-  id: string;
-  session_id: string;
-  user_id?: string; 
+interface Booking {
+  id: ID;
+  session_id: ID;
+  user_id: ID;
   customer_name: string;
-  passport_data?: PassportData;
-  receipt_number?: string;
-  status: 'confirmed' | 'pending' | 'paid' | 'pending_payment' | 'verifying';
-  total_amount: number;
-  payment_proof_url?: string;
-  tags?: string[];
-  email?: string;
-  // 報名資訊
-  room_type?: 'single' | 'double' | 'twin' | 'family';
-  meal_preference?: 'normal' | 'vegetarian' | 'halal' | 'other';
-  special_needs?: string; // 特殊需求
-  seat_preference?: string; // 座位偏好（靠窗、靠走道等）
-  companions?: Companion[];
-  // 分配資訊
-  assigned_room?: string; // 分配的房間號
-  assigned_seat?: string; // 分配的座位號
+  passport_data: PassportData;
+  receipt_number: string;
+  status: BookingStatus;
+  total_amount: TWD;
+  payment_proof_url: URLString;
+  tags: string[];
+  email: Email;
+  room_type: RoomType;
+  meal_preference: MealPreference;
+  special_needs: string;
+  seat_preference: string;
+  companions: Companion[];
+  assigned_room: string;
+  assigned_seat: string;
 }
 
-// --- Weapon 4: Footprints ---
-export interface UserFootprint {
-  user_id: string;
-  email: string;
-  visited_countries: string[]; // ISO codes like ['JP', 'TH', 'FR']
+interface UserFootprint {
+  user_id: ID;
+  email: Email;
+  visited_countries: string[];
   trip_count: number;
 }
 
-export interface Supplier {
-  id: string;
+interface Supplier {
+  id: ID;
   name: string;
-  category: 'hotel' | 'airline' | 'transport' | 'restaurant';
-  contact_email: string;
+  category: SupplierCategory;
+  contact_email: Email;
   payment_terms: string;
 }
 
-export interface TourCost {
-  id: string;
-  session_id: string;
-  supplier_id: string;
-  supplier_name: string; 
+interface TourCost {
+  id: ID;
+  session_id: ID;
+  supplier_id: ID;
+  supplier_name: string;
   item_name: string;
-  cost_type: 'fixed' | 'per_pax';
+  cost_type: CostType;
   unit_cost: number;
   currency: string;
   exchange_rate: number;
-  status: 'estimated' | 'committed' | 'paid';
+  status: CostStatus;
 }
 
-export type PassportStatus = 'customer' | 'sales' | 'op_safe' | 'embassy' | 'tour_leader' | 'returned';
-
-export interface Passenger {
-  id: string;
-  user_id?: string;
+interface Passenger {
+  id: ID;
+  user_id: ID;
   name: string;
-  english_name?: string;
-  passport_number?: string;
+  english_name: string;
+  passport_number: string;
   passport_location: PassportStatus;
-  booking_id: string;
-  birthday: string;
+  booking_id: ID;
+  birthday: DateTimeString;
   personal_id: string;
-  email?: string;
+  email: Email;
 }
 
-export interface PassportLog {
-  id: string;
-  passenger_id: string;
-  from_user: string;
-  to_user: string;
+interface PassportLog {
+  id: ID;
+  passenger_id: ID;
+  from_user: ID;
+  to_user: ID;
   action: 'check_in' | 'transfer' | 'check_out';
-  timestamp: string;
+  timestamp: DateTimeString;
 }
 
-export interface TourExpense {
-  id: string;
-  session_id: string;
-  tour_leader_id: string;
+interface TourExpense {
+  id: ID;
+  session_id: ID;
+  tour_leader_id: ID;
   amount_foreign: number;
   currency: 'JPY' | 'USD' | 'EUR' | 'CNY';
   exchange_rate: number;
-  amount_twd: number;
-  category: 'meal' | 'ticket' | 'transport' | 'tip' | 'other';
-  receipt_image_url?: string;
-  created_at: string;
-  note?: string;
+  amount_twd: TWD;
+  category: ExpenseCategory;
+  receipt_image_url: URLString;
+  created_at: DateTimeString;
+  note: string;
 }
 
-export interface QuoteItem {
-    id: string;
-    name: string;
-    type: 'flight' | 'hotel' | 'transport' | 'activity' | 'guide';
-    cost_per_pax: number;
-    currency: string;
+interface QuoteItem {
+  id: ID;
+  name: string;
+  type: QuoteItemType;
+  cost_per_pax: number;
+  currency: string;
 }
 
-export interface MiniQuoteItem {
-  id: string;
+interface MiniQuoteItem {
+  id: ID;
   item_name: string;
-  cost_type: 'fixed' | 'per_pax';
+  cost_type: CostType;
   amount: number;
 }
 
-export interface LineChatLog {
-  id: string;
-  line_user_id: string;
+interface LineChatLog {
+  id: ID;
+  line_user_id: ID;
   message_type: 'text' | 'image';
   content: string;
-  timestamp: string;
+  timestamp: DateTimeString;
   direction: 'inbound' | 'outbound';
 }
 
-export interface CustomerInteraction {
-    id: string;
-    type: 'line' | 'call' | 'email' | 'counter';
-    content: string;
-    agent_name: string;
-    timestamp: string;
-    sentiment?: 'positive' | 'neutral' | 'negative';
+interface CustomerInteraction {
+  id: ID;
+  type: InteractionType;
+  content: string;
+  agent_name: string;
+  timestamp: DateTimeString;
+  sentiment: InteractionSentiment;
 }
 
-export interface CustomerProfile {
-    id: string;
-    name: string;
-    tags: string[];
-    total_spend: number;
-    interactions: CustomerInteraction[];
+interface CustomerProfile {
+  id: ID;
+  name: string;
+  tags: string[];
+  total_spend: TWD;
+  interactions: CustomerInteraction[];
 }
 
-export interface PublicTourData {
-  id: string;
+interface PublicTourData {
+  id: ID;
   title: string;
   days: number;
-  base_price: number;
-  cover_image: string;
+  base_price: TWD;
+  cover_image: URLString;
   description: string;
   itinerary_json: {
-    points: { time: string; name: string; desc: string; image?: string }[];
+    points: { time: string; name: string; desc: string; image?: URLString }[];
     hotel: string;
   }[];
   share_token: string;
 }
 
-export interface CompanyBudget {
-  id: string;
+interface CompanyBudget {
+  id: ID;
   company_name: string;
-  total_budget: number;
-  used_budget: number;
-  last_updated: string;
+  total_budget: TWD;
+  used_budget: TWD;
+  last_updated: DateTimeString;
 }
 
-export interface Poll {
-  id: string;
+interface Poll {
+  id: ID;
   title: string;
   description: string;
-  deadline: string;
-  status: 'active' | 'closed';
+  deadline: DateTimeString;
+  status: PollStatus;
   total_votes: number;
-  ai_summary?: string; 
+  ai_summary: string;
 }
 
-export interface PollOption {
-  id: string;
-  poll_id: string;
+interface PollOption {
+  id: ID;
+  poll_id: ID;
   text: string;
-  image_url?: string;
+  image_url: URLString;
   tags: string[];
   vote_count: number;
-  is_winner?: boolean;
+  is_winner: boolean;
 }
 
-export interface ChangeRequest {
-  id: string;
+interface ChangeRequest {
+  id: ID;
   requester_name: string;
-  category: 'itinerary' | 'hotel' | 'meal' | 'pax_count';
+  category: ChangeRequestCategory;
   description: string;
-  status: 'pending' | 'op_review' | 'client_review' | 'approved' | 'rejected';
-  cost_impact: number;
-  created_at: string;
-  comments?: string; 
+  status: ChangeRequestStatus;
+  cost_impact: TWD;
+  created_at: DateTimeString;
+  comments: string;
 }
 
-export interface Incident {
-  id: string;
+interface Incident {
+  id: ID;
   title: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: IncidentSeverity;
   status_message: string;
-  timestamp: string;
+  timestamp: DateTimeString;
   is_active: boolean;
 }
 
-// 同行者
-export interface Companion {
-  id: string;
+interface Companion {
+  id: ID;
   name: string;
-  relationship: 'spouse' | 'child' | 'parent' | 'other';
-  age?: number;
-  passport_number?: string;
-  special_needs?: string;
+  relationship: RelationshipType;
+  age: number;
+  passport_number: string;
+  special_needs: string;
 }
 
-// 特殊需求統計
-export interface SpecialNeedsSummary {
-  category: string; // 素食、輪椅、單人房等
+interface SpecialNeedsSummary {
+  category: string;
   count: number;
-  passengers: { id: string; name: string }[];
+  passengers: { id: ID; name: string }[];
 }
 
-// 全團名單總覽
-export interface GroupRoster {
-  session_id: string;
+interface GroupRoster {
+  session_id: ID;
   total_passengers: number;
   room_assignments: HotelRoomAllocation[];
   seat_assignments: SeatAssignment[];
@@ -358,18 +487,12 @@ export interface GroupRoster {
   };
 }
 
-// 房間分配（用於名單表）- 兼容 camelCase + snake_case
-export interface RoomAssignment {
+interface RoomAssignment {
   roomNumber: string;
-  room_number?: string;
-  roomType: 'single' | 'double' | 'twin' | 'family' | 'suite';
-  room_type?: 'single' | 'double' | 'twin' | 'family' | 'suite';
+  room_type: RoomType;
   hotelName: string;
-  hotel_name?: string;
-  occupants: { id: string; name: string }[];
-  checkIn: string;
-  check_in?: string;
-  checkOut: string;
-  check_out?: string;
-  notes?: string;
+  occupants: { id: ID; name: string }[];
+  checkIn: DateTimeString;
+  checkOut: DateTimeString;
+  notes: string;
 }

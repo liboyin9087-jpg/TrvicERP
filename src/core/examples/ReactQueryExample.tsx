@@ -15,7 +15,7 @@ import {
 } from '../query/hooks/useCustomerQueries';
 import { queryKeys } from '../query/queryKeys';
 import type { Customer, CustomerStatus } from '@/core/types/customer';
-import Loading from '@/components/shared/Loading';
+import { Loading } from '@/components/shared/Loading';
 
 /**
  * 客戶列表組件（使用 React Query）

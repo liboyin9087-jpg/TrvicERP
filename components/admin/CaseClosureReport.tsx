@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Download, Users, Calendar, MapPin, CheckCircle, AlertTriangle,
@@ -6,10 +6,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TourSession, Booking } from '@/types';
-
-// ============================================
-// Types
-// ============================================
 
 interface CaseClosureReportProps {
   session: TourSession;
@@ -36,10 +32,6 @@ interface IncidentLog {
   timestamp: string;
   severity: 'low' | 'medium' | 'high';
 }
-
-// ============================================
-// Mock Data
-// ============================================
 
 const MOCK_FEEDBACK: FeedbackSummary = {
   averageRating: 4.5,
@@ -81,21 +73,19 @@ const MOCK_INCIDENTS: IncidentLog[] = [
   },
 ];
 
-// ============================================
-// Helper Components
-// ============================================
-
-function StatCard({ icon, label, value, subValue, trend }: {
+interface StatCardProps {
   icon: React.ReactNode;
   label: string;
   value: string;
   subValue?: string;
   trend?: 'up' | 'down' | 'neutral';
-}) {
+}
+
+const StatCard: React.FC<StatCardProps> = memo(({ icon, label, value, subValue, trend }) => {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm" role="region" aria-label={label}>
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-600">
+        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-600" aria-hidden="true">
           {icon}
         </div>
         <span className="text-sm text-gray-500">{label}</span>
@@ -115,16 +105,18 @@ function StatCard({ icon, label, value, subValue, trend }: {
       </div>
     </div>
   );
-}
+});
 
-function RatingBar({ label, rating, maxRating = 5 }: {
+interface RatingBarProps {
   label: string;
   rating: number;
   maxRating?: number;
-}) {
+}
+
+const RatingBar: React.FC<RatingBarProps> = memo(({ label, rating, maxRating = 5 }) => {
   const percentage = (rating / maxRating) * 100;
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4" role="progressbar" aria-valuenow={rating} aria-valuemin={0} aria-valuemax={maxRating} aria-label={`${label}評分`}>
       <span className="text-sm text-gray-600 w-24 shrink-0">{label}</span>
       <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
         <motion.div
@@ -142,21 +134,25 @@ function RatingBar({ label, rating, maxRating = 5 }: {
       <span className="text-sm font-medium text-gray-900 w-10 text-right">{rating.toFixed(1)}</span>
     </div>
   );
+});
+
+interface IncidentCardProps {
+  incident: IncidentLog;
 }
 
-function IncidentCard({ incident }: { incident: IncidentLog }) {
-  const typeLabels: Record<string, { label: string; color: string }> = {
+const IncidentCard: React.FC<IncidentCardProps> = memo(({ incident }) => {
+  const typeLabels = useMemo(() => ({
     delay: { label: '延誤', color: 'bg-yellow-100 text-yellow-700' },
     complaint: { label: '客訴', color: 'bg-red-100 text-red-700' },
     medical: { label: '醫療', color: 'bg-blue-100 text-blue-700' },
     lost_item: { label: '遺失', color: 'bg-purple-100 text-purple-700' },
     other: { label: '其他', color: 'bg-gray-100 text-gray-700' },
-  };
+  }), []);
 
   const { label, color } = typeLabels[incident.type] || typeLabels.other;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
+    <div className="bg-white rounded-xl border border-gray-100 p-4" role="article" aria-label={`事件記錄: ${label}`}>
       <div className="flex items-start justify-between mb-2">
         <span className={cn('px-2 py-1 rounded-lg text-xs font-medium', color)}>
           {label}
@@ -170,22 +166,14 @@ function IncidentCard({ incident }: { incident: IncidentLog }) {
       </div>
     </div>
   );
-}
+});
 
-// ============================================
-// Main Component
-// ============================================
-
-export default function CaseClosureReport({
-  session,
-  bookings,
-}: CaseClosureReportProps) {
+const CaseClosureReport: React.FC<CaseClosureReportProps> = memo(({ session, bookings }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'feedback' | 'incidents' | 'export'>('overview');
 
   const feedback = MOCK_FEEDBACK;
   const incidents = MOCK_INCIDENTS;
 
-  // 計算統計數據
   const totalPax = session.current_pax;
   const confirmedPax = bookings.filter(b => b.status === 'confirmed' || b.status === 'paid').length;
   const specialNeedsCount = bookings.filter(b => b.special_needs).length;
@@ -326,16 +314,15 @@ export default function CaseClosureReport({
     `;
   };
 
-  const tabs = [
+  const tabs = useMemo(() => [
     { key: 'overview', label: '總覽', icon: <FileText className="w-4 h-4" /> },
     { key: 'feedback', label: '滿意度', icon: <Star className="w-4 h-4" /> },
     { key: 'incidents', label: '事件記錄', icon: <AlertTriangle className="w-4 h-4" /> },
     { key: 'export', label: '匯出', icon: <Download className="w-4 h-4" /> },
-  ];
+  ], []);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6" role="main" aria-label="團次結案報告">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-gray-900">結案報告</h3>
@@ -349,6 +336,7 @@ export default function CaseClosureReport({
             whileTap={{ scale: 0.98 }}
             onClick={handleExportPDF}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium"
+            aria-label="列印報告"
           >
             <Printer className="w-4 h-4" />
             列印報告
@@ -356,8 +344,7 @@ export default function CaseClosureReport({
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-gray-100 pb-4">
+      <div className="flex gap-2 border-b border-gray-100 pb-4" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -368,6 +355,9 @@ export default function CaseClosureReport({
                 ? 'bg-gray-900 text-white'
                 : 'text-gray-600 hover:bg-gray-100'
             )}
+            role="tab"
+            aria-selected={activeTab === tab.key}
+            aria-controls={`tabpanel-${tab.key}`}
           >
             {tab.icon}
             {tab.label}
@@ -375,14 +365,14 @@ export default function CaseClosureReport({
         ))}
       </div>
 
-      {/* Tab Content */}
       {activeTab === 'overview' && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
+          role="tabpanel"
+          id="tabpanel-overview"
         >
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               icon={<Users className="w-5 h-5" />}
@@ -411,9 +401,7 @@ export default function CaseClosureReport({
             />
           </div>
 
-          {/* Quick Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Top Ratings */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <h4 className="font-bold text-gray-900 mb-4">滿意度概覽</h4>
               <div className="space-y-3">
@@ -423,7 +411,6 @@ export default function CaseClosureReport({
               </div>
             </div>
 
-            {/* Recent Incidents */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <h4 className="font-bold text-gray-900 mb-4">事件摘要</h4>
               {incidents.length > 0 ? (
@@ -448,8 +435,9 @@ export default function CaseClosureReport({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
+          role="tabpanel"
+          id="tabpanel-feedback"
         >
-          {/* Rating Overview */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -483,7 +471,6 @@ export default function CaseClosureReport({
             </div>
           </div>
 
-          {/* Highlights & Improvements */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-green-50 rounded-2xl border border-green-100 p-6">
               <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
@@ -527,6 +514,8 @@ export default function CaseClosureReport({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="space-y-4"
+          role="tabpanel"
+          id="tabpanel-incidents"
         >
           {incidents.length > 0 ? (
             incidents.map((incident) => (
@@ -547,12 +536,15 @@ export default function CaseClosureReport({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          role="tabpanel"
+          id="tabpanel-export"
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleExportPDF}
             className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all"
+            aria-label="匯出PDF報告"
           >
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
               <FileText className="w-6 h-6 text-blue-600" />
@@ -568,6 +560,7 @@ export default function CaseClosureReport({
             whileTap={{ scale: 0.98 }}
             onClick={() => alert('Excel 匯出功能開發中')}
             className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:bg-green-50 transition-all"
+            aria-label="匯出Excel數據"
           >
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
               <Download className="w-6 h-6 text-green-600" />
@@ -583,6 +576,7 @@ export default function CaseClosureReport({
             whileTap={{ scale: 0.98 }}
             onClick={() => alert('Email 發送功能開發中')}
             className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50 transition-all"
+            aria-label="Email發送報告"
           >
             <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
               <Mail className="w-6 h-6 text-purple-600" />
@@ -596,4 +590,6 @@ export default function CaseClosureReport({
       )}
     </div>
   );
-}
+});
+
+export default CaseClosureReport;

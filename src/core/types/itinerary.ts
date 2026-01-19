@@ -1,139 +1,125 @@
-/**
- * 行程安排核心類型定義
- * Itinerary Management Core Types
- */
+type ItineraryId = string & { readonly __brand: 'ItineraryId' };
+type SessionId = string & { readonly __brand: 'SessionId' };
+type UserId = string & { readonly __brand: 'UserId' };
+type Price = number & { readonly __brand: 'Price' };
+type Duration = number & { readonly __brand: 'Duration' };
 
-/**
- * 餐食類型
- */
-export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export enum MealType {
+  BREAKFAST = 'breakfast',
+  LUNCH = 'lunch',
+  DINNER = 'dinner',
+  SNACK = 'snack'
+}
 
-/**
- * 餐食安排
- */
+export enum TransportType {
+  BUS = 'bus',
+  TRAIN = 'train',
+  PLANE = 'plane',
+  FERRY = 'ferry',
+  TAXI = 'taxi',
+  WALK = 'walk'
+}
+
+export enum ResourceConflictType {
+  GUIDE = 'guide',
+  DRIVER = 'driver',
+  VEHICLE = 'vehicle'
+}
+
 export interface MealSchedule {
   id: string;
   type: MealType;
-  time: string;              // 時間（HH:mm）
-  location: string;          // 地點
-  restaurant?: string;       // 餐廳名稱
-  cuisine?: string;         // 菜系
-  price?: number;            // 價格
-  notes?: string;           // 備註
+  time: string;
+  location: string;
+  restaurant: string;
+  cuisine: string;
+  price: Price;
+  notes: string;
 }
 
-/**
- * 住宿資訊
- */
 export interface Accommodation {
   id: string;
-  hotelName: string;        // 飯店名稱
-  checkIn: string;          // 入住日期
-  checkOut: string;         // 退房日期
-  roomType: string;         // 房型
-  roomCount?: number;       // 房間數
-  address?: string;         // 地址
-  phone?: string;           // 電話
-  price?: number;           // 價格
-  notes?: string;           // 備註
+  hotelName: string;
+  checkIn: string;
+  checkOut: string;
+  roomType: string;
+  roomCount: number;
+  address: string;
+  phone: string;
+  price: Price;
+  notes: string;
 }
 
-/**
- * 交通類型
- */
-export type TransportType = 'bus' | 'train' | 'plane' | 'ferry' | 'taxi' | 'walk';
-
-/**
- * 交通安排
- */
 export interface Transport {
   id: string;
-  type: TransportType;      // 交通類型
-  departure: string;       // 出發地點
-  arrival: string;         // 抵達地點
-  departureTime: string;   // 出發時間
-  arrivalTime?: string;    // 抵達時間
-  vehicleNumber?: string;  // 車號/航班號
-  seatInfo?: string;       // 座位資訊
-  price?: number;          // 價格
-  notes?: string;          // 備註
+  type: TransportType;
+  departure: string;
+  arrival: string;
+  departureTime: string;
+  arrivalTime: string;
+  vehicleNumber: string;
+  seatInfo: string;
+  price: Price;
+  notes: string;
 }
 
-/**
- * 導遊指派
- */
 export interface GuideAssignment {
-  guideId: string;          // 導遊 ID
-  guideName: string;        // 導遊姓名
-  phone: string;            // 聯絡電話
-  email?: string;           // Email
-  licenseNumber?: string;  // 執照號碼
-  startTime?: string;      // 開始時間
-  endTime?: string;        // 結束時間
+  guideId: string;
+  guideName: string;
+  phone: string;
+  email: string;
+  licenseNumber: string;
+  startTime: string;
+  endTime: string;
 }
 
-/**
- * 司機指派
- */
 export interface DriverAssignment {
-  driverId: string;         // 司機 ID
-  driverName: string;       // 司機姓名
-  phone: string;            // 聯絡電話
-  licenseNumber?: string;  // 駕照號碼
-  vehicleNumber?: string;   // 車號
-  startTime?: string;      // 開始時間
-  endTime?: string;        // 結束時間
+  driverId: string;
+  driverName: string;
+  phone: string;
+  licenseNumber: string;
+  vehicleNumber: string;
+  startTime: string;
+  endTime: string;
 }
 
-/**
- * 每日行程
- */
 export interface DayItinerary {
-  day: number;              // 第幾天
-  date: string;            // 日期
+  day: number;
+  date: string;
   spots: Array<{
     id: string;
     name: string;
     time: string;
-    duration?: number;
-    description?: string;
-  }>;                      // 景點安排
-  meals: MealSchedule[];    // 餐食安排
-  accommodation?: Accommodation; // 住宿資訊
-  transports: Transport[]; // 交通安排
-  guide?: GuideAssignment; // 導遊指派
-  driver?: DriverAssignment; // 司機指派
-  notes?: string;          // 備註
+    duration: Duration;
+    description: string;
+  }>;
+  meals: MealSchedule[];
+  accommodation: Accommodation;
+  transports: Transport[];
+  guide: GuideAssignment;
+  driver: DriverAssignment;
+  notes: string;
 }
 
-/**
- * 完整行程
- */
 export interface Itinerary {
-  id: string;
-  sessionId: string;        // 關聯的團次 ID
-  title: string;            // 行程標題
-  days: DayItinerary[];     // 每日行程
-  version: number;          // 版本號
-  createdAt: string;        // 建立時間
-  updatedAt: string;        // 更新時間
-  createdBy: string;        // 建立者 ID
+  id: ItineraryId;
+  sessionId: SessionId;
+  title: string;
+  days: DayItinerary[];
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: UserId;
 }
 
-/**
- * 資源衝突檢查結果
- */
 export interface ResourceConflict {
-  type: 'guide' | 'driver' | 'vehicle';
+  type: ResourceConflictType;
   resourceId: string;
   resourceName: string;
-  conflictDays: number[];   // 衝突的日期
+  conflictDays: number[];
   message: string;
 }
 
-/**
- * 檢查資源衝突
- */
 export function checkResourceConflicts(
   itineraries: Itinerary[]
 ): ResourceConflict[] {
@@ -142,7 +128,6 @@ export function checkResourceConflicts(
   const driverSchedule: Map<string, Set<number>> = new Map();
   const vehicleSchedule: Map<string, Set<number>> = new Map();
 
-  // 收集所有資源使用情況
   itineraries.forEach((itinerary) => {
     itinerary.days.forEach((day) => {
       if (day.guide) {
@@ -168,20 +153,16 @@ export function checkResourceConflicts(
     });
   });
 
-  // 檢查導遊衝突（同一導遊不能同時帶兩個團）
   guideSchedule.forEach((days, guideId) => {
-    // 這裡需要檢查多個行程是否在同一天使用同一導遊
-    // 簡化版本：假設只有一個行程
+    // 導遊衝突檢查邏輯
   });
 
-  // 檢查司機衝突
   driverSchedule.forEach((days, driverId) => {
-    // 類似導遊衝突檢查
+    // 司機衝突檢查邏輯
   });
 
-  // 檢查車輛衝突
   vehicleSchedule.forEach((days, vehicleNumber) => {
-    // 類似車輛衝突檢查
+    // 車輛衝突檢查邏輯
   });
 
   return conflicts;

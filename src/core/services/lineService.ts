@@ -1,49 +1,49 @@
-/**
- * Line Messaging API 服務
- * Line Messaging API Service
- */
-
 import { api } from '@/lib/api';
 
-// Line API 端點
+interface FlexMessageContents {
+  type: string;
+  [key: string]: unknown;
+}
+
+interface MeetingInfo {
+  location: string;
+  address?: string;
+  meetingTime: string;
+  contactPerson: string;
+  contactPhone: string;
+  groupNumber: string;
+}
+
+interface ItineraryChange {
+  groupNumber: string;
+  changeType: string;
+  description: string;
+  effectiveDate?: string;
+}
+
 const LINE_API_BASE = import.meta.env.VITE_LINE_API_URL || '/api/v1/line';
 
-/**
- * Line 訊息類型
- */
 export type LineMessageType = 'text' | 'image' | 'flex' | 'template';
 
-/**
- * Line 訊息
- */
 export interface LineMessage {
   type: LineMessageType;
   text?: string;
   imageUrl?: string;
   altText?: string;
-  contents?: any; // Flex Message contents
+  contents?: FlexMessageContents;
 }
 
-/**
- * Line 發送目標
- */
 export interface LineSendTarget {
   type: 'user' | 'group' | 'room';
   id: string;
   name?: string;
 }
 
-/**
- * Line 發送請求
- */
 export interface LineSendRequest {
   targets: LineSendTarget[];
   messages: LineMessage[];
 }
 
-/**
- * Line 發送結果
- */
 export interface LineSendResult {
   success: boolean;
   sentCount: number;
@@ -51,9 +51,6 @@ export interface LineSendResult {
   errors?: { targetId: string; error: string }[];
 }
 
-/**
- * 文件發送選項
- */
 export interface DocumentSendOptions {
   sessionId: string;
   documentType: 'itinerary' | 'room_list' | 'seat_chart' | 'roster' | 'meeting_info';
@@ -61,13 +58,7 @@ export interface DocumentSendOptions {
   customMessage?: string;
 }
 
-/**
- * Line 服務
- */
 export class LineService {
-  /**
-   * 發送文字訊息
-   */
   static async sendTextMessage(
     targets: LineSendTarget[],
     text: string
@@ -79,13 +70,10 @@ export class LineService {
     return this.send(request);
   }
 
-  /**
-   * 發送圖片訊息
-   */
   static async sendImageMessage(
     targets: LineSendTarget[],
     imageUrl: string,
-    altText: string = '圖片訊息'
+    altText = '圖片訊息'
   ): Promise<LineSendResult> {
     const request: LineSendRequest = {
       targets,
@@ -94,13 +82,10 @@ export class LineService {
     return this.send(request);
   }
 
-  /**
-   * 發送 Flex 訊息（用於豐富格式）
-   */
   static async sendFlexMessage(
     targets: LineSendTarget[],
     altText: string,
-    contents: any
+    contents: FlexMessageContents
   ): Promise<LineSendResult> {
     const request: LineSendRequest = {
       targets,
@@ -109,9 +94,6 @@ export class LineService {
     return this.send(request);
   }
 
-  /**
-   * 發送出團文件通知
-   */
   static async sendDocumentNotification(
     options: DocumentSendOptions
   ): Promise<LineSendResult> {
@@ -129,8 +111,7 @@ export class LineService {
     const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
     const documentUrl = `${baseUrl}/documents/${sessionId}/${documentType}`;
 
-    // 建立 Flex Message
-    const flexContents = {
+    const flexContents: FlexMessageContents = {
       type: 'bubble',
       header: {
         type: 'box',
@@ -198,21 +179,11 @@ export class LineService {
     );
   }
 
-  /**
-   * 發送集合提醒
-   */
   static async sendMeetingReminder(
     targets: LineSendTarget[],
-    meetingInfo: {
-      location: string;
-      address?: string;
-      meetingTime: string;
-      contactPerson: string;
-      contactPhone: string;
-      groupNumber: string;
-    }
+    meetingInfo: MeetingInfo
   ): Promise<LineSendResult> {
-    const flexContents = {
+    const flexContents: FlexMessageContents = {
       type: 'bubble',
       header: {
         type: 'box',
@@ -317,31 +288,18 @@ export class LineService {
     return this.sendFlexMessage(targets, '集合提醒通知', flexContents);
   }
 
-  /**
-   * 發送行程變更通知
-   */
   static async sendItineraryChangeNotification(
     targets: LineSendTarget[],
-    change: {
-      groupNumber: string;
-      changeType: string;
-      description: string;
-      effectiveDate?: string;
-    }
+    change: ItineraryChange
   ): Promise<LineSendResult> {
     const text = `⚠️ 行程變更通知\n\n團號：${change.groupNumber}\n變更類型：${change.changeType}\n${change.effectiveDate ? `生效日期：${change.effectiveDate}\n` : ''}\n${change.description}`;
     return this.sendTextMessage(targets, text);
   }
 
-  /**
-   * 核心發送方法
-   */
   private static async send(request: LineSendRequest): Promise<LineSendResult> {
-    // 檢查是否為 Mock 模式
     const useMock = import.meta.env.VITE_USE_MOCK !== 'false';
 
     if (useMock) {
-      // Mock 模式：模擬發送成功
       console.log('[Line Mock] 發送訊息:', request);
       await new Promise((resolve) => setTimeout(resolve, 500));
       return {
@@ -351,36 +309,36 @@ export class LineService {
       };
     }
 
-    // 真實 API 呼叫
-    const response = await api.post<LineSendResult>(`${LINE_API_BASE}/send`, request);
+    try {
+      const response = await api.post<LineSendResult>(`${LINE_API_BASE}/send`, request);
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
-    if (response.error) {
+      return response.data || {
+        success: false,
+        sentCount: 0,
+        failedCount: request.targets.length,
+      };
+    } catch (error) {
       return {
         success: false,
         sentCount: 0,
         failedCount: request.targets.length,
-        errors: [{ targetId: 'all', error: response.error.message }],
+        errors: [{ targetId: 'all', error: error instanceof Error ? error.message : 'Unknown error' }],
       };
     }
-
-    return response.data || {
-      success: false,
-      sentCount: 0,
-      failedCount: request.targets.length,
-    };
   }
 
-  /**
-   * 取得 Line 用戶列表（從訂單中提取）
-   */
   static extractLineTargetsFromBookings(
     bookings: Array<{ id: string; customer_name: string; user_id?: string }>
   ): LineSendTarget[] {
     return bookings
-      .filter((b) => b.user_id)
+      .filter((b): b is { id: string; customer_name: string; user_id: string } => !!b.user_id)
       .map((b) => ({
-        type: 'user' as const,
-        id: b.user_id!,
+        type: 'user',
+        id: b.user_id,
         name: b.customer_name,
       }));
   }

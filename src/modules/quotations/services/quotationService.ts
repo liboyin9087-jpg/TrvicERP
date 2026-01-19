@@ -1,8 +1,3 @@
-/**
- * 報價管理服務層
- * Quotation Management Service Layer
- */
-
 import { api, API_ENDPOINTS } from '../../../lib/api';
 import type {
   Quotation,
@@ -10,6 +5,8 @@ import type {
   UpdateQuotationData,
   ConvertQuotationToOrderData,
   QuotationItem,
+  ApiResponse,
+  ApiError,
 } from '../../../core/types/quotation';
 import {
   calculateQuotationCost,
@@ -17,22 +14,13 @@ import {
   isQuotationExpired,
 } from '../../../core/types/quotation';
 
-/**
- * 報價服務
- */
 export class QuotationService {
-  /**
-   * 取得報價列表
-   */
   static async getQuotations(params?: {
     customerId?: string;
     status?: string;
     page?: number;
     limit?: number;
-  }): Promise<{
-    data: Quotation[] | null;
-    error: any;
-  }> {
+  }): Promise<ApiResponse<Quotation[]>> {
     const queryParams = new URLSearchParams();
     if (params?.customerId) queryParams.append('customerId', params.customerId);
     if (params?.status) queryParams.append('status', params.status);
@@ -43,31 +31,17 @@ export class QuotationService {
     return api.get<Quotation[]>(endpoint);
   }
 
-  /**
-   * 取得單一報價
-   */
-  static async getQuotation(id: string): Promise<{
-    data: Quotation | null;
-    error: any;
-  }> {
+  static async getQuotation(id: string): Promise<ApiResponse<Quotation>> {
     return api.get<Quotation>(API_ENDPOINTS.quotations.detail(id));
   }
 
-  /**
-   * 建立報價
-   */
   static async createQuotation(
     data: CreateQuotationData
-  ): Promise<{
-    data: Quotation | null;
-    error: any;
-  }> {
-    // 計算成本
+  ): Promise<ApiResponse<Quotation>> {
     const costBreakdown = calculateQuotationCost(data.items, data.paxCount);
     const totalCost = costBreakdown.total;
     const sellingPrice = calculateSellingPrice(totalCost, data.profitMargin);
 
-    // 計算有效期限
     const validDays = data.validDays || 30;
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + validDays);
@@ -81,23 +55,13 @@ export class QuotationService {
       currency: data.currency || 'TWD',
     };
 
-    return api.post<Quotation>(
-      API_ENDPOINTS.quotations.create,
-      quotationData
-    );
+    return api.post<Quotation>(API_ENDPOINTS.quotations.create, quotationData);
   }
 
-  /**
-   * 更新報價
-   */
   static async updateQuotation(
     id: string,
     data: UpdateQuotationData
-  ): Promise<{
-    data: Quotation | null;
-    error: any;
-  }> {
-    // 如果更新項目或人數，需要重新計算
+  ): Promise<ApiResponse<Quotation>> {
     if (data.items || data.paxCount || data.profitMargin) {
       const currentQuotation = await this.getQuotation(id);
       if (currentQuotation.error || !currentQuotation.data) {
@@ -126,30 +90,17 @@ export class QuotationService {
     return api.patch<Quotation>(API_ENDPOINTS.quotations.update(id), data);
   }
 
-  /**
-   * 刪除報價
-   */
-  static async deleteQuotation(id: string): Promise<{
-    data: null;
-    error: any;
-  }> {
+  static async deleteQuotation(id: string): Promise<ApiResponse<null>> {
     return api.delete(API_ENDPOINTS.quotations.delete(id));
   }
 
-  /**
-   * 將報價轉換為訂單
-   */
   static async convertToOrder(
     id: string,
     convertData?: ConvertQuotationToOrderData
-  ): Promise<{
-    data: { orderId: string } | null;
-    error: any;
-  }> {
-    // 檢查報價是否過期
+  ): Promise<ApiResponse<{ orderId: string }>> {
     const quotation = await this.getQuotation(id);
     if (quotation.error || !quotation.data) {
-      return quotation as any;
+      return quotation;
     }
 
     if (isQuotationExpired(quotation.data.validUntil)) {
@@ -178,19 +129,10 @@ export class QuotationService {
     );
   }
 
-  /**
-   * 取得報價版本歷史
-   */
-  static async getQuotationVersions(id: string): Promise<{
-    data: Quotation[] | null;
-    error: any;
-  }> {
+  static async getQuotationVersions(id: string): Promise<ApiResponse<Quotation[]>> {
     return api.get<Quotation[]>(API_ENDPOINTS.quotations.versions(id));
   }
 
-  /**
-   * 計算報價預覽（不儲存）
-   */
   static calculateQuotationPreview(
     items: QuotationItem[],
     paxCount: number,

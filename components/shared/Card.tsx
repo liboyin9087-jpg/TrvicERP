@@ -1,16 +1,4 @@
-/**
- * TrvicERP Card Component
- *
- * Card variants per design spec:
- * - default: Standard card with border and shadow
- * - elevated: Higher elevation card
- * - stat: KPI/statistics card
- * - interactive: Clickable card
- *
- * @see DESIGN_SYSTEM.md Section 5.2
- */
-
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 
 export type CardVariant = 'default' | 'elevated' | 'stat' | 'interactive';
@@ -19,6 +7,8 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   hoverable?: boolean;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 }
 
 const variantStyles: Record<CardVariant, string> = {
@@ -55,7 +45,7 @@ const hoverStyles = {
   interactive: 'hover:shadow-md hover:border-primary-500',
 };
 
-export const Card = forwardRef<HTMLDivElement, CardProps>(
+export const Card = memo(forwardRef<HTMLDivElement, CardProps>(
   (
     {
       className,
@@ -63,6 +53,8 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       padding = 'md',
       hoverable = false,
       children,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledby,
       ...props
     },
     ref
@@ -76,31 +68,35 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           hoverable && hoverStyles[variant],
           className
         )}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledby}
+        role={variant === 'interactive' ? 'button' : 'region'}
         {...props}
       >
         {children}
       </div>
     );
   }
-);
+));
 
 Card.displayName = 'Card';
 
-/**
- * Card Header
- */
 export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 }
 
-export function CardHeader({
+export const CardHeader = memo(function CardHeader({
   className,
   title,
   subtitle,
   action,
   children,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledby,
   ...props
 }: CardHeaderProps) {
   return (
@@ -109,48 +105,64 @@ export function CardHeader({
         'flex items-start justify-between gap-4 mb-4',
         className
       )}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledby}
       {...props}
     >
       <div className="flex-1 min-w-0">
         {title && (
-          <h3 className="text-lg font-bold text-neutral-900 truncate">
+          <h3 className="text-lg font-bold text-neutral-900 truncate" aria-label={title}>
             {title}
           </h3>
         )}
         {subtitle && (
-          <p className="text-sm text-neutral-500 mt-1">{subtitle}</p>
+          <p className="text-sm text-neutral-500 mt-1" aria-label={subtitle}>
+            {subtitle}
+          </p>
         )}
         {children}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>
   );
+});
+
+export interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 }
 
-/**
- * Card Body
- */
-export interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {}
-
-export function CardBody({ className, children, ...props }: CardBodyProps) {
+export const CardBody = memo(function CardBody({ 
+  className, 
+  children, 
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledby,
+  ...props 
+}: CardBodyProps) {
   return (
-    <div className={cn('text-neutral-700', className)} {...props}>
+    <div 
+      className={cn('text-neutral-700', className)} 
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledby}
+      {...props}
+    >
       {children}
     </div>
   );
-}
+});
 
-/**
- * Card Footer
- */
 export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   bordered?: boolean;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 }
 
-export function CardFooter({
+export const CardFooter = memo(function CardFooter({
   className,
   bordered = true,
   children,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledby,
   ...props
 }: CardFooterProps) {
   return (
@@ -160,16 +172,15 @@ export function CardFooter({
         bordered && 'border-t border-neutral-200',
         className
       )}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledby}
       {...props}
     >
       {children}
     </div>
   );
-}
+});
 
-/**
- * KPI/Stat Card
- */
 export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   value: string | number;
@@ -178,26 +189,30 @@ export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
     label?: string;
   };
   icon?: React.ReactNode;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
 }
 
-export function StatCard({
+export const StatCard = memo(function StatCard({
   className,
   title,
   value,
   change,
   icon,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledby,
   ...props
 }: StatCardProps) {
   const isPositive = change && change.value >= 0;
 
   return (
-    <Card variant="stat" className={className} hoverable {...props}>
+    <Card variant="stat" className={className} hoverable aria-label={ariaLabel} aria-labelledby={ariaLabelledby} {...props}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+          <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide" aria-label={title}>
             {title}
           </p>
-          <p className="text-2xl font-bold text-primary-900 mt-2 font-mono tabular-nums">
+          <p className="text-2xl font-bold text-primary-900 mt-2 font-mono tabular-nums" aria-label={`Value: ${value}`}>
             {value}
           </p>
           {change && (
@@ -206,6 +221,7 @@ export function StatCard({
                 'text-sm mt-2 flex items-center gap-1',
                 isPositive ? 'text-success' : 'text-error'
               )}
+              aria-label={`Change: ${change.value}% ${change.label || ''}`}
             >
               <span>{isPositive ? '\u2191' : '\u2193'}</span>
               <span className="font-medium">
@@ -218,13 +234,13 @@ export function StatCard({
           )}
         </div>
         {icon && (
-          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center text-primary-900">
+          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center text-primary-900" aria-hidden="true">
             {icon}
           </div>
         )}
       </div>
     </Card>
   );
-}
+});
 
 export default Card;

@@ -1,185 +1,161 @@
-/**
- * 客戶管理核心類型定義
- * Customer Management Core Types
- */
+type CustomerId = string & { readonly __brand: 'CustomerId' };
+type AgentId = string & { readonly __brand: 'AgentId' };
+type ContactId = string & { readonly __brand: 'ContactId' };
+type TagId = string & { readonly __brand: 'TagId' };
+type NTAmount = number & { readonly __brand: 'NTAmount' };
 
-/**
- * 客戶類型
- */
-export type CustomerType = 'individual' | 'corporate' | 'agent';
+enum CustomerType {
+  INDIVIDUAL = 'individual',
+  CORPORATE = 'corporate',
+  AGENT = 'agent'
+}
 
-/**
- * 客戶等級
- */
-export type CustomerTier = 'standard' | 'silver' | 'gold' | 'platinum' | 'vip';
+enum CustomerTier {
+  STANDARD = 'standard',
+  SILVER = 'silver',
+  GOLD = 'gold',
+  PLATINUM = 'platinum',
+  VIP = 'vip'
+}
 
-/**
- * 客戶狀態
- */
-export type CustomerStatus = 'active' | 'inactive' | 'blocked';
+enum CustomerStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  BLOCKED = 'blocked'
+}
 
-/**
- * 客戶互動類型
- */
-export type InteractionType = 'line' | 'call' | 'email' | 'counter' | 'whatsapp';
+enum InteractionType {
+  LINE = 'line',
+  CALL = 'call',
+  EMAIL = 'email',
+  COUNTER = 'counter',
+  WHATSAPP = 'whatsapp'
+}
 
-/**
- * 客戶互動情緒
- */
-export type InteractionSentiment = 'positive' | 'neutral' | 'negative';
+enum InteractionSentiment {
+  POSITIVE = 'positive',
+  NEUTRAL = 'neutral',
+  NEGATIVE = 'negative'
+}
 
-/**
- * 客戶互動記錄
- */
-export interface CustomerInteraction {
+interface CustomerInteraction {
   id: string;
-  customerId: string;
+  customerId: CustomerId;
   type: InteractionType;
   content: string;
-  agentId?: string;
+  agentId: AgentId | null;
   agentName: string;
-  sentiment?: InteractionSentiment;
+  sentiment: InteractionSentiment | null;
   createdAt: string;
 }
 
-/**
- * 客戶標籤
- */
-export interface CustomerTag {
-  id: string;
+interface CustomerTag {
+  id: TagId;
   name: string;
   color: string;
-  category?: string;
+  category: string | null;
 }
 
-/**
- * 聯絡人
- */
-export interface Contact {
-  id: string;
+interface Contact {
+  id: ContactId;
   name: string;
-  title?: string;
-  phone?: string;
-  email?: string;
+  title: string | null;
+  phone: string | null;
+  email: string | null;
   isPrimary: boolean;
 }
 
-/**
- * 客戶
- */
-export interface Customer {
-  id: string;
+interface Customer {
+  id: CustomerId;
   type: CustomerType;
   name: string;
-  englishName?: string;
-  email?: string;
-  phone?: string;
-  mobile?: string;
-  address?: string;
+  englishName: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  address: string | null;
   tier: CustomerTier;
   status: CustomerStatus;
   tags: CustomerTag[];
-  contacts?: Contact[];
-  // 企業客戶欄位
-  companyName?: string;
-  taxId?: string;
-  // 統計資訊
-  totalSpend: number;
+  contacts: Contact[];
+  companyName: string | null;
+  taxId: string | null;
+  totalSpend: NTAmount;
   orderCount: number;
-  lastOrderDate?: string;
-  // 偏好設定
-  preferredLanguage?: string;
-  preferredContact?: InteractionType;
-  notes?: string;
-  // 時間戳
+  lastOrderDate: string | null;
+  preferredLanguage: string | null;
+  preferredContact: InteractionType | null;
+  notes: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-/**
- * 客戶資料 (CDP)
- */
-export interface CustomerProfile extends Customer {
+interface CustomerProfile extends Customer {
   interactions: CustomerInteraction[];
-  visitedCountries?: string[];
-  tripCount?: number;
-  averageOrderValue?: number;
-  lifetimeValue?: number;
+  visitedCountries: string[];
+  tripCount: number;
+  averageOrderValue: NTAmount;
+  lifetimeValue: NTAmount;
 }
 
-/**
- * 建立客戶資料
- */
-export interface CreateCustomerData {
+interface CreateCustomerData {
   type: CustomerType;
   name: string;
-  englishName?: string;
-  email?: string;
-  phone?: string;
-  mobile?: string;
-  address?: string;
-  tier?: CustomerTier;
-  tags?: string[];
-  contacts?: Omit<Contact, 'id'>[];
-  companyName?: string;
-  taxId?: string;
-  preferredLanguage?: string;
-  preferredContact?: InteractionType;
-  notes?: string;
+  englishName: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  address: string | null;
+  tier: CustomerTier;
+  tags: string[];
+  contacts: Array<Omit<Contact, 'id'>>;
+  companyName: string | null;
+  taxId: string | null;
+  preferredLanguage: string | null;
+  preferredContact: InteractionType | null;
+  notes: string | null;
 }
 
-/**
- * 更新客戶資料
- */
-export interface UpdateCustomerData {
-  type?: CustomerType;
-  name?: string;
-  englishName?: string;
-  email?: string;
-  phone?: string;
-  mobile?: string;
-  address?: string;
-  tier?: CustomerTier;
-  status?: CustomerStatus;
-  tags?: string[];
-  companyName?: string;
-  taxId?: string;
-  preferredLanguage?: string;
-  preferredContact?: InteractionType;
-  notes?: string;
+interface UpdateCustomerData {
+  type: CustomerType | null;
+  name: string | null;
+  englishName: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  address: string | null;
+  tier: CustomerTier | null;
+  status: CustomerStatus | null;
+  tags: string[] | null;
+  companyName: string | null;
+  taxId: string | null;
+  preferredLanguage: string | null;
+  preferredContact: InteractionType | null;
+  notes: string | null;
 }
 
-/**
- * 客戶查詢條件
- */
-export interface CustomerQuery {
-  type?: CustomerType;
-  tier?: CustomerTier | CustomerTier[];
-  status?: CustomerStatus;
-  tags?: string[];
-  search?: string;
-  page?: number;
-  limit?: number;
+interface CustomerQuery {
+  type: CustomerType | null;
+  tier: CustomerTier | CustomerTier[] | null;
+  status: CustomerStatus | null;
+  tags: string[] | null;
+  search: string | null;
+  page: number;
+  limit: number;
 }
 
-/**
- * 客戶等級升級規則
- */
-export const TIER_THRESHOLDS: Record<CustomerTier, number> = {
-  standard: 0,
-  silver: 50000,
-  gold: 150000,
-  platinum: 500000,
-  vip: 1000000,
+const TIER_THRESHOLDS: Record<CustomerTier, NTAmount> = {
+  [CustomerTier.STANDARD]: 0 as NTAmount,
+  [CustomerTier.SILVER]: 50000 as NTAmount,
+  [CustomerTier.GOLD]: 150000 as NTAmount,
+  [CustomerTier.PLATINUM]: 500000 as NTAmount,
+  [CustomerTier.VIP]: 1000000 as NTAmount
 };
 
-/**
- * 計算客戶等級
- */
-export function calculateCustomerTier(totalSpend: number): CustomerTier {
-  if (totalSpend >= TIER_THRESHOLDS.vip) return 'vip';
-  if (totalSpend >= TIER_THRESHOLDS.platinum) return 'platinum';
-  if (totalSpend >= TIER_THRESHOLDS.gold) return 'gold';
-  if (totalSpend >= TIER_THRESHOLDS.silver) return 'silver';
-  return 'standard';
+function calculateCustomerTier(totalSpend: NTAmount): CustomerTier {
+  if (totalSpend >= TIER_THRESHOLDS[CustomerTier.VIP]) return CustomerTier.VIP;
+  if (totalSpend >= TIER_THRESHOLDS[CustomerTier.PLATINUM]) return CustomerTier.PLATINUM;
+  if (totalSpend >= TIER_THRESHOLDS[CustomerTier.GOLD]) return CustomerTier.GOLD;
+  if (totalSpend >= TIER_THRESHOLDS[CustomerTier.SILVER]) return CustomerTier.SILVER;
+  return CustomerTier.STANDARD;
 }

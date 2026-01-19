@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Pencil, FileText, MessageCircle } from 'lucide-react';
@@ -42,7 +42,7 @@ interface ViewSwitcherProps {
   className?: string;
 }
 
-export default function ViewSwitcher({ className }: ViewSwitcherProps) {
+const ViewSwitcher = memo(({ className }: ViewSwitcherProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -59,7 +59,7 @@ export default function ViewSwitcher({ className }: ViewSwitcherProps) {
   };
 
   return (
-    <div className={cn('flex items-center gap-1 p-1 bg-slate-100 rounded-xl', className)}>
+    <div className={cn('flex items-center gap-1 p-1 bg-slate-100 rounded-xl', className)} role="tablist" aria-label="檢視模式切換">
       {VIEW_OPTIONS.map((option) => {
         const Icon = option.icon;
         const isActive = currentMode === option.id;
@@ -76,6 +76,10 @@ export default function ViewSwitcher({ className }: ViewSwitcherProps) {
                 ? 'text-brand-600'
                 : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             )}
+            role="tab"
+            aria-selected={isActive}
+            aria-controls={`${option.id}-tab`}
+            id={`${option.id}-tab-btn`}
           >
             {isActive && (
               <motion.div
@@ -86,7 +90,7 @@ export default function ViewSwitcher({ className }: ViewSwitcherProps) {
               />
             )}
             <span className="relative z-10 flex items-center gap-2">
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4" aria-hidden="true" />
               <span className="hidden sm:inline">{option.label}</span>
             </span>
           </motion.button>
@@ -94,10 +98,11 @@ export default function ViewSwitcher({ className }: ViewSwitcherProps) {
       })}
     </div>
   );
-}
+});
 
-// Compact version for mobile
-export function ViewSwitcherCompact({ className }: ViewSwitcherProps) {
+ViewSwitcher.displayName = 'ViewSwitcher';
+
+const ViewSwitcherCompact = memo(({ className }: ViewSwitcherProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -110,15 +115,18 @@ export function ViewSwitcherCompact({ className }: ViewSwitcherProps) {
   const currentMode = getCurrentMode();
   const currentOption = VIEW_OPTIONS.find(o => o.id === currentMode) || VIEW_OPTIONS[0];
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const option = VIEW_OPTIONS.find(o => o.id === e.target.value);
+    if (option) navigate(option.path);
+  };
+
   return (
     <div className={cn('relative', className)}>
       <select
         value={currentMode}
-        onChange={(e) => {
-          const option = VIEW_OPTIONS.find(o => o.id === e.target.value);
-          if (option) navigate(option.path);
-        }}
+        onChange={handleChange}
         className="appearance-none bg-slate-100 text-slate-700 text-sm font-medium px-4 py-2 pr-8 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+        aria-label="檢視模式切換"
       >
         {VIEW_OPTIONS.map((option) => (
           <option key={option.id} value={option.id}>
@@ -126,7 +134,11 @@ export function ViewSwitcherCompact({ className }: ViewSwitcherProps) {
           </option>
         ))}
       </select>
-      <currentOption.icon className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+      <currentOption.icon className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" aria-hidden="true" />
     </div>
   );
-}
+});
+
+ViewSwitcherCompact.displayName = 'ViewSwitcherCompact';
+
+export { ViewSwitcher, ViewSwitcherCompact };

@@ -1,16 +1,4 @@
-/**
- * TrvicERP Modal Component
- *
- * Accessible modal dialog with:
- * - Navigator Blue theme
- * - Keyboard navigation (ESC to close)
- * - Focus trap
- * - Smooth animations
- *
- * @see DESIGN_SYSTEM.md
- */
-
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,7 +27,7 @@ const sizeClasses: Record<ModalSize, string> = {
   full: 'max-w-4xl',
 };
 
-export default function Modal({
+const Modal = memo(function Modal({
   isOpen,
   onClose,
   title,
@@ -54,7 +42,6 @@ export default function Modal({
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Handle ESC key
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape' && closeOnEscape) {
@@ -64,9 +51,8 @@ export default function Modal({
     [onClose, closeOnEscape]
   );
 
-  // Handle backdrop click
   const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.MouseEvent<HTMLDivElement>) => {
       if (closeOnBackdrop && e.target === e.currentTarget) {
         onClose();
       }
@@ -78,8 +64,6 @@ export default function Modal({
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-
-      // Focus the modal for accessibility
       modalRef.current?.focus();
     }
 
@@ -98,7 +82,6 @@ export default function Modal({
           aria-modal="true"
           aria-labelledby={title ? 'modal-title' : undefined}
         >
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -109,7 +92,6 @@ export default function Modal({
             aria-hidden="true"
           />
 
-          {/* Modal Content */}
           <motion.div
             ref={modalRef}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -124,7 +106,6 @@ export default function Modal({
             )}
             tabIndex={-1}
           >
-            {/* Header */}
             {(title || showCloseButton) && (
               <div className="flex items-start justify-between px-6 py-4 border-b border-neutral-200">
                 <div className="flex-1 min-w-0 pr-4">
@@ -159,12 +140,10 @@ export default function Modal({
               </div>
             )}
 
-            {/* Body */}
             <div className="px-6 py-4 max-h-[70vh] overflow-y-auto scrollbar-thin">
               {children}
             </div>
 
-            {/* Footer */}
             {footer && (
               <div className="px-6 py-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-end gap-3">
                 {footer}
@@ -175,12 +154,8 @@ export default function Modal({
       )}
     </AnimatePresence>
   );
-}
+});
 
-/**
- * Confirmation Dialog
- * Pre-built modal for confirm/cancel actions
- */
 export interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -193,7 +168,7 @@ export interface ConfirmDialogProps {
   loading?: boolean;
 }
 
-export function ConfirmDialog({
+const ConfirmDialog = memo(function ConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
@@ -254,4 +229,6 @@ export function ConfirmDialog({
       <p className="text-neutral-600">{message}</p>
     </Modal>
   );
-}
+});
+
+export { Modal, ConfirmDialog };

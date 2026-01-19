@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 import {
   DragDropContext,
@@ -32,6 +32,10 @@ interface ColumnData {
   bg: string;
   text: string;
   items: PassportItem[];
+}
+
+interface PassportKanbanProps {
+  initialData?: Record<string, PassportItem[]>;
 }
 
 const INITIAL_DATA: Record<string, PassportItem[]> = {
@@ -90,18 +94,18 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-export default function PassportKanban() {
-  const [columns, setColumns] = useState<Record<string, PassportItem[]>>(INITIAL_DATA);
+const PassportKanban: React.FC<PassportKanbanProps> = memo(({ initialData = INITIAL_DATA }) => {
+  const [columns, setColumns] = useState<Record<string, PassportItem[]>>(initialData);
   const [search, setSearch] = useState('');
 
-  const isExpiringSoon = (expiry: string) => {
+  const isExpiringSoon = useMemo(() => (expiry: string) => {
     const expiryDate = new Date(expiry);
     const sixMonthsFromNow = new Date();
     sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
     return expiryDate < sixMonthsFromNow;
-  };
+  }, []);
 
-  const handleDragEnd = (result: DropResult) => {
+  const handleDragEnd = useMemo(() => (result: DropResult) => {
     const { source, destination } = result;
 
     if (!destination) return;
@@ -125,24 +129,24 @@ export default function PassportKanban() {
       [source.droppableId]: sourceColumn,
       [destination.droppableId]: destColumn,
     });
-  };
+  }, [columns]);
 
-  const getFilteredItems = (items: PassportItem[]) => {
+  const getFilteredItems = useMemo(() => (items: PassportItem[]) => {
     if (!search) return items;
     return items.filter(item =>
       item.name.includes(search) ||
       item.tripName.includes(search) ||
       item.passportNo.includes(search)
     );
-  };
+  }, [search]);
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: Object.values(columns).flat().length,
     pending: columns.pending.length,
     reviewing: columns.reviewing.length,
     completed: columns.completed.length,
     expiringSoon: Object.values(columns).flat().filter(p => isExpiringSoon(p.expiry)).length,
-  };
+  }), [columns, isExpiringSoon]);
 
   return (
     <motion.div
@@ -150,8 +154,9 @@ export default function PassportKanban() {
       initial="hidden"
       animate="visible"
       className="p-6 lg:p-8 max-w-full mx-auto space-y-6 min-h-screen"
+      role="main"
+      aria-label="護照管理看板"
     >
-      {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -162,7 +167,7 @@ export default function PassportKanban() {
               Passport Kanban
             </span>
           </div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900">團員護照管理</h2>
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">團員護照管理</h1>
           <p className="text-slate-500 mt-1">拖曳卡片更新護照繳交狀態</p>
         </div>
         <div className="flex items-center gap-3">
@@ -174,12 +179,14 @@ export default function PassportKanban() {
               onChange={(e) => setSearch(e.target.value)}
               placeholder="搜尋姓名或團名..."
               className="input-modern pl-10 pr-4 w-64"
+              aria-label="搜尋護照"
             />
           </div>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="btn-pill btn-pill-primary gap-2"
+            aria-label="新增團員"
           >
             <Plus className="w-4 h-4" />
             新增團員
@@ -187,7 +194,6 @@ export default function PassportKanban() {
         </div>
       </motion.div>
 
-      {/* Stats */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard icon={FileText} label="總團員數" value={stats.total} />
         <StatCard icon={Inbox} label="未繳交" value={stats.pending} color="amber" />
@@ -196,7 +202,6 @@ export default function PassportKanban() {
         <StatCard icon={AlertTriangle} label="即將到期" value={stats.expiringSoon} color="red" warning />
       </motion.div>
 
-      {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {COLUMNS_CONFIG.map((column) => {
@@ -204,8 +209,7 @@ export default function PassportKanban() {
             const filteredItems = getFilteredItems(columns[column.id]);
 
             return (
-              <div key={column.id} className="trvic-card p-4 min-h-[500px] flex flex-col">
-                {/* Column Header */}
+              <div key={column.id} className="trvic-card p-4 min-h-[500px] flex flex-col" aria-label={column.title}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
                     <div className={cn(
@@ -214,7 +218,7 @@ export default function PassportKanban() {
                     )}>
                       <ColumnIcon className="w-4.5 h-4.5 text-white" />
                     </div>
-                    <h3 className="font-bold text-slate-900">{column.title}</h3>
+                    <h2 className="font-bold text-slate-900">{column.title}</h2>
                   </div>
                   <span className={cn(
                     'px-3 py-1.5 rounded-lg text-sm font-bold',
@@ -224,7 +228,6 @@ export default function PassportKanban() {
                   </span>
                 </div>
 
-                {/* Droppable Area */}
                 <Droppable droppableId={column.id}>
                   {(provided, snapshot) => (
                     <div
@@ -234,6 +237,7 @@ export default function PassportKanban() {
                         'flex-1 space-y-3 rounded-xl p-2 transition-colors min-h-[400px]',
                         snapshot.isDraggingOver ? 'bg-slate-100' : 'bg-transparent'
                       )}
+                      aria-live="polite"
                     >
                       {filteredItems.map((item, index) => (
                         <Draggable key={item.id} draggableId={item.id} index={index}>
@@ -246,6 +250,9 @@ export default function PassportKanban() {
                                 'bg-white p-4 rounded-xl border border-slate-100 cursor-grab active:cursor-grabbing group transition-all',
                                 snapshot.isDragging && 'shadow-2xl rotate-2 scale-105 border-brand-300'
                               )}
+                              aria-label={`${item.name}的護照資料`}
+                              role="button"
+                              tabIndex={0}
                             >
                               <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-3">
@@ -258,7 +265,7 @@ export default function PassportKanban() {
                                   </div>
                                 </div>
                                 {isExpiringSoon(item.expiry) && (
-                                  <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center" title="護照即將到期">
+                                  <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center" title="護照即將到期" aria-label="護照即將到期">
                                     <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                                   </div>
                                 )}
@@ -295,6 +302,7 @@ export default function PassportKanban() {
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
                                   className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+                                  aria-label="更多選項"
                                 >
                                   <MoreHorizontal className="w-4 h-4 text-slate-400" />
                                 </motion.button>
@@ -328,7 +336,7 @@ export default function PassportKanban() {
       </DragDropContext>
     </motion.div>
   );
-}
+});
 
 interface StatCardProps {
   icon: React.ElementType;
@@ -338,7 +346,7 @@ interface StatCardProps {
   warning?: boolean;
 }
 
-function StatCard({ icon: Icon, label, value, color, warning }: StatCardProps) {
+const StatCard: React.FC<StatCardProps> = memo(({ icon: Icon, label, value, color, warning }) => {
   const colorStyles = {
     amber: 'from-amber-500 to-orange-500',
     blue: 'from-blue-500 to-indigo-500',
@@ -353,6 +361,7 @@ function StatCard({ icon: Icon, label, value, color, warning }: StatCardProps) {
         'trvic-card p-4',
         warning && value > 0 && 'ring-2 ring-red-200'
       )}
+      aria-label={`${label}: ${value}`}
     >
       <div className="flex items-center gap-3">
         <div className={cn(
@@ -368,4 +377,6 @@ function StatCard({ icon: Icon, label, value, color, warning }: StatCardProps) {
       </div>
     </motion.div>
   );
-}
+});
+
+export default PassportKanban;

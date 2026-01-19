@@ -94,6 +94,10 @@ export const API_ENDPOINTS = {
     teams: `${API_BASE_URL}/api/${API_VERSION}/reports/teams`,
     export: (type: string) => `${API_BASE_URL}/api/${API_VERSION}/reports/${type}/export`,
   },
+  // 審計日誌
+  audit: {
+    logs: `${API_BASE_URL}/api/${API_VERSION}/audit/logs`,
+  },
 } as const;
 
 // 預設請求 headers
