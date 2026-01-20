@@ -41,7 +41,8 @@ export type ViewKey =
   | 'costing' | 'insurance' | 'quotation' | 'operations' | 'expense' | 'chat'
   | 'estimator' | 'map' | 'welfare' | 'builder'
   | 'traveler' | 'itinerary' | 'voting' | 'briefing' | 'addons' | 'footprint'
-  | 'tour-management';
+  | 'tour-management'
+  | 'crm-pipeline' | 'reports' | 'group-management' | 'financial' | 'customer-portal';
 
 export type ViewMode = 'edit' | 'proposal' | 'line';
 

@@ -49,6 +49,13 @@ const TravelFootprint = lazy(() => import('./components/client/TravelFootprint')
 // 新增的旅遊管理組件
 const TourDemo = lazy(() => import('./src/pages/TourDemo'));
 
+// 團體旅遊核心功能
+const CustomerPortal = lazy(() => import('./src/modules/tours/components/CustomerPortal'));
+const CRMPipeline = lazy(() => import('./src/modules/tours/components/CRMPipeline'));
+const AdvancedReports = lazy(() => import('./src/modules/tours/components/AdvancedReports'));
+const GroupManagement = lazy(() => import('./src/modules/tours/components/GroupManagement'));
+const FinancialManagement = lazy(() => import('./src/modules/tours/components/FinancialManagement'));
+
 const EdgeAssistant = lazy(() => import('./components/shared/EdgeAssistant'));
 const InteractiveMap = lazy(() => import('./components/shared/InteractiveMap'));
 const LegalAssistant = lazy(() => import('./components/shared/LegalAssistant'));
@@ -73,35 +80,42 @@ const STAFF_NAV: NavGroup[] = [
     label: 'Overview',
     items: [
       { id: 'dashboard', label: '營運儀表板', icon: <LayoutDashboard className="w-4 h-4" /> },
-      { id: 'operations', label: '營運中心', icon: <Activity className="w-4 h-4" /> },
+      { id: 'reports', label: '營運報表', icon: <Activity className="w-4 h-4" /> },
       { id: 'tour-management', label: '旅遊管理', icon: <Plane className="w-4 h-4" /> },
     ],
   },
   {
-    label: 'Journey',
+    label: 'Sales',
+    items: [
+      { id: 'crm-pipeline', label: '銷售管道', icon: <Users className="w-4 h-4" /> },
+      { id: 'quotation', label: '報價計算', icon: <Calculator className="w-4 h-4" /> },
+      { id: 'crm', label: '客戶管理', icon: <Users className="w-4 h-4" /> },
+    ],
+  },
+  {
+    label: 'Operations',
     items: [
       { id: 'sessions', label: '團次管理', icon: <Calendar className="w-4 h-4" /> },
+      { id: 'group-management', label: '團員管理', icon: <Users className="w-4 h-4" /> },
       { id: 'planner', label: '行程規劃', icon: <Map className="w-4 h-4" /> },
-      // 'builder' 已整合到 'planner' 中，作為子功能
       { id: 'passport', label: '護照管理', icon: <FileText className="w-4 h-4" /> },
     ],
   },
   {
-    label: 'Relations',
+    label: 'Finance',
     items: [
-      { id: 'crm', label: '客戶管理', icon: <Users className="w-4 h-4" /> },
+      { id: 'financial', label: '財務管理', icon: <CreditCard className="w-4 h-4" /> },
       { id: 'payments', label: '收款管理', icon: <CreditCard className="w-4 h-4" /> },
-      { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-4 h-4" /> },
+      { id: 'costing', label: '成本分析', icon: <Receipt className="w-4 h-4" /> },
+      { id: 'expense', label: '領隊報帳', icon: <Receipt className="w-4 h-4" /> },
     ],
   },
   {
-    label: 'Finance & Tools',
+    label: 'Tools',
     items: [
-      { id: 'quotation', label: '報價計算', icon: <Calculator className="w-4 h-4" /> },
       { id: 'estimator', label: '快速估價', icon: <Sparkles className="w-4 h-4" /> },
-      { id: 'costing', label: '成本分析', icon: <Receipt className="w-4 h-4" /> },
       { id: 'insurance', label: '保險管理', icon: <Shield className="w-4 h-4" /> },
-      { id: 'expense', label: '領隊報帳', icon: <Receipt className="w-4 h-4" /> },
+      { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-4 h-4" /> },
     ],
   },
 ];
@@ -183,6 +197,12 @@ function ViewRenderer({ view }: { view: ViewKey }) {
       case 'addons': return <TourAddons />;
       case 'footprint': return <TravelFootprint />;
       case 'tour-management': return <TourDemo />;
+      // 新增團體旅遊核心功能
+      case 'crm-pipeline': return <CRMPipeline />;
+      case 'reports': return <AdvancedReports />;
+      case 'group-management': return <GroupManagement />;
+      case 'financial': return <FinancialManagement />;
+      case 'customer-portal': return <CustomerPortal />;
       default: return <ERPInsights />;
     }
   };
