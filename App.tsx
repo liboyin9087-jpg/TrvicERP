@@ -46,6 +46,9 @@ const DigitalBriefing = lazy(() => import('./components/client/DigitalBriefing')
 const TourAddons = lazy(() => import('./components/client/TourAddons'));
 const TravelFootprint = lazy(() => import('./components/client/TravelFootprint'));
 
+// 新增的旅遊管理組件
+const TourDemo = lazy(() => import('./src/pages/TourDemo'));
+
 const EdgeAssistant = lazy(() => import('./components/shared/EdgeAssistant'));
 const InteractiveMap = lazy(() => import('./components/shared/InteractiveMap'));
 const LegalAssistant = lazy(() => import('./components/shared/LegalAssistant'));
@@ -71,6 +74,7 @@ const STAFF_NAV: NavGroup[] = [
     items: [
       { id: 'dashboard', label: '營運儀表板', icon: <LayoutDashboard className="w-4 h-4" /> },
       { id: 'operations', label: '營運中心', icon: <Activity className="w-4 h-4" /> },
+      { id: 'tour-management', label: '旅遊管理', icon: <Plane className="w-4 h-4" /> },
     ],
   },
   {
@@ -178,6 +182,7 @@ function ViewRenderer({ view }: { view: ViewKey }) {
       case 'briefing': return <DigitalBriefing />;
       case 'addons': return <TourAddons />;
       case 'footprint': return <TravelFootprint />;
+      case 'tour-management': return <TourDemo />;
       default: return <ERPInsights />;
     }
   };
@@ -515,7 +520,7 @@ function AppContent() {
     setMobileMenuOpen,
   } = useAppStore();
 
-  const handleLogin = (role: UserRole) => login(role);
+  const handleLogin = (role: UserRole, userId?: string, userName?: string) => login(role, userId, userName);
 
   if (!isLoggedIn) return <LoginPage onLogin={handleLogin} />;
 

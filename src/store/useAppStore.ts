@@ -1,6 +1,34 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Booking, TourSession, ItineraryItem } from '../../types';
+
+// 簡化的類型定義以避免循環依賴
+interface ItineraryItem {
+  id: string;
+  name: string;
+  description: string;
+  startTime: Date;
+  endTime: Date;
+}
+
+interface Booking {
+  id: string;
+  sessionId: string;
+  customerId: string;
+  amount: number;
+  status: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface TourSession {
+  id: string;
+  code: string;
+  startDate: Date;
+  endDate: Date;
+  capacity: number;
+  bookedCount: number;
+  status: string;
+}
 
 // ============================================
 // Type Definitions
@@ -12,7 +40,8 @@ export type ViewKey =
   | 'dashboard' | 'sessions' | 'planner' | 'crm' | 'payments' | 'passport'
   | 'costing' | 'insurance' | 'quotation' | 'operations' | 'expense' | 'chat'
   | 'estimator' | 'map' | 'welfare' | 'builder'
-  | 'traveler' | 'itinerary' | 'voting' | 'briefing' | 'addons' | 'footprint';
+  | 'traveler' | 'itinerary' | 'voting' | 'briefing' | 'addons' | 'footprint'
+  | 'tour-management';
 
 export type ViewMode = 'edit' | 'proposal' | 'line';
 
@@ -26,7 +55,7 @@ const STATE_MACHINE = {
   completed: []
 } as const;
 
-function canTransition(from: keyof typeof STATE_MACHINE, to: keyof typeof STATE_MACHINE): boolean {
+function canTransition(from: any, to: any): boolean {
   return STATE_MACHINE[from]?.includes(to) ?? false;
 }
 
@@ -248,7 +277,7 @@ export const useAppStore = create<AppStore>()(
         const prevState = get().bookings.find(b => b.id === id);
         if (!prevState) return;
 
-        if (updates.status && !canTransition(prevState.status, updates.status)) {
+        if (updates.status && !canTransition(prevState.status as any, updates.status as any)) {
           throw new Error(`Invalid status transition from ${prevState.status} to ${updates.status}`);
         }
 
@@ -323,7 +352,7 @@ export const useAppStore = create<AppStore>()(
         const prevState = get().sessions.find(s => s.id === id);
         if (!prevState) return;
 
-        if (updates.status && !canTransition(prevState.status, updates.status)) {
+        if (updates.status && !canTransition(prevState.status as any, updates.status as any)) {
           throw new Error(`Invalid status transition from ${prevState.status} to ${updates.status}`);
         }
 
@@ -383,7 +412,33 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'travelmaster-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        // 安全的 localStorage 檢查
+        try {
+          return localStorage;
+        } catch (error) {
+          console.warn('localStorage 不可用，使用記憶體儲存:', error);
+          // 返回一個簡單的記憶體儲存實現
+          const data: Record<string, any> = {};
+          const memoryStorage = {
+            getItem: (key: string) => {
+              const item = data[key];
+              return item ? JSON.stringify(item) : null;
+            },
+            setItem: (key: string, value: string) => {
+              try {
+                data[key] = JSON.parse(value);
+              } catch {
+                data[key] = value;
+              }
+            },
+            removeItem: (key: string) => {
+              delete data[key];
+            }
+          };
+          return memoryStorage;
+        }
+      }),
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,
         userRole: state.userRole,
