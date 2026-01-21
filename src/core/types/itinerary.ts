@@ -4,6 +4,17 @@ type UserId = string & { readonly __brand: 'UserId' };
 type Price = number & { readonly __brand: 'Price' };
 type Duration = number & { readonly __brand: 'Duration' };
 
+export type { ApiResponse } from './api';
+export { ApiError } from './api';
+export type { ServiceError, ServiceResponse } from './service';
+
+export interface ItineraryVersion {
+  version: number;
+  createdAt: string;
+  createdBy: UserId;
+  changes: string;
+}
+
 export enum MealType {
   BREAKFAST = 'breakfast',
   LUNCH = 'lunch',

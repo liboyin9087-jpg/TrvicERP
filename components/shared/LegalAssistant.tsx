@@ -59,12 +59,14 @@ const TypingIndicator = memo(() => {
 });
 
 const LegalAssistant: React.FC<LegalAssistantProps> = memo(({
-  initialMessages = [{
-    id: 'welcome',
-    role: 'assistant',
-    content: '您好！我是法規小助理\n\n我可以幫您查詢旅遊相關法規，包括：\n• 護照申請規定\n• 旅遊契約條款\n• 航空公約賠償\n• 消費者保護法\n\n請問有什麼可以幫您的？',
-    timestamp: new Date(),
-  }],
+  initialMessages = [
+    {
+      id: 'welcome',
+      role: 'assistant' as const,
+      content: '您好！我是法規小助理\n\n我可以幫您查詢旅遊相關法規，包括：\n• 護照申請規定\n• 旅遊契約條款\n• 航空公約賠償\n• 消費者保護法\n\n請問有什麼可以幫您的？',
+      timestamp: new Date(),
+    },
+  ],
   quickQuestions = DEFAULT_QUICK_QUESTIONS
 }) => {
   const [isOpen, setIsOpen] = useState(false);

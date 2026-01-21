@@ -14,7 +14,8 @@ import {
   useDeleteCustomer,
 } from '../query/hooks/useCustomerQueries';
 import { queryKeys } from '../query/queryKeys';
-import type { Customer, CustomerStatus } from '@/core/types/customer';
+import { CustomerStatus, CustomerType } from '@/core/types/customer';
+import type { Customer } from '@/core/types/customer';
 import { Loading } from '@/components/shared/Loading';
 
 /**
@@ -52,11 +53,11 @@ export function CustomerListExample() {
   // 處理建立客戶
   const handleCreate = async () => {
     await createMutation.mutateAsync({
-      type: 'individual',
+      type: CustomerType.INDIVIDUAL,
       name: '新客戶',
       email: 'new@example.com',
       // ... 其他欄位
-    });
+    } as any);
     // 不需要手動 refetch，React Query 會自動更新列表
   };
 
@@ -64,7 +65,7 @@ export function CustomerListExample() {
   const handleUpdate = async (id: string) => {
     await updateMutation.mutateAsync({
       id,
-      data: { name: '更新後的姓名' },
+      data: { name: '更新後的姓名' } as any,
     });
     // 自動更新快取，不需要手動 setState
   };
@@ -126,7 +127,7 @@ export function CustomerListExample() {
  */
 export function CustomerListWithFiltersExample() {
   const [filters, setFilters] = React.useState<{ status: CustomerStatus }>({
-    status: 'active',
+    status: CustomerStatus.ACTIVE,
   });
 
   // 當 filters 改變時，React Query 會自動重新獲取
@@ -140,9 +141,9 @@ export function CustomerListWithFiltersExample() {
           setFilters({ ...filters, status: e.target.value as CustomerStatus })
         }
       >
-        <option value="active">活躍</option>
-        <option value="inactive">非活躍</option>
-        <option value="blocked">已封鎖</option>
+        <option value={CustomerStatus.ACTIVE}>活躍</option>
+        <option value={CustomerStatus.INACTIVE}>非活躍</option>
+        <option value={CustomerStatus.BLOCKED}>已封鎖</option>
       </select>
 
       {isLoading ? (

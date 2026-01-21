@@ -1,10 +1,11 @@
 import { api, API_ENDPOINTS } from '../../../lib/api';
-import type {
+import {
   Tour,
   PublicTourData,
   CreateTourData,
   UpdateTourData,
   TourQuery,
+  TourStatus,
 } from '../../../core/types/tour';
 import { ApiError } from '../../../core/types/api';
 
@@ -121,7 +122,7 @@ export class TourService {
     error: ApiError | null;
   }> {
     try {
-      return await this.getTours({ search: keyword, status: 'active', limit: 20 });
+      return await this.getTours({ search: keyword, status: TourStatus.ACTIVE, limit: 20 } as TourQuery);
     } catch (error) {
       return { data: null, error: error as ApiError };
     }

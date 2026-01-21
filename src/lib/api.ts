@@ -3,8 +3,8 @@
  * 後端 API 配置檔案
  */
 
-// API 基礎 URL
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// API 基礎 URL - 使用 Supabase 作為後端，不需要獨立 API 服務器
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // API 版本
 const API_VERSION = 'v1';
@@ -324,6 +324,24 @@ export async function apiRequest<T>(
 ): Promise<ApiResponse<T>> {
   const method = options.method || 'GET';
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  // 檢查是否有可用的 API 端點
+  if (!API_BASE_URL) {
+    // 如果沒有配置 API URL，返回模擬數據或空結果
+    console.warn('API URL 未配置，返回模擬數據');
+    return {
+      data: null as T,
+      error: new ApiError(
+        'API 服務暫時不可用',
+        'SERVICE_UNAVAILABLE',
+        undefined,
+        undefined,
+        endpoint,
+        method,
+        requestId
+      )
+    };
+  }
 
   try {
     // 動態導入攔截器以避免循環依賴

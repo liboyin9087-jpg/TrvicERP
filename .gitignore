@@ -32,6 +32,18 @@ _trash_terminal_artifacts/
 _qwen_packets/
 *.textClipping
 *.py
+*.pyc
+__pycache__/
+
+# 修補/備份檔案
+*.fixed
+
+# 原始資料（可能含敏感資訊）
+raw_data/
+
+# 本機測試/除錯檔
+test-minimal.html
+debug.html
 repomix-output.xml
 project_analysis.txt
 tsc

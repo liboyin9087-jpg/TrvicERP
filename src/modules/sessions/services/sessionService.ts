@@ -1,12 +1,11 @@
 import { api, API_ENDPOINTS } from '../../../lib/api';
+import { SessionStatus } from '../../../core/types/session';
 import type {
   Session,
   CreateSessionData,
   UpdateSessionData,
   SessionQuery,
-  SessionStatus,
 } from '../../../core/types/session';
-import { isValidSessionTransition } from '../../../core/types/session';
 
 /**
  * Session status transition state machine

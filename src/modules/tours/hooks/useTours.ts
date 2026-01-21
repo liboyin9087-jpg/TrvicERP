@@ -95,15 +95,15 @@ export function useCreateTour() {
         const result = await TourService.createTour(data);
         if (result.error) {
           toast.error(result.error.message || '建立行程失敗');
-          return { success: false, error: result.error };
+          return { data: null, error: result.error };
         }
 
         toast.success('行程建立成功');
-        return { success: true, data: result.data };
+        return { data: result.data, error: null };
       } catch (err) {
         const error = err as ApiError;
         toast.error('建立行程時發生錯誤');
-        return { success: false, error };
+        return { data: null, error };
       } finally {
         setLoading(false);
       }
@@ -125,15 +125,15 @@ export function useUpdateTour() {
         const result = await TourService.updateTour(id, data);
         if (result.error) {
           toast.error(result.error.message || '更新行程失敗');
-          return { success: false, error: result.error };
+          return { data: null, error: result.error };
         }
 
         toast.success('行程更新成功');
-        return { success: true, data: result.data };
+        return { data: result.data, error: null };
       } catch (err) {
         const error = err as ApiError;
         toast.error('更新行程時發生錯誤');
-        return { success: false, error };
+        return { data: null, error };
       } finally {
         setLoading(false);
       }
@@ -155,15 +155,15 @@ export function useDeleteTour() {
         const result = await TourService.deleteTour(id);
         if (result.error) {
           toast.error(result.error.message || '刪除行程失敗');
-          return { success: false, error: result.error };
+          return { data: null, error: result.error };
         }
 
         toast.success('行程已刪除');
-        return { success: true };
+        return { data: null, error: null };
       } catch (err) {
         const error = err as ApiError;
         toast.error('刪除行程時發生錯誤');
-        return { success: false, error };
+        return { data: null, error };
       } finally {
         setLoading(false);
       }
@@ -185,15 +185,15 @@ export function useCloneTour() {
         const result = await TourService.cloneTour(id, newCode);
         if (result.error) {
           toast.error(result.error.message || '複製行程失敗');
-          return { success: false, error: result.error };
+          return { data: null, error: result.error };
         }
 
         toast.success('行程複製成功');
-        return { success: true, data: result.data };
+        return { data: result.data, error: null };
       } catch (err) {
         const error = err as ApiError;
         toast.error('複製行程時發生錯誤');
-        return { success: false, error };
+        return { data: null, error };
       } finally {
         setLoading(false);
       }

@@ -2,20 +2,8 @@ import { useState, useCallback } from 'react';
 import { LineService, LineSendTarget, LineSendResult, DocumentSendOptions } from '../services/lineService';
 import { useToast } from '../../store/useToastStore';
 
-interface MeetingInfo {
-  title: string;
-  time: string;
-  location: string;
-  notes?: string;
-}
-
-interface ItineraryChange {
-  tourId: string;
-  changeType: 'date' | 'location' | 'cancellation';
-  oldValue: string;
-  newValue: string;
-  reason?: string;
-}
+type MeetingInfo = Parameters<typeof LineService.sendMeetingReminder>[1];
+type ItineraryChange = Parameters<typeof LineService.sendItineraryChangeNotification>[1];
 
 export function useLineSend() {
   const [loading, setLoading] = useState<boolean>(false);

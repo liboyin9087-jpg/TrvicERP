@@ -1,4 +1,6 @@
 import { api, API_ENDPOINTS } from '../../../lib/api';
+import { ApiError } from '../../../core/types/api';
+import { Currency, QuotationStatus } from '../../../core/types/quotation';
 import type {
   Quotation,
   CreateQuotationData,
@@ -6,7 +8,8 @@ import type {
   ConvertQuotationToOrderData,
   QuotationItem,
   ApiResponse,
-  ApiError,
+  NTAmount,
+  Percentage,
 } from '../../../core/types/quotation';
 import {
   calculateQuotationCost,
@@ -50,9 +53,9 @@ export class QuotationService {
       ...data,
       costBreakdown,
       sellingPrice,
-      totalAmount: sellingPrice * data.paxCount,
+      totalNTAmount: (sellingPrice * data.paxCount) as NTAmount,
       validUntil: validUntil.toISOString(),
-      currency: data.currency || 'TWD',
+      currency: data.currency || Currency.TWD,
     };
 
     return api.post<Quotation>(API_ENDPOINTS.quotations.create, quotationData);
@@ -83,7 +86,7 @@ export class QuotationService {
         ...data,
         costBreakdown,
         sellingPrice,
-        totalAmount: sellingPrice * paxCount,
+        totalAmount: (sellingPrice * paxCount) as NTAmount,
       };
     }
 
@@ -100,26 +103,20 @@ export class QuotationService {
   ): Promise<ApiResponse<{ orderId: string }>> {
     const quotation = await this.getQuotation(id);
     if (quotation.error || !quotation.data) {
-      return quotation;
+      return { data: null, error: quotation.error };
     }
 
     if (isQuotationExpired(quotation.data.validUntil)) {
       return {
         data: null,
-        error: {
-          code: 'QUOTATION_EXPIRED',
-          message: '報價已過期，無法轉換為訂單',
-        },
+        error: new ApiError('報價已過期，無法轉換為訂單', 'QUOTATION_EXPIRED'),
       };
     }
 
-    if (quotation.data.status !== 'sent' && quotation.data.status !== 'accepted') {
+    if (quotation.data.status !== QuotationStatus.SENT && quotation.data.status !== QuotationStatus.ACCEPTED) {
       return {
         data: null,
-        error: {
-          code: 'INVALID_STATUS',
-          message: '只有已發送或已接受的報價才能轉換為訂單',
-        },
+        error: new ApiError('只有已發送或已接受的報價才能轉換為訂單', 'INVALID_STATUS'),
       };
     }
 
@@ -136,23 +133,23 @@ export class QuotationService {
   static calculateQuotationPreview(
     items: QuotationItem[],
     paxCount: number,
-    profitMargin: number
+    profitMargin: Percentage
   ): {
     costBreakdown: ReturnType<typeof calculateQuotationCost>;
-    sellingPrice: number;
-    totalAmount: number;
+    sellingPrice: NTAmount;
+    totalNTAmount: NTAmount;
   } {
     const costBreakdown = calculateQuotationCost(items, paxCount);
     const sellingPrice = calculateSellingPrice(
       costBreakdown.total,
       profitMargin
     );
-    const totalAmount = sellingPrice * paxCount;
+    const totalNTAmount = (sellingPrice * paxCount) as NTAmount;
 
     return {
       costBreakdown,
       sellingPrice,
-      totalAmount,
+      totalNTAmount,
     };
   }
 }

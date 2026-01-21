@@ -1,16 +1,19 @@
-type CustomerId = string & { readonly __brand: 'CustomerId' };
-type AgentId = string & { readonly __brand: 'AgentId' };
-type ContactId = string & { readonly __brand: 'ContactId' };
-type TagId = string & { readonly __brand: 'TagId' };
-type NTAmount = number & { readonly __brand: 'NTAmount' };
+export type CustomerId = string & { readonly __brand: 'CustomerId' };
+export type AgentId = string & { readonly __brand: 'AgentId' };
+export type ContactId = string & { readonly __brand: 'ContactId' };
+export type TagId = string & { readonly __brand: 'TagId' };
+export type NTAmount = number & { readonly __brand: 'NTAmount' };
 
-enum CustomerType {
+export { ApiError } from './api';
+export type { ApiResponse } from './api';
+
+export enum CustomerType {
   INDIVIDUAL = 'individual',
   CORPORATE = 'corporate',
   AGENT = 'agent'
 }
 
-enum CustomerTier {
+export enum CustomerTier {
   STANDARD = 'standard',
   SILVER = 'silver',
   GOLD = 'gold',
@@ -18,13 +21,13 @@ enum CustomerTier {
   VIP = 'vip'
 }
 
-enum CustomerStatus {
+export enum CustomerStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
   BLOCKED = 'blocked'
 }
 
-enum InteractionType {
+export enum InteractionType {
   LINE = 'line',
   CALL = 'call',
   EMAIL = 'email',
@@ -32,13 +35,13 @@ enum InteractionType {
   WHATSAPP = 'whatsapp'
 }
 
-enum InteractionSentiment {
+export enum InteractionSentiment {
   POSITIVE = 'positive',
   NEUTRAL = 'neutral',
   NEGATIVE = 'negative'
 }
 
-interface CustomerInteraction {
+export interface CustomerInteraction {
   id: string;
   customerId: CustomerId;
   type: InteractionType;
@@ -49,14 +52,14 @@ interface CustomerInteraction {
   createdAt: string;
 }
 
-interface CustomerTag {
+export interface CustomerTag {
   id: TagId;
   name: string;
   color: string;
   category: string | null;
 }
 
-interface Contact {
+export interface Contact {
   id: ContactId;
   name: string;
   title: string | null;
@@ -65,7 +68,7 @@ interface Contact {
   isPrimary: boolean;
 }
 
-interface Customer {
+export interface Customer {
   id: CustomerId;
   type: CustomerType;
   name: string;
@@ -90,7 +93,7 @@ interface Customer {
   updatedAt: string;
 }
 
-interface CustomerProfile extends Customer {
+export interface CustomerProfile extends Customer {
   interactions: CustomerInteraction[];
   visitedCountries: string[];
   tripCount: number;
@@ -98,7 +101,7 @@ interface CustomerProfile extends Customer {
   lifetimeValue: NTAmount;
 }
 
-interface CreateCustomerData {
+export interface CreateCustomerData {
   type: CustomerType;
   name: string;
   englishName: string | null;
@@ -116,7 +119,7 @@ interface CreateCustomerData {
   notes: string | null;
 }
 
-interface UpdateCustomerData {
+export interface UpdateCustomerData {
   type: CustomerType | null;
   name: string | null;
   englishName: string | null;
@@ -134,14 +137,14 @@ interface UpdateCustomerData {
   notes: string | null;
 }
 
-interface CustomerQuery {
-  type: CustomerType | null;
-  tier: CustomerTier | CustomerTier[] | null;
-  status: CustomerStatus | null;
-  tags: string[] | null;
-  search: string | null;
-  page: number;
-  limit: number;
+export interface CustomerQuery {
+  type?: CustomerType | null;
+  tier?: CustomerTier | CustomerTier[] | null;
+  status?: CustomerStatus | null;
+  tags?: string[] | null;
+  search?: string | null;
+  page?: number;
+  limit?: number;
 }
 
 const TIER_THRESHOLDS: Record<CustomerTier, NTAmount> = {
@@ -152,7 +155,7 @@ const TIER_THRESHOLDS: Record<CustomerTier, NTAmount> = {
   [CustomerTier.VIP]: 1000000 as NTAmount
 };
 
-function calculateCustomerTier(totalSpend: NTAmount): CustomerTier {
+export function calculateCustomerTier(totalSpend: NTAmount): CustomerTier {
   if (totalSpend >= TIER_THRESHOLDS[CustomerTier.VIP]) return CustomerTier.VIP;
   if (totalSpend >= TIER_THRESHOLDS[CustomerTier.PLATINUM]) return CustomerTier.PLATINUM;
   if (totalSpend >= TIER_THRESHOLDS[CustomerTier.GOLD]) return CustomerTier.GOLD;

@@ -1,38 +1,38 @@
-import type { TourSession, Booking, PublicTourData, LineChatLog, CompanyBudget, Poll, PollOption, ChangeRequest, Incident, TourOption, UserFootprint } from '../../../types';
+import type { Booking, PublicTourData, LineChatLog, CompanyBudget, Poll, PollOption, ChangeRequest, Incident, TourOption, UserFootprint } from '../../../types';
 
 const MOCK_TOUR_OPTIONS: TourOption[] = [
-    { id: 'opt_fit_1', session_id: 's_demo', day_number: 3, title: '札幌啤酒博物館 & 螃蟹大餐', description: '參觀歷史悠久的啤酒廠，晚餐享受北海道三大蟹吃到飽。', price_add_on: 2500, capacity_limit: 20, quota_used: 12, image_url: 'https://picsum.photos/300/200?random=50' },
-    { id: 'opt_fit_2', session_id: 's_demo', day_number: 4, title: '小樽運河手作音樂盒體驗', description: '專業老師帶領製作專屬音樂盒，含小樽甜點午茶券。', price_add_on: 1200, capacity_limit: 15, quota_used: 5, image_url: 'https://picsum.photos/300/200?random=51' },
-    { id: 'opt_fit_3', session_id: 's_demo', day_number: 5, title: '千歲 Outlet Rera 購物巡禮', description: '免費接駁車服務，含 500 日圓折價券。', price_add_on: 0, capacity_limit: 40, quota_used: 28, image_url: 'https://picsum.photos/300/200?random=52' },
+    { id: 'opt_fit_1' as any, session_id: 's_demo' as any, day_number: 3, title: '札幌啤酒博物館 & 螃蟹大餐', description: '參觀歷史悠久的啤酒廠，晚餐享受北海道三大蟹吃到飽。', price_add_on: 2500 as any, capacity_limit: 20, quota_used: 12, image_url: 'https://picsum.photos/300/200?random=50' as any },
+    { id: 'opt_fit_2' as any, session_id: 's_demo' as any, day_number: 4, title: '小樽運河手作音樂盒體驗', description: '專業老師帶領製作專屬音樂盒，含小樽甜點午茶券。', price_add_on: 1200 as any, capacity_limit: 15, quota_used: 5, image_url: 'https://picsum.photos/300/200?random=51' as any },
+    { id: 'opt_fit_3' as any, session_id: 's_demo' as any, day_number: 5, title: '千歲 Outlet Rera 購物巡禮', description: '免費接駁車服務，含 500 日圓折價券。', price_add_on: 0 as any, capacity_limit: 40, quota_used: 28, image_url: 'https://picsum.photos/300/200?random=52' as any },
 ];
 
 const MOCK_FOOTPRINT: UserFootprint = {
-    user_id: 'me',
-    email: 'traveler@foxconn.com',
+    user_id: 'me' as any,
+    email: 'traveler@foxconn.com' as any,
     visited_countries: ['JP', 'TH', 'VN', 'SG', 'KR'],
     trip_count: 8
 };
 
 const MOCK_PUBLIC_TOUR: PublicTourData = {
-    id: 't1',
+    id: 't1' as any,
     title: '北海道絕景五日遊',
     days: 5,
-    base_price: 39900,
-    cover_image: 'https://picsum.photos/800/400?random=10',
+    base_price: 39900 as any,
+    cover_image: 'https://picsum.photos/800/400?random=10' as any,
     description: '嚴選北海道道央主要景點，包含小樽運河、富良野花田。\n特別安排入住星野度假村，享受奢華一泊二食。',
     share_token: 'share-123',
     itinerary_json: [
         {
             hotel: 'Sapporo Grand Hotel',
             points: [
-                { time: '09:00', name: '新千歲機場集合', desc: '專車接送前往市區', image: 'https://picsum.photos/200/200?random=11' },
-                { time: '14:00', name: '小樽運河散策', desc: '感受異國情調的浪漫運河', image: 'https://picsum.photos/200/200?random=12' }
+                { time: '09:00', name: '新千歲機場集合', desc: '專車接送前往市區', image: 'https://picsum.photos/200/200?random=11' as any },
+                { time: '14:00', name: '小樽運河散策', desc: '感受異國情調的浪漫運河', image: 'https://picsum.photos/200/200?random=12' as any }
             ]
         },
         {
             hotel: 'Hoshino Resorts TOMAMU',
             points: [
-                { time: '10:00', name: '富良野花田', desc: '欣賞七彩花海', image: 'https://picsum.photos/200/200?random=13' },
+                { time: '10:00', name: '富良野花田', desc: '欣賞七彩花海', image: 'https://picsum.photos/200/200?random=13' as any },
                 { time: '16:00', name: '入住星野度假村', desc: '享受渡假村設施' }
             ]
         }
@@ -40,55 +40,108 @@ const MOCK_PUBLIC_TOUR: PublicTourData = {
 };
 
 const MOCK_UNPAID_BOOKINGS: Booking[] = [
-    { id: 'b_u1', session_id: 's_demo', user_id: 'u1', customer_name: 'Wang Xiao-Ming', total_amount: 39900, status: 'pending_payment', email: 'wang@example.com' },
-    { id: 'b_u2', session_id: 's_demo', user_id: 'u2', customer_name: 'Chen Da-Wen', total_amount: 79800, status: 'verifying', email: 'chen@example.com', payment_proof_url: 'mock_proof.jpg' },
+    {
+        id: 'b_u1' as any,
+        session_id: 's_demo' as any,
+        user_id: 'u1' as any,
+        customer_name: 'Wang Xiao-Ming',
+        passport_data: {
+            name: 'Wang Xiao-Ming',
+            passport_number: 'E123456789',
+            expiry_date: new Date(Date.now() + 86400000 * 365).toISOString() as any,
+            nationality: 'TW',
+            birthday: new Date('1990-01-01').toISOString() as any,
+            personal_id: 'A123456789'
+        },
+        receipt_number: 'R-0001',
+        status: 'pending' as any,
+        total_amount: 39900 as any,
+        payment_proof_url: '' as any,
+        tags: [],
+        email: 'wang@example.com' as any,
+        room_type: 'double' as any,
+        meal_preference: 'normal' as any,
+        special_needs: '',
+        seat_preference: '',
+        companions: [],
+        assigned_room: '',
+        assigned_seat: '',
+    },
+    {
+        id: 'b_u2' as any,
+        session_id: 's_demo' as any,
+        user_id: 'u2' as any,
+        customer_name: 'Chen Da-Wen',
+        passport_data: {
+            name: 'Chen Da-Wen',
+            passport_number: 'E987654321',
+            expiry_date: new Date(Date.now() + 86400000 * 365).toISOString() as any,
+            nationality: 'TW',
+            birthday: new Date('1988-05-05').toISOString() as any,
+            personal_id: 'B234567890'
+        },
+        receipt_number: 'R-0002',
+        status: 'verifying' as any,
+        total_amount: 79800 as any,
+        payment_proof_url: 'mock_proof.jpg' as any,
+        tags: [],
+        email: 'chen@example.com' as any,
+        room_type: 'double' as any,
+        meal_preference: 'normal' as any,
+        special_needs: '',
+        seat_preference: '',
+        companions: [],
+        assigned_room: '',
+        assigned_seat: '',
+    },
 ];
 
 const MOCK_COMPANY_BUDGET: CompanyBudget = {
-    id: 'comp_1',
+    id: 'comp_1' as any,
     company_name: '鴻海科技集團 (Foxconn)',
-    total_budget: 5000000,
-    used_budget: 4150000, 
-    last_updated: new Date().toISOString()
+    total_budget: 5000000 as any,
+    used_budget: 4150000 as any, 
+    last_updated: new Date().toISOString() as any
 };
 
 const MOCK_POLLS: Poll[] = [
     { 
-        id: 'poll_1', 
+        id: 'poll_1' as any, 
         title: '2025 年度員工旅遊地點票選', 
         description: '請大家踴躍投票，結果將作為福委會最終採購依據。本投票採「匿名盲選」制，避免人情壓力。',
-        deadline: '2024-12-31', 
-        status: 'active',
+        deadline: '2024-12-31' as any, 
+        status: 'active' as any,
         total_votes: 156,
         ai_summary: '根據目前的投票趨勢，超過 60% 的員工傾向選擇「北海道滑雪」行程，主要考量為「獨特性」與「公司全額補助」。建議福委會優先與旅行社洽談 1/15 出發之團體機位。'
     }
 ];
 
 const MOCK_POLL_OPTIONS: PollOption[] = [
-    { id: 'opt_1', poll_id: 'poll_1', text: '日本北海道滑雪五日', image_url: 'https://picsum.photos/300/200?random=20', tags: ['預算 5萬', '免請假'], vote_count: 98, is_winner: true },
-    { id: 'opt_2', poll_id: 'poll_1', text: '泰國曼谷渡假五日', image_url: 'https://picsum.photos/300/200?random=21', tags: ['預算 3萬', '需請假3天'], vote_count: 42 },
-    { id: 'opt_3', poll_id: 'poll_1', text: '國內環島豪華列車', image_url: 'https://picsum.photos/300/200?random=22', tags: ['預算 2萬', '親子友善'], vote_count: 16 },
+    { id: 'opt_1' as any, poll_id: 'poll_1' as any, text: '日本北海道滑雪五日', image_url: 'https://picsum.photos/300/200?random=20' as any, tags: ['預算 5萬', '免請假'], vote_count: 98, is_winner: true },
+    { id: 'opt_2' as any, poll_id: 'poll_1' as any, text: '泰國曼谷渡假五日', image_url: 'https://picsum.photos/300/200?random=21' as any, tags: ['預算 3萬', '需請假3天'], vote_count: 42, is_winner: false },
+    { id: 'opt_3' as any, poll_id: 'poll_1' as any, text: '國內環島豪華列車', image_url: 'https://picsum.photos/300/200?random=22' as any, tags: ['預算 2萬', '親子友善'], vote_count: 16, is_winner: false },
 ];
 
 const MOCK_CHANGE_REQUESTS: ChangeRequest[] = [
     {
-        id: 'cr_1',
+        id: 'cr_1' as any,
         requester_name: '福委會 - 陳經理',
-        category: 'meal',
+        category: 'meal' as any,
         description: 'D2 晚餐原定飯店自助餐，希望能改成當地的居酒屋，讓大家體驗一下氣氛。預算可微調。',
-        status: 'op_review',
-        cost_impact: 0, 
-        created_at: new Date(Date.now() - 86400000).toISOString()
+        status: 'op_review' as any,
+        cost_impact: 0 as any, 
+        created_at: new Date(Date.now() - 86400000).toISOString() as any,
+        comments: ''
     }
 ];
 
 const MOCK_INCIDENTS: Incident[] = [
     {
-        id: 'inc_1',
+        id: 'inc_1' as any,
         title: '北海道大雪影響行程',
-        severity: 'high',
+        severity: 'high' as any,
         status_message: '目前新千歲機場暫時關閉，全團已帶回飯店休息，預計明日 10:00 重新確認航班。全員平安。',
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString() as any,
         is_active: true
     }
 ];
@@ -121,12 +174,12 @@ class MockSupabase {
                 return { data: [newItem], error: null };
             }
             if (table === 'incidents') {
-                const newItem = { ...pendingData, id: Math.random().toString(), timestamp: new Date().toISOString(), is_active: true };
+                const newItem = { ...pendingData, id: Math.random().toString(), timestamp: new Date().toISOString() as any, is_active: true };
                 this.incidents.unshift(newItem);
                 return { data: [newItem], error: null };
             }
             if (table === 'line_chat_logs') {
-                const newLog = { ...pendingData, id: Math.random().toString(), timestamp: new Date().toISOString() };
+                const newLog = { ...pendingData, id: Math.random().toString(), timestamp: new Date().toISOString() as any };
                 this.lineLogs.unshift(newLog); 
                 this.emit('line_chat_update', newLog);
                 return { error: null };

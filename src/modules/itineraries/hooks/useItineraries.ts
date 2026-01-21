@@ -7,6 +7,7 @@ import type {
   ServiceError,
   ServiceResponse,
 } from '../../../core/types/itinerary';
+import { ApiError } from '../../../core/types/itinerary';
 import { useToast } from '../../../store/useToastStore';
 
 export function useItinerary(sessionId: string | null) {
@@ -36,7 +37,7 @@ export function useItinerary(sessionId: string | null) {
         setItinerary(result.data);
       }
     } catch (err) {
-      setError({ message: '發生未知錯誤', code: 'UNKNOWN_ERROR' });
+      setError(new ApiError('發生未知錯誤', 'UNKNOWN_ERROR'));
       toast.error('取得行程安排時發生錯誤');
     } finally {
       setLoading(false);
@@ -70,7 +71,7 @@ export function useCreateItinerary() {
         return { success: true, data: result.data };
       } catch (err) {
         toast.error('建立行程安排時發生錯誤');
-        return { success: false, error: { message: '發生未知錯誤', code: 'UNKNOWN_ERROR' } };
+        return { success: false, error: new ApiError('發生未知錯誤', 'UNKNOWN_ERROR') };
       } finally {
         setLoading(false);
       }
@@ -101,7 +102,7 @@ export function useUpdateItinerary() {
         return { success: true, data: result.data };
       } catch (err) {
         toast.error('更新行程安排時發生錯誤');
-        return { success: false, error: { message: '發生未知錯誤', code: 'UNKNOWN_ERROR' } };
+        return { success: false, error: new ApiError('發生未知錯誤', 'UNKNOWN_ERROR') };
       } finally {
         setLoading(false);
       }
@@ -133,7 +134,7 @@ export function useUpdateDayItinerary() {
         return { success: true, data: result.data };
       } catch (err) {
         toast.error('更新單日行程時發生錯誤');
-        return { success: false, error: { message: '發生未知錯誤', code: 'UNKNOWN_ERROR' } };
+        return { success: false, error: new ApiError('發生未知錯誤', 'UNKNOWN_ERROR') };
       } finally {
         setLoading(false);
       }
@@ -169,7 +170,7 @@ export function useItineraryVersions(sessionId: string | null) {
         setVersions(result.data || []);
       }
     } catch (err) {
-      setError({ message: '發生未知錯誤', code: 'UNKNOWN_ERROR' });
+      setError(new ApiError('發生未知錯誤', 'UNKNOWN_ERROR'));
       toast.error('取得版本歷史時發生錯誤');
     } finally {
       setLoading(false);
@@ -200,7 +201,7 @@ export function useRevertItinerary() {
         return { success: true, data: result.data };
       } catch (err) {
         toast.error('還原版本時發生錯誤');
-        return { success: false, error: { message: '發生未知錯誤', code: 'UNKNOWN_ERROR' } };
+        return { success: false, error: new ApiError('發生未知錯誤', 'UNKNOWN_ERROR') };
       } finally {
         setLoading(false);
       }
@@ -228,7 +229,7 @@ export function useCloneItinerary() {
         return { success: true, data: result.data };
       } catch (err) {
         toast.error('複製行程安排時發生錯誤');
-        return { success: false, error: { message: '發生未知錯誤', code: 'UNKNOWN_ERROR' } };
+        return { success: false, error: new ApiError('發生未知錯誤', 'UNKNOWN_ERROR') };
       } finally {
         setLoading(false);
       }

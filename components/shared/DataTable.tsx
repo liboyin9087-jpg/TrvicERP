@@ -148,7 +148,13 @@ const DataTable = memo(<T extends { id?: string | number }>({
                 )}
                 style={{ width: column.width }}
                 onClick={column.sortable ? () => handleSort(column.key) : undefined}
-                aria-sort={column.sortable ? (sortColumn === column.key ? sortDirection : 'none') : undefined}
+                aria-sort={
+                  column.sortable
+                    ? (sortColumn === column.key
+                        ? (sortDirection === 'asc' ? 'ascending' : 'descending')
+                        : 'none')
+                    : undefined
+                }
               >
                 <div
                   className={cn(
@@ -242,7 +248,11 @@ const DataTable = memo(<T extends { id?: string | number }>({
                       >
                         {column.render
                           ? column.render(value, record, index)
-                          : value ?? '-'}
+                          : value == null
+                            ? '-'
+                            : typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+                              ? String(value)
+                              : JSON.stringify(value)}
                       </td>
                     );
                   })}

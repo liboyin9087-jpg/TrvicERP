@@ -77,13 +77,13 @@ export interface TravelPlan {
 // 2. State Machine & Helpers
 // ============================================
 
-const STATE_MACHINE = {
+const STATE_MACHINE: Record<Status, Status[]> = {
   draft: ['soliciting'],
   soliciting: ['guaranteed', 'cancelled'],
   guaranteed: ['departed', 'cancelled'],
   departed: [],
-  cancelled: []
-} as const;
+  cancelled: [],
+};
 
 function canTransition(from: Status, to: Status): boolean {
   return STATE_MACHINE[from]?.includes(to) ?? false;

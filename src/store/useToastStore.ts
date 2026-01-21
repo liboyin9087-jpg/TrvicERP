@@ -37,12 +37,12 @@ interface ToastActions {
 
 type ToastStore = ToastState & ToastActions;
 
-const TOAST_STATE_MACHINE = {
+const TOAST_STATE_MACHINE: Record<Toast['status'], Toast['status'][]> = {
   pending: ['showing', 'removed'],
   showing: ['removing', 'removed'],
   removing: ['removed'],
-  removed: []
-} as const;
+  removed: [],
+};
 
 function canTransition(from: Toast['status'], to: Toast['status']): boolean {
   return TOAST_STATE_MACHINE[from]?.includes(to) ?? false;

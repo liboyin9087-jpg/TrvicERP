@@ -7,7 +7,8 @@
 export * from './orders';
 
 // 報價管理
-export * from './quotations';
+export { QuotationService } from './quotations/services/quotationService';
+export * from './quotations/hooks/useQuotations';
 
 // 報表
 export * from './reports';
@@ -19,7 +20,10 @@ export * from './sessions';
 export * from './customers';
 
 // 行程產品
-export * from './tours';
+export { TourService } from './tours/services/tourService';
+export * from './tours/hooks/useTours';
+export { TourManagementApp } from './tours/TourManagementApp';
 
 // 行程安排
-export * from './itineraries';
+export { ItineraryService } from './itineraries/services/itineraryService';
+export * from './itineraries/hooks/useItineraries';

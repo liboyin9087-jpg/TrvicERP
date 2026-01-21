@@ -1,4 +1,5 @@
 import { Branded } from './branded';
+import type { ItineraryVersion } from './itinerary';
 
 type SessionId = Branded<string, 'SessionId'>;
 type SeriesId = Branded<string, 'SeriesId'>;
@@ -68,14 +69,6 @@ export interface TourLeader {
   email: string;
   licenseNumber: string;
   experienceYears: number;
-}
-
-export interface ItineraryVersion {
-  version: number;
-  createdAt: string;
-  createdBy: UserId;
-  changes: string;
-  itineraryData: Record<string, unknown>;
 }
 
 export interface MeetingInfo {

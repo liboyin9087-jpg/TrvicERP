@@ -7,8 +7,8 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: CardVariant;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   hoverable?: boolean;
-  'aria-label'?: string;
-  'aria-labelledby'?: string;
+  ariaLabel?: string;
+  ariaLabelledby?: string;
 }
 
 const variantStyles: Record<CardVariant, string> = {
@@ -53,8 +53,8 @@ export const Card = memo(forwardRef<HTMLDivElement, CardProps>(
       padding = 'md',
       hoverable = false,
       children,
-      'aria-label': ariaLabel,
-      'aria-labelledby': ariaLabelledby,
+      ariaLabel,
+      ariaLabelledby,
       ...props
     },
     ref
@@ -86,8 +86,8 @@ export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;
-  'aria-label'?: string;
-  'aria-labelledby'?: string;
+  ariaLabel?: string;
+  ariaLabelledby?: string;
 }
 
 export const CardHeader = memo(function CardHeader({
@@ -96,8 +96,8 @@ export const CardHeader = memo(function CardHeader({
   subtitle,
   action,
   children,
-  'aria-label': ariaLabel,
-  'aria-labelledby': ariaLabelledby,
+  ariaLabel,
+  ariaLabelledby,
   ...props
 }: CardHeaderProps) {
   return (
@@ -131,15 +131,15 @@ export const CardHeader = memo(function CardHeader({
 CardHeader.displayName = 'CardHeader';
 
 export interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {
-  'aria-label'?: string;
-  'aria-labelledby'?: string;
+  ariaLabel?: string;
+  ariaLabelledby?: string;
 }
 
 export const CardBody = memo(function CardBody({ 
   className, 
   children, 
-  'aria-label': ariaLabel,
-  'aria-labelledby': ariaLabelledby,
+  ariaLabel,
+  ariaLabelledby,
   ...props 
 }: CardBodyProps) {
   return (
@@ -158,16 +158,16 @@ CardBody.displayName = 'CardBody';
 
 export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   bordered?: boolean;
-  'aria-label'?: string;
-  'aria-labelledby'?: string;
+  ariaLabel?: string;
+  ariaLabelledby?: string;
 }
 
 export const CardFooter = memo(function CardFooter({
   className,
   bordered = true,
   children,
-  'aria-label': ariaLabel,
-  'aria-labelledby': ariaLabelledby,
+  ariaLabel,
+  ariaLabelledby,
   ...props
 }: CardFooterProps) {
   return (
@@ -196,8 +196,8 @@ export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
     label?: string;
   };
   icon?: React.ReactNode;
-  'aria-label'?: string;
-  'aria-labelledby'?: string;
+  ariaLabel?: string;
+  ariaLabelledby?: string;
 }
 
 export const StatCard = memo(function StatCard({
@@ -206,8 +206,8 @@ export const StatCard = memo(function StatCard({
   value,
   change,
   icon,
-  'aria-label': ariaLabel,
-  'aria-labelledby': ariaLabelledby,
+  ariaLabel,
+  ariaLabelledby,
   ...props
 }: StatCardProps) {
   const isPositive = change && change.value >= 0;

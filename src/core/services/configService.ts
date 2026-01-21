@@ -1,4 +1,4 @@
-import { api, API_ENDPOINTS, type ApiResponse } from '@/lib/api';
+import { ApiError, api, API_ENDPOINTS, type ApiResponse } from '@/lib/api';
 
 export type ConfigCategory = 'general' | 'notification' | 'integration' | 'security' | 'ui';
 
@@ -10,11 +10,6 @@ export interface SystemConfig<T = unknown> {
   description?: string;
   updatedAt: string;
   updatedBy: string;
-}
-
-export interface ApiError {
-  code: string;
-  message: string;
 }
 
 export class ConfigService {
@@ -49,10 +44,7 @@ export class ConfigService {
     } catch (error) {
       return {
         data: null,
-        error: {
-          code: 'FETCH_FAILED',
-          message: 'Failed to fetch configurations',
-        },
+        error: new ApiError('FETCH_FAILED', 'Failed to fetch configurations'),
       };
     }
   }
@@ -76,10 +68,7 @@ export class ConfigService {
 
     return {
       data: null,
-      error: {
-        code: 'NOT_FOUND',
-        message: `Configuration key "${key}" not found`,
-      },
+      error: new ApiError('NOT_FOUND', `Configuration key "${key}" not found`),
     };
   }
 
@@ -88,7 +77,7 @@ export class ConfigService {
     defaultValue?: T
   ): Promise<T | undefined> {
     const result = await this.getConfig(key);
-    return result.data?.value ?? defaultValue;
+    return (result.data?.value as T | undefined) ?? defaultValue;
   }
 
   static async updateConfig<T = unknown>(
@@ -109,10 +98,7 @@ export class ConfigService {
     } catch (error) {
       return {
         data: null,
-        error: {
-          code: 'UPDATE_FAILED',
-          message: `Failed to update configuration for key "${key}"`,
-        },
+        error: new ApiError('UPDATE_FAILED', `Failed to update configuration for key "${key}"`),
       };
     }
   }

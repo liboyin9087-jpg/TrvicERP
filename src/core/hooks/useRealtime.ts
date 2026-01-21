@@ -6,8 +6,9 @@ import {
   LocationUpdate,
   ConnectionStatus,
   NotificationType,
-  NotificationSeverity,
 } from '../services/realtimeService';
+
+type NotificationSeverity = RealtimeNotification['severity'];
 
 export function useRealtimeConnection() {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');

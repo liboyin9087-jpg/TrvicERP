@@ -88,7 +88,7 @@ export class BackupService {
       for (const [tableName, records] of Object.entries(backup.tables)) {
         if (records && records.length > 0) {
           for (const record of records) {
-            restorePromises.push(offlineService.save(tableName, record));
+            restorePromises.push(offlineService.save(tableName as any, record));
           }
         }
       }

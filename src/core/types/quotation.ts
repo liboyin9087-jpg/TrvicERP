@@ -1,10 +1,18 @@
+import type { CustomerId } from './customer';
+export { ApiError } from './api';
+export type { ApiResponse } from './api';
+
 export type QuotationId = string & { readonly __brand: 'QuotationId' };
-export type CustomerId = string & { readonly __brand: 'CustomerId' };
 export type SessionId = string & { readonly __brand: 'SessionId' };
 export type OrderId = string & { readonly __brand: 'OrderId' };
 export type UserId = string & { readonly __brand: 'UserId' };
 export type Amount = number & { readonly __brand: 'Amount' };
 export type Percentage = number & { readonly __brand: 'Percentage' };
+
+export interface QuotationServiceResult<T = unknown> {
+  data: T | null;
+  error: import('./api').ApiError | null;
+}
 
 export enum QuotationStatus {
   DRAFT = 'draft',
@@ -102,7 +110,13 @@ export interface UpdateQuotationData {
 
 export interface ConvertQuotationToOrderData {
   orderNumber: string;
-  notes: string;
+  notes?: string;
+}
+
+export interface QuotationPreviewResult {
+  costBreakdown: CostBreakdown;
+  sellingPrice: Amount;
+  totalAmount: Amount;
 }
 
 export function calculateQuotationCost(
@@ -114,13 +128,13 @@ export function calculateQuotationCost(
 
   items.forEach(item => {
     if (item.costType === CostType.FIXED) {
-      fixed += item.unitCost * item.quantity as Amount;
+      fixed = (fixed + (item.unitCost * item.quantity)) as Amount;
     } else {
-      variable += item.unitCost as Amount;
+      variable = (variable + item.unitCost) as Amount;
     }
   });
 
-  const total = fixed + variable * paxCount as Amount;
+  const total = (fixed + (variable * paxCount)) as Amount;
 
   return {
     fixed,

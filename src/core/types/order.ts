@@ -1,11 +1,11 @@
 import { Branded } from './branded';
 
-type OrderId = string & Branded<'OrderId'>;
-type SessionId = string & Branded<'SessionId'>;
-type QuotationId = string & Branded<'QuotationId'>;
-type CustomerId = string & Branded<'CustomerId'>;
-type NTAmount = number & Branded<'NTAmount'>;
-type DateTimeString = string & Branded<'DateTimeString'>;
+type OrderId = Branded<string, 'OrderId'>;
+type SessionId = Branded<string, 'SessionId'>;
+type QuotationId = Branded<string, 'QuotationId'>;
+type CustomerId = Branded<string, 'CustomerId'>;
+type NTAmount = Branded<number, 'NTAmount'>;
+type DateTimeString = Branded<string, 'DateTimeString'>;
 
 export enum OrderStatus {
   DRAFT = 'draft',

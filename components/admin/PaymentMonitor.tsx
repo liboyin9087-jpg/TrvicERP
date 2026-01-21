@@ -28,11 +28,11 @@ interface Payment {
 function convertOrderToPayment(order: Order): Payment {
   // Map order status to payment status
   const statusMap: Record<OrderStatus, 'pending' | 'processing' | 'completed' | 'failed'> = {
+    [CoreOrderStatus.DRAFT]: 'pending',
     [CoreOrderStatus.PENDING]: 'pending',
     [CoreOrderStatus.CONFIRMED]: 'processing',
     [CoreOrderStatus.PAID]: 'completed',
-    [CoreOrderStatus.PENDING_PAYMENT]: 'pending',
-    [CoreOrderStatus.VERIFYING]: 'processing',
+    [CoreOrderStatus.IN_PROGRESS]: 'processing',
     [CoreOrderStatus.COMPLETED]: 'completed',
     [CoreOrderStatus.CANCELLED]: 'failed',
     [CoreOrderStatus.REFUNDED]: 'failed',
@@ -45,24 +45,20 @@ function convertOrderToPayment(order: Order): Payment {
   // Calculate payment status based on paid amount
   let paymentStatus: 'pending' | 'processing' | 'completed' | 'failed' = statusMap[order.status];
   
-  if (order.status === CoreOrderStatus.PAID && order.paidAmount >= order.totalAmount) {
+  if (order.status === CoreOrderStatus.PAID && (order.paidAmount as any) >= (order.totalAmount as any)) {
     paymentStatus = 'completed';
-  } else if (order.status === CoreOrderStatus.PENDING_PAYMENT) {
-    paymentStatus = 'pending';
-  } else if (order.status === CoreOrderStatus.VERIFYING) {
-    paymentStatus = 'processing';
   } else if (order.status === CoreOrderStatus.CANCELLED || order.status === CoreOrderStatus.REFUNDED) {
     paymentStatus = 'failed';
   }
 
   return {
-    id: order.id as string,
+    id: order.id as any,
     orderId: order.orderNumber,
     customerName: order.customerName,
-    amount: order.totalAmount,
+    amount: order.totalAmount as any,
     status: paymentStatus,
     method: paymentMethod,
-    createdAt: new Date(order.createdAt).toLocaleString('zh-TW', {
+    createdAt: new Date(order.createdAt as any).toLocaleString('zh-TW', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

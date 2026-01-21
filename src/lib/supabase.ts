@@ -63,15 +63,15 @@ export function createSupabaseClient(): SupabaseClient | null {
     });
 
     // 監聽連接狀態變化
-    client.realtime.onOpen(() => {
+    (client.realtime as any)?.onOpen?.(() => {
       console.log('[Supabase] Realtime connection opened');
     });
 
-    client.realtime.onClose(() => {
+    (client.realtime as any)?.onClose?.(() => {
       console.log('[Supabase] Realtime connection closed');
     });
 
-    client.realtime.onError((error) => {
+    (client.realtime as any)?.onError?.((error: unknown) => {
       console.error('[Supabase] Realtime error:', error);
     });
 

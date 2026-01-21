@@ -6,7 +6,8 @@ import type {
   UpdateQuotationData,
   QuotationItem,
   QuotationPreviewResult,
-  ServiceResult,
+  QuotationServiceResult,
+  Percentage,
 } from '../../../core/types/quotation';
 import { useToast } from '../../../store/useToastStore';
 
@@ -152,7 +153,7 @@ export function useConvertQuotationToOrder() {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
-  const convertToOrder = useCallback(async (quotationId: string, orderNumber?: string): Promise<MutationResult<ServiceResult>> => {
+  const convertToOrder = useCallback(async (quotationId: string, orderNumber?: string): Promise<MutationResult<{ orderId: string }>> => {
     setLoading(true);
     try {
       const result = await QuotationService.convertToOrder(quotationId, { orderNumber });
@@ -179,7 +180,7 @@ export function useQuotationPreview() {
     paxCount: number,
     profitMargin: number
   ): QuotationPreviewResult => {
-    return QuotationService.calculateQuotationPreview(items, paxCount, profitMargin);
+    return QuotationService.calculateQuotationPreview(items, paxCount, profitMargin as Percentage);
   }, []);
 
   return { calculatePreview };

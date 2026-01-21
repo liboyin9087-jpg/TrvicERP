@@ -1,5 +1,5 @@
 import React, { useState, memo, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import {
   DndContext,
   DragOverlay,
@@ -41,22 +41,12 @@ import { cn } from '@/lib/utils';
 import { aiService } from '@/services/aiService';
 import { aiService as externalAiService } from '@/services/external/aiService';
 
-interface ContainerVariants {
-  hidden: { opacity: number };
-  visible: { opacity: number; transition: { staggerChildren: number } };
-}
-
-interface ItemVariants {
-  hidden: { opacity: number; y: number };
-  visible: { opacity: number; y: number };
-}
-
-const containerVariants: ContainerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
 };
 
-const itemVariants: ItemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0 }
 };

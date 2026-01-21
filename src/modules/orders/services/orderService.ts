@@ -78,10 +78,10 @@ export class OrderService {
         if (!isValid) {
           return {
             data: null,
-            error: {
-              code: 'INVALID_TRANSITION',
-              message: `無法從 ${currentOrder.data.status} 轉換到 ${data.status}`,
-            },
+            error: new ApiError(
+              `無法從 ${currentOrder.data.status} 轉換到 ${data.status}`,
+              'INVALID_TRANSITION'
+            ),
           };
         }
       }
@@ -134,10 +134,7 @@ export class OrderService {
     if (result.error || !result.data) {
       return {
         data: null,
-        error: result.error || {
-          code: 'CONVERSION_FAILED',
-          message: '報價轉換為訂單失敗'
-        }
+        error: result.error ?? new ApiError('報價轉換為訂單失敗', 'CONVERSION_FAILED'),
       };
     }
 

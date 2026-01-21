@@ -4,28 +4,40 @@ import {
   Calendar, Users, Plus, Search, Filter, Edit, Trash2, Eye,
   ChevronRight, X, Building2, MapPin, Clock, TrendingUp, AlertCircle,
   CheckCircle, FileText, Download, Copy, Settings, UserCheck, Bed,
-  Bus, User, Phone, Mail, Save
+  Bus, User, Phone, Mail, Save, Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/formatting';
-import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, TourLeader, MeetingInfo } from '@/types';
 import { useSessions, useCreateSession, useUpdateSession, useDeleteSession } from '@/modules/sessions/hooks/useSessions';
-import type { Session, SessionStatus, GroupType } from '@/core/types/session';
-import { SessionStatus as CoreSessionStatus, GroupType as CoreGroupType } from '@/core/types/session';
+import type { Session, CreateSessionData, UpdateSessionData, TourLeader } from '@/core/types/session';
+import { SessionStatus, GroupType } from '@/core/types/session';
 import { Loading } from '@/components/shared/Loading';
-import { useAppStore } from '@/store/useAppStore';
-import { AuthService } from '@/core/services/authService';
+import { AICopilot } from '@/components/shared/AICopilot';
 
 // ============================================
 // Types
 // ============================================
 
-type TabKey = 'dashboard' | 'groups' | 'create';
+type TabKey = 'dashboard' | 'groups' | 'create' | 'ai-copilot';
 
-interface GroupListItem extends TourSession {
-  series_name?: string;
-  registration_progress: number;
-  pending_welfare_count?: number;
+interface GroupListItem extends Session {
+  seriesName?: string;
+  registrationProgress: number;
+  pendingWelfareCount?: number;
+}
+
+interface SessionFormData {
+  seriesId: string;
+  groupNumber: string;
+  groupType: GroupType;
+  status: SessionStatus;
+  startDate: string;
+  endDate: string;
+  minPax: number;
+  maxPax: number;
+  seatReleaseDate: string;
+  priceTwd: number;
+  agentCommission: number;
 }
 
 // ============================================
@@ -33,9 +45,9 @@ interface GroupListItem extends TourSession {
 // ============================================
 
 const MOCK_TOUR_LEADERS: TourLeader[] = [
-  { id: 'tl1', name: '張導遊', phone: '0912-345-678', email: 'guide1@travel.com', license_number: 'TL-2020-001', experience_years: 5 },
-  { id: 'tl2', name: '李領隊', phone: '0912-345-679', email: 'guide2@travel.com', license_number: 'TL-2018-015', experience_years: 8 },
-  { id: 'tl3', name: '王導遊', phone: '0912-345-680', email: 'guide3@travel.com', license_number: 'TL-2021-023', experience_years: 3 },
+  { id: 'tl1' as any, name: '張導遊', phone: '0912-345-678', email: 'guide1@travel.com', licenseNumber: 'TL-2020-001', experienceYears: 5 },
+  { id: 'tl2' as any, name: '李領隊', phone: '0912-345-679', email: 'guide2@travel.com', licenseNumber: 'TL-2018-015', experienceYears: 8 },
+  { id: 'tl3' as any, name: '王導遊', phone: '0912-345-680', email: 'guide3@travel.com', licenseNumber: 'TL-2021-023', experienceYears: 3 },
 ];
 
 // ============================================
@@ -43,142 +55,63 @@ const MOCK_TOUR_LEADERS: TourLeader[] = [
 // ============================================
 
 /**
- * Convert Session (camelCase) to GroupListItem (snake_case)
- * 將 Session 類型轉換為 GroupListItem 類型
+ * Convert Session to GroupListItem
  */
 function convertSessionToGroupListItem(session: Session): GroupListItem {
-  // Map status enum values
-  const statusMap: Record<SessionStatus, string> = {
-    [CoreSessionStatus.SOLICITING]: 'soliciting',
-    [CoreSessionStatus.GUARANTEED]: 'guaranteed',
-    [CoreSessionStatus.CLOSED]: 'closed',
-    [CoreSessionStatus.COMPLETED]: 'completed',
-    [CoreSessionStatus.CANCELLED]: 'cancelled',
-  };
-
-  // Map group type enum values
-  const groupTypeMap: Record<GroupType, string> = {
-    [CoreGroupType.WELFARE]: 'welfare',
-    [CoreGroupType.REGULAR]: 'regular',
-  };
-
   // Calculate registration progress
-  const registrationProgress = session.maxPax > 0
-    ? Math.round((session.currentPax / session.maxPax) * 100)
+  const registrationProgress = (session.maxPax as unknown as number) > 0
+    ? Math.round(((session.currentPax as unknown as number) / (session.maxPax as unknown as number)) * 100)
     : 0;
 
   return {
-    id: session.id as string,
-    series_id: session.seriesId as string,
-    group_number: session.groupNumber,
-    group_type: groupTypeMap[session.groupType] as 'welfare' | 'regular',
-    start_date: session.startDate,
-    end_date: session.endDate,
-    status: statusMap[session.status] as 'soliciting' | 'guaranteed' | 'closed' | 'completed' | 'cancelled',
-    min_pax: session.minPax,
-    max_pax: session.maxPax,
-    current_pax: session.currentPax,
-    seat_release_date: session.seatReleaseDate,
-    price_twd: session.priceTwd,
-    agent_commission: session.agentCommission,
-    registration_progress: registrationProgress,
-    created_at: session.createdAt,
-    // Optional fields
-    series_name: undefined, // Will be populated from tour data if available
-    pending_welfare_count: session.groupType === CoreGroupType.WELFARE ? undefined : undefined,
+    ...session,
+    registrationProgress: registrationProgress,
+    seriesName: undefined,
+    pendingWelfareCount: undefined,
   };
 }
 
 /**
  * Convert GroupListItem to CreateSessionData
  */
-function convertGroupListItemToCreateSessionData(data: Partial<TourSession>): {
-  seriesId: string;
-  tourId: string;
-  groupNumber: string;
-  groupType: GroupType;
-  startDate: string;
-  endDate: string;
-  minPax: number;
-  maxPax: number;
-  seatReleaseDate: string;
-  priceTwd: number;
-  agentCommission: number;
-} {
-  const groupTypeMap: Record<string, GroupType> = {
-    'welfare': CoreGroupType.WELFARE,
-    'regular': CoreGroupType.REGULAR,
-  };
-
+function convertFormDataToCreateSessionData(data: SessionFormData): CreateSessionData {
   return {
-    seriesId: (data.series_id || '') as any,
-    tourId: (data.series_id || '') as any, // Using series_id as tourId fallback
-    groupNumber: data.group_number || '',
-    groupType: groupTypeMap[data.group_type || 'regular'] || CoreGroupType.REGULAR,
-    startDate: data.start_date || '',
-    endDate: data.end_date || '',
-    minPax: data.min_pax || 20,
-    maxPax: data.max_pax || 40,
-    seatReleaseDate: data.seat_release_date || '',
-    priceTwd: data.price_twd || 0,
-    agentCommission: data.agent_commission || 0.15,
+    seriesId: data.seriesId as any,
+    tourId: data.seriesId as any,
+    groupNumber: data.groupNumber,
+    groupType: data.groupType,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    minPax: data.minPax as any,
+    maxPax: data.maxPax as any,
+    seatReleaseDate: data.seatReleaseDate,
+    priceTwd: data.priceTwd as any,
+    agentCommission: data.agentCommission as any,
   };
 }
 
 /**
  * Convert GroupListItem to UpdateSessionData
  */
-function convertGroupListItemToUpdateSessionData(data: Partial<TourSession>, session?: Session): {
-  groupNumber: string;
-  groupType: GroupType;
-  startDate: string;
-  endDate: string;
-  status?: SessionStatus;
-  minPax: number;
-  maxPax: number;
-  currentPax: number;
-  seatReleaseDate: string;
-  priceTwd: number;
-  agentCommission: number;
-  tourLeaderId?: string;
-  tourLeaderName?: string;
-  meetingInfo?: {
-    location: string;
-    address: string;
-    meetingTime: string;
-    contactPerson: string;
-    contactPhone: string;
-    notes: string;
-  };
-} {
-  const groupTypeMap: Record<string, GroupType> = {
-    'welfare': CoreGroupType.WELFARE,
-    'regular': CoreGroupType.REGULAR,
-  };
-
-  const statusMap: Record<string, SessionStatus> = {
-    'soliciting': CoreSessionStatus.SOLICITING,
-    'guaranteed': CoreSessionStatus.GUARANTEED,
-    'closed': CoreSessionStatus.CLOSED,
-    'completed': CoreSessionStatus.COMPLETED,
-    'cancelled': CoreSessionStatus.CANCELLED,
-  };
-
+function convertFormDataToUpdateSessionData(
+  data: SessionFormData,
+  originalSession: Session
+): UpdateSessionData {
   return {
-    groupNumber: data.group_number || session?.groupNumber || '',
-    groupType: groupTypeMap[data.group_type || 'regular'] || CoreGroupType.REGULAR,
-    startDate: data.start_date || session?.startDate || '',
-    endDate: data.end_date || session?.endDate || '',
-    status: data.status ? statusMap[data.status] : undefined,
-    minPax: data.min_pax ?? session?.minPax ?? 20,
-    maxPax: data.max_pax ?? session?.maxPax ?? 40,
-    currentPax: data.current_pax ?? session?.currentPax ?? 0,
-    seatReleaseDate: data.seat_release_date || session?.seatReleaseDate || '',
-    priceTwd: data.price_twd ?? session?.priceTwd ?? 0,
-    agentCommission: data.agent_commission ?? session?.agentCommission ?? 0.15,
-    tourLeaderId: session?.tourLeaderId as string | undefined,
-    tourLeaderName: session?.tourLeaderName,
-    meetingInfo: session?.meetingInfo,
+    groupNumber: data.groupNumber,
+    groupType: data.groupType,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    status: data.status,
+    minPax: data.minPax as any,
+    maxPax: data.maxPax as any,
+    currentPax: (originalSession.currentPax as unknown as number) as any,
+    seatReleaseDate: data.seatReleaseDate,
+    priceTwd: data.priceTwd as any,
+    agentCommission: data.agentCommission as any,
+    tourLeaderId: originalSession.tourLeaderId as any,
+    tourLeaderName: originalSession.tourLeaderName,
+    meetingInfo: originalSession.meetingInfo,
   };
 }
 
@@ -246,10 +179,12 @@ function StatCard({ icon, label, value, trend, trendUp }: {
 function DashboardTab({ groups, onNavigate }: {
   groups: GroupListItem[]; onNavigate: (tab: TabKey) => void;
 }) {
-  const activeGroups = groups.filter(g => g.status !== 'completed');
-  const pendingWelfare = groups.filter(g => g.group_type === 'welfare' && g.pending_welfare_count && g.pending_welfare_count > 0);
-  const totalPendingWelfare = pendingWelfare.reduce((sum, g) => sum + (g.pending_welfare_count || 0), 0);
-  const totalRegistrations = groups.reduce((sum, g) => sum + g.current_pax, 0);
+  const activeGroups = groups.filter(g => g.status !== SessionStatus.COMPLETED);
+  const pendingWelfare = groups.filter(
+    g => g.groupType === GroupType.WELFARE && g.pendingWelfareCount && g.pendingWelfareCount > 0
+  );
+  const totalPendingWelfare = pendingWelfare.reduce((sum, g) => sum + (g.pendingWelfareCount || 0), 0);
+  const totalRegistrations = groups.reduce((sum, g) => sum + (g.currentPax as unknown as number), 0);
 
   return (
     <div className="space-y-6">
@@ -257,7 +192,7 @@ function DashboardTab({ groups, onNavigate }: {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={<Calendar className="w-5 h-5" />} label="進行中團體" value={activeGroups.length.toString()} />
         <StatCard icon={<Users className="w-5 h-5" />} label="總報名人數" value={totalRegistrations.toString()} trend="+12%" trendUp />
-        <StatCard icon={<Building2 className="w-5 h-5" />} label="福委團數量" value={groups.filter(g => g.group_type === 'welfare').length.toString()} />
+        <StatCard icon={<Building2 className="w-5 h-5" />} label="福委團數量" value={groups.filter(g => g.groupType === GroupType.WELFARE).length.toString()} />
         <StatCard icon={<AlertCircle className="w-5 h-5" />} label="待審核福委團" value={totalPendingWelfare.toString()} />
       </div>
 
@@ -324,7 +259,7 @@ function DashboardTab({ groups, onNavigate }: {
         </div>
         <div className="divide-y divide-gray-100">
           {activeGroups.slice(0, 5).map((group) => (
-            <GroupRow key={group.id} group={group} />
+            <GroupCard key={group.id} group={group} />
           ))}
         </div>
       </div>
@@ -355,42 +290,43 @@ function DashboardTab({ groups, onNavigate }: {
   );
 }
 
-function GroupRow({ group }: { group: GroupListItem }) {
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, { bg: string; text: string; label: string }> = {
-      soliciting: { bg: 'bg-green-100', text: 'text-green-700', label: '招募中' },
-      guaranteed: { bg: 'bg-blue-100', text: 'text-blue-700', label: '已成團' },
-      closed: { bg: 'bg-gray-100', text: 'text-gray-600', label: '已截止' },
-      completed: { bg: 'bg-gray-100', text: 'text-gray-600', label: '已結案' },
+function GroupCard({ group }: { group: GroupListItem }) {
+  const getStatusBadge = (status: SessionStatus) => {
+    const badges: Record<SessionStatus, { label: string; bg: string; text: string }> = {
+      [SessionStatus.SOLICITING]: { label: '招募中', bg: 'bg-brand-100', text: 'text-brand-700' },
+      [SessionStatus.GUARANTEED]: { label: '已成團', bg: 'bg-blue-100', text: 'text-blue-700' },
+      [SessionStatus.CLOSED]: { label: '已截止', bg: 'bg-gray-100', text: 'text-gray-600' },
+      [SessionStatus.COMPLETED]: { label: '已結案', bg: 'bg-gray-100', text: 'text-gray-600' },
+      [SessionStatus.CANCELLED]: { label: '已取消', bg: 'bg-gray-100', text: 'text-gray-600' },
     };
-    return styles[status] || styles.soliciting;
+    return badges[status] || badges[SessionStatus.SOLICITING];
   };
 
   const status = getStatusBadge(group.status);
-  const fillRate = (group.current_pax / group.max_pax) * 100;
+  const fillRate = ((group.currentPax as unknown as number) / (group.maxPax as unknown as number)) * 100;
 
   return (
     <div className="p-6 hover:bg-gray-50 transition-colors">
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h4 className="font-semibold text-gray-900">{group.series_name || '未命名行程'}</h4>
+            <h4 className="font-semibold text-gray-900">{group.seriesName || '未命名行程'}</h4>
             <span className={cn('px-2 py-1 rounded-full text-xs font-semibold', status.bg, status.text)}>
               {status.label}
             </span>
-            {group.group_type === 'welfare' && (
+            {group.groupType === GroupType.WELFARE && (
               <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
                 福委團
               </span>
             )}
-            {group.group_number && (
-              <span className="text-xs text-gray-500 font-mono">{group.group_number}</span>
+            {group.groupNumber && (
+              <span className="text-xs text-gray-500 font-mono">{group.groupNumber}</span>
             )}
           </div>
           <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-            <span>{group.start_date} ~ {group.end_date}</span>
+            <span>{group.startDate} ~ {group.endDate}</span>
             <span>•</span>
-            <span>截止 {group.seat_release_date}</span>
+            <span>截止 {group.seatReleaseDate}</span>
           </div>
         </div>
         <div className="flex items-center gap-6">
@@ -400,10 +336,10 @@ function GroupRow({ group }: { group: GroupListItem }) {
                 <div className="h-full bg-slate-900 rounded-full transition-all" style={{ width: `${fillRate}%` }} />
               </div>
               <span className="text-sm font-semibold text-gray-900 w-16">
-                {group.current_pax}/{group.max_pax}
+                {(group.currentPax as unknown as number)}/{(group.maxPax as unknown as number)}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">報名進度 {group.registration_progress}%</p>
+            <p className="text-xs text-gray-500 mt-1">報名進度 {group.registrationProgress}%</p>
           </div>
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -420,19 +356,25 @@ function GroupRow({ group }: { group: GroupListItem }) {
 
 function GroupsListTab({ groups, onEdit, onDelete, onView }: {
   groups: GroupListItem[];
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-  onView: (id: string) => void;
+  onEdit: (id: Session['id']) => void;
+  onDelete: (id: Session['id']) => void;
+  onView: (id: Session['id']) => void;
 }) {
   const [filter, setFilter] = useState<'all' | 'welfare' | 'regular'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'soliciting' | 'guaranteed' | 'closed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | SessionStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredGroups = groups.filter(g => {
-    if (filter !== 'all' && g.group_type !== filter) return false;
+    if (filter !== 'all') {
+      const expected = filter === 'welfare' ? GroupType.WELFARE : GroupType.REGULAR;
+      if (g.groupType !== expected) return false;
+    }
     if (statusFilter !== 'all' && g.status !== statusFilter) return false;
-    if (searchQuery && !g.series_name?.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !g.group_number?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (
+      searchQuery &&
+      !g.seriesName?.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !g.groupNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+    ) return false;
     return true;
   });
 
@@ -468,8 +410,15 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
-          {(['all', 'soliciting', 'guaranteed', 'closed'] as const).map((status) => (
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              'all',
+              SessionStatus.SOLICITING,
+              SessionStatus.GUARANTEED,
+              SessionStatus.CLOSED,
+            ] as const
+          ).map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
@@ -480,10 +429,10 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               )}
             >
-              {status === 'all' && '全部狀態'}
-              {status === 'soliciting' && '招募中'}
-              {status === 'guaranteed' && '已成團'}
-              {status === 'closed' && '已截止'}
+              {status === 'all' && '全部'}
+              {status === SessionStatus.SOLICITING && '招募中'}
+              {status === SessionStatus.GUARANTEED && '已成團'}
+              {status === SessionStatus.CLOSED && '已截止'}
             </button>
           ))}
         </div>
@@ -508,46 +457,46 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                 <tr key={group.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-medium text-gray-900">{group.series_name || '未命名行程'}</p>
-                      {group.group_number && (
-                        <p className="text-xs text-gray-500 font-mono">{group.group_number}</p>
+                      <p className="font-medium text-gray-900">{group.seriesName || '未命名行程'}</p>
+                      {group.groupNumber && (
+                        <p className="text-xs text-gray-500 font-mono">{group.groupNumber}</p>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
                       'px-2 py-1 rounded-full text-xs font-medium',
-                      group.group_type === 'welfare' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                      group.groupType === GroupType.WELFARE ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
                     )}>
-                      {group.group_type === 'welfare' ? '福委團' : '一般團'}
+                      {group.groupType === GroupType.WELFARE ? '福委團' : '一般團'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {group.start_date} ~ {group.end_date}
+                    {group.startDate} ~ {group.endDate}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-slate-900 rounded-full transition-all"
-                          style={{ width: `${(group.current_pax / group.max_pax) * 100}%` }}
+                          style={{ width: `${((group.currentPax as unknown as number) / (group.maxPax as unknown as number)) * 100}%` }}
                         />
                       </div>
                       <span className="text-sm font-medium text-gray-900">
-                        {group.current_pax}/{group.max_pax}
+                        {(group.currentPax as unknown as number)}/{(group.maxPax as unknown as number)}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
                       'px-2 py-1 rounded-full text-xs font-medium',
-                      group.status === 'soliciting' && 'bg-brand-100 text-brand-700',
-                      group.status === 'guaranteed' && 'bg-brand-100 text-brand-700',
-                      group.status === 'closed' && 'bg-gray-100 text-gray-600',
+                      group.status === SessionStatus.SOLICITING && 'bg-brand-100 text-brand-700',
+                      group.status === SessionStatus.GUARANTEED && 'bg-brand-100 text-brand-700',
+                      group.status === SessionStatus.CLOSED && 'bg-gray-100 text-gray-600',
                     )}>
-                      {group.status === 'soliciting' && '招募中'}
-                      {group.status === 'guaranteed' && '已成團'}
-                      {group.status === 'closed' && '已截止'}
+                      {group.status === SessionStatus.SOLICITING && '招募中'}
+                      {group.status === SessionStatus.GUARANTEED && '已成團'}
+                      {group.status === SessionStatus.CLOSED && '已截止'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -589,21 +538,21 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
 function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Partial<TourSession>) => void;
+  onSubmit: (data: SessionFormData) => void;
   group: GroupListItem;
 }) {
-  const [formData, setFormData] = useState<Partial<TourSession>>({
-    series_id: group.series_id,
-    group_number: group.group_number,
-    group_type: group.group_type,
+  const [formData, setFormData] = useState<SessionFormData>({
+    seriesId: group.seriesId as any,
+    groupNumber: group.groupNumber,
+    groupType: group.groupType,
     status: group.status,
-    start_date: group.start_date,
-    end_date: group.end_date,
-    min_pax: group.min_pax,
-    max_pax: group.max_pax,
-    seat_release_date: group.seat_release_date,
-    price_twd: group.price_twd,
-    agent_commission: group.agent_commission,
+    startDate: group.startDate,
+    endDate: group.endDate,
+    minPax: group.minPax as unknown as number,
+    maxPax: group.maxPax as unknown as number,
+    seatReleaseDate: group.seatReleaseDate,
+    priceTwd: group.priceTwd as unknown as number,
+    agentCommission: group.agentCommission as unknown as number,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -641,8 +590,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <input
                 type="text"
                 placeholder="例：東京經典五日遊"
-                value={formData.series_id || ''}
-                onChange={(e) => setFormData({ ...formData, series_id: e.target.value })}
+                value={formData.seriesId || ''}
+                onChange={(e) => setFormData({ ...formData, seriesId: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -652,8 +601,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <input
                 type="text"
                 placeholder="例：GRP-2025-001"
-                value={formData.group_number || ''}
-                onChange={(e) => setFormData({ ...formData, group_number: e.target.value })}
+                value={formData.groupNumber || ''}
+                onChange={(e) => setFormData({ ...formData, groupNumber: e.target.value })}
                 className="trvic-input w-full"
               />
             </div>
@@ -663,24 +612,24 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">團型</label>
               <select
-                value={formData.group_type || 'regular'}
-                onChange={(e) => setFormData({ ...formData, group_type: e.target.value as 'welfare' | 'regular' })}
+                value={formData.groupType}
+                onChange={(e) => setFormData({ ...formData, groupType: e.target.value as GroupType })}
                 className="trvic-input w-full"
               >
-                <option value="regular">一般團</option>
-                <option value="welfare">福委團</option>
+                <option value={GroupType.REGULAR}>一般團</option>
+                <option value={GroupType.WELFARE}>福委團</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">狀態</label>
               <select
-                value={formData.status || 'soliciting'}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as TourSession['status'] })}
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as SessionStatus })}
                 className="trvic-input w-full"
               >
-                <option value="soliciting">招募中</option>
-                <option value="guaranteed">已成團</option>
-                <option value="closed">已截止</option>
+                <option value={SessionStatus.SOLICITING}>招募中</option>
+                <option value={SessionStatus.GUARANTEED}>已成團</option>
+                <option value={SessionStatus.CLOSED}>已截止</option>
               </select>
             </div>
           </div>
@@ -690,8 +639,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">出發日期</label>
               <input
                 type="date"
-                value={formData.start_date || ''}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                value={formData.startDate || ''}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -700,8 +649,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">結束日期</label>
               <input
                 type="date"
-                value={formData.end_date || ''}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                value={formData.endDate || ''}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -714,8 +663,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <input
                 type="number"
                 min="1"
-                value={formData.min_pax || 20}
-                onChange={(e) => setFormData({ ...formData, min_pax: parseInt(e.target.value) })}
+                value={formData.minPax || 20}
+                onChange={(e) => setFormData({ ...formData, minPax: parseInt(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -725,8 +674,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <input
                 type="number"
                 min="1"
-                value={formData.max_pax || 40}
-                onChange={(e) => setFormData({ ...formData, max_pax: parseInt(e.target.value) })}
+                value={formData.maxPax || 40}
+                onChange={(e) => setFormData({ ...formData, maxPax: parseInt(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -735,8 +684,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">座位釋放日期</label>
               <input
                 type="date"
-                value={formData.seat_release_date || ''}
-                onChange={(e) => setFormData({ ...formData, seat_release_date: e.target.value })}
+                value={formData.seatReleaseDate || ''}
+                onChange={(e) => setFormData({ ...formData, seatReleaseDate: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -749,8 +698,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
               <input
                 type="number"
                 min="0"
-                value={formData.price_twd || 0}
-                onChange={(e) => setFormData({ ...formData, price_twd: parseInt(e.target.value) })}
+                value={formData.priceTwd || 0}
+                onChange={(e) => setFormData({ ...formData, priceTwd: parseInt(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -762,8 +711,8 @@ function EditGroupModal({ isOpen, onClose, onSubmit, group }: {
                 min="0"
                 max="1"
                 step="0.01"
-                value={formData.agent_commission || 0.15}
-                onChange={(e) => setFormData({ ...formData, agent_commission: parseFloat(e.target.value) })}
+                value={formData.agentCommission || 0.15}
+                onChange={(e) => setFormData({ ...formData, agentCommission: parseFloat(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -822,7 +771,7 @@ function ViewGroupModal({ isOpen, onClose, group }: {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">團體詳情</h2>
-              <p className="text-sm text-gray-500">{group.group_number}</p>
+              <p className="text-sm text-gray-500">{group.groupNumber}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -834,24 +783,24 @@ function ViewGroupModal({ isOpen, onClose, group }: {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">行程系列</p>
-              <p className="font-semibold text-gray-900">{group.series_name || group.series_id || '未命名'}</p>
+              <p className="font-semibold text-gray-900">{group.seriesName || (group.seriesId as unknown as string) || '未命名'}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">團型</p>
               <span className={cn(
                 'px-3 py-1 rounded-full text-sm font-medium',
-                group.group_type === 'welfare' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                group.groupType === GroupType.WELFARE ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
               )}>
-                {group.group_type === 'welfare' ? '福委團' : '一般團'}
+                {group.groupType === GroupType.WELFARE ? '福委團' : '一般團'}
               </span>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">出發日期</p>
-              <p className="font-semibold text-gray-900">{group.start_date}</p>
+              <p className="font-semibold text-gray-900">{group.startDate}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">結束日期</p>
-              <p className="font-semibold text-gray-900">{group.end_date}</p>
+              <p className="font-semibold text-gray-900">{group.endDate}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">報名進度</p>
@@ -859,11 +808,11 @@ function ViewGroupModal({ isOpen, onClose, group }: {
                 <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-brand-600 rounded-full transition-all"
-                    style={{ width: `${(group.current_pax / group.max_pax) * 100}%` }}
+                    style={{ width: `${((group.currentPax as unknown as number) / (group.maxPax as unknown as number)) * 100}%` }}
                   />
                 </div>
                 <span className="text-sm font-medium text-gray-900">
-                  {group.current_pax}/{group.max_pax}
+                  {(group.currentPax as unknown as number)}/{(group.maxPax as unknown as number)}
                 </span>
               </div>
             </div>
@@ -871,30 +820,30 @@ function ViewGroupModal({ isOpen, onClose, group }: {
               <p className="text-sm text-gray-500 mb-1">狀態</p>
               <span className={cn(
                 'px-3 py-1 rounded-full text-sm font-medium',
-                group.status === 'soliciting' && 'bg-brand-100 text-brand-700',
-                group.status === 'guaranteed' && 'bg-green-100 text-green-700',
-                group.status === 'closed' && 'bg-gray-100 text-gray-600',
+                group.status === SessionStatus.SOLICITING && 'bg-brand-100 text-brand-700',
+                group.status === SessionStatus.GUARANTEED && 'bg-green-100 text-green-700',
+                group.status === SessionStatus.CLOSED && 'bg-gray-100 text-gray-600',
               )}>
-                {group.status === 'soliciting' && '招募中'}
-                {group.status === 'guaranteed' && '已成團'}
-                {group.status === 'closed' && '已截止'}
+                {group.status === SessionStatus.SOLICITING && '招募中'}
+                {group.status === SessionStatus.GUARANTEED && '已成團'}
+                {group.status === SessionStatus.CLOSED && '已截止'}
               </span>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">價格</p>
-              <p className="font-semibold text-gray-900">{formatCurrency(group.price_twd || 0)}</p>
+              <p className="font-semibold text-gray-900">{formatCurrency((group.priceTwd as unknown as number) || 0)}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">業務佣金率</p>
-              <p className="font-semibold text-gray-900">{(group.agent_commission * 100).toFixed(1)}%</p>
+              <p className="font-semibold text-gray-900">{(((group.agentCommission as unknown as number) || 0) * 100).toFixed(1)}%</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">座位釋放日期</p>
-              <p className="font-semibold text-gray-900">{group.seat_release_date || '未設定'}</p>
+              <p className="font-semibold text-gray-900">{group.seatReleaseDate || '未設定'}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-1">建立日期</p>
-              <p className="font-semibold text-gray-900">{group.created_at}</p>
+              <p className="font-semibold text-gray-900">{group.createdAt}</p>
             </div>
           </div>
         </div>
@@ -910,15 +859,20 @@ function ViewGroupModal({ isOpen, onClose, group }: {
 function CreateGroupModal({ isOpen, onClose, onSubmit }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Partial<TourSession>) => void;
+  onSubmit: (data: SessionFormData) => void;
 }) {
-  const [formData, setFormData] = useState<Partial<TourSession>>({
-    group_type: 'regular',
-    status: 'soliciting',
-    min_pax: 20,
-    max_pax: 40,
-    price_twd: 0,
-    agent_commission: 0.15,
+  const [formData, setFormData] = useState<SessionFormData>({
+    seriesId: '',
+    groupNumber: '',
+    groupType: GroupType.REGULAR,
+    status: SessionStatus.SOLICITING,
+    startDate: '',
+    endDate: '',
+    minPax: 20,
+    maxPax: 40,
+    seatReleaseDate: '',
+    priceTwd: 0,
+    agentCommission: 0.15,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -956,8 +910,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <input
                 type="text"
                 placeholder="例：東京經典五日遊"
-                value={formData.series_id || ''}
-                onChange={(e) => setFormData({ ...formData, series_id: e.target.value })}
+                value={formData.seriesId || ''}
+                onChange={(e) => setFormData({ ...formData, seriesId: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -967,8 +921,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <input
                 type="text"
                 placeholder="例：GRP-2025-001"
-                value={formData.group_number || ''}
-                onChange={(e) => setFormData({ ...formData, group_number: e.target.value })}
+                value={formData.groupNumber || ''}
+                onChange={(e) => setFormData({ ...formData, groupNumber: e.target.value })}
                 className="trvic-input w-full"
               />
             </div>
@@ -978,24 +932,24 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">團型</label>
               <select
-                value={formData.group_type || 'regular'}
-                onChange={(e) => setFormData({ ...formData, group_type: e.target.value as 'welfare' | 'regular' })}
+                value={formData.groupType}
+                onChange={(e) => setFormData({ ...formData, groupType: e.target.value as GroupType })}
                 className="trvic-input w-full"
               >
-                <option value="regular">一般團</option>
-                <option value="welfare">福委團</option>
+                <option value={GroupType.REGULAR}>一般團</option>
+                <option value={GroupType.WELFARE}>福委團</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">狀態</label>
               <select
-                value={formData.status || 'soliciting'}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as TourSession['status'] })}
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as SessionStatus })}
                 className="trvic-input w-full"
               >
-                <option value="soliciting">招募中</option>
-                <option value="guaranteed">已成團</option>
-                <option value="closed">已截止</option>
+                <option value={SessionStatus.SOLICITING}>招募中</option>
+                <option value={SessionStatus.GUARANTEED}>已成團</option>
+                <option value={SessionStatus.CLOSED}>已截止</option>
               </select>
             </div>
           </div>
@@ -1005,8 +959,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">出發日期</label>
               <input
                 type="date"
-                value={formData.start_date || ''}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                value={formData.startDate || ''}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -1015,8 +969,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">結束日期</label>
               <input
                 type="date"
-                value={formData.end_date || ''}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                value={formData.endDate || ''}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -1029,8 +983,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <input
                 type="number"
                 min="1"
-                value={formData.min_pax || 20}
-                onChange={(e) => setFormData({ ...formData, min_pax: parseInt(e.target.value) })}
+                value={formData.minPax || 20}
+                onChange={(e) => setFormData({ ...formData, minPax: parseInt(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -1040,8 +994,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <input
                 type="number"
                 min="1"
-                value={formData.max_pax || 40}
-                onChange={(e) => setFormData({ ...formData, max_pax: parseInt(e.target.value) })}
+                value={formData.maxPax || 40}
+                onChange={(e) => setFormData({ ...formData, maxPax: parseInt(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -1050,8 +1004,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">座位釋放日期</label>
               <input
                 type="date"
-                value={formData.seat_release_date || ''}
-                onChange={(e) => setFormData({ ...formData, seat_release_date: e.target.value })}
+                value={formData.seatReleaseDate || ''}
+                onChange={(e) => setFormData({ ...formData, seatReleaseDate: e.target.value })}
                 className="trvic-input w-full"
                 required
               />
@@ -1064,8 +1018,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
               <input
                 type="number"
                 min="0"
-                value={formData.price_twd || 0}
-                onChange={(e) => setFormData({ ...formData, price_twd: parseInt(e.target.value) })}
+                value={formData.priceTwd || 0}
+                onChange={(e) => setFormData({ ...formData, priceTwd: parseInt(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -1077,8 +1031,8 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
                 min="0"
                 max="1"
                 step="0.01"
-                value={formData.agent_commission || 0.15}
-                onChange={(e) => setFormData({ ...formData, agent_commission: parseFloat(e.target.value) })}
+                value={formData.agentCommission || 0.15}
+                onChange={(e) => setFormData({ ...formData, agentCommission: parseFloat(e.target.value) })}
                 className="trvic-input w-full"
                 required
               />
@@ -1134,13 +1088,9 @@ export default function SessionManager() {
     return sessions.map(convertSessionToGroupListItem);
   }, [sessions]);
 
-  // Get current user ID for audit logging
-  const currentUser = AuthService.getCurrentUser();
-  const currentUserId = currentUser?.id || 'system';
-
-  const handleCreateGroup = async (data: Partial<TourSession>) => {
+  const handleCreateGroup = async (data: SessionFormData) => {
     try {
-      const createData = convertGroupListItemToCreateSessionData(data);
+      const createData = convertFormDataToCreateSessionData(data);
       const result = await createSession(createData);
       
       if (result.success && result.data) {
@@ -1152,7 +1102,7 @@ export default function SessionManager() {
     }
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: Session['id']) => {
     const group = groups.find(g => g.id === id);
     if (group) {
       setSelectedGroup(group);
@@ -1160,7 +1110,7 @@ export default function SessionManager() {
     }
   };
 
-  const handleUpdateGroup = async (data: Partial<TourSession>) => {
+  const handleUpdateGroup = async (data: SessionFormData) => {
     if (!selectedGroup) return;
 
     try {
@@ -1171,10 +1121,10 @@ export default function SessionManager() {
         return;
       }
 
-      const updateData = convertGroupListItemToUpdateSessionData(data, originalSession);
+      const updateData = convertFormDataToUpdateSessionData(data, originalSession);
       // Note: updateSession hook doesn't expose userId parameter, so we need to call service directly
       // For now, we'll use the hook and let the service handle userId internally
-      const result = await updateSession(selectedGroup.id, updateData);
+      const result = await updateSession(selectedGroup.id as any, updateData);
       
       if (result.success) {
         await refetchSessions();
@@ -1186,11 +1136,11 @@ export default function SessionManager() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: Session['id']) => {
     if (!confirm('確定要刪除此團體嗎？')) return;
 
     try {
-      const result = await deleteSession(id);
+      const result = await deleteSession(id as any);
       if (result.success) {
         await refetchSessions();
       }
@@ -1199,7 +1149,7 @@ export default function SessionManager() {
     }
   };
 
-  const handleView = (id: string) => {
+  const handleView = (id: Session['id']) => {
     const group = groups.find(g => g.id === id);
     if (group) {
       setSelectedGroup(group);

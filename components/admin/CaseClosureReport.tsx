@@ -5,10 +5,11 @@ import {
   Star, MessageSquare, TrendingUp, Clock, Printer, Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TourSession, Booking } from '@/types';
+import type { Booking } from '../../types';
+import type { Session } from '@/core/types/session';
 
 interface CaseClosureReportProps {
-  session: TourSession;
+  session: Session;
   bookings: Booking[];
   onClose?: () => void;
 }
@@ -174,11 +175,11 @@ const CaseClosureReport: React.FC<CaseClosureReportProps> = memo(({ session, boo
   const feedback = MOCK_FEEDBACK;
   const incidents = MOCK_INCIDENTS;
 
-  const totalPax = session.current_pax;
+  const totalPax = session.currentPax as any;
   const confirmedPax = bookings.filter(b => b.status === 'confirmed' || b.status === 'paid').length;
   const specialNeedsCount = bookings.filter(b => b.special_needs).length;
   const duration = Math.ceil(
-    (new Date(session.end_date).getTime() - new Date(session.start_date).getTime()) / (1000 * 60 * 60 * 24)
+    (new Date(session.endDate).getTime() - new Date(session.startDate).getTime()) / (1000 * 60 * 60 * 24)
   );
 
   const handleExportPDF = () => {
@@ -196,7 +197,7 @@ const CaseClosureReport: React.FC<CaseClosureReportProps> = memo(({ session, boo
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>結案報告 - ${session.group_number || session.series_id}</title>
+        <title>結案報告 - ${session.groupNumber || session.seriesId}</title>
         <style>
           body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; line-height: 1.6; }
           .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
@@ -223,8 +224,8 @@ const CaseClosureReport: React.FC<CaseClosureReportProps> = memo(({ session, boo
         <div class="header">
           <div class="title">團次結案報告</div>
           <div class="meta">
-            團號：${session.group_number || 'N/A'} |
-            出發日期：${session.start_date} ~ ${session.end_date} |
+            團號：${session.groupNumber || 'N/A'} |
+            出發日期：${session.startDate} ~ ${session.endDate} |
             報告日期：${new Date().toLocaleDateString('zh-TW')}
           </div>
         </div>
@@ -327,7 +328,7 @@ const CaseClosureReport: React.FC<CaseClosureReportProps> = memo(({ session, boo
         <div>
           <h3 className="text-lg font-bold text-gray-900">結案報告</h3>
           <p className="text-sm text-gray-500 mt-1">
-            團號：{session.group_number || session.series_id} | {session.start_date} ~ {session.end_date}
+            團號：{session.groupNumber || session.seriesId} | {session.startDate} ~ {session.endDate}
           </p>
         </div>
         <div className="flex items-center gap-2">

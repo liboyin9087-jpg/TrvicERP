@@ -7,13 +7,14 @@ import type {
   ApiResponse,
 } from '../../../core/types/itinerary';
 import { checkResourceConflicts } from '../../../core/types/itinerary';
+import { ApiError } from '../../../core/types/itinerary';
 
 export class ItineraryService {
   static async getItinerary(sessionId: string): Promise<ApiResponse<Itinerary>> {
     try {
       return await api.get<Itinerary>(`${API_ENDPOINTS.sessions.detail(sessionId)}/itinerary`);
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { data: null, error: new ApiError('取得行程安排失敗', 'UNKNOWN_ERROR') };
     }
   }
 
@@ -27,7 +28,7 @@ export class ItineraryService {
         data
       );
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { data: null, error: new ApiError('建立行程安排失敗', 'UNKNOWN_ERROR') };
     }
   }
 
@@ -41,7 +42,7 @@ export class ItineraryService {
         data
       );
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { data: null, error: new ApiError('更新行程安排失敗', 'UNKNOWN_ERROR') };
     }
   }
 
@@ -56,7 +57,7 @@ export class ItineraryService {
         data
       );
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { data: null, error: new ApiError('更新單日行程失敗', 'UNKNOWN_ERROR') };
     }
   }
 
@@ -68,7 +69,7 @@ export class ItineraryService {
         `${API_ENDPOINTS.sessions.detail(sessionId)}/itinerary/versions`
       );
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { data: null, error: new ApiError('取得版本歷史失敗', 'UNKNOWN_ERROR') };
     }
   }
 
@@ -82,7 +83,7 @@ export class ItineraryService {
         { version }
       );
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { data: null, error: new ApiError('還原版本失敗', 'UNKNOWN_ERROR') };
     }
   }
 
@@ -100,7 +101,7 @@ export class ItineraryService {
         { fromSessionId }
       );
     } catch (error) {
-      return { data: null, error: error as Error };
+      return { data: null, error: new ApiError('複製行程安排失敗', 'UNKNOWN_ERROR') };
     }
   }
 }

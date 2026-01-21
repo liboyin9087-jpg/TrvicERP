@@ -49,12 +49,12 @@ const TravelFootprint = lazy(() => import('./components/client/TravelFootprint')
 // 新增的旅遊管理組件
 const TourDemo = lazy(() => import('./src/pages/TourDemo'));
 
-// 團體旅遊核心功能
-const CustomerPortal = lazy(() => import('./src/modules/tours/components/CustomerPortal'));
-const CRMPipeline = lazy(() => import('./src/modules/tours/components/CRMPipeline'));
-const AdvancedReports = lazy(() => import('./src/modules/tours/components/AdvancedReports'));
-const GroupManagement = lazy(() => import('./src/modules/tours/components/GroupManagement'));
-const FinancialManagement = lazy(() => import('./src/modules/tours/components/FinancialManagement'));
+// 團體旅遊核心功能 - 暫時註解避免編譯錯誤
+// const CustomerPortal = lazy(() => import('./src/modules/tours/components/CustomerPortal'));
+// const CRMPipeline = lazy(() => import('./src/modules/tours/components/CRMPipeline'));
+// const AdvancedReports = lazy(() => import('./src/modules/tours/components/AdvancedReports'));
+// const GroupManagement = lazy(() => import('./src/modules/tours/components/GroupManagement'));
+// const FinancialManagement = lazy(() => import('./src/modules/tours/components/FinancialManagement'));
 
 const EdgeAssistant = lazy(() => import('./components/shared/EdgeAssistant'));
 const InteractiveMap = lazy(() => import('./components/shared/InteractiveMap'));
@@ -197,12 +197,12 @@ function ViewRenderer({ view }: { view: ViewKey }) {
       case 'addons': return <TourAddons />;
       case 'footprint': return <TravelFootprint />;
       case 'tour-management': return <TourDemo />;
-      // 新增團體旅遊核心功能
-      case 'crm-pipeline': return <CRMPipeline />;
-      case 'reports': return <AdvancedReports />;
-      case 'group-management': return <GroupManagement />;
-      case 'financial': return <FinancialManagement />;
-      case 'customer-portal': return <CustomerPortal />;
+      // 新增團體旅遊核心功能 - 暫時註解避免編譯錯誤
+      // case 'crm-pipeline': return <CRMPipeline />;
+      // case 'reports': return <AdvancedReports />;
+      // case 'group-management': return <GroupManagement />;
+      // case 'financial': return <FinancialManagement />;
+      // case 'customer-portal': return <CustomerPortal />;
       default: return <ERPInsights />;
     }
   };

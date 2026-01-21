@@ -5,16 +5,23 @@ import {
   Calendar, MapPin, Phone, Printer, X, CheckCircle, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, RoomAssignment, MeetingInfo } from '@/types';
+import type { Booking } from '../../types';
+import type { Session, HotelRoomAllocation, SeatAssignment, MeetingInfo } from '@/core/types/session';
 import { LineService, LineSendTarget } from '@/core/services/lineService';
 
 interface DocumentGeneratorProps {
-  session: TourSession;
+  session: Session;
   bookings: Booking[];
   hotelRooms?: HotelRoomAllocation[];
   roomAssignments?: RoomAssignment[];
   seatAssignments?: SeatAssignment[];
   meetingInfo?: MeetingInfo;
+}
+
+interface RoomAssignment {
+  roomNumber: string;
+  roomType: string;
+  occupants: { name: string }[];
 }
 
 type DocumentType = 'itinerary' | 'room_list' | 'seat_chart' | 'roster' | 'meeting_info';
@@ -121,7 +128,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
         case 'seat_chart':
           csvContent = '座位號,是否已分配,乘客姓名,交通工具類型\n';
           seatAssignments.forEach(seat => {
-            csvContent += `${seat.seat_number},"${seat.is_assigned ? '是' : '否'}","${seat.passenger_name || ''}","${seat.vehicle_type || ''}"\n`;
+            csvContent += `${seat.seatNumber},"${seat.isAssigned ? '是' : '否'}","${seat.passengerName || ''}","${seat.vehicleType || ''}"\n`;
           });
           break;
         case 'meeting_info':
@@ -129,18 +136,18 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
             csvContent = '項目,內容\n';
             csvContent += `集合地點,"${meetingInfo.location}"\n`;
             if (meetingInfo.address) csvContent += `地址,"${meetingInfo.address}"\n`;
-            csvContent += `集合時間,"${meetingInfo.meeting_time}"\n`;
-            csvContent += `聯絡人,"${meetingInfo.contact_person}"\n`;
-            csvContent += `聯絡電話,"${meetingInfo.contact_phone}"\n`;
+            csvContent += `集合時間,"${meetingInfo.meetingTime}"\n`;
+            csvContent += `聯絡人,"${meetingInfo.contactPerson}"\n`;
+            csvContent += `聯絡電話,"${meetingInfo.contactPhone}"\n`;
             if (meetingInfo.notes) csvContent += `備註,"${meetingInfo.notes}"\n`;
           }
           break;
         case 'itinerary':
           csvContent = '日期,行程內容\n';
-          csvContent += `團號,"${session.group_number || session.series_id}"\n`;
-          csvContent += `出發日期,"${session.start_date}"\n`;
-          csvContent += `結束日期,"${session.end_date}"\n`;
-          csvContent += `人數,"${session.current_pax}/${session.max_pax}"\n`;
+          csvContent += `團號,"${session.groupNumber || session.seriesId}"\n`;
+          csvContent += `出發日期,"${session.startDate}"\n`;
+          csvContent += `結束日期,"${session.endDate}"\n`;
+          csvContent += `人數,"${session.currentPax}/${session.maxPax}"\n`;
           break;
         default:
           csvContent = '資料\n無資料可匯出\n';
@@ -150,7 +157,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `${docLabel}_${session.group_number || session.series_id}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `${docLabel}_${session.groupNumber || session.seriesId}_${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -178,10 +185,10 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       }
 
       const result = await LineService.sendDocumentNotification({
-        sessionId: session.id,
+        sessionId: session.id as any,
         documentType: type,
         recipients: targets,
-        customMessage: `團號：${session.group_number || session.series_id}`,
+        customMessage: `團號：${session.groupNumber || session.seriesId}`,
       });
 
       setLineSendResult({
@@ -224,7 +231,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>團體行程表 - ${session.group_number || session.series_id}</title>
+        <title>團體行程表 - ${session.groupNumber || session.seriesId}</title>
         <style>
           body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
           .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
@@ -241,9 +248,9 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
         <div class="header">
           <div class="title">團體行程表</div>
           <div class="meta">
-            團號：${session.group_number || 'N/A'} | 
-            出發日期：${session.start_date} ~ ${session.end_date} | 
-            人數：${session.current_pax}/${session.max_pax}
+            團號：${session.groupNumber || 'N/A'} | 
+            出發日期：${session.startDate} ~ ${session.endDate} | 
+            人數：${session.currentPax}/${session.maxPax}
           </div>
         </div>
         <div class="section">
@@ -261,7 +268,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>分房表 - ${session.group_number || session.series_id}</title>
+        <title>分房表 - ${session.groupNumber || session.seriesId}</title>
         <style>
           body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
           .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
@@ -274,7 +281,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <body>
         <div class="header">
           <div class="title">分房表</div>
-          <div>團號：${session.group_number || 'N/A'} | 出發日期：${session.start_date}</div>
+          <div>團號：${session.groupNumber || 'N/A'} | 出發日期：${session.startDate}</div>
         </div>
         <table>
           <thead>
@@ -305,7 +312,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>座位表 - ${session.group_number || session.series_id}</title>
+        <title>座位表 - ${session.groupNumber || session.seriesId}</title>
         <style>
           body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
           .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
@@ -319,13 +326,13 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <body>
         <div class="header">
           <div class="title">座位表</div>
-          <div>團號：${session.group_number || 'N/A'} | 交通工具：${seatAssignments[0]?.vehicle_type || 'N/A'}</div>
+          <div>團號：${session.groupNumber || 'N/A'} | 交通工具：${seatAssignments[0]?.vehicleType || 'N/A'}</div>
         </div>
         <div class="seat-grid">
           ${seatAssignments.map(seat => `
-            <div class="seat ${seat.is_assigned ? 'assigned' : 'available'}">
-              <div style="font-weight: bold;">${seat.seat_number}</div>
-              ${seat.passenger_name ? `<div style="font-size: 12px; margin-top: 5px;">${seat.passenger_name}</div>` : ''}
+            <div class="seat ${seat.isAssigned ? 'assigned' : 'available'}">
+              <div style="font-weight: bold;">${seat.seatNumber}</div>
+              ${seat.passengerName ? `<div style="font-size: 12px; margin-top: 5px;">${seat.passengerName}</div>` : ''}
             </div>
           `).join('')}
         </div>
@@ -340,7 +347,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>名單清冊 - ${session.group_number || session.series_id}</title>
+        <title>名單清冊 - ${session.groupNumber || session.seriesId}</title>
         <style>
           body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
           .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
@@ -353,7 +360,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <body>
         <div class="header">
           <div class="title">名單清冊</div>
-          <div>團號：${session.group_number || 'N/A'} | 總人數：${bookings.length}</div>
+          <div>團號：${session.groupNumber || 'N/A'} | 總人數：${bookings.length}</div>
         </div>
         <table>
           <thead>
@@ -391,7 +398,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>集合資訊 - ${session.group_number || session.series_id}</title>
+        <title>集合資訊 - ${session.groupNumber || session.seriesId}</title>
         <style>
           body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
           .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
@@ -405,7 +412,7 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
       <body>
         <div class="header">
           <div class="title">集合資訊</div>
-          <div>團號：${session.group_number || 'N/A'}</div>
+          <div>團號：${session.groupNumber || 'N/A'}</div>
         </div>
         <div class="info-box">
           <div class="info-item">
@@ -415,15 +422,15 @@ const DocumentGenerator: React.FC<DocumentGeneratorProps> = memo(({
           </div>
           <div class="info-item">
             <div class="info-label">集合時間</div>
-            <div class="info-value">${meetingInfo.meeting_time}</div>
+            <div class="info-value">${meetingInfo.meetingTime}</div>
           </div>
           <div class="info-item">
             <div class="info-label">聯絡人</div>
-            <div class="info-value">${meetingInfo.contact_person}</div>
+            <div class="info-value">${meetingInfo.contactPerson}</div>
           </div>
           <div class="info-item">
             <div class="info-label">聯絡電話</div>
-            <div class="info-value">${meetingInfo.contact_phone}</div>
+            <div class="info-value">${meetingInfo.contactPhone}</div>
           </div>
           ${meetingInfo.notes ? `
             <div class="info-item">

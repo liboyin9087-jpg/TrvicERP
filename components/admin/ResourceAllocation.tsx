@@ -5,7 +5,8 @@ import {
   Save, X, Users, Bed, MapPin, Phone, Mail, Award, CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { HotelRoomAllocation, SeatAssignment, TourLeader } from '@/types';
+import type { HotelRoomAllocation, SeatAssignment, TourLeader } from '@/core/types/session';
+import { RoomType, VehicleType } from '@/core/types/session';
 
 type TabKey = 'hotel' | 'transport' | 'leader';
 
@@ -22,9 +23,9 @@ interface ResourceAllocationProps {
 }
 
 const MOCK_TOUR_LEADERS: TourLeader[] = [
-  { id: 'tl1', name: '張導遊', phone: '0912-345-678', email: 'guide1@travel.com', license_number: 'TL-2020-001', experience_years: 5 },
-  { id: 'tl2', name: '李領隊', phone: '0912-345-679', email: 'guide2@travel.com', license_number: 'TL-2018-015', experience_years: 8 },
-  { id: 'tl3', name: '王導遊', phone: '0912-345-680', email: 'guide3@travel.com', license_number: 'TL-2021-023', experience_years: 3 },
+  { id: 'tl1' as any, name: '張導遊', phone: '0912-345-678', email: 'guide1@travel.com', licenseNumber: 'TL-2020-001', experienceYears: 5 },
+  { id: 'tl2' as any, name: '李領隊', phone: '0912-345-679', email: 'guide2@travel.com', licenseNumber: 'TL-2018-015', experienceYears: 8 },
+  { id: 'tl3' as any, name: '王導遊', phone: '0912-345-680', email: 'guide3@travel.com', licenseNumber: 'TL-2021-023', experienceYears: 3 },
 ];
 
 interface HotelAllocationTabProps {
@@ -54,11 +55,11 @@ const HotelAllocationTab = memo(({ rooms, onUpdate }: HotelAllocationTabProps) =
   const handleLockRoom = (roomId: string, count: number) => {
     const updated = rooms.map(r => {
       if (r.id === roomId) {
-        const newLocked = Math.min(r.locked_count + count, r.total_count);
+        const newLocked = Math.min(r.lockedCount + count, r.totalCount);
         return {
           ...r,
-          locked_count: newLocked,
-          available_count: r.total_count - newLocked,
+          lockedCount: newLocked,
+          availableCount: r.totalCount - newLocked,
         };
       }
       return r;
@@ -68,22 +69,15 @@ const HotelAllocationTab = memo(({ rooms, onUpdate }: HotelAllocationTabProps) =
 
   const handleAddRoom = (data: Partial<HotelRoomAllocation>) => {
     const newRoom: HotelRoomAllocation = {
-      id: `room_${Date.now()}`,
-      hotelName: data.hotel_name || data.hotelName || '',
-      hotel_name: data.hotel_name || data.hotelName || '',
-      roomType: (data.room_type || data.roomType || 'double') as 'single' | 'double' | 'twin' | 'family' | 'suite',
-      room_type: data.room_type || data.roomType || 'double',
-      roomTypeLabel: data.room_type_label || data.roomTypeLabel || '雙人房',
-      room_type_label: data.room_type_label || data.roomTypeLabel || '雙人房',
-      totalCount: data.total_count || data.totalCount || 0,
-      total_count: data.total_count || data.totalCount || 0,
+      id: `room_${Date.now()}` as any,
+      hotelName: data.hotelName || '',
+      roomType: (data.roomType || RoomType.DOUBLE) as any,
+      roomTypeLabel: data.roomTypeLabel || '雙人房',
+      totalCount: data.totalCount || 0,
       lockedCount: 0,
-      locked_count: 0,
-      availableCount: data.total_count || data.totalCount || 0,
-      available_count: data.total_count || data.totalCount || 0,
-      pricePerNight: data.price_per_night || data.pricePerNight,
-      price_per_night: data.price_per_night || data.pricePerNight,
-      nights: data.nights,
+      availableCount: data.totalCount || 0,
+      pricePerNight: data.pricePerNight as any,
+      nights: data.nights || 0,
     };
     onUpdate([...rooms, newRoom]);
     setShowAddModal(false);
@@ -122,8 +116,8 @@ const HotelAllocationTab = memo(({ rooms, onUpdate }: HotelAllocationTabProps) =
                   <Building2 className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
-                  <h4 id={`room-${room.id}-title`} className="font-bold text-gray-900">{room.hotel_name}</h4>
-                  <p className="text-xs text-gray-500">{room.room_type_label}</p>
+                  <h4 id={`room-${room.id}-title`} className="font-bold text-gray-900">{room.hotelName}</h4>
+                  <p className="text-xs text-gray-500">{room.roomTypeLabel}</p>
                 </div>
               </div>
               <button
@@ -138,28 +132,28 @@ const HotelAllocationTab = memo(({ rooms, onUpdate }: HotelAllocationTabProps) =
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">總房數</span>
-                <span className="font-semibold text-gray-900">{room.total_count} 間</span>
+                <span className="font-semibold text-gray-900">{room.totalCount} 間</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">已鎖定</span>
-                <span className="font-semibold text-brand-600">{room.locked_count} 間</span>
+                <span className="font-semibold text-brand-600">{room.lockedCount} 間</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">可用</span>
-                <span className="font-semibold text-green-600">{room.available_count} 間</span>
+                <span className="font-semibold text-green-600">{room.availableCount} 間</span>
               </div>
 
-              {room.price_per_night && (
+              {room.pricePerNight && (
                 <div className="pt-2 border-t border-gray-100">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">每晚單價</span>
-                    <span className="font-semibold">NT${room.price_per_night.toLocaleString()}</span>
+                    <span className="font-semibold">NT${(room.pricePerNight as any).toLocaleString()}</span>
                   </div>
                   {room.nights && (
                     <div className="flex items-center justify-between text-sm mt-1">
                       <span className="text-gray-500">總價（{room.nights}晚）</span>
                       <span className="font-semibold text-brand-600">
-                        NT${(room.price_per_night * room.nights).toLocaleString()}
+                        NT${(((room.pricePerNight as any) || 0) * room.nights).toLocaleString()}
                       </span>
                     </div>
                   )}
@@ -169,10 +163,10 @@ const HotelAllocationTab = memo(({ rooms, onUpdate }: HotelAllocationTabProps) =
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => handleLockRoom(room.id, 1)}
-                  disabled={room.available_count === 0}
+                  disabled={room.availableCount === 0}
                   className={cn(
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1',
-                    room.available_count > 0
+                    room.availableCount > 0
                       ? 'bg-blue-100 text-brand-700 hover:bg-brand-200'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   )}
@@ -183,10 +177,10 @@ const HotelAllocationTab = memo(({ rooms, onUpdate }: HotelAllocationTabProps) =
                 </button>
                 <button
                   onClick={() => handleLockRoom(room.id, -1)}
-                  disabled={room.locked_count === 0}
+                  disabled={room.lockedCount === 0}
                   className={cn(
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1',
-                    room.locked_count > 0
+                    room.lockedCount > 0
                       ? 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   )}
@@ -220,9 +214,9 @@ const HotelAllocationTab = memo(({ rooms, onUpdate }: HotelAllocationTabProps) =
 
 const AddHotelModal = memo(({ onClose, onSubmit }: AddHotelModalProps) => {
   const [formData, setFormData] = useState<Partial<HotelRoomAllocation>>({
-    room_type: 'double',
-    room_type_label: '雙人房',
-    total_count: 0,
+    roomType: RoomType.DOUBLE,
+    roomTypeLabel: '雙人房',
+    totalCount: 0,
   });
 
   const roomTypes = useMemo(() => [
@@ -257,8 +251,8 @@ const AddHotelModal = memo(({ onClose, onSubmit }: AddHotelModalProps) => {
             <input
               id="hotelName"
               type="text"
-              value={formData.hotel_name || ''}
-              onChange={(e) => setFormData({ ...formData, hotel_name: e.target.value })}
+              value={formData.hotelName || ''}
+              onChange={(e) => setFormData({ ...formData, hotelName: e.target.value })}
               className="trvic-input w-full"
               required
               aria-required="true"
@@ -268,13 +262,13 @@ const AddHotelModal = memo(({ onClose, onSubmit }: AddHotelModalProps) => {
             <label htmlFor="roomType" className="block text-sm font-medium text-gray-700 mb-1.5">房型</label>
             <select
               id="roomType"
-              value={formData.room_type}
+              value={formData.roomType}
               onChange={(e) => {
                 const selected = roomTypes.find(t => t.value === e.target.value);
                 setFormData({
                   ...formData,
-                  room_type: e.target.value as HotelRoomAllocation['room_type'],
-                  room_type_label: selected?.label || '',
+                  roomType: e.target.value as any,
+                  roomTypeLabel: selected?.label || '',
                 });
               }}
               className="trvic-input w-full"
@@ -290,11 +284,11 @@ const AddHotelModal = memo(({ onClose, onSubmit }: AddHotelModalProps) => {
               id="totalCount"
               type="number"
               min="1"
-              value={formData.total_count || 0}
+              value={formData.totalCount || 0}
               onChange={(e) => setFormData({
                 ...formData,
-                total_count: parseInt(e.target.value),
-                available_count: parseInt(e.target.value),
+                totalCount: parseInt(e.target.value),
+                availableCount: parseInt(e.target.value),
               })}
               className="trvic-input w-full"
               required
@@ -308,8 +302,8 @@ const AddHotelModal = memo(({ onClose, onSubmit }: AddHotelModalProps) => {
                 id="pricePerNight"
                 type="number"
                 min="0"
-                value={formData.price_per_night || ''}
-                onChange={(e) => setFormData({ ...formData, price_per_night: parseInt(e.target.value) || undefined })}
+                value={(formData.pricePerNight as any) || ''}
+                onChange={(e) => setFormData({ ...formData, pricePerNight: (parseInt(e.target.value) || 0) as any })}
                 className="trvic-input w-full"
               />
             </div>
@@ -341,7 +335,7 @@ const AddHotelModal = memo(({ onClose, onSubmit }: AddHotelModalProps) => {
 });
 
 const TransportAllocationTab = memo(({ seats, onUpdate }: TransportAllocationTabProps) => {
-  const [vehicleType, setVehicleType] = useState<'bus' | 'train' | 'plane' | 'ferry'>('bus');
+  const [vehicleType, setVehicleType] = useState<VehicleType>(VehicleType.BUS);
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [totalSeats, setTotalSeats] = useState(40);
 
@@ -350,21 +344,20 @@ const TransportAllocationTab = memo(({ seats, onUpdate }: TransportAllocationTab
     for (let i = 1; i <= totalSeats; i++) {
       const seatNum = String(i).padStart(2, '0');
       newSeats.push({
-        id: `seat_${i}`,
-        vehicleType: vehicleType,
-        vehicle_type: vehicleType,
-        vehicleNumber: vehicleNumber,
-        vehicle_number: vehicleNumber,
+        id: `seat_${i}` as any,
+        vehicleType,
+        vehicleNumber,
         seatNumber: seatNum,
-        seat_number: seatNum,
+        passengerId: '',
+        passengerName: '',
+        bookingId: '',
         isAssigned: false,
-        is_assigned: false,
       });
     }
     onUpdate(newSeats);
   };
 
-  const assignedSeats = useMemo(() => seats.filter(s => s.is_assigned).length, [seats]);
+  const assignedSeats = useMemo(() => seats.filter(s => s.isAssigned).length, [seats]);
   const availableSeats = useMemo(() => seats.length - assignedSeats, [seats, assignedSeats]);
 
   return (
@@ -384,13 +377,13 @@ const TransportAllocationTab = memo(({ seats, onUpdate }: TransportAllocationTab
             <select
               id="vehicleType"
               value={vehicleType}
-              onChange={(e) => setVehicleType(e.target.value as SeatAssignment['vehicle_type'])}
+              onChange={(e) => setVehicleType(e.target.value as VehicleType)}
               className="trvic-input w-full"
             >
-              <option value="bus">遊覽車</option>
-              <option value="train">火車</option>
-              <option value="plane">飛機</option>
-              <option value="ferry">渡輪</option>
+              <option value={VehicleType.BUS}>遊覽車</option>
+              <option value={VehicleType.TRAIN}>火車</option>
+              <option value={VehicleType.PLANE}>飛機</option>
+              <option value={VehicleType.FERRY}>渡輪</option>
             </select>
           </div>
           <div>
@@ -452,19 +445,19 @@ const TransportAllocationTab = memo(({ seats, onUpdate }: TransportAllocationTab
                   whileTap={{ scale: 0.95 }}
                   className={cn(
                     'aspect-square rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all',
-                    seat.is_assigned
+                    seat.isAssigned
                       ? 'bg-brand-100 border-brand-300 text-brand-700'
                       : 'bg-neutral-50 border-neutral-200 text-neutral-700 hover:bg-neutral-100'
                   )}
                   onClick={() => {
                     const updated = seats.map(s =>
-                      s.id === seat.id ? { ...s, is_assigned: !s.is_assigned } : s
+                      s.id === seat.id ? { ...s, isAssigned: !s.isAssigned } : s
                     );
                     onUpdate(updated);
                   }}
-                  aria-label={`座位 ${seat.seat_number}`}
+                  aria-label={`座位 ${seat.seatNumber}`}
                 >
-                  {seat.seat_number}
+                  {seat.seatNumber}
                 </motion.button>
               ))}
             </div>
@@ -517,7 +510,7 @@ const TourLeaderTab = memo(({ leaderId, onUpdate }: TourLeaderTabProps) => {
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{leader.name}</h4>
-                  <p className="text-xs text-gray-500">執照：{leader.license_number}</p>
+                  <p className="text-xs text-gray-500">執照：{leader.licenseNumber}</p>
                 </div>
               </div>
               {leaderId === leader.id && (
@@ -539,7 +532,7 @@ const TourLeaderTab = memo(({ leaderId, onUpdate }: TourLeaderTabProps) => {
               )}
               <div className="flex items-center gap-2 text-gray-600">
                 <Award className="w-4 h-4" />
-                <span>經驗 {leader.experience_years} 年</span>
+                <span>經驗 {leader.experienceYears} 年</span>
               </div>
             </div>
           </motion.button>
@@ -581,7 +574,7 @@ const ResourceAllocation = memo(({
     });
   };
 
-  const tabs = useMemo(() => [
+  const tabs = useMemo<{ key: TabKey; label: string; icon: React.ReactNode }[]>(() => [
     { key: 'hotel', label: '飯店分配', icon: <Building2 className="w-4 h-4" /> },
     { key: 'transport', label: '交通座位', icon: <Bus className="w-4 h-4" /> },
     { key: 'leader', label: '導遊派任', icon: <User className="w-4 h-4" /> },

@@ -1,3 +1,5 @@
+import type { ApiError } from './api';
+
 type TourId = string & { readonly __brand: 'TourId' };
 type AttractionId = string & { readonly __brand: 'AttractionId' };
 type HighlightId = string & { readonly __brand: 'HighlightId' };
@@ -44,6 +46,11 @@ export enum InclusionCategory {
   GUIDE = 'guide',
   INSURANCE = 'insurance',
   OTHER = 'other'
+}
+
+export interface ServiceResult<T = unknown> {
+  data: T | null;
+  error: ApiError | null;
 }
 
 export interface Attraction {

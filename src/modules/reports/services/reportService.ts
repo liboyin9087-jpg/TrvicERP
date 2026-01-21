@@ -47,6 +47,8 @@ interface ApiResponse<T> {
   } | null;
 }
 
+export type ReportError = NonNullable<ApiResponse<unknown>['error']>;
+
 interface ExportParams {
   dateFrom?: string;
   dateTo?: string;

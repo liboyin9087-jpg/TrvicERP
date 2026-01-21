@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, Calendar, MapPin, Users, Bell, User, ChevronRight, Clock,
@@ -14,6 +14,7 @@ import { AuthService } from '@/core/services/authService';
 import { Loading } from '@/components/shared/Loading';
 import type { Session } from '@/core/types/session';
 import { SessionStatus, GroupType } from '@/core/types/session';
+import { OrderStatus } from '@/core/types/order';
 
 // ============================================
 // Types
@@ -1212,13 +1213,8 @@ export default function TravelerApp() {
 
   // Connect to service layer
   const currentUser = AuthService.getCurrentUser();
-  const { sessions, loading: sessionsLoading, error: sessionsError } = useSessions({
-    groupType: GroupType.WELFARE, // Filter for welfare trips
-    status: SessionStatus.SOLICITING, // Only show open sessions
-  });
-  const { orders, loading: ordersLoading } = useOrders({
-    customerId: currentUser?.id as any || null,
-  });
+  const { sessions, loading: sessionsLoading, error: sessionsError } = useSessions();
+  const { orders, loading: ordersLoading } = useOrders();
 
   // Convert user data
   const user: UserProfile = useMemo(() => {
@@ -1226,7 +1222,7 @@ export default function TravelerApp() {
       return {
         name: currentUser.name,
         department: '員工', // TODO: Get from user profile
-        employeeId: currentUser.id,
+        employeeId: currentUser.id as any,
         seniority: 0, // TODO: Get from user profile
         email: currentUser.email,
         isEligible: true,
@@ -1246,34 +1242,46 @@ export default function TravelerApp() {
 
     return sessions
       .filter(s => s.groupType === GroupType.WELFARE && s.status === SessionStatus.SOLICITING)
-      .map(session => ({
+      .map(session => {
+        const totalSpots = Number(session.maxPax as any);
+        const currentSpots = Number(session.currentPax as any);
+        const spotsLeft = Math.max(totalSpots - currentSpots, 0);
+
+        const tripStatus: AvailableTrip['status'] = spotsLeft <= 0 ? 'full' : 'open';
+
+        return ({
         id: session.id as string,
         name: session.groupNumber || '未命名行程',
         destination: '目的地', // TODO: Get from tour data
         startDate: session.startDate,
         endDate: session.endDate,
         image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800', // TODO: Get from tour data
-        price: session.priceTwd,
+        price: session.priceTwd as any,
         maxSubsidy: 15000, // TODO: Get from welfare budget
         subsidyType: 'fixed' as const,
         subsidyAmount: 15000,
         description: `團號：${session.groupNumber}`,
         highlights: [],
         registrationDeadline: session.seatReleaseDate,
-        spotsLeft: session.maxPax - session.currentPax,
-        totalSpots: session.maxPax,
-        status: session.status === SessionStatus.SOLICITING ? 'open' as const : 'closed' as const,
-      }));
+        spotsLeft,
+        totalSpots,
+        status: tripStatus,
+      });
+      });
   }, [sessions]);
 
   // Convert orders to MyRegistration format
-  const registrations: MyRegistration[] = useMemo(() => {
+  const registrationsFromOrders: MyRegistration[] = useMemo(() => {
     if (!orders || orders.length === 0) {
       return MOCK_MY_REGISTRATIONS; // Fallback to mock
     }
 
-    return orders.map(order => {
-      const session = sessions?.find(s => s.id === order.sessionId);
+    const userOrders = currentUser
+      ? orders.filter(o => (o.customerId as any) === (currentUser.id as any))
+      : orders;
+
+    return userOrders.map(order => {
+      const session = sessions?.find(s => (s.id as any) === (order.sessionId as any));
       return {
         id: order.id as string,
         tripId: order.sessionId as string,
@@ -1282,19 +1290,25 @@ export default function TravelerApp() {
         startDate: session?.startDate || '',
         endDate: session?.endDate || '',
         image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
-        status: order.status === 'confirmed' ? 'approved' as const : 'pending' as const,
-        registeredAt: order.createdAt,
+        status: order.status === OrderStatus.CONFIRMED || order.status === OrderStatus.PAID ? 'approved' as const : 'pending' as const,
+        registeredAt: order.createdAt as any,
         roomType: '雙人房', // TODO: Get from order data
         companions: [],
         subsidyAmount: 15000, // TODO: Calculate from order
-        selfPay: order.totalAmount - 15000,
+        selfPay: (order.totalAmount as any) - 15000,
         specialNeeds: order.notes || '',
       };
     });
-  }, [orders, sessions]);
+  }, [orders, sessions, currentUser]);
+
+  const [registrations, setRegistrations] = useState<MyRegistration[]>(registrationsFromOrders);
+
+  useEffect(() => {
+    setRegistrations(registrationsFromOrders);
+  }, [registrationsFromOrders]);
 
   // Mock notifications for now (TODO: Implement notification service)
-  const [notifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
 
   const unreadCount = notifications.filter(n => !n.read).length;
   const selectedTrip = availableTrips.find(t => t.id === selectedTripId);

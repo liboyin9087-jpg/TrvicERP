@@ -1,21 +1,18 @@
 import { QueryFunction, QueryKey, UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
 import { Customer, Order } from '../../types';
 
 export * from './useCustomerQueries';
 export * from './useOrderQueries';
 
-export function useCustomQuery<TData = unknown, TError = AxiosError>(
+export function useCustomQuery<TData = unknown, TError = unknown>(
   queryKey: QueryKey,
   queryFn: QueryFunction<TData>,
   options?: Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery<TData, TError>(queryKey, queryFn, {
-    ...options,
-    onError: (error) => {
-      console.error('Query error:', error);
-      options?.onError?.(error);
-    }
+  return useQuery<TData, TError>({
+    queryKey,
+    queryFn,
+    ...(options as any),
   });
 }
 

@@ -334,7 +334,7 @@ export default function AdvancedReports() {
                 <ResponsiveContainer width="50%" height={280}>
                   <PieChart>
                     <Pie
-                      data={destinationData}
+                      data={destinationData as unknown as any[]}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -381,12 +381,15 @@ export default function AdvancedReports() {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
-                    data={groupStatusData}
+                    data={groupStatusData as unknown as any[]}
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
                     dataKey="count"
-                    label={({ status, percentage }) => `${status} ${percentage}%`}
+                    label={(props) => {
+                      const payload = (props as any).payload as GroupStats;
+                      return `${payload.status} ${payload.percentage}%`;
+                    }}
                     labelLine={{ stroke: '#94a3b8', strokeWidth: 1 }}
                   >
                     {groupStatusData.map((entry, index) => (

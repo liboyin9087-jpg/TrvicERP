@@ -47,20 +47,20 @@ const getDemoAccounts = (): Record<DemoRole, { email: string; password: string; 
 
   return {
     staff: {
-      email: import.meta.env.VITE_DEMO_STAFF_EMAIL || '',
-      password: import.meta.env.VITE_DEMO_STAFF_PASSWORD || '',
+      email: 'demo@trvic.com',
+      password: 'demo12345',
       label: '旅行社管理端',
       icon: <Briefcase className="w-5 h-5" />,
     },
     welfare: {
-      email: import.meta.env.VITE_DEMO_WELFARE_EMAIL || '',
-      password: import.meta.env.VITE_DEMO_WELFARE_PASSWORD || '',
+      email: 'welfare@trvic.com',
+      password: 'welfare12345',
       label: '福委會/HR',
       icon: <Building2 className="w-5 h-5" />,
     },
     traveler: {
-      email: import.meta.env.VITE_DEMO_TRAVELER_EMAIL || '',
-      password: import.meta.env.VITE_DEMO_TRAVELER_PASSWORD || '',
+      email: 'traveler@trvic.com',
+      password: 'traveler12345',
       label: '員工端',
       icon: <Users className="w-5 h-5" />,
     },
@@ -121,7 +121,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setFormErrors({});
 
     try {
-      const validatedData = loginSchema.parse({ email, password });
+      const validatedData = loginSchema.parse({ email, password }) as LoginCredentials;
       
       setIsLoading(true);
       const result = await AuthService.login(validatedData);
@@ -129,17 +129,17 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       if (result.success && result.user) {
         showNotification('登入成功！', 'success');
         setTimeout(() => {
-          onLogin(mapUserRoleToAppRole(result.user!.role), result.user!.id, result.user!.name);
+          onLogin(mapUserRoleToAppRole(result.user!.role as any) as any, result.user!.id as any, result.user!.name);
         }, 500);
       } else {
         showNotification('登入失敗，請檢查您的憑證', 'error');
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errors = error.flatten().fieldErrors;
+        const errors = error.flatten().fieldErrors as any;
         setFormErrors({
-          email: errors.email?.[0] || '',
-          password: errors.password?.[0] || ''
+          email: (errors.email?.[0] as string) || '',
+          password: (errors.password?.[0] as string) || ''
         });
       } else {
         showNotification('登入過程中發生錯誤', 'error');

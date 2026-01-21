@@ -5,10 +5,29 @@ import {
   UserCheck, UserX, Filter, Search, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TourSession, Booking, RoomAssignment, SeatAssignment, SpecialNeedsSummary } from '@/types';
+import type { Booking } from '../../types';
+import type { Session } from '@/core/types/session';
+
+interface RoomAssignment {
+  roomNumber: string;
+  roomType: string;
+  occupants: { name: string }[];
+}
+
+interface SeatAssignment {
+  id: string;
+  seat_number: string;
+  is_assigned: boolean;
+}
+
+interface SpecialNeedsSummary {
+  category: string;
+  count: number;
+  passengers: { id: string; name: string }[];
+}
 
 interface GroupRosterProps {
-  session: TourSession;
+  session: Session;
   bookings: Booking[];
   roomAssignments?: RoomAssignment[];
   seatAssignments?: SeatAssignment[];
@@ -26,8 +45,8 @@ const GroupRoster: React.FC<GroupRosterProps> = memo(({
   const { confirmedCount, pendingCount, registrationProgress } = useMemo(() => {
     const confirmed = bookings.filter(b => b.status === 'confirmed' || b.status === 'paid').length;
     const pending = bookings.filter(b => b.status === 'pending' || b.status === 'pending_payment').length;
-    const progress = session.max_pax > 0
-      ? Math.round((session.current_pax / session.max_pax) * 100)
+    const progress = (session.maxPax as any) > 0
+      ? Math.round(((session.currentPax as any) / (session.maxPax as any)) * 100)
       : 0;
     return { confirmedCount: confirmed, pendingCount: pending, registrationProgress: progress };
   }, [bookings, session]);
@@ -90,7 +109,7 @@ const GroupRoster: React.FC<GroupRosterProps> = memo(({
             </div>
             <div>
               <p className="text-sm text-gray-500">總報名人數</p>
-              <p className="text-2xl font-bold text-gray-900">{session.current_pax}</p>
+              <p className="text-2xl font-bold text-gray-900">{session.currentPax as any}</p>
             </div>
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -102,7 +121,7 @@ const GroupRoster: React.FC<GroupRosterProps> = memo(({
               aria-valuemax={100}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-2">進度 {registrationProgress}% ({session.current_pax}/{session.max_pax})</p>
+          <p className="text-xs text-gray-500 mt-2">進度 {registrationProgress}% ({session.currentPax as any}/{session.maxPax as any})</p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100" role="status" aria-live="polite">

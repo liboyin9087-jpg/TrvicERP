@@ -221,7 +221,7 @@ interface TourLeader extends CoreTourLeader {
   experience_years: number;
 }
 
-interface ItineraryVersion {
+export interface ItineraryVersion {
   version: number;
   created_at: DateTimeString;
   created_by: ID;
@@ -235,7 +235,7 @@ interface MeetingInfo extends CoreMeetingInfo {
   contact_phone: string;
 }
 
-interface TourOption {
+export interface TourOption {
   id: ID;
   session_id: ID;
   day_number: number;
@@ -270,7 +270,7 @@ interface PassportData {
   personal_id: string;
 }
 
-interface Booking {
+export interface Booking {
   id: ID;
   session_id: ID;
   user_id: ID;
@@ -291,7 +291,7 @@ interface Booking {
   assigned_seat: string;
 }
 
-interface UserFootprint {
+export interface UserFootprint {
   user_id: ID;
   email: Email;
   visited_countries: string[];
@@ -370,7 +370,7 @@ interface MiniQuoteItem {
   amount: number;
 }
 
-interface LineChatLog {
+export interface LineChatLog {
   id: ID;
   line_user_id: ID;
   message_type: 'text' | 'image';
@@ -396,7 +396,7 @@ interface CustomerProfile {
   interactions: CustomerInteraction[];
 }
 
-interface PublicTourData {
+export interface PublicTourData {
   id: ID;
   title: string;
   days: number;
@@ -410,7 +410,7 @@ interface PublicTourData {
   share_token: string;
 }
 
-interface CompanyBudget {
+export interface CompanyBudget {
   id: ID;
   company_name: string;
   total_budget: TWD;
@@ -418,7 +418,7 @@ interface CompanyBudget {
   last_updated: DateTimeString;
 }
 
-interface Poll {
+export interface Poll {
   id: ID;
   title: string;
   description: string;
@@ -428,7 +428,7 @@ interface Poll {
   ai_summary: string;
 }
 
-interface PollOption {
+export interface PollOption {
   id: ID;
   poll_id: ID;
   text: string;
@@ -438,7 +438,7 @@ interface PollOption {
   is_winner: boolean;
 }
 
-interface ChangeRequest {
+export interface ChangeRequest {
   id: ID;
   requester_name: string;
   category: ChangeRequestCategory;
@@ -449,7 +449,7 @@ interface ChangeRequest {
   comments: string;
 }
 
-interface Incident {
+export interface Incident {
   id: ID;
   title: string;
   severity: IncidentSeverity;

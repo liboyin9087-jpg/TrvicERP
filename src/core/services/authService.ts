@@ -31,12 +31,18 @@ export class AuthService {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          error: error.errors[0].message
+          error: error.issues[0]?.message || '登入驗證失敗',
+          user: null,
+          token: null,
+          refreshToken: null,
         };
       }
       return {
         success: false,
-        error: '登入驗證失敗'
+        error: '登入驗證失敗',
+        user: null,
+        token: null,
+        refreshToken: null,
       };
     }
 
@@ -52,47 +58,88 @@ export class AuthService {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     const { email, password } = credentials;
-    const mockEmail = import.meta.env.VITE_MOCK_EMAIL || '';
-    const mockPassword = import.meta.env.VITE_MOCK_PASSWORD || '';
-
-    if (email !== mockEmail) {
-      return {
-        success: false,
-        error: '帳號或密碼錯誤'
-      };
-    }
-
-    if (password !== mockPassword) {
-      return {
-        success: false,
-        error: '帳號或密碼錯誤'
-      };
-    }
-
-    const user: User = {
-      id: 'user_mock',
-      email: mockEmail,
-      name: '測試使用者',
-      role: 'admin',
-      status: 'active',
-      permissions: ROLE_PERMISSIONS.admin,
-      lastLogin: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+    
+    // Demo 帳號配置
+    const demoAccounts: Record<string, { password: string; user: User }> = {
+      'demo@trvic.com': {
+        password: 'demo12345',
+        user: {
+          id: 'staff_demo',
+          email: 'demo@trvic.com',
+          name: '旅行社管理員',
+          role: 'admin' as UserRole,
+          status: 'active' as const,
+          permissions: ROLE_PERMISSIONS.admin,
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any
+      },
+      'welfare@trvic.com': {
+        password: 'welfare12345',
+        user: {
+          id: 'welfare_demo',
+          email: 'welfare@trvic.com',
+          name: '福委會管理員',
+          role: 'welfare' as UserRole,
+          status: 'active' as const,
+          permissions: ROLE_PERMISSIONS.welfare,
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any
+      },
+      'traveler@trvic.com': {
+        password: 'traveler12345',
+        user: {
+          id: 'traveler_demo',
+          email: 'traveler@trvic.com',
+          name: '員工',
+          role: 'traveler' as UserRole,
+          status: 'active' as const,
+          permissions: ROLE_PERMISSIONS.traveler,
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any
+      }
     };
+
+    const account = demoAccounts[email as keyof typeof demoAccounts];
+    
+    if (!account) {
+      return {
+        success: false,
+        error: '帳號或密碼錯誤',
+        user: null,
+        token: null,
+        refreshToken: null,
+      };
+    }
+
+    if (password !== account.password) {
+      return {
+        success: false,
+        error: '帳號或密碼錯誤',
+        user: null,
+        token: null,
+        refreshToken: null,
+      };
+    }
 
     const mockToken = `mock_token_${Date.now()}`;
     const mockRefreshToken = `mock_refresh_token_${Date.now()}`;
 
     this.setToken(mockToken);
     this.setRefreshToken(mockRefreshToken);
-    this.setUser(user);
+    this.setUser(account.user);
 
     return {
       success: true,
-      user,
-      token: mockToken,
-      refreshToken: mockRefreshToken,
+      user: account.user,
+      token: mockToken as any,
+      refreshToken: mockRefreshToken as any,
+      error: null,
     };
   }
 
@@ -108,7 +155,10 @@ export class AuthService {
     if (result.error || !result.data) {
       return {
         success: false,
-        error: '登入失敗，請檢查您的帳號和密碼'
+        error: '登入失敗，請檢查您的帳號和密碼',
+        user: null,
+        token: null,
+        refreshToken: null,
       };
     }
 
@@ -119,8 +169,9 @@ export class AuthService {
     return {
       success: true,
       user: result.data.user,
-      token: result.data.token,
-      refreshToken: result.data.refreshToken,
+      token: result.data.token as any,
+      refreshToken: result.data.refreshToken as any,
+      error: null,
     };
   }
 
