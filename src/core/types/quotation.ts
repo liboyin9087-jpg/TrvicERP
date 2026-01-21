@@ -1,17 +1,13 @@
-import type { CustomerId } from './customer';
-export { ApiError } from './api';
+import { CustomerId } from './customer';
+import { QuotationId, SessionId, OrderId, UserId, NTAmount, Percentage } from './branded';
+import type { ApiError as ApiErrorType } from './api';
 export type { ApiResponse } from './api';
-
-export type QuotationId = string & { readonly __brand: 'QuotationId' };
-export type SessionId = string & { readonly __brand: 'SessionId' };
-export type OrderId = string & { readonly __brand: 'OrderId' };
-export type UserId = string & { readonly __brand: 'UserId' };
-export type Amount = number & { readonly __brand: 'Amount' };
-export type Percentage = number & { readonly __brand: 'Percentage' };
+export type { ApiError } from './api';
+export type { NTAmount, Percentage } from './branded';
 
 export interface QuotationServiceResult<T = unknown> {
   data: T | null;
-  error: import('./api').ApiError | null;
+  error: ApiErrorType | null;
 }
 
 export enum QuotationStatus {
@@ -49,16 +45,16 @@ export interface QuotationItem {
   category: ItemCategory;
   name: string;
   costType: CostType;
-  unitCost: Amount;
+  unitCost: NTAmount;
   quantity: number;
   currency: Currency;
   description: string;
 }
 
 export interface CostBreakdown {
-  fixed: Amount;
-  variable: Amount;
-  total: Amount;
+  fixed: NTAmount;
+  variable: NTAmount;
+  total: NTAmount;
   currency: Currency;
 }
 
@@ -72,9 +68,9 @@ export interface Quotation {
   items: QuotationItem[];
   costBreakdown: CostBreakdown;
   profitMargin: Percentage;
-  sellingPrice: Amount;
+  sellingPrice: NTAmount;
   paxCount: number;
-  totalAmount: Amount;
+  totalNTAmount: NTAmount;
   currency: Currency;
   validUntil: string;
   status: QuotationStatus;
@@ -104,8 +100,8 @@ export interface UpdateQuotationData {
   validUntil: string;
   notes: string;
   costBreakdown: CostBreakdown;
-  sellingPrice: Amount;
-  totalAmount: Amount;
+  sellingPrice: NTAmount;
+  totalNTAmount: NTAmount;
 }
 
 export interface ConvertQuotationToOrderData {
@@ -115,26 +111,26 @@ export interface ConvertQuotationToOrderData {
 
 export interface QuotationPreviewResult {
   costBreakdown: CostBreakdown;
-  sellingPrice: Amount;
-  totalAmount: Amount;
+  sellingPrice: NTAmount;
+  totalNTAmount: NTAmount;
 }
 
 export function calculateQuotationCost(
   items: QuotationItem[],
   paxCount: number
 ): CostBreakdown {
-  let fixed = 0 as Amount;
-  let variable = 0 as Amount;
+  let fixed = 0 as NTAmount;
+  let variable = 0 as NTAmount;
 
   items.forEach(item => {
     if (item.costType === CostType.FIXED) {
-      fixed = (fixed + (item.unitCost * item.quantity)) as Amount;
+      fixed = (fixed + (item.unitCost * item.quantity)) as NTAmount;
     } else {
-      variable = (variable + item.unitCost) as Amount;
+      variable = (variable + item.unitCost) as NTAmount;
     }
   });
 
-  const total = (fixed + (variable * paxCount)) as Amount;
+  const total = (fixed + (variable * paxCount)) as NTAmount;
 
   return {
     fixed,
@@ -145,10 +141,10 @@ export function calculateQuotationCost(
 }
 
 export function calculateSellingPrice(
-  totalCost: Amount,
+  totalCost: NTAmount,
   profitMargin: Percentage
-): Amount {
-  return Math.round(totalCost * (1 + profitMargin / 100)) as Amount;
+): NTAmount {
+  return Math.round(totalCost * (1 + profitMargin / 100)) as NTAmount;
 }
 
 export function isQuotationExpired(validUntil: string): boolean {

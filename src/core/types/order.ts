@@ -1,11 +1,11 @@
-import { Branded } from './branded';
-
-type OrderId = Branded<string, 'OrderId'>;
-type SessionId = Branded<string, 'SessionId'>;
-type QuotationId = Branded<string, 'QuotationId'>;
-type CustomerId = Branded<string, 'CustomerId'>;
-type NTAmount = Branded<number, 'NTAmount'>;
-type DateTimeString = Branded<string, 'DateTimeString'>;
+import type {
+  OrderId,
+  SessionId,
+  QuotationId,
+  CustomerId,
+  NTAmount,
+  DateTimeString,
+} from './branded';
 
 export enum OrderStatus {
   DRAFT = 'draft',

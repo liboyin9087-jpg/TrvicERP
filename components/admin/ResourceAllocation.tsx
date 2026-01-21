@@ -7,6 +7,8 @@ import {
 import { cn } from '@/lib/utils';
 import type { HotelRoomAllocation, SeatAssignment, TourLeader } from '@/core/types/session';
 import { RoomType, VehicleType } from '@/core/types/session';
+import { RequirePermission } from '@/core/components/RequirePermission';
+import { Permission } from '@/core/types/auth';
 
 type TabKey = 'hotel' | 'transport' | 'leader';
 
@@ -581,9 +583,10 @@ const ResourceAllocation = memo(({
   ], []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-2 border-b border-gray-200" role="tablist">
-        {tabs.map((tab) => (
+    <RequirePermission permission={Permission.ADMIN_MANAGE}>
+      <div className="space-y-6">
+        <div className="flex gap-2 border-b border-gray-200" role="tablist">
+          {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -634,6 +637,7 @@ const ResourceAllocation = memo(({
         )}
       </div>
     </div>
+    </RequirePermission>
   );
 });
 

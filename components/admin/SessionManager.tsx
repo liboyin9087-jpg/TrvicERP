@@ -12,7 +12,9 @@ import { useSessions, useCreateSession, useUpdateSession, useDeleteSession } fro
 import type { Session, CreateSessionData, UpdateSessionData, TourLeader } from '@/core/types/session';
 import { SessionStatus, GroupType } from '@/core/types/session';
 import { Loading } from '@/components/shared/Loading';
-import { AICopilot } from '@/components/shared/AICopilot';
+import { AICopilot } from '../../src/components/shared/AICopilot';
+import { RequirePermission } from '@/core/components/RequirePermission';
+import { Permission } from '@/core/types/auth';
 
 // ============================================
 // Types
@@ -1164,6 +1166,7 @@ export default function SessionManager() {
     { key: 'dashboard', label: '儀表板', icon: <TrendingUp className="w-4 h-4" /> },
     { key: 'groups', label: '團體列表', icon: <Calendar className="w-4 h-4" /> },
     { key: 'create', label: '建立團體', icon: <Plus className="w-4 h-4" /> },
+    { key: 'ai-copilot', label: 'AI Copilot', icon: <Bot className="w-4 h-4" /> },
   ];
 
   // Show loading state
@@ -1195,14 +1198,15 @@ export default function SessionManager() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="p-8 max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between"
-        >
+    <RequirePermission permission={Permission.ADMIN_MANAGE}>
+      <div className="min-h-screen bg-neutral-50">
+        <div className="p-8 max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-brand-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
               <Calendar className="w-7 h-7 text-white" />
@@ -1245,6 +1249,7 @@ export default function SessionManager() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
+          className="min-h-[600px]"
         >
           {activeTab === 'dashboard' && (
             <DashboardTab groups={groups} onNavigate={setActiveTab} />
@@ -1257,8 +1262,21 @@ export default function SessionManager() {
               onView={handleView}
             />
           )}
+          {activeTab === 'ai-copilot' && (
+            <AICopilot 
+              tourInfo={{
+                '團號': selectedGroup?.groupNumber || 'DEMO-001',
+                '團名': selectedGroup?.seriesName || '示範團體',
+                '出發日': selectedGroup?.startDate || '2024-01-15',
+                '回程日': selectedGroup?.endDate || '2024-01-19',
+                '人數': selectedGroup?.currentPax as unknown as number || 30,
+                '領隊': '張小華', // TODO: 從 tourLeaderId 查詢領隊資料
+                '目的地': '東京'
+              }}
+            />
+          )}
         </motion.div>
-      </div>
+        </div>
 
       {/* Create Group Modal */}
       <AnimatePresence>
@@ -1299,6 +1317,7 @@ export default function SessionManager() {
           />
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </RequirePermission>
   );
 }

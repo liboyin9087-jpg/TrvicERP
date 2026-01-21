@@ -15,9 +15,10 @@ interface AIResponse {
   }[];
 }
 
-// 使用環境變數或預設 API Key（生產環境建議使用環境變數）
-const API_KEY = import.meta.env.VITE_SILICONFLOW_API_KEY || 'sk-datneleaegsucsfbqrlsdgzppzcoxhzgeurtseabxeposdvg';
-const API_URL = 'https://api.siliconflow.com/v1/chat/completions';
+const API_KEY = import.meta.env.VITE_SILICONFLOW_API_KEY;
+const API_URL = import.meta.env.VITE_SILICONFLOW_BASE_URL
+  ? `${import.meta.env.VITE_SILICONFLOW_BASE_URL}/chat/completions`
+  : 'https://api.siliconflow.cn/v1/chat/completions';
 
 export const aiService = {
   async getRecommendations(destination: string, existingSpots: Spot[]): Promise<Partial<Spot>[]> {

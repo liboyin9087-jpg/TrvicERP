@@ -1,0 +1,285 @@
+{
+  "tour_id": "HOK_SNOW_W24_001",
+  "tour_name": "北海道粉雪滑雪5日遊",
+  "destination": "北海道",
+  "duration_days": 5,
+  "duration_nights": 4,
+  "departure_dates": ["2024-01-20", "2024-02-03", "2024-02-17"],
+  "target_audience": "滑雪愛好者",
+  "price_per_person": 35800,
+  "group_size": 25,
+  "actual_bookings": [24, 25, 23],
+  "success_rate": 0.96,
+  "profit_margin": 0.22,
+  "highlights": [
+    "二世古聯合滑雪場",
+    "溫泉酒店住宿",
+    "雪上摩托車體驗",
+    "札幌拉麵品嚐",
+    "小樽運河浪漫"
+  ],
+  "itinerary": [
+    {
+      "day": 1,
+      "title": "抵達札幌_小樽浪漫之旅",
+      "activities": [
+        {
+          "time": "09:00",
+          "activity": "桃園機場集合",
+          "duration": 60,
+          "type": "交通",
+          "notes": "辦理登機手續"
+        },
+        {
+          "time": "13:00",
+          "activity": "抵達札幌新千歲機場",
+          "duration": 60,
+          "type": "交通",
+          "notes": "領隊機場接機"
+        },
+        {
+          "time": "15:00",
+          "activity": "小樽運河",
+          "duration": 120,
+          "type": "景點",
+          "notes": "運河散步、八音盒館參觀"
+        },
+        {
+          "time": "17:30",
+          "activity": "晚餐_海鮮丼",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "新鮮海鮮蓋飯"
+        }
+      ],
+      "accommodation": "定山溪溫泉酒店",
+      "meals": ["晚餐"]
+    },
+    {
+      "day": 2,
+      "title": "二世古滑雪_粉雪天堂",
+      "activities": [
+        {
+          "time": "07:30",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "日式早餐"
+        },
+        {
+          "time": "09:00",
+          "activity": "前往二世古滑雪場",
+          "duration": 90,
+          "type": "交通",
+          "notes": "專車接送"
+        },
+        {
+          "time": "10:30",
+          "activity": "滑雪裝備租借",
+          "duration": 60,
+          "type": "活動",
+          "notes": "專業教學指導"
+        },
+        {
+          "time": "12:00",
+          "activity": "午餐_滑雪場內",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "滑雪客專用餐廳"
+        },
+        {
+          "time": "13:00",
+          "activity": "自由滑雪",
+          "duration": 240,
+          "type": "活動",
+          "notes": "依程度分組教學"
+        },
+        {
+          "time": "18:00",
+          "activity": "溫泉體驗",
+          "duration": 120,
+          "type": "活動",
+          "notes": "露天風呂放鬆"
+        }
+      ],
+      "accommodation": "定山溪溫泉酒店",
+      "meals": ["早餐", "午餐", "晚餐"]
+    },
+    {
+      "day": 3,
+      "title": "雪上活動_精彩體驗",
+      "activities": [
+        {
+          "time": "08:00",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "日式早餐"
+        },
+        {
+          "time": "09:30",
+          "activity": "雪上摩托車",
+          "duration": 120,
+          "type": "活動",
+          "notes": "雪地探險體驗"
+        },
+        {
+          "time": "12:30",
+          "activity": "午餐_山頂餐廳",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "景觀餐廳用餐"
+        },
+        {
+          "time": "14:00",
+          "activity": "雪鞋健行",
+          "duration": 180,
+          "type": "活動",
+          "notes": "雪地自然漫步"
+        },
+        {
+          "time": "18:00",
+          "activity": "晚餐_成吉思汗烤肉",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "北海道特色料理"
+        }
+      ],
+      "accommodation": "定山溪溫泉酒店",
+      "meals": ["早餐", "午餐", "晚餐"]
+    },
+    {
+      "day": 4,
+      "title": "札幌市區_文化之旅",
+      "activities": [
+        {
+          "time": "08:00",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "日式早餐"
+        },
+        {
+          "time": "10:00",
+          "activity": "北海道神宮",
+          "duration": 90,
+          "type": "景點",
+          "notes": "參拜祈福"
+        },
+        {
+          "time": "12:00",
+          "activity": "午餐_拉麵横丁",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "品嚐多家拉麵"
+        },
+        {
+          "time": "14:00",
+          "activity": "白色戀人公園",
+          "duration": 120,
+          "type": "景點",
+          "notes": "鐘樓、煉瓦館參觀"
+        },
+        {
+          "time": "17:00",
+          "activity": "薄野購物",
+          "duration": 180,
+          "type": "購物",
+          "notes": "藥妝、伴手禮採購"
+        }
+      ],
+      "accommodation": "札幌市區酒店",
+      "meals": ["早餐", "午餐"]
+    },
+    {
+      "day": 5,
+      "title": "最後衝刺_滿載而歸",
+      "activities": [
+        {
+          "time": "08:00",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "自助式早餐"
+        },
+        {
+          "time": "10:00",
+          "activity": "機場免稅店",
+          "duration": 120,
+          "type": "購物",
+          "notes": "最後機會免稅購物"
+        },
+        {
+          "time": "13:00",
+          "activity": "午餐_機場",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "機場餐廳"
+        },
+        {
+          "time": "15:00",
+          "activity": "前往新千歲機場",
+          "duration": 90,
+          "type": "交通",
+          "notes": "專車送機"
+        },
+        {
+          "time": "18:30",
+          "activity": "搭機返台",
+          "duration": 240,
+          "type": "交通",
+          "notes": "滿載滑雪回憶返台"
+        }
+      ],
+      "meals": ["早餐", "午餐"]
+    }
+  ],
+  "cost_breakdown": {
+    "fixed_costs": {
+      "機票": 15000,
+      "住宿": 10000,
+      "滑雪場": 3000,
+      "領隊": 2000
+    },
+    "variable_costs": {
+      "滑雪裝備": 2000,
+      "雪上活動": 1800,
+      "餐食": 2000
+    },
+    "total_cost": 35800,
+    "profit_per_person": 7876
+  },
+  "customer_feedback": {
+    "overall_rating": 4.9,
+    "positive_comments": [
+      "雪質超棒，粉雪天堂",
+      "溫泉酒店很舒服，服務很好",
+      "教練很專業，新手也玩得很開心",
+      "雪上摩托車很刺激"
+    ],
+    "improvement_suggestions": [
+      "滑雪時間可以再長一些",
+      "可以增加更多夜間活動"
+    ]
+  },
+  "marketing_insights": {
+    "best_selling_points": [
+      "二世古聯合滑雪場暢滑",
+      "溫泉酒店雙重享受",
+      "多樣化雪上活動",
+      "專業滑雪教學指導"
+    ],
+    "target_demographics": {
+      "age_groups": ["20-40歲運動族", "親子家庭"],
+      "income_level": "中高收入",
+      "interests": ["滑雪運動", "溫泉", "日本文化"]
+    }
+  },
+  "operational_notes": {
+    "visa_requirements": "免簽證",
+    "passport_validity": "需超過回程日6個月",
+    "weather_considerations": "冬季溫度-10~5度，需專業保暖裝備",
+    "health_recommendations": ["旅遊保險", "防曬用品", "潤唇膏"],
+    "packing_suggestions": ["滑雪裝備", "保暖內衣", "太陽眼鏡", "防滑靴"]
+  }
+}

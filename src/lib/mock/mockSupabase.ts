@@ -1,4 +1,28 @@
-import type { Booking, PublicTourData, LineChatLog, CompanyBudget, Poll, PollOption, ChangeRequest, Incident, TourOption, UserFootprint } from '../../../types';
+import type { Booking, LineChatLog, CompanyBudget, Poll, PollOption, ChangeRequest, Incident, UserFootprint } from '../../core/types';
+
+// Mock types for legacy data structures
+interface TourOption {
+  id: any;
+  session_id: any;
+  day_number: number;
+  title: string;
+  description: string;
+  price_add_on: any;
+  capacity_limit: number;
+  quota_used: number;
+  image_url?: any;
+}
+
+interface PublicTourData {
+  id: any;
+  title: string;
+  days: number;
+  base_price: any;
+  cover_image: any;
+  description: string;
+  share_token: string;
+  itinerary_json: any[];
+}
 
 const MOCK_TOUR_OPTIONS: TourOption[] = [
     { id: 'opt_fit_1' as any, session_id: 's_demo' as any, day_number: 3, title: '札幌啤酒博物館 & 螃蟹大餐', description: '參觀歷史悠久的啤酒廠，晚餐享受北海道三大蟹吃到飽。', price_add_on: 2500 as any, capacity_limit: 20, quota_used: 12, image_url: 'https://picsum.photos/300/200?random=50' as any },

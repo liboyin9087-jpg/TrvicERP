@@ -1,11 +1,12 @@
 import type { ApiError } from './api';
-
-type TourId = string & { readonly __brand: 'TourId' };
-type AttractionId = string & { readonly __brand: 'AttractionId' };
-type HighlightId = string & { readonly __brand: 'HighlightId' };
-type InclusionId = string & { readonly __brand: 'InclusionId' };
-type NTAmount = number & { readonly __brand: 'NTAmount' };
-type UserId = string & { readonly __brand: 'UserId' };
+import type {
+  TourId,
+  AttractionId,
+  HighlightId,
+  InclusionId,
+  NTAmount,
+  UserId,
+} from './branded';
 
 export enum TourStatus {
   DRAFT = 'draft',

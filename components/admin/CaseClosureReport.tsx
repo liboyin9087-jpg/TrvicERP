@@ -5,8 +5,10 @@ import {
   Star, MessageSquare, TrendingUp, Clock, Printer, Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Booking } from '../../types';
+import type { Booking } from '@/core/types';
 import type { Session } from '@/core/types/session';
+import { RequirePermission } from '@/core/components/RequirePermission';
+import { Permission } from '@/core/types/auth';
 
 interface CaseClosureReportProps {
   session: Session;
@@ -323,8 +325,9 @@ const CaseClosureReport: React.FC<CaseClosureReportProps> = memo(({ session, boo
   ], []);
 
   return (
-    <div className="space-y-6" role="main" aria-label="團次結案報告">
-      <div className="flex items-center justify-between">
+    <RequirePermission permission={Permission.ADMIN_MANAGE}>
+      <div className="space-y-6" role="main" aria-label="團次結案報告">
+        <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-gray-900">結案報告</h3>
           <p className="text-sm text-gray-500 mt-1">
@@ -589,7 +592,8 @@ const CaseClosureReport: React.FC<CaseClosureReportProps> = memo(({ session, boo
           </motion.button>
         </motion.div>
       )}
-    </div>
+      </div>
+    </RequirePermission>
   );
 });
 

@@ -1,7 +1,4 @@
-type UserId = string & { readonly __brand: 'UserId' };
-type Email = string & { readonly __brand: 'Email' };
-type DateTimeString = string & { readonly __brand: 'DateTimeString' };
-type Token = string & { readonly __brand: 'Token' };
+import { UserId, EmailId, DateTimeString, Token } from './branded';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -93,7 +90,7 @@ export enum UserStatus {
 
 export interface User {
   id: UserId;
-  email: Email;
+  email: EmailId;
   name: string;
   role: UserRole;
   status: UserStatus;
@@ -104,7 +101,7 @@ export interface User {
 }
 
 export interface LoginCredentials {
-  email: Email;
+  email: EmailId;
   password: string;
 }
 
@@ -118,7 +115,7 @@ export interface LoginResponse {
 
 export interface TokenPayload {
   userId: UserId;
-  email: Email;
+  email: EmailId;
   role: UserRole;
   permissions: Permission[];
   exp: number;

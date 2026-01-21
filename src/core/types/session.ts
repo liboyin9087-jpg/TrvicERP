@@ -1,15 +1,5 @@
-import { Branded } from './branded';
+import { Branded, SessionId, SeriesId, TourId, HotelRoomAllocationId, SeatAssignmentId, TourLeaderId, UserId, NTAmount, PaxCount } from './branded';
 import type { ItineraryVersion } from './itinerary';
-
-type SessionId = Branded<string, 'SessionId'>;
-type SeriesId = Branded<string, 'SeriesId'>;
-type TourId = Branded<string, 'TourId'>;
-type HotelRoomAllocationId = Branded<string, 'HotelRoomAllocationId'>;
-type SeatAssignmentId = Branded<string, 'SeatAssignmentId'>;
-type TourLeaderId = Branded<string, 'TourLeaderId'>;
-type UserId = Branded<string, 'UserId'>;
-type NTAmount = Branded<number, 'NTAmount'>;
-type PaxCount = Branded<number, 'PaxCount'>;
 
 export enum SessionStatus {
   SOLICITING = 'soliciting',

@@ -92,12 +92,19 @@ let tokenExpiry: number = 0;
 
 const getAuthToken = async (): Promise<string | null> => {
   if (cachedToken && Date.now() < tokenExpiry) return cachedToken;
-  
+
+  const clientId = import.meta.env.VITE_TDX_CLIENT_ID;
+  const clientSecret = import.meta.env.VITE_TDX_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    console.warn('[TDX] 缺少 API 認證資訊，請設定 VITE_TDX_CLIENT_ID 和 VITE_TDX_CLIENT_SECRET');
+    return null;
+  }
+
   const params = new URLSearchParams();
   params.append('grant_type', 'client_credentials');
-  // 使用環境變數或預設值（生產環境建議使用環境變數）
-  params.append('client_id', import.meta.env.VITE_TDX_CLIENT_ID || 'liboyin9087-96e69e28-fb9e-4c25');
-  params.append('client_secret', import.meta.env.VITE_TDX_CLIENT_SECRET || '4c94f8a3-5896-48b7-8a4f-bc67c6924959');
+  params.append('client_id', clientId);
+  params.append('client_secret', clientSecret);
 
   try {
     const res = await fetch('https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token', {

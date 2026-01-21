@@ -1,0 +1,21 @@
+# TrvicERP AI Server Dependencies
+# Python 3.10+
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# LLM Integration
+langchain>=0.1.0
+langchain-google-genai>=1.0.0
+langchain-core>=0.1.0
+
+# Data Validation
+pydantic>=2.0.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# Optional: If using other LLM providers
+# langchain-openai>=0.0.2
+# langchain-anthropic>=0.1.0

@@ -1,0 +1,270 @@
+{
+  "tour_id": "TKO_DISNEY_W23_001",
+  "tour_name": "東京迪士尼5日遊_冬季限定",
+  "destination": "東京",
+  "duration_days": 5,
+  "duration_nights": 4,
+  "departure_dates": ["2023-12-15", "2023-12-22", "2023-12-29"],
+  "target_audience": "親子家庭",
+  "price_per_person": 28900,
+  "group_size": 30,
+  "actual_bookings": [28, 30, 29],
+  "success_rate": 0.97,
+  "profit_margin": 0.18,
+  "highlights": [
+    "迪士尼海洋獨家門票",
+    "冬季限定聖誕活動",
+    "淺草寺和服體驗",
+    "東京晴空塔觀景",
+    "原宿潮流購物"
+  ],
+  "itinerary": [
+    {
+      "day": 1,
+      "title": "抵達東京_淺草寺文化體驗",
+      "activities": [
+        {
+          "time": "09:00",
+          "activity": "桃園機場集合",
+          "duration": 60,
+          "type": "交通",
+          "notes": "辦理登機手續"
+        },
+        {
+          "time": "12:00",
+          "activity": "抵達東京成田機場",
+          "duration": 60,
+          "type": "交通",
+          "notes": "領隊機場接機"
+        },
+        {
+          "time": "14:00",
+          "activity": "淺草寺參拜",
+          "duration": 120,
+          "type": "景點",
+          "notes": "體驗抽籤、和服租借拍照"
+        },
+        {
+          "time": "16:30",
+          "activity": "仲見世商店街",
+          "duration": 90,
+          "type": "購物",
+          "notes": "自由購物、品嚐人形燒"
+        },
+        {
+          "time": "19:00",
+          "activity": "晚餐_天婦羅",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "正宗天婦羅料理"
+        }
+      ],
+      "accommodation": "東京灣希爾頓酒店",
+      "meals": ["晚餐"]
+    },
+    {
+      "day": 2,
+      "title": "東京迪士尼樂園_夢幻一日",
+      "activities": [
+        {
+          "time": "08:00",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "自助式早餐"
+        },
+        {
+          "time": "09:00",
+          "activity": "前往迪士尼樂園",
+          "duration": 60,
+          "type": "交通",
+          "notes": "專車接送"
+        },
+        {
+          "time": "10:00",
+          "activity": "迪士尼樂園",
+          "duration": 540,
+          "type": "景點",
+          "notes": "暢遊七大主題區、觀賞花車巡遊"
+        },
+        {
+          "time": "19:00",
+          "activity": "晚餐_迪士尼內",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "主題餐廳體驗"
+        }
+      ],
+      "accommodation": "東京灣希爾頓酒店",
+      "meals": ["早餐", "晚餐"]
+    },
+    {
+      "day": 3,
+      "title": "迪士尼海洋_獨家體驗",
+      "activities": [
+        {
+          "time": "08:00",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "自助式早餐"
+        },
+        {
+          "time": "09:00",
+          "activity": "前往迪士尼海洋",
+          "duration": 60,
+          "type": "交通",
+          "notes": "專車接送"
+        },
+        {
+          "time": "10:00",
+          "activity": "迪士尼海洋",
+          "duration": 540,
+          "type": "景點",
+          "notes": "體驗獨家水上表演、地心探險"
+        },
+        {
+          "time": "19:00",
+          "activity": "晚餐_日式燒肉",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "高級和牛燒肉"
+        }
+      ],
+      "accommodation": "東京灣希爾頓酒店",
+      "meals": ["早餐", "晚餐"]
+    },
+    {
+      "day": 4,
+      "title": "市區觀光_購物天堂",
+      "activities": [
+        {
+          "time": "08:00",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "自助式早餐"
+        },
+        {
+          "time": "10:00",
+          "activity": "東京晴空塔",
+          "duration": 120,
+          "type": "景點",
+          "notes": "觀景台360度東京全景"
+        },
+        {
+          "time": "13:00",
+          "activity": "午餐_晴空塔內",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "高空景觀餐廳"
+        },
+        {
+          "time": "15:00",
+          "activity": "原宿竹下通",
+          "duration": 180,
+          "type": "購物",
+          "notes": "潮流購物、藥妝採購"
+        },
+        {
+          "time": "19:00",
+          "activity": "晚餐_居酒屋",
+          "duration": 90,
+          "type": "餐食",
+          "notes": "日式居酒屋體驗"
+        }
+      ],
+      "accommodation": "東京灣希爾頓酒店",
+      "meals": ["早餐", "午餐", "晚餐"]
+    },
+    {
+      "day": 5,
+      "title": "最後購物_快樂返程",
+      "activities": [
+        {
+          "time": "08:00",
+          "activity": "酒店早餐",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "自助式早餐"
+        },
+        {
+          "time": "10:00",
+          "activity": "免稅店",
+          "duration": 120,
+          "type": "購物",
+          "notes": "最後機會免稅購物"
+        },
+        {
+          "time": "13:00",
+          "activity": "午餐_機場",
+          "duration": 60,
+          "type": "餐食",
+          "notes": "機場餐廳"
+        },
+        {
+          "time": "15:00",
+          "activity": "前往成田機場",
+          "duration": 90,
+          "type": "交通",
+          "notes": "專車送機"
+        },
+        {
+          "time": "18:30",
+          "activity": "搭機返台",
+          "duration": 240,
+          "type": "交通",
+          "notes": "滿載美好回憶返台"
+        }
+      ],
+      "meals": ["早餐", "午餐"]
+    }
+  ],
+  "cost_breakdown": {
+    "fixed_costs": {
+      "機票": 12000,
+      "住宿": 8000,
+      "遊覽車": 2000,
+      "領隊": 1500
+    },
+    "variable_costs": {
+      "門票": 3500,
+      "餐食": 1900
+    },
+    "total_cost": 28900,
+    "profit_per_person": 5204
+  },
+  "customer_feedback": {
+    "overall_rating": 4.8,
+    "positive_comments": [
+      "迪士尼門票很難買，旅行社安排得很好",
+      "領隊很專業，照顧周到",
+      "酒店位置優越，服務品質佳",
+      "行程安排合理，不趕時間"
+    ],
+    "improvement_suggestions": [
+      "可以增加更多自由活動時間",
+      "部分餐食可以更豐富一些"
+    ]
+  },
+  "marketing_insights": {
+    "best_selling_points": [
+      "迪士尼雙園區完整體驗",
+      "冬季限定聖誕主題",
+      "一價全包無隱藏費用",
+      "專業領隊全程陪同"
+    ],
+    "target_demographics": {
+      "age_groups": ["25-45歲親子", "50-65歲長輩"],
+      "income_level": "中高收入家庭",
+      "interests": ["主題樂園", "日本文化", "購物"]
+    }
+  },
+  "operational_notes": {
+    "visa_requirements": "免簽證",
+    "passport_validity": "需超過回程日6個月",
+    "weather_considerations": "冬季溫度5-15度，需攜帶保暖衣物",
+    "health_recommendations": ["旅遊保險", "常用藥品", "口罩"],
+    "packing_suggestions": ["保暖外套", "舒適鞋子", "相機充電器", "轉接頭"]
+  }
+}

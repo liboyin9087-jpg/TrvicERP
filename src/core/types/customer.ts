@@ -1,9 +1,6 @@
-export type CustomerId = string & { readonly __brand: 'CustomerId' };
-export type AgentId = string & { readonly __brand: 'AgentId' };
-export type ContactId = string & { readonly __brand: 'ContactId' };
-export type TagId = string & { readonly __brand: 'TagId' };
-export type NTAmount = number & { readonly __brand: 'NTAmount' };
+import type { CustomerId, AgentId, ContactId, TagId, NTAmount } from './branded';
 
+export type { CustomerId, AgentId, ContactId, TagId, NTAmount };
 export { ApiError } from './api';
 export type { ApiResponse } from './api';
 

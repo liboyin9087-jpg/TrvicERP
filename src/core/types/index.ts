@@ -3,6 +3,9 @@
  * Unified Type Exports
  */
 
+// Branded Types（單一真相來源）
+export * from './branded';
+
 // 認證與權限
 export * from './auth';
 
@@ -10,7 +13,18 @@ export * from './auth';
 export * from './order';
 
 // 報價管理
-export * from './quotation';
+export type {
+  Quotation,
+  CreateQuotationData,
+  UpdateQuotationData,
+  ConvertQuotationToOrderData,
+  QuotationItem,
+  CostBreakdown,
+  QuotationServiceResult,
+  QuotationPreviewResult,
+} from './quotation';
+export { QuotationStatus, CostType, ItemCategory, Currency } from './quotation';
+export { calculateQuotationCost, calculateSellingPrice, isQuotationExpired } from './quotation';
 
 // 行程安排
 export * from './itinerary';
@@ -37,8 +51,8 @@ export enum PassportStatus {
   EXPIRED = 'expired'
 }
 
-type ID = string & { readonly __brand: 'ID' };
-type NTAmount = number & { readonly __brand: 'NTAmount' };
+// 使用 branded.ts 的類型（避免重複定義）
+import type { ID, NTAmount } from './branded';
 type TaxID = string & { readonly __brand: 'TaxID' };
 
 export interface ItineraryItem {
@@ -66,6 +80,19 @@ export interface Booking {
   amount: NTAmount;
   createdAt: Date;
   updatedAt: Date;
+  // Additional fields for DocumentGenerator
+  customer_name?: string;
+  user_id?: string;
+  email?: string;
+  status?: 'pending' | 'pending_payment' | 'confirmed' | 'paid' | 'cancelled';
+  passport_data?: {
+    passport_number?: string;
+    expiry_date?: string;
+    nationality?: string;
+  };
+  assigned_room?: string;
+  assigned_seat?: string;
+  special_needs?: string;
 }
 
 export interface TourOption {

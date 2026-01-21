@@ -141,11 +141,10 @@ export const weatherService = {
     city?: string,
     options: Partial<CWAQueryOptions> = {}
   ): Promise<WeatherForecast | WeatherForecast[] | null> {
-    // 使用環境變數或預設 API Key（生產環境建議使用環境變數）
-    const API_KEY = import.meta.env.VITE_CWA_API_KEY || 'CWA-319AFA4F-6F57-4109-BDD6-F8DB65789EC5';
-    
+    const API_KEY = import.meta.env.VITE_CWA_API_KEY;
+
     if (!API_KEY) {
-      console.warn('[CWA API] API Key 未設定');
+      console.warn('[CWA API] 缺少 API Key，請設定 VITE_CWA_API_KEY 環境變數');
       return null;
     }
     

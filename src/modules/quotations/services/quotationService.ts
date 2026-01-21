@@ -86,7 +86,7 @@ export class QuotationService {
         ...data,
         costBreakdown,
         sellingPrice,
-        totalAmount: (sellingPrice * paxCount) as NTAmount,
+        totalNTAmount: (sellingPrice * paxCount) as NTAmount,
       };
     }
 

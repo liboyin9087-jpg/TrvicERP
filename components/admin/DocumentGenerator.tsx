@@ -5,7 +5,7 @@ import {
   Calendar, MapPin, Phone, Printer, X, CheckCircle, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Booking } from '../../types';
+import type { Booking } from '@/core/types';
 import type { Session, HotelRoomAllocation, SeatAssignment, MeetingInfo } from '@/core/types/session';
 import { LineService, LineSendTarget } from '@/core/services/lineService';
 

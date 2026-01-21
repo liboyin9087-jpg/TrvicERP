@@ -78,8 +78,8 @@ const QuotationBuilder: React.FC<QuotationBuilderProps> = memo(({
     return {
       totalCost: preview.costBreakdown.total,
       sellingPrice: preview.sellingPrice,
-      totalRevenue: preview.totalAmount,
-      profit: preview.totalAmount - (preview.costBreakdown.total * paxCount),
+      totalRevenue: preview.totalNTAmount,
+      profit: preview.totalNTAmount - (preview.costBreakdown.total * paxCount),
     };
   }, [items, marginRate, paxCount, calculatePreview]);
 

@@ -10,6 +10,8 @@ import type { Order, OrderStatus } from '@/core/types/order';
 import { OrderStatus as CoreOrderStatus } from '@/core/types/order';
 import { Loading } from '@/components/shared/Loading';
 import { formatCurrency } from '@/lib/utils/formatting';
+import { RequirePermission } from '@/core/components/RequirePermission';
+import { Permission } from '@/core/types/auth';
 
 interface Payment {
   id: string;
@@ -141,39 +143,44 @@ const PaymentMonitor: React.FC<PaymentMonitorProps> = memo(({ onExport }) => {
   // Show loading state
   if (ordersLoading && payments.length === 0) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <Loading text="載入付款資料中..." />
-      </div>
+      <RequirePermission permission={Permission.FINANCIAL_VIEW}>
+        <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+          <Loading text="載入付款資料中..." />
+        </div>
+      </RequirePermission>
     );
   }
 
   // Show error state
   if (ordersError && payments.length === 0) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-gray-900 mb-2">載入失敗</p>
-          <p className="text-gray-600 mb-4">{ordersError.message || '無法載入付款資料'}</p>
-          <button
-            onClick={() => refetchOrders()}
-            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
-          >
-            重新載入
-          </button>
+      <RequirePermission permission={Permission.FINANCIAL_VIEW}>
+        <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-900 mb-2">載入失敗</p>
+            <p className="text-gray-600 mb-4">{ordersError.message || '無法載入付款資料'}</p>
+            <button
+              onClick={() => refetchOrders()}
+              className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            >
+              重新載入
+            </button>
+          </div>
         </div>
-      </div>
+      </RequirePermission>
     );
   }
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6"
-      aria-label="付款管理面板"
-    >
+    <RequirePermission permission={Permission.FINANCIAL_VIEW}>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6"
+        aria-label="付款管理面板"
+      >
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
@@ -345,6 +352,7 @@ const PaymentMonitor: React.FC<PaymentMonitorProps> = memo(({ onExport }) => {
         )}
       </motion.div>
     </motion.div>
+    </RequirePermission>
   );
 });
 

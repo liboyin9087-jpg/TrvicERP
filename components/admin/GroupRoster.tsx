@@ -5,8 +5,10 @@ import {
   UserCheck, UserX, Filter, Search, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Booking } from '../../types';
+import type { Booking } from '@/core/types';
 import type { Session } from '@/core/types/session';
+import { RequirePermission } from '@/core/components/RequirePermission';
+import { Permission } from '@/core/types/auth';
 
 interface RoomAssignment {
   roomNumber: string;
@@ -93,8 +95,9 @@ const GroupRoster: React.FC<GroupRosterProps> = memo(({
   };
 
   return (
-    <div className="space-y-6" role="region" aria-label="團體名單總覽">
-      <div className="flex items-center justify-between">
+    <RequirePermission permission={Permission.ADMIN_MANAGE}>
+      <div className="space-y-6" role="region" aria-label="團體名單總覽">
+        <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-bold text-gray-900">全團名單總覽</h3>
           <p className="text-sm text-gray-500 mt-1">即時查看報名進度與名單資訊</p>
@@ -356,8 +359,9 @@ const GroupRoster: React.FC<GroupRosterProps> = memo(({
             )}
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </RequirePermission>
   );
 });
 

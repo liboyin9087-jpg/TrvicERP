@@ -202,9 +202,10 @@ function MyComponent() {
 
 ## 📦 部署
 
-### 建置生產版本
-
+### 快速部署
 ```bash
+# 推送到 GitHub 自動觸發 Vercel 部署
+git push origin main
 npm run build
 ```
 

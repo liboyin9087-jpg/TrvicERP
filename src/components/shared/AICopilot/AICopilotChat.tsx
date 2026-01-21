@@ -33,8 +33,30 @@ export function AICopilotChat({ context, onSuggestionExecute, className }: AICop
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [llmStatus, setLlmStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
+
+  // 檢查 LLM 連接狀態
+  useEffect(() => {
+    const checkLLMStatus = async () => {
+      try {
+        // 嘗試初始化 LLM 服務來檢查配置
+        const { getLLMConfigFromEnv } = await import('@/services/llmService');
+        const config = getLLMConfigFromEnv();
+        
+        if (config.apiKey) {
+          setLlmStatus('connected');
+        } else {
+          setLlmStatus('disconnected');
+        }
+      } catch (error) {
+        setLlmStatus('disconnected');
+      }
+    };
+
+    checkLLMStatus();
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -121,9 +143,33 @@ export function AICopilotChat({ context, onSuggestionExecute, className }: AICop
   return (
     <div className={`flex flex-col h-full bg-white border border-neutral-300 rounded-lg ${className}`}>
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 border-b border-neutral-200">
-        <Bot className="h-5 w-5 text-primary-900" />
-        <h3 className="text-lg font-bold text-neutral-900">AI Copilot</h3>
+      <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-primary-900" />
+          <h3 className="text-lg font-bold text-neutral-900">AI Copilot</h3>
+        </div>
+        
+        {/* LLM 狀態指示器 */}
+        <div className="flex items-center gap-2">
+          {llmStatus === 'checking' && (
+            <div className="flex items-center gap-1 text-xs text-neutral-500">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+              <span>檢查中</span>
+            </div>
+          )}
+          {llmStatus === 'connected' && (
+            <div className="flex items-center gap-1 text-xs text-green-600">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>Qwen2.5</span>
+            </div>
+          )}
+          {llmStatus === 'disconnected' && (
+            <div className="flex items-center gap-1 text-xs text-neutral-500">
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <span>模擬模式</span>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Chat Messages */}
