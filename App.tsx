@@ -48,6 +48,7 @@ const TravelFootprint = lazy(() => import('./components/client/TravelFootprint')
 
 // 新增的旅遊管理組件
 const TourDemo = lazy(() => import('./src/pages/TourDemo'));
+const AICopilotDemo = lazy(() => import('./src/pages/AICopilotDemo'));
 
 // 團體旅遊核心功能 - 暫時註解避免編譯錯誤
 // const CustomerPortal = lazy(() => import('./src/modules/tours/components/CustomerPortal'));
@@ -99,6 +100,7 @@ const STAFF_NAV: NavGroup[] = [
       { id: 'group-management', label: '團員管理', icon: <Users className="w-4 h-4" /> },
       { id: 'planner', label: '行程規劃', icon: <Map className="w-4 h-4" /> },
       { id: 'passport', label: '護照管理', icon: <FileText className="w-4 h-4" /> },
+      { id: 'ai-copilot', label: 'AI Copilot', icon: <Sparkles className="w-4 h-4" /> },
     ],
   },
   {
@@ -197,6 +199,7 @@ function ViewRenderer({ view }: { view: ViewKey }) {
       case 'addons': return <TourAddons />;
       case 'footprint': return <TravelFootprint />;
       case 'tour-management': return <TourDemo />;
+      case 'ai-copilot': return <AICopilotDemo />;
       // 新增團體旅遊核心功能 - 暫時註解避免編譯錯誤
       // case 'crm-pipeline': return <CRMPipeline />;
       // case 'reports': return <AdvancedReports />;
