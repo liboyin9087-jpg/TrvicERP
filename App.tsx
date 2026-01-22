@@ -15,12 +15,12 @@ import { useAppStore, type ViewKey, type UserRole } from './src/store/useAppStor
 import LoginPage from './components/auth/LoginPage';
 
 // Admin Components
-import ERPInsights from './components/admin/ERPInsights';
 import SessionManager from './components/admin/SessionManager';
 import WelfareDashboard from './components/admin/WelfareDashboard';
 import PaymentMonitor from './components/admin/PaymentMonitor';
 import PassportKanban from './components/admin/PassportKanban';
 import CostingDashboard from './components/admin/CostingDashboard';
+import DraggableDashboard from './components/dashboard/DraggableDashboard';
 
 // Staff Components
 import VisualPlanner from './components/staff/VisualPlanner';
@@ -160,7 +160,7 @@ const contentVariants = {
 function ViewRenderer({ view }: { view: ViewKey }) {
   switch (view) {
     // Admin/Staff Views
-    case 'dashboard': return <ERPInsights />;
+    case 'dashboard': return <DraggableDashboard />;
     case 'sessions': return <SessionManager />;
     case 'planner': return <VisualPlanner />;
     case 'builder': return <ItineraryBuilder />;
@@ -183,7 +183,7 @@ function ViewRenderer({ view }: { view: ViewKey }) {
     case 'briefing': return <DigitalBriefing />;
     case 'addons': return <TourAddons />;
     case 'footprint': return <TravelFootprint />;
-    default: return <ERPInsights />;
+    default: return <DraggableDashboard />;
   }
 }
 
