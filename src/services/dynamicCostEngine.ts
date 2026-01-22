@@ -462,17 +462,17 @@ export class DynamicCostEngine {
   /**
    * 產生成本分析報告
    */
-  generateCostAnalysis(sessionId: string): {
+  async generateCostAnalysis(sessionId: string): Promise<{
     currentCost: CostCalculationResult;
     costBreakdown: Record<string, number>;
     optimizationSuggestions: string[];
     riskFactors: string[];
-  } {
-    const session = this.getSessionData(sessionId);
+  }> {
+    const session = await this.getSessionData(sessionId);
     const numberOfPeople = session.customers?.length || 20;
     const duration = this.calculateSessionDuration(session);
     
-    const currentCost = this.calculateDynamicCost(
+    const currentCost = await this.calculateDynamicCost(
       sessionId,
       numberOfPeople,
       duration,

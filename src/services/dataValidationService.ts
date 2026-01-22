@@ -64,7 +64,7 @@ interface ValidationRule {
   maxLength?: number;
   min?: number;
   max?: number;
-  customValidator?: (value: any) => boolean | string;
+  customValidator?: (value: any, context?: any) => boolean | string;
   errorMessage?: string;
   warningMessage?: string;
 }
@@ -450,30 +450,30 @@ export class DataValidationService {
     const warnings: ValidationWarning[] = [];
 
     // 驗證報價基本資訊
-    if (!quotation.title || quotation.title.trim().length === 0) {
+    if (!quotation.quotationNumber || quotation.quotationNumber.trim().length === 0) {
       errors.push({
-        field: 'title',
+        field: 'quotationNumber',
         type: 'required',
-        message: '報價標題不能為空',
+        message: '報價單號不能為空',
         severity: 'error'
       });
     }
 
-    if (quotation.title && quotation.title.length > 100) {
+    if (quotation.quotationNumber && quotation.quotationNumber.length > 100) {
       errors.push({
-        field: 'title',
+        field: 'quotationNumber',
         type: 'name',
-        message: '報價標題長度不能超過100字符',
+        message: '報價單號長度不能超過100字符',
         severity: 'error'
       });
     }
 
     // 驗證金額
-    if (!quotation.totalPrice || quotation.totalPrice <= 0) {
+    if (!quotation.totalAmount || quotation.totalAmount <= 0) {
       errors.push({
-        field: 'totalPrice',
+        field: 'totalAmount',
         type: 'required',
-        message: '報價總價必須大於0',
+        message: '報價總金額必須大於0',
         severity: 'error'
       });
     }

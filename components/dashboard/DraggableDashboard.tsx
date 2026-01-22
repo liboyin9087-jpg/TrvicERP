@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import GridLayout, { Layout } from 'react-grid-layout';
-import { WidthProvider } from 'react-grid-layout';
+import GridLayout, { Layout, useContainerWidth } from 'react-grid-layout';
 import { GripVertical, MoreHorizontal, Plus, Settings, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
@@ -13,9 +12,8 @@ import AddWidgetPanel from './AddWidgetPanel';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-const ResponsiveGridLayout = WidthProvider(GridLayout);
-
 export default function DraggableDashboard() {
+  const { width, containerRef, mounted } = useContainerWidth();
   const { userRole, userName } = useAppStore((state) => ({
     userRole: state.userRole,
     userName: state.userName,
@@ -41,7 +39,7 @@ export default function DraggableDashboard() {
     setRole(userRole);
   }, [userRole, setRole]);
 
-  const layout = useMemo<Layout[]>(
+  const layout = useMemo<Layout>(
     () =>
       widgets.map((widget) => ({
         i: widget.id,
@@ -59,7 +57,7 @@ export default function DraggableDashboard() {
   );
 
   const handleLayoutChange = useCallback(
-    (newLayout: Layout[]) => {
+    (newLayout: Layout) => {
       if (!isEditMode) return;
       applyLayout(newLayout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h })));
     },
@@ -127,85 +125,90 @@ export default function DraggableDashboard() {
         </div>
       )}
 
-      {widgets.length === 0 ? (
-        <div className="flex items-center justify-center h-96 bg-white rounded-xl border border-gray-200">
-          <div className="text-center text-gray-500">
-            <p className="font-medium">No widgets yet</p>
-            <button
-              onClick={() => {
-                setEditMode(true);
-                setShowLibrary(true);
-              }}
-              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <Plus size={14} />
-              Add widgets
-            </button>
-          </div>
-        </div>
-      ) : (
-        <ResponsiveGridLayout
-          className="layout"
-          layout={layout}
-          cols={12}
-          rowHeight={80}
-          margin={[16, 16]}
-          containerPadding={[0, 0]}
-          onLayoutChange={handleLayoutChange}
-          onDragStop={() => isEditMode && saveLayout()}
-          onResizeStop={() => isEditMode && saveLayout()}
-          isDraggable={isEditMode}
-          isResizable={isEditMode}
-          draggableHandle=".widget-drag-handle"
-          useCSSTransforms
-        >
-          {widgets.map((widget) => (
-            <div
-              key={widget.id}
-              onClick={() => setSelectedWidgetId(widget.id)}
-              className={cn(
-                'relative rounded-xl bg-white border transition-all duration-200 overflow-hidden flex flex-col',
-                isEditMode
-                  ? 'border-dashed border-blue-300 shadow-lg'
-                  : 'border-gray-200 shadow-sm',
-                selectedWidgetId === widget.id && 'ring-2 ring-blue-400'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center justify-between px-4 py-3 border-b border-gray-100',
-                  isEditMode && 'bg-blue-50 widget-drag-handle cursor-move'
-                )}
+      <div ref={containerRef}>
+        {widgets.length === 0 ? (
+          <div className="flex items-center justify-center h-96 bg-white rounded-xl border border-gray-200">
+            <div className="text-center text-gray-500">
+              <p className="font-medium">No widgets yet</p>
+              <button
+                onClick={() => {
+                  setEditMode(true);
+                  setShowLibrary(true);
+                }}
+                className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700"
               >
-                <div className="flex items-center gap-2">
-                  {isEditMode && <GripVertical size={16} className="text-gray-400" />}
-                  <h3 className="font-semibold text-gray-800 text-sm">{widget.title}</h3>
-                </div>
-                <div className="flex items-center gap-1">
-                  {isEditMode ? (
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeWidget(widget.id);
-                      }}
-                      className="p-1 rounded hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
-                  ) : (
-                    <button className="p-1 rounded hover:bg-gray-100 text-gray-400 transition-colors">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="flex-1 p-4 overflow-auto">
-                <WidgetRenderer widget={widget} />
-              </div>
+                <Plus size={14} />
+                Add widgets
+              </button>
             </div>
-          ))}
-        </ResponsiveGridLayout>
-      )}
+          </div>
+        ) : (
+          mounted && (
+            <GridLayout
+              width={width}
+              className="layout"
+              layout={layout}
+              cols={12}
+              rowHeight={80}
+              margin={[16, 16]}
+              containerPadding={[0, 0]}
+              onLayoutChange={handleLayoutChange}
+              onDragStop={() => isEditMode && saveLayout()}
+              onResizeStop={() => isEditMode && saveLayout()}
+              isDraggable={isEditMode}
+              isResizable={isEditMode}
+              draggableHandle=".widget-drag-handle"
+              useCSSTransforms
+            >
+              {widgets.map((widget) => (
+                <div
+                  key={widget.id}
+                  onClick={() => setSelectedWidgetId(widget.id)}
+                  className={cn(
+                    'relative rounded-xl bg-white border transition-all duration-200 overflow-hidden flex flex-col',
+                    isEditMode
+                      ? 'border-dashed border-blue-300 shadow-lg'
+                      : 'border-gray-200 shadow-sm',
+                    selectedWidgetId === widget.id && 'ring-2 ring-blue-400'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'flex items-center justify-between px-4 py-3 border-b border-gray-100',
+                      isEditMode && 'bg-blue-50 widget-drag-handle cursor-move'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isEditMode && <GripVertical size={16} className="text-gray-400" />}
+                      <h3 className="font-semibold text-gray-800 text-sm">{widget.title}</h3>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {isEditMode ? (
+                        <button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeWidget(widget.id);
+                          }}
+                          className="p-1 rounded hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <X size={16} />
+                        </button>
+                      ) : (
+                        <button className="p-1 rounded hover:bg-gray-100 text-gray-400 transition-colors">
+                          <MoreHorizontal size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 p-4 overflow-auto">
+                    <WidgetRenderer widget={widget} />
+                  </div>
+                </div>
+              ))}
+            </GridLayout>
+          )
+        )}
+      </div>
 
       <AddWidgetPanel
         isOpen={showLibrary}
