@@ -17,7 +17,8 @@ export function warnIfEnvMisconfigured(): void {
   const issues: string[] = [];
 
   if (useMock) {
-    issues.push('VITE_USE_MOCK is enabled in production.');
+    console.info('[env] Mock mode enabled; backend requests are disabled.');
+    return;
   }
 
   for (const { key, label } of REQUIRED_URLS) {
