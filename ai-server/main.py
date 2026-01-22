@@ -68,7 +68,8 @@ VIEW_KEYS = [
     "dashboard", "sessions", "planner", "crm", "payments", "passport",
     "costing", "insurance", "quotation", "operations", "expense", "chat",
     "estimator", "map", "welfare", "builder", "traveler", "itinerary",
-    "voting", "briefing", "addons", "footprint", "tour-management", "ai-copilot"
+    "voting", "briefing", "addons", "footprint", "tour-management", "ai-copilot",
+    "proposal-engine"
 ]
 
 WIDGET_TYPES = [

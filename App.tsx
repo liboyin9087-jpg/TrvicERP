@@ -32,6 +32,7 @@ import LeaderExpenseApp from './components/staff/LeaderExpenseApp';
 import LineChatMonitor from './components/staff/LineChatMonitor';
 import MiniTourEstimator from './components/staff/MiniTourEstimator';
 import ItineraryBuilder from './components/staff/ItineraryBuilder';
+import ProposalEngine from './components/staff/ProposalEngine';
 
 // Client Components
 import TravelerApp from './components/client/TravelerApp';
@@ -94,6 +95,7 @@ const STAFF_NAV: NavGroup[] = [
   {
     label: '業務工具',
     items: [
+      { id: 'proposal-engine', label: 'AI 提案', icon: <FileText className="w-5 h-5" /> },
       { id: 'quotation', label: '報價計算', icon: <Calculator className="w-5 h-5" /> },
       { id: 'estimator', label: '快速估價', icon: <Sparkles className="w-5 h-5" /> },
       { id: 'costing', label: '成本分析', icon: <Receipt className="w-5 h-5" /> },
@@ -172,6 +174,7 @@ function ViewRenderer({ view }: { view: ViewKey }) {
     case 'costing': return <CostingDashboard />;
     case 'insurance': return <InsuranceExport />;
     case 'quotation': return <QuotationBuilder />;
+    case 'proposal-engine': return <ProposalEngine />;
     case 'operations': return <OperationHub />;
     case 'expense': return <LeaderExpenseApp />;
     case 'chat': return <LineChatMonitor />;

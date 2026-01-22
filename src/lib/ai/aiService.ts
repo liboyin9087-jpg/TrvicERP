@@ -10,6 +10,9 @@ import type {
   ModesResponse,
   AIMode,
   AIModeOption,
+  StructuredOutputRequest,
+  StructuredOutputResponse,
+  ProposalComparisonOutput,
 } from '../../types/ai';
 
 // API 基礎 URL - 可透過環境變數配置
@@ -116,6 +119,83 @@ class AIService {
 
     if (!response.ok) {
       throw new Error('無法取得模式列表');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Structured output generation (Pydantic-backed)
+   */
+  async generateStructured<T = ProposalComparisonOutput>(
+    request: StructuredOutputRequest
+  ): Promise<StructuredOutputResponse<T>> {
+    if (USE_MOCK) {
+      const mockData: ProposalComparisonOutput = {
+        title: '東京五日企業團 - 三版本提案',
+        summary: '依預算與需求提供三版方案，兼顧成本與體驗差異。',
+        tiers: [
+          {
+            name: '經濟版',
+            price_per_person: 42000,
+            margin_percent: 12,
+            lodging: '商務飯店 3-4 星',
+            transport: '標準遊覽車',
+            meals: '在地風味 8 餐',
+            highlights: ['市區精華景點', '固定行程'],
+          },
+          {
+            name: '豪華版',
+            price_per_person: 52000,
+            margin_percent: 15,
+            lodging: '四星飯店 + 1 晚溫泉',
+            transport: '舒適座椅巴士',
+            meals: '特色餐廳 10 餐',
+            highlights: ['溫泉體驗', '半天自由活動'],
+          },
+          {
+            name: '旗艦版',
+            price_per_person: 65000,
+            margin_percent: 18,
+            lodging: '五星飯店 + 2 晚溫泉',
+            transport: '豪華巴士 + 專屬領隊',
+            meals: '米其林或高級料亭',
+            highlights: ['VIP 接送', '高端團體客製'],
+          },
+        ],
+        inclusions: ['機票', '住宿', '餐食', '交通', '保險'],
+        exclusions: ['私人消費', '小費', '自由行程費用'],
+        safety_commitments: ['全員保險', '緊急支援 24/7', '法規合規流程'],
+      };
+
+      return {
+        schema: request.schema,
+        data: mockData as T,
+        raw_text: JSON.stringify(mockData),
+        attempts: 1,
+        provider: 'mock',
+      };
+    }
+
+    const response = await fetch(`${this.baseUrl}/api/structured`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: request.message,
+        mode: request.mode,
+        context: request.context || '',
+        schema: request.schema,
+        user_role: request.user_role,
+        user_id: request.user_id,
+        max_attempts: request.max_attempts,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: '未知錯誤' }));
+      throw new Error(error.detail || `AI 服務錯誤: ${response.status}`);
     }
 
     return response.json();

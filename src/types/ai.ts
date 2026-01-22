@@ -27,6 +27,56 @@ export interface PendingAction {
   reason: string;
 }
 
+export interface ProposalTier {
+  name: string;
+  price_per_person: number;
+  margin_percent: number;
+  lodging: string;
+  transport: string;
+  meals: string;
+  highlights: string[];
+}
+
+export interface ProposalComparisonOutput {
+  title: string;
+  summary: string;
+  tiers: ProposalTier[];
+  inclusions: string[];
+  exclusions: string[];
+  safety_commitments: string[];
+}
+
+export interface ItineraryActivity {
+  time: string;
+  title: string;
+  stay_hours: number;
+  notes?: string | null;
+}
+
+export interface ItineraryDay {
+  day: number;
+  title: string;
+  meals: string[];
+  lodging: string;
+  activities: ItineraryActivity[];
+}
+
+export interface ItineraryOutput {
+  title: string;
+  days: ItineraryDay[];
+  highlights: string[];
+  cautions: string[];
+}
+
+export interface NpsInsightOutput {
+  nps_score: number;
+  response_count: number;
+  promoter_ratio: number;
+  detractor_ratio: number;
+  key_themes: string[];
+  improvement_actions: string[];
+}
+
 // 可用函數名稱
 export type FunctionName =
   | 'navigate'
@@ -94,6 +144,24 @@ export interface ChatRequest {
   context?: string;
   user_role?: string;
   user_id?: string;
+}
+
+export interface StructuredOutputRequest {
+  message: string;
+  mode: AIMode;
+  context?: string;
+  schema: 'itinerary' | 'proposal_comparison' | 'nps_insight';
+  user_role?: string;
+  user_id?: string;
+  max_attempts?: number;
+}
+
+export interface StructuredOutputResponse<T = Record<string, any>> {
+  schema: string;
+  data: T;
+  raw_text: string;
+  attempts: number;
+  provider: string;
 }
 
 export interface ChatResponse {
