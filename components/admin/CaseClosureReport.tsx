@@ -7,7 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { aiService } from '@/lib/ai/aiService';
 import { useToast } from '@/store/useToastStore';
-import type { NpsInsightOutput } from '@/types/ai';
+import type { NpsInsightOutput } from '../../src/types/ai';
 import type { TourSession, Booking } from '../../types';
 
 // ============================================

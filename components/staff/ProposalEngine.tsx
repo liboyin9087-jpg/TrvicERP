@@ -9,7 +9,7 @@ import {
 import { aiService } from '@/lib/ai/aiService';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/store/useToastStore';
-import type { ProposalComparisonOutput, ProposalTier } from '@/types/ai';
+import type { ProposalComparisonOutput, ProposalTier } from '../../src/types/ai';
 
 const TAGS = ['奢華', '親子', '冒險', '員工旅遊', 'CSR', '美食'];
 
