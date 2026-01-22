@@ -1,50 +1,115 @@
-import React, { useState } from 'react';
-import { Bot, Send, X, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Bot, Send, X, Maximize2, Minimize2, Sparkles, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
+import { aiService } from '../../src/lib/ai/aiService';
+import { useFunctionExecutor } from '../../src/hooks/useFunctionExecutor';
+import type { AIMode, ChatMessage, AIModeOption } from '../../src/types/ai';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
+// 預設模式選項
+const DEFAULT_MODES: AIModeOption[] = [
+  { id: 'general', label: '🧭 通用', description: '團控通用助手' },
+  { id: 'itinerary', label: '📅 行程', description: '行程規劃專家' },
+  { id: 'marketing', label: '✨ 行銷', description: '行銷文案專家' },
+  { id: 'costing', label: '💰 成本', description: '成本試算專家' },
+  { id: 'legal', label: '⚖️ 法規', description: '法規諮詢專家' },
+];
 
 export default function EdgeAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'assistant', content: '您好！我是 TravelMaster AI 助理，有什麼可以幫助您的嗎？', timestamp: new Date() }
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentMode, setCurrentMode] = useState<AIMode>('general');
+  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: '1',
+      role: 'assistant',
+      content: '您好！我是 TrvicERP AI 助理，有什麼可以幫助您的嗎？您可以問我關於行程規劃、報價計算、法規諮詢等問題，或請我幫您導航到特定頁面。',
+      timestamp: new Date(),
+    },
   ]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date() };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const modeSelectorRef = useRef<HTMLDivElement>(null);
+  const { executeFunctions } = useFunctionExecutor();
 
-    setTimeout(() => {
-      const aiResponse: Message = {
+  // 滾動到最新訊息
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // 點擊外部關閉模式選擇器
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modeSelectorRef.current && !modeSelectorRef.current.contains(event.target as Node)) {
+        setShowModeSelector(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await aiService.chat({
+        message: input,
+        mode: currentMode,
+      });
+
+      // 執行函數呼叫
+      if (response.function_calls && response.function_calls.length > 0) {
+        executeFunctions(response.function_calls);
+      }
+
+      const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: getAIResponse(input),
-        timestamp: new Date()
+        content: response.reply,
+        timestamp: new Date(),
+        functionCalls: response.function_calls || undefined,
       };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'AI 服務暫時無法使用';
+      setError(errorMessage);
+
+      // 加入錯誤訊息到對話
+      const errorAiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `抱歉，發生錯誤：${errorMessage}。請稍後再試。`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorAiMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getAIResponse = (query: string): string => {
-    if (query.includes('行程') || query.includes('推薦')) {
-      return '根據您的需求，我推薦「東京五日深度遊」行程，包含淺草、晴空塔、築地市場等熱門景點，目前3月15日出發的團次還有8個名額。';
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
-    if (query.includes('客戶') || query.includes('VIP')) {
-      return '目前系統中有 4 位白金會員，其中李小華的總消費金額最高，達 NT$ 520,000。建議可以針對 VIP 客戶推送專屬優惠。';
-    }
-    if (query.includes('報價') || query.includes('價格')) {
-      return '5天4夜東京行程建議報價：機票 NT$15,000 + 住宿 NT$12,000 + 其他 NT$10,500 = 總計 NT$37,500/人。加上 15% 利潤後售價為 NT$43,125。';
-    }
-    return '好的，我已了解您的需求。請問還有什麼需要協助的嗎？';
+  };
+
+  const getCurrentModeLabel = () => {
+    const mode = DEFAULT_MODES.find((m) => m.id === currentMode);
+    return mode?.label || '🧭 通用';
   };
 
   if (!isOpen) {
@@ -52,6 +117,7 @@ export default function EdgeAssistant() {
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform z-50"
+        title="開啟 AI 助理"
       >
         <Sparkles className="w-6 h-6" />
       </button>
@@ -59,7 +125,12 @@ export default function EdgeAssistant() {
   }
 
   return (
-    <div className={`fixed ${isExpanded ? 'inset-4' : 'bottom-6 right-6 w-96 h-[500px]'} bg-white rounded-2xl shadow-2xl flex flex-col z-50 transition-all`}>
+    <div
+      className={`fixed ${
+        isExpanded ? 'inset-4' : 'bottom-6 right-6 w-96 h-[500px]'
+      } bg-white rounded-2xl shadow-2xl flex flex-col z-50 transition-all`}
+    >
+      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
@@ -71,28 +142,109 @@ export default function EdgeAssistant() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+            title={isExpanded ? '縮小' : '放大'}
+          >
             {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
-          <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+            title="關閉"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
       </div>
 
+      {/* Mode Selector */}
+      <div className="px-4 py-2 border-b border-gray-100">
+        <div className="relative" ref={modeSelectorRef}>
+          <button
+            onClick={() => setShowModeSelector(!showModeSelector)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+          >
+            <span>{getCurrentModeLabel()}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showModeSelector ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showModeSelector && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              {DEFAULT_MODES.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => {
+                    setCurrentMode(mode.id);
+                    setShowModeSelector(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg ${
+                    currentMode === mode.id ? 'bg-gray-50 font-medium' : ''
+                  }`}
+                >
+                  <div className="font-medium">{mode.label}</div>
+                  <div className="text-xs text-gray-500">{mode.description}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] px-4 py-3 rounded-2xl ${message.role === 'user' ? 'bg-black text-white rounded-br-none' : 'bg-gray-100 text-gray-900 rounded-bl-none'}`}>
-              <p className="text-sm">{message.content}</p>
+          <div
+            key={message.id}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+                message.role === 'user'
+                  ? 'bg-black text-white rounded-br-none'
+                  : 'bg-gray-100 text-gray-900 rounded-bl-none'
+              }`}
+            >
+              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              {message.functionCalls && message.functionCalls.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500">
+                    已執行: {message.functionCalls.map((fc) => fc.name).join(', ')}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         ))}
+
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-100 text-gray-900 px-4 py-3 rounded-2xl rounded-bl-none">
+              <Loader2 className="w-5 h-5 animate-spin" />
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
       </div>
 
+      {/* Error display */}
+      {error && (
+        <div className="px-4 py-2 bg-red-50 border-t border-red-100">
+          <div className="flex items-center gap-2 text-red-600 text-sm">
+            <AlertCircle className="w-4 h-4" />
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Input area */}
       <div className="p-4 border-t border-gray-100">
+        {/* Quick actions */}
         <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
-          {['推薦熱門行程', '查詢客戶資料', '計算報價'].map((quick) => (
+          {['推薦熱門行程', '查詢客戶資料', '計算報價', '法規諮詢'].map((quick) => (
             <button
               key={quick}
               onClick={() => setInput(quick)}
@@ -102,17 +254,28 @@ export default function EdgeAssistant() {
             </button>
           ))}
         </div>
+
+        {/* Input field */}
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            onKeyDown={handleKeyDown}
             placeholder="輸入訊息..."
-            className="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
           />
-          <button onClick={handleSend} className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center hover:bg-gray-800 transition-colors">
-            <Send className="w-5 h-5" />
+          <button
+            onClick={handleSend}
+            disabled={isLoading || !input.trim()}
+            className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>

@@ -12,7 +12,8 @@ export type ViewKey =
   | 'dashboard' | 'sessions' | 'planner' | 'crm' | 'payments' | 'passport'
   | 'costing' | 'insurance' | 'quotation' | 'operations' | 'expense' | 'chat'
   | 'estimator' | 'map' | 'welfare' | 'builder'
-  | 'traveler' | 'itinerary' | 'voting' | 'briefing' | 'addons' | 'footprint';
+  | 'traveler' | 'itinerary' | 'voting' | 'briefing' | 'addons' | 'footprint'
+  | 'tour-management' | 'ai-copilot';
 
 export type ViewMode = 'edit' | 'proposal' | 'line';
 
