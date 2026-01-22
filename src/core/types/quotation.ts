@@ -58,6 +58,7 @@ export interface CostBreakdown {
  */
 export interface Quotation {
   id: string;
+  title?: string;              // 報價標題（向後相容）
   quotationNumber: string;     // 報價單號
   version: number;              // 版本號
   customerId: string;           // 客戶 ID
@@ -68,6 +69,7 @@ export interface Quotation {
   profitMargin: number;         // 利潤率（百分比）
   sellingPrice: number;        // 售價（每人）
   paxCount: number;             // 人數
+  totalPrice?: number;          // 總價（向後相容）
   totalAmount: number;          // 總金額
   currency: string;             // 幣別
   validUntil: string;          // 有效期限

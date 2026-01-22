@@ -64,7 +64,7 @@ interface ValidationRule {
   maxLength?: number;
   min?: number;
   max?: number;
-  customValidator?: (value: any, context?: any) => boolean | string;
+  customValidator?: (value: any) => boolean | string;
   errorMessage?: string;
   warningMessage?: string;
 }
@@ -201,10 +201,6 @@ const CUSTOMER_VALIDATION_RULES: Record<string, ValidationRule[]> = {
     {
       type: 'emergency_contact',
       required: true,
-      customValidator: (value: string, context: any) => {
-        // 確保緊急聯絡人不是客戶本人
-        return value !== context.customerName;
-      },
       errorMessage: '緊急聯絡人不能是客戶本人'
     }
   ],
@@ -449,31 +445,34 @@ export class DataValidationService {
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
 
+    const title = quotation.title ?? quotation.quotationNumber ?? '';
+    const totalPrice = quotation.totalPrice ?? quotation.totalAmount ?? 0;
+
     // 驗證報價基本資訊
-    if (!quotation.quotationNumber || quotation.quotationNumber.trim().length === 0) {
+    if (!title || title.trim().length === 0) {
       errors.push({
-        field: 'quotationNumber',
+        field: 'title',
         type: 'required',
-        message: '報價單號不能為空',
+        message: '報價標題不能為空',
         severity: 'error'
       });
     }
 
-    if (quotation.quotationNumber && quotation.quotationNumber.length > 100) {
+    if (title && title.length > 100) {
       errors.push({
-        field: 'quotationNumber',
+        field: 'title',
         type: 'name',
-        message: '報價單號長度不能超過100字符',
+        message: '報價標題長度不能超過100字符',
         severity: 'error'
       });
     }
 
     // 驗證金額
-    if (!quotation.totalAmount || quotation.totalAmount <= 0) {
+    if (!totalPrice || totalPrice <= 0) {
       errors.push({
-        field: 'totalAmount',
+        field: 'totalPrice',
         type: 'required',
-        message: '報價總金額必須大於0',
+        message: '報價總價必須大於0',
         severity: 'error'
       });
     }
@@ -799,8 +798,21 @@ export class DataValidationService {
       }
 
       // 自定義驗證
+      if (rule.type === 'emergency_contact' && context?.customerName) {
+        if (fieldValue === context.customerName) {
+          errors.push({
+            field: rule.type,
+            type: rule.type,
+            message: rule.errorMessage || `${rule.type} 驗證失敗`,
+            severity: 'error',
+            currentValue: fieldValue,
+            fixSuggestion: `請更換 ${rule.type} 的資料`
+          });
+        }
+      }
+
       if (rule.customValidator) {
-        const result = rule.customValidator(fieldValue, context);
+        const result = rule.customValidator(fieldValue);
         if (result === false) {
           errors.push({
             field: rule.type,
