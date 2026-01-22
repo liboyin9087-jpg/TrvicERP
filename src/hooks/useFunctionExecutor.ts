@@ -54,7 +54,7 @@ export function useFunctionExecutor() {
         'costing', 'insurance', 'quotation', 'operations', 'expense', 'chat',
         'estimator', 'map', 'welfare', 'builder', 'traveler', 'itinerary',
         'voting', 'briefing', 'addons', 'footprint', 'tour-management', 'ai-copilot',
-        'proposal-engine', 'client-portal',
+        'proposal-engine', 'client-portal', 'corporate-crm',
       ];
 
       if (!args.viewKey || !validViewKeys.includes(args.viewKey)) {
