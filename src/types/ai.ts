@@ -3,6 +3,7 @@
  */
 
 import type { ViewKey } from '../store/useAppStore';
+import type { WidgetConfig, WidgetLayout, WidgetType } from '../core/types/dashboard';
 
 // AI 專家模式
 export type AIMode = 'itinerary' | 'marketing' | 'costing' | 'legal' | 'general';
@@ -25,14 +26,22 @@ export type FunctionName =
   | 'navigate'
   | 'showCustomerData'
   | 'showQuotation'
-  | 'showItinerary';
+  | 'showItinerary'
+  | 'setDashboardEditMode'
+  | 'addDashboardWidget'
+  | 'removeDashboardWidget'
+  | 'updateDashboardWidget';
 
 // 函數參數型別
 export type FunctionArguments =
   | NavigateArguments
   | ShowCustomerDataArguments
   | ShowQuotationArguments
-  | ShowItineraryArguments;
+  | ShowItineraryArguments
+  | SetDashboardEditModeArguments
+  | AddDashboardWidgetArguments
+  | RemoveDashboardWidgetArguments
+  | UpdateDashboardWidgetArguments;
 
 export interface NavigateArguments {
   viewKey: ViewKey;
@@ -48,6 +57,28 @@ export interface ShowQuotationArguments {
 
 export interface ShowItineraryArguments {
   sessionId?: string;
+}
+
+export interface SetDashboardEditModeArguments {
+  enabled: boolean;
+}
+
+export interface AddDashboardWidgetArguments {
+  type: WidgetType;
+  title?: string;
+  config?: WidgetConfig;
+  layout?: Partial<WidgetLayout>;
+}
+
+export interface RemoveDashboardWidgetArguments {
+  id: string;
+}
+
+export interface UpdateDashboardWidgetArguments {
+  id: string;
+  title?: string;
+  config?: Partial<WidgetConfig>;
+  layout?: Partial<WidgetLayout>;
 }
 
 // API 請求/回應型別

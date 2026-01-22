@@ -12,7 +12,7 @@ import os
 import re
 import json
 import httpx
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Tuple
 import prompt_templates
 
 load_dotenv()
@@ -40,6 +40,134 @@ SILICONFLOW_MODEL = "deepseek-ai/DeepSeek-V3"
 # 使用哪個 LLM 提供者：'gemini' 或 'siliconflow'
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 
+# Function calling definitions
+VIEW_KEYS = [
+    "dashboard", "sessions", "planner", "crm", "payments", "passport",
+    "costing", "insurance", "quotation", "operations", "expense", "chat",
+    "estimator", "map", "welfare", "builder", "traveler", "itinerary",
+    "voting", "briefing", "addons", "footprint", "tour-management", "ai-copilot"
+]
+
+WIDGET_TYPES = [
+    "kpi-card", "chart-line", "chart-bar", "chart-pie", "data-table",
+    "quick-actions", "calendar", "notifications", "weather", "recent-orders",
+    "pending-tasks", "customer-ranking"
+]
+
+KPI_TYPES = ["revenue", "orders", "customers", "satisfaction"]
+DATE_RANGES = ["today", "week", "month", "quarter"]
+
+WIDGET_CONFIG_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "kpiType": {"type": "string", "enum": KPI_TYPES},
+        "dateRange": {"type": "string", "enum": DATE_RANGES},
+        "chartDataSource": {"type": "string"},
+        "chartPeriod": {"type": "number"},
+        "tableColumns": {"type": "array", "items": {"type": "string"}},
+        "tableRowLimit": {"type": "number"},
+        "refreshInterval": {"type": "number"},
+        "showTrend": {"type": "boolean"},
+    },
+}
+
+WIDGET_LAYOUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "w": {"type": "number"},
+        "h": {"type": "number"},
+        "minW": {"type": "number"},
+        "minH": {"type": "number"},
+        "maxW": {"type": "number"},
+        "maxH": {"type": "number"},
+    },
+}
+
+FUNCTION_DECLARATIONS = [
+    {
+        "name": "navigate",
+        "description": "Navigate to a specific ERP view",
+        "parameters": {
+            "type": "object",
+            "properties": {"viewKey": {"type": "string", "enum": VIEW_KEYS}},
+            "required": ["viewKey"],
+        },
+    },
+    {
+        "name": "showCustomerData",
+        "description": "Open customer management and optionally search",
+        "parameters": {
+            "type": "object",
+            "properties": {"searchQuery": {"type": "string"}},
+        },
+    },
+    {
+        "name": "showQuotation",
+        "description": "Open quotation page and optionally prefill destination",
+        "parameters": {
+            "type": "object",
+            "properties": {"destination": {"type": "string"}},
+        },
+    },
+    {
+        "name": "showItinerary",
+        "description": "Open itinerary page and optionally focus session",
+        "parameters": {
+            "type": "object",
+            "properties": {"sessionId": {"type": "string"}},
+        },
+    },
+    {
+        "name": "setDashboardEditMode",
+        "description": "Enable or disable dashboard edit mode",
+        "parameters": {
+            "type": "object",
+            "properties": {"enabled": {"type": "boolean"}},
+            "required": ["enabled"],
+        },
+    },
+    {
+        "name": "addDashboardWidget",
+        "description": "Add a dashboard widget",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string", "enum": WIDGET_TYPES},
+                "title": {"type": "string"},
+                "config": WIDGET_CONFIG_SCHEMA,
+                "layout": WIDGET_LAYOUT_SCHEMA,
+            },
+            "required": ["type"],
+        },
+    },
+    {
+        "name": "removeDashboardWidget",
+        "description": "Remove a dashboard widget by id",
+        "parameters": {
+            "type": "object",
+            "properties": {"id": {"type": "string"}},
+            "required": ["id"],
+        },
+    },
+    {
+        "name": "updateDashboardWidget",
+        "description": "Update dashboard widget title, config, or layout",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "title": {"type": "string"},
+                "config": WIDGET_CONFIG_SCHEMA,
+                "layout": WIDGET_LAYOUT_SCHEMA,
+            },
+            "required": ["id"],
+        },
+    },
+]
+
+OPENAI_TOOLS = [{"type": "function", "function": decl} for decl in FUNCTION_DECLARATIONS]
 
 # 讀取法規知識庫
 def load_rules() -> str:
@@ -64,11 +192,66 @@ def load_rules() -> str:
 RULES = load_rules()
 
 
+def parse_gemini_response(result: Dict[str, Any]) -> Tuple[str, List["FunctionCall"]]:
+    content = result.get("candidates", [{}])[0].get("content", {})
+    parts = content.get("parts", [])
+    text_parts: List[str] = []
+    function_calls: List[FunctionCall] = []
+
+    for part in parts:
+        if isinstance(part, dict) and "text" in part:
+            text_parts.append(part["text"])
+        if isinstance(part, dict) and "functionCall" in part:
+            call = part.get("functionCall", {})
+            name = call.get("name", "")
+            args = call.get("args") or {}
+            function_calls.append(FunctionCall(name=name, arguments=args))
+
+    return "\n".join(text_parts).strip(), function_calls
+
+
+def parse_openai_response(result: Dict[str, Any]) -> Tuple[str, List["FunctionCall"]]:
+    message = result.get("choices", [{}])[0].get("message", {})
+    text = message.get("content") or ""
+    function_calls: List[FunctionCall] = []
+
+    tool_calls = message.get("tool_calls") or []
+    for call in tool_calls:
+        func = call.get("function", {})
+        name = func.get("name", "")
+        raw_args = func.get("arguments")
+        args: Dict[str, Any] = {}
+        if isinstance(raw_args, str):
+            try:
+                args = json.loads(raw_args)
+            except json.JSONDecodeError:
+                args = {}
+        elif isinstance(raw_args, dict):
+            args = raw_args
+        function_calls.append(FunctionCall(name=name, arguments=args))
+
+    if not tool_calls and message.get("function_call"):
+        func = message.get("function_call", {})
+        name = func.get("name", "")
+        raw_args = func.get("arguments")
+        args = {}
+        if isinstance(raw_args, str):
+            try:
+                args = json.loads(raw_args)
+            except json.JSONDecodeError:
+                args = {}
+        elif isinstance(raw_args, dict):
+            args = raw_args
+        function_calls.append(FunctionCall(name=name, arguments=args))
+
+    return text.strip(), function_calls
+
+
 async def call_gemini(
     system_prompt: str,
     user_message: str,
     temperature: float = 0.5
-) -> str:
+) -> Tuple[str, List["FunctionCall"]]:
     """
     呼叫 Google Gemini API (免費額度)
     """
@@ -88,6 +271,16 @@ async def call_gemini(
                 "parts": [{"text": f"{system_prompt}\n\n用戶問題：{user_message}"}]
             }
         ],
+        "tools": [
+            {
+                "functionDeclarations": FUNCTION_DECLARATIONS
+            }
+        ],
+        "toolConfig": {
+            "functionCallingConfig": {
+                "mode": "AUTO"
+            }
+        },
         "generationConfig": {
             "temperature": temperature,
             "maxOutputTokens": 4096,
@@ -105,11 +298,9 @@ async def call_gemini(
             )
 
         result = response.json()
-
-        # 解析 Gemini 回應格式
         try:
-            return result["candidates"][0]["content"]["parts"][0]["text"]
-        except (KeyError, IndexError) as e:
+            return parse_gemini_response(result)
+        except Exception as e:
             raise HTTPException(
                 status_code=500,
                 detail=f"Gemini 回應解析錯誤: {str(e)}"
@@ -120,7 +311,7 @@ async def call_siliconflow(
     system_prompt: str,
     user_message: str,
     temperature: float = 0.5
-) -> str:
+) -> Tuple[str, List["FunctionCall"]]:
     """
     呼叫 SiliconFlow API (DeepSeek-V3) - 備用
     """
@@ -142,6 +333,8 @@ async def call_siliconflow(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message}
         ],
+        "tools": OPENAI_TOOLS,
+        "tool_choice": "auto",
         "temperature": temperature,
         "max_tokens": 4096
     }
@@ -161,14 +354,14 @@ async def call_siliconflow(
             )
 
         result = response.json()
-        return result["choices"][0]["message"]["content"]
+        return parse_openai_response(result)
 
 
 async def call_llm(
     system_prompt: str,
     user_message: str,
     temperature: float = 0.5
-) -> str:
+) -> Tuple[str, List["FunctionCall"]]:
     """
     統一 LLM 呼叫介面，根據設定選擇提供者
     優先使用 Gemini (免費額度)，失敗時切換到 SiliconFlow
@@ -295,14 +488,18 @@ async def chat(req: ChatRequest):
 
     # 4. 執行 LLM 呼叫
     try:
-        response_content = await call_llm(
+        response_text, function_calls = await call_llm(
             system_prompt=final_prompt,
             user_message=req.message,
             temperature=temperature
         )
 
-        # 5. 解析函數呼叫
-        clean_reply, function_calls = parse_function_calls(response_content)
+        # 5. 解析函數呼叫（若工具呼叫為空，嘗試解析標記格式）
+        clean_reply = response_text.strip()
+        if not function_calls:
+            clean_reply, function_calls = parse_function_calls(response_text)
+        if not clean_reply:
+            clean_reply = "已完成操作。"
 
         return ChatResponse(
             reply=clean_reply,
