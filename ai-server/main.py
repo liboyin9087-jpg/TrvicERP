@@ -15,7 +15,11 @@ import httpx
 from typing import Optional, List, Dict, Any, Tuple
 import prompt_templates
 
-load_dotenv()
+BASE_DIR = os.path.dirname(__file__)
+load_dotenv(os.path.join(BASE_DIR, ".env"), override=False)
+load_dotenv(os.path.join(BASE_DIR, ".env.local"), override=False)
+load_dotenv(os.path.join(BASE_DIR, "..", ".env"), override=False)
+load_dotenv(os.path.join(BASE_DIR, "..", ".env.local"), override=False)
 
 app = FastAPI(
     title="TrvicERP AI Copilot",
@@ -366,11 +370,18 @@ async def call_llm(
     統一 LLM 呼叫介面，根據設定選擇提供者
     優先使用 Gemini (免費額度)，失敗時切換到 SiliconFlow
     """
+    provider = (LLM_PROVIDER or "gemini").lower()
+    if provider == "siliconflow":
+        try:
+            return await call_siliconflow(system_prompt, user_message, temperature)
+        except HTTPException as e:
+            if os.getenv("GOOGLE_API_KEY"):
+                print(f"⚠️ SiliconFlow 失敗 ({e.detail})，切換到 Gemini...")
+                return await call_gemini(system_prompt, user_message, temperature)
+            raise
     try:
-        # 優先使用 Gemini
         return await call_gemini(system_prompt, user_message, temperature)
     except HTTPException as e:
-        # 如果 Gemini 失敗且有 SiliconFlow key，嘗試備用
         if os.getenv("SILICONFLOW_API_KEY"):
             print(f"⚠️ Gemini 失敗 ({e.detail})，切換到 SiliconFlow...")
             return await call_siliconflow(system_prompt, user_message, temperature)
