@@ -53,3 +53,9 @@ VERCEL_TOKEN=***
 VERCEL_ORG_ID=team_xxxxx
 VERCEL_PROJECT_ID=prj_xxxxx
 ```
+
+## One-click env check
+
+```
+npm run check:env
+```
