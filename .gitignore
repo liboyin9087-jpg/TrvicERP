@@ -9,6 +9,10 @@ build/
 out/
 .vercel/
 
+# Python cache
+__pycache__/
+*.pyc
+
 # 環境變數與秘密
 .env
 .env.local
