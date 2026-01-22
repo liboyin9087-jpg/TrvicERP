@@ -5,6 +5,8 @@
 
 import { api, API_ENDPOINTS } from '../../../lib/api';
 
+const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
+
 /**
  * 營收報表查詢條件
  */
@@ -132,6 +134,16 @@ export class ReportService {
     data: Blob | null;
     error: any;
   }> {
+    if (USE_MOCK) {
+      return {
+        data: null,
+        error: {
+          code: 'MOCK_MODE',
+          message: '目前為 Mock 模式，報表匯出尚未啟用',
+        },
+      };
+    }
+
     const queryParams = new URLSearchParams();
     queryParams.append('format', format);
     Object.entries(params || {}).forEach(([key, value]) => {

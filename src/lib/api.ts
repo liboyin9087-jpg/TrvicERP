@@ -5,6 +5,7 @@
 
 // API 基礎 URL
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
 // API 版本
 const API_VERSION = 'v1';
@@ -120,6 +121,89 @@ export interface ApiResponse<T> {
   error: ApiError | null;
 }
 
+const MOCK_LIST_ENDPOINTS: RegExp[] = [
+  /\/api\/v1\/orders\/?$/,
+  /\/api\/v1\/quotations\/?$/,
+  /\/api\/v1\/tours\/?$/,
+  /\/api\/v1\/sessions\/?$/,
+  /\/api\/v1\/customers\/?$/,
+  /\/api\/v1\/users\/?$/,
+  /\/api\/v1\/polls\/?$/,
+  /\/api\/v1\/budgets\/?$/,
+  /\/api\/v1\/reports\/(revenue|customers|teams)\/?$/,
+];
+
+const MOCK_LATENCY_MS = 120;
+
+function getPathname(endpoint: string): string {
+  try {
+    return new URL(endpoint, 'http://localhost').pathname;
+  } catch {
+    return endpoint;
+  }
+}
+
+function parseRequestBody(body: BodyInit | null | undefined): unknown {
+  if (!body) return null;
+  if (typeof body === 'string') {
+    try {
+      return JSON.parse(body);
+    } catch {
+      return body;
+    }
+  }
+  return body;
+}
+
+function createMockId(prefix: string): string {
+  const suffix = Math.random().toString(36).slice(2, 8);
+  return `${prefix}_${Date.now()}_${suffix}`;
+}
+
+function extractResourceId(pathname: string): string | null {
+  const parts = pathname.split('/').filter(Boolean);
+  if (parts.length < 4) return null;
+  if (parts[0] !== 'api' || parts[1] !== 'v1') return null;
+  return parts[3] || null;
+}
+
+async function mockApiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
+
+  const method = (options.method || 'GET').toUpperCase();
+  const pathname = getPathname(endpoint);
+
+  if (method === 'GET') {
+    if (MOCK_LIST_ENDPOINTS.some((regex) => regex.test(pathname))) {
+      return { data: [] as T, error: null };
+    }
+    return { data: null as T, error: null };
+  }
+
+  if (method === 'DELETE') {
+    return { data: null as T, error: null };
+  }
+
+  const body = parseRequestBody(options.body);
+  const idFromPath = extractResourceId(pathname);
+  let data: any = body;
+
+  if (data && typeof data === 'object') {
+    if (idFromPath && !('id' in data)) {
+      data = { ...data, id: idFromPath };
+    } else if (!('id' in data)) {
+      data = { ...data, id: createMockId('mock') };
+    }
+  } else if (data == null) {
+    data = { id: idFromPath || createMockId('mock') };
+  }
+
+  return { data: data as T, error: null };
+}
+
 /**
  * 標準化 API 錯誤處理
  */
@@ -182,6 +266,10 @@ export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
+  if (USE_MOCK) {
+    return mockApiRequest<T>(endpoint, options);
+  }
+
   try {
     const token = localStorage.getItem('auth_token');
 

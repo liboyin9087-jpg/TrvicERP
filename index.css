@@ -195,6 +195,33 @@ body {
     color: #374151;
   }
 
+  .react-grid-item.react-grid-placeholder {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px dashed rgba(59, 130, 246, 0.4);
+    border-radius: 0.75rem;
+  }
+
+  .react-resizable-handle {
+    width: 16px;
+    height: 16px;
+    background: rgba(59, 130, 246, 0.9);
+    border-radius: 9999px;
+    opacity: 0.6;
+  }
+
+  .react-resizable-handle:hover {
+    opacity: 0.9;
+  }
+
+  /* Dashboard drag handle */
+  .widget-drag-handle {
+    cursor: grab;
+  }
+
+  .widget-drag-handle:active {
+    cursor: grabbing;
+  }
+
   /* Stat Card */
   .stat-card {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
