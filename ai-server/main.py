@@ -6,7 +6,7 @@ TrvicERP AI Copilot - FastAPI 後端
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ValidationError
 from dotenv import load_dotenv
 import os
 import re
@@ -390,7 +390,9 @@ async def call_gemini(
     system_prompt: str,
     user_message: str,
     temperature: float = 0.5,
-    max_tokens: int = GEMINI_DEFAULT_MAX_TOKENS
+    max_tokens: int = GEMINI_DEFAULT_MAX_TOKENS,
+    enable_tools: bool = True,
+    response_mime_type: Optional[str] = None
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     呼叫 Google Gemini API (免費額度)
@@ -411,21 +413,24 @@ async def call_gemini(
                 "parts": [{"text": f"{system_prompt}\n\n用戶問題：{user_message}"}]
             }
         ],
-        "tools": [
-            {
-                "functionDeclarations": FUNCTION_DECLARATIONS
-            }
-        ],
-        "toolConfig": {
-            "functionCallingConfig": {
-                "mode": "AUTO"
-            }
-        },
         "generationConfig": {
             "temperature": temperature,
             "maxOutputTokens": max_tokens,
         }
     }
+    if enable_tools:
+        payload["tools"] = [
+            {
+                "functionDeclarations": FUNCTION_DECLARATIONS
+            }
+        ]
+        payload["toolConfig"] = {
+            "functionCallingConfig": {
+                "mode": "AUTO"
+            }
+        }
+    if response_mime_type:
+        payload["generationConfig"]["responseMimeType"] = response_mime_type
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(url, json=payload)
@@ -452,7 +457,9 @@ async def call_siliconflow(
     user_message: str,
     temperature: float = 0.5,
     model: str = SILICONFLOW_MODEL,
-    max_tokens: int = 4096
+    max_tokens: int = 4096,
+    enable_tools: bool = True,
+    response_format: Optional[Dict[str, Any]] = None
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     呼叫 SiliconFlow API (DeepSeek-V3) - 備用
@@ -475,11 +482,14 @@ async def call_siliconflow(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message}
         ],
-        "tools": OPENAI_TOOLS,
-        "tool_choice": "auto",
         "temperature": temperature,
         "max_tokens": max_tokens
     }
+    if enable_tools:
+        payload["tools"] = OPENAI_TOOLS
+        payload["tool_choice"] = "auto"
+    if response_format:
+        payload["response_format"] = response_format
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
@@ -506,7 +516,10 @@ async def call_llm(
     provider: Optional[str] = None,
     model: Optional[str] = None,
     max_tokens: Optional[int] = None,
-    gemini_max_tokens: Optional[int] = None
+    gemini_max_tokens: Optional[int] = None,
+    enable_tools: bool = True,
+    response_mime_type: Optional[str] = None,
+    response_format: Optional[Dict[str, Any]] = None
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     統一 LLM 呼叫介面，根據設定選擇提供者
@@ -522,7 +535,9 @@ async def call_llm(
                 user_message,
                 temperature,
                 model=selected_model,
-                max_tokens=max_tokens or 4096
+                max_tokens=max_tokens or 4096,
+                enable_tools=enable_tools,
+                response_format=response_format
             )
         except HTTPException as e:
             if os.getenv("GOOGLE_API_KEY"):
@@ -531,7 +546,9 @@ async def call_llm(
                     system_prompt,
                     user_message,
                     temperature,
-                    max_tokens=gemini_max_tokens or GEMINI_DEFAULT_MAX_TOKENS
+                    max_tokens=gemini_max_tokens or GEMINI_DEFAULT_MAX_TOKENS,
+                    enable_tools=enable_tools,
+                    response_mime_type=response_mime_type
                 )
             raise
     try:
@@ -539,7 +556,9 @@ async def call_llm(
             system_prompt,
             user_message,
             temperature,
-            max_tokens=gemini_max_tokens or GEMINI_DEFAULT_MAX_TOKENS
+            max_tokens=gemini_max_tokens or GEMINI_DEFAULT_MAX_TOKENS,
+            enable_tools=enable_tools,
+            response_mime_type=response_mime_type
         )
     except HTTPException as e:
         if os.getenv("SILICONFLOW_API_KEY"):
@@ -549,7 +568,9 @@ async def call_llm(
                 user_message,
                 temperature,
                 model=selected_model,
-                max_tokens=max_tokens or 4096
+                max_tokens=max_tokens or 4096,
+                enable_tools=enable_tools,
+                response_format=response_format
             )
         raise
 
@@ -727,6 +748,8 @@ class ChatRequest(BaseModel):
     message: str
     mode: str = "general"
     context: str = ""
+    user_role: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 class FunctionCall(BaseModel):
@@ -743,6 +766,82 @@ class ChatResponse(BaseModel):
     image_url: Optional[str] = None
     image_prompt: Optional[str] = None
     rag_sources: Optional[List[str]] = None
+    pending_actions: Optional[List["PendingAction"]] = None
+    blocked_actions: Optional[List["PendingAction"]] = None
+
+
+class PendingAction(BaseModel):
+    id: str
+    call: FunctionCall
+    reason: str
+
+
+class StructuredOutputRequest(BaseModel):
+    message: str
+    mode: str = "general"
+    context: str = ""
+    schema: str = "itinerary"
+    user_role: Optional[str] = None
+    user_id: Optional[str] = None
+    max_attempts: int = 2
+
+
+class StructuredOutputResponse(BaseModel):
+    schema: str
+    data: Dict[str, Any]
+    raw_text: str
+    attempts: int
+    provider: str
+
+
+class ItineraryActivity(BaseModel):
+    time: str = Field(..., description="Time or time range")
+    title: str = Field(..., description="Activity title")
+    stay_hours: float = Field(..., ge=0, description="Estimated stay duration in hours")
+    notes: Optional[str] = Field(default=None, description="Notes or cautions")
+
+
+class ItineraryDay(BaseModel):
+    day: int = Field(..., ge=1, description="Day number")
+    title: str = Field(..., description="Day title")
+    meals: List[str] = Field(default_factory=list, description="Meals included")
+    lodging: str = Field(..., description="Hotel or lodging")
+    activities: List[ItineraryActivity] = Field(default_factory=list)
+
+
+class ItineraryOutput(BaseModel):
+    title: str = Field(..., description="Trip title")
+    days: List[ItineraryDay] = Field(default_factory=list)
+    highlights: List[str] = Field(default_factory=list)
+    cautions: List[str] = Field(default_factory=list)
+
+
+class ProposalTier(BaseModel):
+    name: str = Field(..., description="Tier name")
+    price_per_person: int = Field(..., ge=0)
+    margin_percent: float = Field(..., ge=0)
+    lodging: str
+    transport: str
+    meals: str
+    highlights: List[str] = Field(default_factory=list)
+
+
+class ProposalComparisonOutput(BaseModel):
+    title: str
+    summary: str
+    tiers: List[ProposalTier] = Field(default_factory=list)
+    inclusions: List[str] = Field(default_factory=list)
+    exclusions: List[str] = Field(default_factory=list)
+    safety_commitments: List[str] = Field(default_factory=list)
+
+
+class NpsInsightOutput(BaseModel):
+    nps_score: int = Field(..., ge=-100, le=100)
+    response_count: int = Field(..., ge=0)
+    promoter_ratio: float = Field(..., ge=0, le=100)
+    detractor_ratio: float = Field(..., ge=0, le=100)
+    key_themes: List[str] = Field(default_factory=list)
+    improvement_actions: List[str] = Field(default_factory=list)
 
 
 def parse_function_calls(text: str) -> tuple[str, List[FunctionCall]]:
@@ -995,6 +1094,113 @@ def sanitize_function_calls(calls: Optional[List[FunctionCall]]) -> List[Functio
     return sanitized_calls
 
 
+STRUCTURED_SCHEMA_MAP: Dict[str, type[BaseModel]] = {
+    "itinerary": ItineraryOutput,
+    "proposal_comparison": ProposalComparisonOutput,
+    "nps_insight": NpsInsightOutput,
+}
+
+
+def get_schema_json(model: type[BaseModel]) -> Dict[str, Any]:
+    if hasattr(model, "model_json_schema"):
+        return model.model_json_schema()  # type: ignore[return-value]
+    return model.schema()  # type: ignore[return-value]
+
+
+def extract_json_payload(text: str) -> str:
+    text = text.strip()
+    if text.startswith("{") and text.endswith("}"):
+        return text
+    if text.startswith("[") and text.endswith("]"):
+        return text
+    candidates = [text.find("{"), text.find("[")]
+    start = min((idx for idx in candidates if idx != -1), default=-1)
+    end_obj = text.rfind("}")
+    end_arr = text.rfind("]")
+    end = max(end_obj, end_arr)
+    if start >= 0 and end > start:
+        return text[start:end + 1]
+    return text
+
+
+def build_structured_prompt(base_prompt: str, schema_name: str, model: type[BaseModel]) -> str:
+    schema_json = get_schema_json(model)
+    schema_string = json.dumps(schema_json, ensure_ascii=False)
+    return (
+        f"{base_prompt}\n\n"
+        "請只輸出 JSON，禁止輸出 Markdown 或額外說明文字。\n"
+        f"JSON 必須符合 schema: {schema_name}\n"
+        f"Schema JSON: {schema_string}\n"
+        "若欄位無資料，請輸出空陣列或空字串，不要省略必填欄位。"
+    )
+
+
+async def generate_structured_output(
+    schema_name: str,
+    message: str,
+    mode: str,
+    context: str,
+    max_attempts: int = 2
+) -> StructuredOutputResponse:
+    model = STRUCTURED_SCHEMA_MAP.get(schema_name)
+    if model is None:
+        raise HTTPException(status_code=400, detail=f"未知 schema: {schema_name}")
+
+    base_prompt = prompt_templates.get_prompt_template(mode, rules=RULES)
+    structured_prompt = build_structured_prompt(base_prompt, schema_name, model)
+    final_prompt = f"""{structured_prompt}
+
+【當前業務情境】：
+{context if context else "無額外情境資訊"}
+"""
+
+    provider, selected_model, override_temperature, max_tokens, gemini_max_tokens = select_llm_for_mode(mode)
+    temperature = override_temperature if override_temperature is not None else prompt_templates.get_temperature(mode)
+
+    attempts = 0
+    last_error = ""
+    for _ in range(max_attempts):
+        attempts += 1
+        response_text, _ = await call_llm(
+            system_prompt=final_prompt,
+            user_message=message,
+            temperature=temperature,
+            provider=provider,
+            model=selected_model,
+            max_tokens=max_tokens,
+            gemini_max_tokens=gemini_max_tokens,
+            enable_tools=False,
+            response_mime_type="application/json",
+            response_format={"type": "json_object"},
+        )
+        try:
+            payload_text = extract_json_payload(response_text)
+            data = json.loads(payload_text)
+            if hasattr(model, "model_validate"):
+                parsed = model.model_validate(data)
+                data = parsed.model_dump()
+            else:
+                parsed = model.parse_obj(data)
+                data = parsed.dict()
+            return StructuredOutputResponse(
+                schema=schema_name,
+                data=data,
+                raw_text=response_text,
+                attempts=attempts,
+                provider=provider,
+            )
+        except (json.JSONDecodeError, ValidationError) as exc:
+            last_error = str(exc)
+            final_prompt = (
+                f"{structured_prompt}\n\n"
+                "上一版 JSON 驗證失敗，請只回傳修正後 JSON。\n"
+                f"錯誤訊息: {last_error}\n"
+                f"上一版輸出: {response_text}"
+            )
+
+    raise HTTPException(status_code=422, detail=f"Structured output 解析失敗: {last_error}")
+
+
 class HealthResponse(BaseModel):
     status: str
     llm_configured: bool
@@ -1123,6 +1329,20 @@ async def chat(req: ChatRequest):
             status_code=500,
             detail=f"AI 服務異常: {str(e)}"
         )
+
+
+@app.post("/api/structured", response_model=StructuredOutputResponse)
+async def structured_output(req: StructuredOutputRequest):
+    """
+    結構化輸出端點 - 強制 JSON + Pydantic 驗證
+    """
+    return await generate_structured_output(
+        schema_name=req.schema,
+        message=req.message,
+        mode=req.mode,
+        context=req.context,
+        max_attempts=max(1, min(req.max_attempts, 4))
+    )
 
 
 # 開發時直接執行
