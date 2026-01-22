@@ -39,7 +39,7 @@ const DEMO_ACCOUNTS: Record<DemoRole, { email: string; password: string; label: 
     password: 'admin123',
     label: '旅行社管理端',
     icon: <Briefcase className="w-5 h-5" />,
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-brand-500 to-brand-700',
     description: '完整的營運管理功能',
   },
   welfare: {
@@ -47,7 +47,7 @@ const DEMO_ACCOUNTS: Record<DemoRole, { email: string; password: string; label: 
     password: 'hr123',
     label: '福委會/HR',
     icon: <Building2 className="w-5 h-5" />,
-    color: 'from-purple-500 to-pink-500',
+    color: 'from-brand-500 to-accent',
     description: '活動與福利管理',
   },
   traveler: {
@@ -55,7 +55,7 @@ const DEMO_ACCOUNTS: Record<DemoRole, { email: string; password: string; label: 
     password: 'emp123',
     label: '員工端',
     icon: <Users className="w-5 h-5" />,
-    color: 'from-green-500 to-emerald-500',
+    color: 'from-accent to-emerald-500',
     description: '個人行程與服務',
   },
 };
@@ -158,28 +158,28 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="relative flex h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="relative flex h-screen overflow-hidden bg-gradient-to-br from-brand-900 via-slate-900 to-brand-800">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Gradient Orbs */}
-        <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"
+          <motion.div
+            className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl"
           animate={{
             x: mousePosition.x * 0.02,
             y: mousePosition.y * 0.02,
           }}
           transition={{ type: 'spring', stiffness: 50, damping: 20 }}
         />
-        <motion.div
-          className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
+          <motion.div
+            className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand-700/20 rounded-full blur-3xl"
           animate={{
             x: mousePosition.x * -0.02,
             y: mousePosition.y * -0.02,
           }}
           transition={{ type: 'spring', stiffness: 50, damping: 20 }}
         />
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"
+          <motion.div
+            className="absolute top-1/2 left-1/2 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -203,7 +203,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             className="mb-8"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl shadow-2xl mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl shadow-2xl mb-6">
               <Plane className="w-10 h-10 text-white" />
             </div>
           </motion.div>
@@ -277,7 +277,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: 'spring' }}
-                className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl mb-4 shadow-lg"
+                className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl mb-4 shadow-lg"
               >
                 <Plane className="w-8 h-8 text-white" />
               </motion.div>
@@ -406,11 +406,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                   />
                   <span className="ml-2 text-sm text-gray-700">記住我</span>
                 </label>
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline">
+                <a href="#" className="text-sm text-brand-500 hover:text-brand-600 font-medium hover:underline">
                   忘記密碼？
                 </a>
               </div>
@@ -423,7 +423,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3.5 rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+                  className="w-full bg-gradient-to-r from-brand-500 to-brand-700 text-white py-3.5 rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
                 >
                   {isLoading ? (
                     <>
@@ -462,7 +462,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="w-full bg-blue-50 border-2 border-blue-100 text-blue-700 py-3.5 rounded-xl font-semibold hover:bg-blue-100 hover:border-blue-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                  className="w-full bg-brand-50 border-2 border-brand-100 text-brand-700 py-3.5 rounded-xl font-semibold hover:bg-brand-100 hover:border-brand-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                 >
                   {selectedDemoRole
                     ? `以 ${DEMO_ACCOUNTS[selectedDemoRole].label} 進入`
@@ -479,7 +479,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               className="text-center text-sm text-gray-600 mt-6"
             >
               還沒有帳號？{' '}
-              <a href="#" className="text-blue-600 font-semibold hover:text-blue-700 hover:underline">
+              <a href="#" className="text-brand-500 font-semibold hover:text-brand-600 hover:underline">
                 立即註冊
               </a>
             </motion.p>

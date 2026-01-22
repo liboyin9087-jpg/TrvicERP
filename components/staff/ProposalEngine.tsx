@@ -76,7 +76,7 @@ export default function ProposalEngine() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 space-y-6">
+    <div className="min-h-screen bg-surface p-6 space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">AI 提案引擎</h1>
@@ -95,7 +95,7 @@ export default function ProposalEngine() {
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-60"
           >
             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
             生成提案
@@ -106,7 +106,7 @@ export default function ProposalEngine() {
       <div className="grid lg:grid-cols-[1.05fr_1.95fr] gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Sparkles className="w-4 h-4 text-blue-500" />
+            <Sparkles className="w-4 h-4 text-brand-500" />
             需求輸入
           </div>
           <div className="space-y-4">
@@ -157,8 +157,8 @@ export default function ProposalEngine() {
                     className={cn(
                       'px-3 py-1 rounded-full text-xs border transition-colors',
                       selectedTags.includes(tag)
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                        ? 'bg-brand-500 text-white border-brand-500'
+                        : 'border-gray-200 text-gray-600 hover:border-brand-200'
                     )}
                   >
                     {tag}
@@ -176,7 +176,7 @@ export default function ProposalEngine() {
               <p className="text-sm text-gray-500 mt-1">{proposal.summary || '請先生成提案。'}</p>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <BarChart3 className="w-4 h-4 text-blue-500" />
+              <BarChart3 className="w-4 h-4 text-brand-500" />
               毛利差異可視化
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function ProposalEngine() {
                 <div key={tier.name} className="rounded-xl border border-gray-200 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">{tier.name}</h3>
-                    <span className="text-xs text-blue-600 font-semibold">
+                    <span className="text-xs text-brand-600 font-semibold">
                       毛利 {tier.margin_percent}%
                     </span>
                   </div>

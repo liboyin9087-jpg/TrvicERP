@@ -426,7 +426,7 @@ export default function CorporateCRM() {
         </div>
         <button
           onClick={openCreateAccount}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
         >
           <Plus className="w-4 h-4" />
           新增企業
@@ -446,7 +446,7 @@ export default function CorporateCRM() {
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
                   'px-4 py-2 rounded-xl text-sm font-medium transition-all',
-                  activeTab === tab.key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  activeTab === tab.key ? 'bg-brand-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                 )}
               >
                 {tab.label}
@@ -512,7 +512,7 @@ export default function CorporateCRM() {
               <div className="flex justify-end">
                 <button
                   onClick={openCreateContact}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-xs font-semibold hover:bg-brand-800"
                 >
                   <Plus className="w-4 h-4" />
                   新增聯絡人
@@ -556,7 +556,7 @@ export default function CorporateCRM() {
               <div className="flex justify-end">
                 <button
                   onClick={openCreateEngagement}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-xs font-semibold hover:bg-brand-800"
                 >
                   <Plus className="w-4 h-4" />
                   新增互動
@@ -721,7 +721,7 @@ export default function CorporateCRM() {
             <button
               onClick={handleSaveAccount}
               disabled={isSaving}
-              className="px-4 py-2 text-sm rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+              className="px-4 py-2 text-sm rounded-lg bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60"
             >
               {isSaving ? '儲存中...' : '儲存'}
             </button>
@@ -802,7 +802,7 @@ export default function CorporateCRM() {
             <button
               onClick={handleSaveContact}
               disabled={isSaving}
-              className="px-4 py-2 text-sm rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+              className="px-4 py-2 text-sm rounded-lg bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60"
             >
               {isSaving ? '儲存中...' : '儲存'}
             </button>
@@ -876,7 +876,7 @@ export default function CorporateCRM() {
             <button
               onClick={handleSaveEngagement}
               disabled={isSaving}
-              className="px-4 py-2 text-sm rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+              className="px-4 py-2 text-sm rounded-lg bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60"
             >
               {isSaving ? '儲存中...' : '儲存'}
             </button>
