@@ -21,6 +21,12 @@ export interface FunctionCall {
   arguments: FunctionArguments;
 }
 
+export interface PendingAction {
+  id: string;
+  call: FunctionCall;
+  reason: string;
+}
+
 // 可用函數名稱
 export type FunctionName =
   | 'navigate'
@@ -86,6 +92,8 @@ export interface ChatRequest {
   message: string;
   mode: AIMode;
   context?: string;
+  user_role?: string;
+  user_id?: string;
 }
 
 export interface ChatResponse {
@@ -96,6 +104,8 @@ export interface ChatResponse {
   image_url?: string | null;
   image_prompt?: string | null;
   rag_sources?: string[] | null;
+  pending_actions?: PendingAction[] | null;
+  blocked_actions?: PendingAction[] | null;
 }
 
 // 健康檢查回應
@@ -120,4 +130,7 @@ export interface ChatMessage {
   imageUrl?: string;
   imagePrompt?: string;
   ragSources?: string[];
+  pendingActions?: PendingAction[];
+  blockedActions?: PendingAction[];
+  pendingResolved?: boolean;
 }

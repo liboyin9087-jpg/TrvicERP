@@ -13,6 +13,7 @@ import re
 import json
 import httpx
 import math
+from uuid import uuid4
 from typing import Optional, List, Dict, Any, Tuple
 import asyncio
 import prompt_templates
@@ -75,6 +76,26 @@ WIDGET_TYPES = [
     "quick-actions", "calendar", "notifications", "weather", "recent-orders",
     "pending-tasks", "customer-ranking"
 ]
+
+ROLE_TOOL_PERMISSIONS: Dict[str, List[str]] = {
+    "staff": [
+        "navigate", "showCustomerData", "showQuotation", "showItinerary",
+        "setDashboardEditMode", "addDashboardWidget", "removeDashboardWidget",
+        "updateDashboardWidget", "generateMarketingImage"
+    ],
+    "welfare": [
+        "navigate", "showItinerary", "showQuotation", "showCustomerData"
+    ],
+    "traveler": [
+        "navigate", "showItinerary"
+    ],
+}
+
+SENSITIVE_TOOLS = {
+    "addDashboardWidget",
+    "removeDashboardWidget",
+    "updateDashboardWidget",
+}
 
 KPI_TYPES = ["revenue", "orders", "customers", "satisfaction"]
 DATE_RANGES = ["today", "week", "month", "quarter"]
@@ -1094,6 +1115,43 @@ def sanitize_function_calls(calls: Optional[List[FunctionCall]]) -> List[Functio
     return sanitized_calls
 
 
+def apply_tool_governance(
+    calls: List[FunctionCall],
+    user_role: Optional[str]
+) -> Tuple[List[FunctionCall], List[PendingAction], List[PendingAction]]:
+    role = (user_role or "staff").lower()
+    allowed = set(ROLE_TOOL_PERMISSIONS.get(role, ROLE_TOOL_PERMISSIONS["staff"]))
+
+    approved: List[FunctionCall] = []
+    pending: List[PendingAction] = []
+    blocked: List[PendingAction] = []
+
+    for call in calls:
+        if call.name not in allowed:
+            blocked.append(
+                PendingAction(
+                    id=f"blocked_{uuid4().hex}",
+                    call=call,
+                    reason=f"RBAC: {role} 不允許執行 {call.name}"
+                )
+            )
+            continue
+
+        if call.name in SENSITIVE_TOOLS:
+            pending.append(
+                PendingAction(
+                    id=f"pending_{uuid4().hex}",
+                    call=call,
+                    reason="需人工確認後執行"
+                )
+            )
+            continue
+
+        approved.append(call)
+
+    return approved, pending, blocked
+
+
 STRUCTURED_SCHEMA_MAP: Dict[str, type[BaseModel]] = {
     "itinerary": ItineraryOutput,
     "proposal_comparison": ProposalComparisonOutput,
@@ -1282,6 +1340,11 @@ async def chat(req: ChatRequest):
         if not clean_reply:
             clean_reply = "已完成操作。"
         function_calls = sanitize_function_calls(function_calls)
+        approved_calls, pending_actions, blocked_actions = apply_tool_governance(
+            function_calls,
+            req.user_role
+        )
+        function_calls = approved_calls
 
         # 7. 行銷模式圖片產出 (Flux Pro)
         image_url = None
@@ -1320,7 +1383,9 @@ async def chat(req: ChatRequest):
             function_calls=filtered_calls if filtered_calls else None,
             image_url=image_url,
             image_prompt=image_prompt,
-            rag_sources=rag_sources if rag_sources else None
+            rag_sources=rag_sources if rag_sources else None,
+            pending_actions=pending_actions if pending_actions else None,
+            blocked_actions=blocked_actions if blocked_actions else None
         )
     except HTTPException:
         raise

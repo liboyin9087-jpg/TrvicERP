@@ -70,6 +70,8 @@ class AIService {
         message: request.message,
         mode: request.mode,
         context: request.context || '',
+        user_role: request.user_role,
+        user_id: request.user_id,
       }),
     });
 
