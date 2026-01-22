@@ -17,7 +17,7 @@ import json
 import os
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Iterable, Tuple
 from urllib import request as urllib_request
 
@@ -111,7 +111,7 @@ class ScanConfig:
     max_file_size_kb: int = 150
     max_file_chars: int = 6000
     max_context_chars: int = 120000
-    allowed_extensions: Iterable[str] = DEFAULT_ALLOWED_EXTENSIONS
+    allowed_extensions: Iterable[str] = field(default_factory=lambda: set(DEFAULT_ALLOWED_EXTENSIONS))
 
 
 def is_excluded(path: str) -> bool:
