@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import GridLayout, { Layout, useContainerWidth } from 'react-grid-layout';
+import { Layout, useContainerWidth } from 'react-grid-layout';
+import { ReactGridLayout } from 'react-grid-layout/legacy';
 import { GripVertical, MoreHorizontal, Plus, Settings, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/store/useAppStore';
@@ -144,14 +145,14 @@ export default function DraggableDashboard() {
           </div>
         ) : (
           mounted && (
-            <GridLayout
+            <ReactGridLayout
               width={width}
               className="layout"
               layout={layout}
               cols={12}
               rowHeight={80}
-              margin={[16, 16]}
-              containerPadding={[0, 0]}
+              margin={[16, 16] as const}
+              containerPadding={[0, 0] as const}
               onLayoutChange={handleLayoutChange}
               onDragStop={() => isEditMode && saveLayout()}
               onResizeStop={() => isEditMode && saveLayout()}
@@ -205,7 +206,7 @@ export default function DraggableDashboard() {
                   </div>
                 </div>
               ))}
-            </GridLayout>
+            </ReactGridLayout>
           )
         )}
       </div>
