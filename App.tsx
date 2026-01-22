@@ -600,8 +600,8 @@ function AppContent() {
   } = useAppStore();
 
   // Handle login from LoginPage
-  const handleLogin = (role: UserRole) => {
-    login(role);
+  const handleLogin = (role: UserRole, userId?: string, userName?: string) => {
+    login(role, userId, userName);
   };
 
   // Show login page if not authenticated
