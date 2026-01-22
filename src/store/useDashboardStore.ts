@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { DashboardRole, Widget, WidgetConfig, WidgetLibraryItem } from '@/core/types/dashboard';
+import type { DashboardRole, Widget, WidgetConfig, WidgetLibraryItem, WidgetLayout } from '@/core/types/dashboard';
 import { DEFAULT_LAYOUTS, DEFAULT_WIDGET_LIBRARY } from '@/data/dashboardLayouts';
 import { cloneWidgets, createWidgetInstance } from '@/lib/dashboardUtils';
 
@@ -37,6 +37,91 @@ const initialLayoutsByRole: Record<DashboardRole, Widget[]> = {
   traveler: cloneWidgets(DEFAULT_LAYOUTS.traveler),
 };
 
+const FALLBACK_LAYOUT: WidgetLayout = { x: 0, y: 0, w: 4, h: 4 };
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const toOptionalNumber = (value: unknown): number | undefined =>
+  isFiniteNumber(value) ? value : undefined;
+
+const getFallbackLayout = (type: Widget['type']): WidgetLayout => {
+  const libraryItem = DEFAULT_WIDGET_LIBRARY.find((item) => item.type === type);
+  return libraryItem?.defaultLayout ?? FALLBACK_LAYOUT;
+};
+
+const normalizeLayout = (layout: Partial<WidgetLayout> | undefined, fallback: WidgetLayout): WidgetLayout => {
+  const x = isFiniteNumber(layout?.x) ? layout!.x : fallback.x;
+  const y = isFiniteNumber(layout?.y) ? layout!.y : fallback.y;
+  const w = Math.max(1, isFiniteNumber(layout?.w) ? layout!.w : fallback.w);
+  const h = Math.max(1, isFiniteNumber(layout?.h) ? layout!.h : fallback.h);
+  const minW = toOptionalNumber(layout?.minW) ?? fallback.minW;
+  const minH = toOptionalNumber(layout?.minH) ?? fallback.minH;
+  const maxW = toOptionalNumber(layout?.maxW) ?? fallback.maxW;
+  const maxH = toOptionalNumber(layout?.maxH) ?? fallback.maxH;
+
+  return {
+    x,
+    y,
+    w,
+    h,
+    ...(minW !== undefined ? { minW } : {}),
+    ...(minH !== undefined ? { minH } : {}),
+    ...(maxW !== undefined ? { maxW } : {}),
+    ...(maxH !== undefined ? { maxH } : {}),
+  };
+};
+
+const normalizeWidget = (widget: Widget): Widget => {
+  const fallbackLayout = getFallbackLayout(widget.type);
+  return {
+    ...widget,
+    config: widget.config ?? {},
+    layout: normalizeLayout(widget.layout, fallbackLayout),
+  };
+};
+
+const normalizeWidgetArray = (widgets: unknown, role: DashboardRole): Widget[] => {
+  if (!Array.isArray(widgets) || widgets.length === 0) {
+    return cloneWidgets(DEFAULT_LAYOUTS[role]);
+  }
+
+  const filtered = widgets.filter(
+    (widget): widget is Widget =>
+      widget &&
+      typeof widget.id === 'string' &&
+      typeof widget.type === 'string' &&
+      widget.layout
+  );
+
+  if (filtered.length === 0) {
+    return cloneWidgets(DEFAULT_LAYOUTS[role]);
+  }
+
+  return filtered.map((widget) => normalizeWidget(widget));
+};
+
+const normalizeLayoutsByRole = (layouts: unknown): Record<DashboardRole, Widget[]> => {
+  const raw =
+    layouts && typeof layouts === 'object'
+      ? (layouts as Partial<Record<DashboardRole, Widget[]>>)
+      : {};
+  return {
+    staff: normalizeWidgetArray(raw.staff, 'staff'),
+    welfare: normalizeWidgetArray(raw.welfare, 'welfare'),
+    traveler: normalizeWidgetArray(raw.traveler, 'traveler'),
+  };
+};
+
+const getNextWidgetY = (widgets: Widget[]): number =>
+  widgets.reduce((maxY, widget) => {
+    const { layout } = widget;
+    if (!layout || !isFiniteNumber(layout.y) || !isFiniteNumber(layout.h)) {
+      return maxY;
+    }
+    return Math.max(maxY, layout.y + layout.h);
+  }, 0);
+
 export const useDashboardStore = create<DashboardState>()(
   persist(
     (set, get) => ({
@@ -49,14 +134,12 @@ export const useDashboardStore = create<DashboardState>()(
       lastSavedAt: null,
 
       setRole: (role) => {
-        const { layoutsByRole } = get();
-        const nextWidgets =
-          layoutsByRole[role] && layoutsByRole[role].length > 0
-            ? cloneWidgets(layoutsByRole[role])
-            : cloneWidgets(DEFAULT_LAYOUTS[role]);
+        const safeLayoutsByRole = normalizeLayoutsByRole(get().layoutsByRole);
+        const nextWidgets = safeLayoutsByRole[role];
         set({
           currentRole: role,
-          widgets: nextWidgets,
+          widgets: cloneWidgets(nextWidgets),
+          layoutsByRole: safeLayoutsByRole,
           selectedWidgetId: null,
           isEditMode: false,
         });
@@ -113,17 +196,21 @@ export const useDashboardStore = create<DashboardState>()(
         })),
 
       addWidget: (widget) =>
-        set((state) => ({
-          widgets: [...state.widgets, widget],
-          selectedWidgetId: widget.id,
-        })),
+        set((state) => {
+          const normalized = normalizeWidget(widget);
+          return {
+            widgets: [...state.widgets, normalized],
+            selectedWidgetId: normalized.id,
+          };
+        }),
 
       addWidgetByType: (type) => {
-        const { availableWidgets } = get();
+        const { availableWidgets, widgets } = get();
         const libraryItem = availableWidgets.find((item) => item.type === type);
         if (!libraryItem) return;
+        const nextY = getNextWidgetY(widgets);
         const widget = createWidgetInstance(libraryItem, {
-          layout: { ...libraryItem.defaultLayout, y: Infinity },
+          layout: { ...libraryItem.defaultLayout, y: nextY },
         });
         get().addWidget(widget);
       },
@@ -143,19 +230,23 @@ export const useDashboardStore = create<DashboardState>()(
 
       saveLayout: () => {
         const { widgets, currentRole } = get();
+        const normalizedWidgets = widgets.map((widget) => normalizeWidget(widget));
         set((state) => ({
+          widgets: normalizedWidgets,
           layoutsByRole: {
             ...state.layoutsByRole,
-            [currentRole]: cloneWidgets(widgets),
+            [currentRole]: cloneWidgets(normalizedWidgets),
           },
           lastSavedAt: new Date().toISOString(),
         }));
       },
 
       discardChanges: () => {
-        const { currentRole, layoutsByRole } = get();
+        const { currentRole } = get();
+        const safeLayoutsByRole = normalizeLayoutsByRole(get().layoutsByRole);
         set({
-          widgets: cloneWidgets(layoutsByRole[currentRole] || DEFAULT_LAYOUTS[currentRole]),
+          widgets: cloneWidgets(safeLayoutsByRole[currentRole]),
+          layoutsByRole: safeLayoutsByRole,
           selectedWidgetId: null,
         });
       },
@@ -183,6 +274,15 @@ export const useDashboardStore = create<DashboardState>()(
         layoutsByRole: state.layoutsByRole,
         lastSavedAt: state.lastSavedAt,
       }),
+      version: 1,
+      migrate: (persistedState: any) => {
+        const lastSavedAt =
+          typeof persistedState?.lastSavedAt === 'string' ? persistedState.lastSavedAt : null;
+        return {
+          layoutsByRole: normalizeLayoutsByRole(persistedState?.layoutsByRole),
+          lastSavedAt,
+        };
+      },
     }
   )
 );
