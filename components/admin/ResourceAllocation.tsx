@@ -104,8 +104,8 @@ function HotelAllocationTab({ rooms, onUpdate }: {
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{room.hotel_name}</h4>
@@ -127,7 +127,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">已鎖定</span>
-                <span className="font-semibold text-blue-600">{room.locked_count} 間</span>
+                <span className="font-semibold text-brand-600">{room.locked_count} 間</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">可用</span>
@@ -143,7 +143,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   {room.nights && (
                     <div className="flex items-center justify-between text-sm mt-1">
                       <span className="text-gray-500">總價（{room.nights}晚）</span>
-                      <span className="font-semibold text-blue-600">
+                      <span className="font-semibold text-brand-600">
                         NT${(room.price_per_night * room.nights).toLocaleString()}
                       </span>
                     </div>
@@ -158,7 +158,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   className={cn(
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1',
                     room.available_count > 0
-                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      ? 'bg-brand-100 text-brand-700 hover:bg-brand-200'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   )}
                 >
@@ -417,7 +417,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
                 <span className="text-sm text-gray-600">可用 ({availableSeats})</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded" />
+                <div className="w-4 h-4 bg-brand-100 border border-brand-300 rounded" />
                 <span className="text-sm text-gray-600">已分配 ({assignedSeats})</span>
               </div>
             </div>
@@ -433,7 +433,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
                   className={cn(
                     'aspect-square rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all',
                     seat.is_assigned
-                      ? 'bg-blue-100 border-blue-300 text-blue-700'
+                      ? 'bg-brand-100 border-brand-300 text-brand-700'
                       : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
                   )}
                   onClick={() => {
@@ -487,7 +487,7 @@ function TourLeaderTab({ leaderId, onUpdate }: {
             className={cn(
               'p-6 rounded-2xl border-2 text-left transition-all',
               leaderId === leader.id
-                ? 'border-blue-500 bg-blue-50'
+                ? 'border-brand-500 bg-brand-50'
                 : 'border-gray-200 bg-white hover:border-gray-300'
             )}
           >
@@ -495,9 +495,9 @@ function TourLeaderTab({ leaderId, onUpdate }: {
               <div className="flex items-center gap-3">
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center',
-                  leaderId === leader.id ? 'bg-blue-100' : 'bg-gray-100'
+                  leaderId === leader.id ? 'bg-brand-100' : 'bg-gray-100'
                 )}>
-                  <User className={cn('w-6 h-6', leaderId === leader.id ? 'text-blue-600' : 'text-gray-600')} />
+                  <User className={cn('w-6 h-6', leaderId === leader.id ? 'text-brand-600' : 'text-gray-600')} />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{leader.name}</h4>
@@ -505,7 +505,7 @@ function TourLeaderTab({ leaderId, onUpdate }: {
                 </div>
               </div>
               {leaderId === leader.id && (
-                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
               )}
@@ -531,12 +531,12 @@ function TourLeaderTab({ leaderId, onUpdate }: {
       </div>
 
       {selectedLeader && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+        <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6">
           <div className="flex items-center gap-3">
-            <CheckCircle className="w-6 h-6 text-blue-600" />
+            <CheckCircle className="w-6 h-6 text-brand-600" />
             <div>
-              <p className="font-semibold text-blue-900">已指派：{selectedLeader.name}</p>
-              <p className="text-sm text-blue-700">聯絡電話：{selectedLeader.phone}</p>
+              <p className="font-semibold text-brand-900">已指派：{selectedLeader.name}</p>
+              <p className="text-sm text-brand-700">聯絡電話：{selectedLeader.phone}</p>
             </div>
           </div>
         </div>
@@ -586,7 +586,7 @@ export default function ResourceAllocation({
             className={cn(
               'flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors',
               activeTab === tab.key
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-brand-500 text-brand-600'
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             )}
           >

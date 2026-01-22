@@ -195,7 +195,7 @@ export default function ERPInsights() {
               className="mt-6 pt-5 border-t border-white/10"
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-gradient-purple flex items-center justify-center">
+                <div className="w-6 h-6 rounded-lg bg-gradient-brand flex items-center justify-center">
                   <Sparkles className="w-3 h-3 text-white" />
                 </div>
                 <p className="text-xs text-gray-400 uppercase font-semibold tracking-wider">AI 策略建議</p>
@@ -236,14 +236,14 @@ function KPICard({ title, value, trend, icon, color, delay }: KPICardProps) {
       trendBg: 'bg-brand-50 text-brand-700',
     },
     purple: {
-      bg: 'bg-purple-50',
-      iconBg: 'bg-gradient-purple',
-      trendBg: 'bg-purple-50 text-purple-700',
+      bg: 'bg-accent-50',
+      iconBg: 'bg-gradient-ocean',
+      trendBg: 'bg-accent-50 text-accent-700',
     },
     blue: {
-      bg: 'bg-blue-50',
+      bg: 'bg-brand-50',
       iconBg: 'bg-gradient-ocean',
-      trendBg: 'bg-blue-50 text-blue-700',
+      trendBg: 'bg-brand-50 text-brand-700',
     },
     orange: {
       bg: 'bg-orange-50',

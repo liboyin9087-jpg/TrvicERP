@@ -13,9 +13,9 @@ export default function BarChartWidget({ widget }: { widget: Widget }) {
       <div className="flex items-end gap-3 h-28">
         {BAR_CHART_DATA.map((item) => (
           <div key={item.label} className="flex flex-col items-center gap-2 flex-1">
-            <div className="w-full h-20 bg-blue-100 rounded-lg overflow-hidden flex items-end">
+            <div className="w-full h-20 bg-brand-100 rounded-lg overflow-hidden flex items-end">
               <div
-                className="bg-blue-500 rounded-lg transition-all"
+                className="bg-brand-500 rounded-lg transition-all"
                 style={{ height: `${(item.value / max) * 100}%` }}
               />
             </div>

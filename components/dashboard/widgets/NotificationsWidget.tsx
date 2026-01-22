@@ -3,7 +3,7 @@ import type { Widget } from '@/core/types/dashboard';
 import { NOTIFICATIONS } from '@/data/dashboardData';
 
 const LEVEL_STYLE = {
-  info: 'bg-blue-500',
+  info: 'bg-brand-500',
   warning: 'bg-amber-500',
   success: 'bg-emerald-500',
 };

@@ -132,7 +132,7 @@ export default function LegalAssistant() {
             onClick={() => setIsOpen(true)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center justify-center"
+            className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center"
           >
             <Scale className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
@@ -153,7 +153,7 @@ export default function LegalAssistant() {
             className="fixed bottom-6 right-6 z-50 w-[380px] h-[580px] glass-panel rounded-3xl flex flex-col overflow-hidden shadow-2xl"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-5 py-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-brand-500 to-brand-700 text-white px-5 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <motion.div
                   whileHover={{ rotate: 10 }}
@@ -194,7 +194,7 @@ export default function LegalAssistant() {
                     className={cn(
                       'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm',
                       message.role === 'user'
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-md'
+                        ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-br-md'
                         : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
                     )}
                   >
@@ -212,10 +212,10 @@ export default function LegalAssistant() {
                             <motion.div
                               key={doc.id}
                               whileHover={{ scale: 1.02 }}
-                              className="text-xs bg-indigo-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-indigo-100 transition-colors"
+                              className="text-xs bg-brand-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-brand-100 transition-colors"
                             >
-                              <span className="font-medium text-indigo-700">{doc.title}</span>
-                              <span className="text-indigo-400 ml-1.5 text-[10px]">({doc.category})</span>
+                              <span className="font-medium text-brand-700">{doc.title}</span>
+                              <span className="text-brand-400 ml-1.5 text-[10px]">({doc.category})</span>
                             </motion.div>
                           ))}
                         </div>
@@ -265,7 +265,7 @@ export default function LegalAssistant() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleQuickQuestion(q)}
-                        className="text-xs bg-white text-indigo-600 px-3 py-1.5 rounded-full border border-indigo-100 hover:bg-indigo-50 hover:border-indigo-200 transition-all shadow-sm"
+                        className="text-xs bg-white text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 hover:bg-brand-50 hover:border-brand-200 transition-all shadow-sm"
                       >
                         {q}
                       </motion.button>
@@ -285,7 +285,7 @@ export default function LegalAssistant() {
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="輸入您的法規問題..."
-                    className="w-full px-4 py-3 bg-gray-100/80 rounded-2xl focus:ring-2 focus:ring-indigo-500/30 focus:bg-white border-0 text-sm transition-all outline-none"
+                    className="w-full px-4 py-3 bg-gray-100/80 rounded-2xl focus:ring-2 focus:ring-brand-500/30 focus:bg-white border-0 text-sm transition-all outline-none"
                     disabled={isLoading}
                   />
                 </div>
@@ -297,7 +297,7 @@ export default function LegalAssistant() {
                   className={cn(
                     'w-11 h-11 rounded-xl flex items-center justify-center transition-all',
                     input.trim() && !isLoading
-                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
+                      ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30'
                       : 'bg-gray-200 text-gray-400'
                   )}
                 >

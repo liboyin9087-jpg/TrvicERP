@@ -23,8 +23,8 @@ export default function InteractiveMap() {
   const getMarkerColor = (type: string) => {
     const colors: Record<string, string> = {
       attraction: 'bg-brand-500',
-      hotel: 'bg-blue-500',
-      restaurant: 'bg-orange-500',
+      hotel: 'bg-accent-500',
+      restaurant: 'bg-warning-500',
     };
     return colors[type] || 'bg-gray-500';
   };
@@ -87,11 +87,11 @@ export default function InteractiveMap() {
             <span className="text-sm text-gray-600">景點</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <div className="w-3 h-3 rounded-full bg-accent-500" />
             <span className="text-sm text-gray-600">住宿</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500" />
+            <div className="w-3 h-3 rounded-full bg-warning-500" />
             <span className="text-sm text-gray-600">餐廳</span>
           </div>
         </div>

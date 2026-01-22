@@ -214,7 +214,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('groups')}
-          className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl text-white shadow-lg"
+          className="flex items-center gap-4 p-6 bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl text-white shadow-lg"
         >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <Plus className="w-6 h-6" />
@@ -262,7 +262,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           <h3 className="font-bold text-gray-900">我的活動</h3>
           <button
             onClick={() => onNavigate('groups')}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1"
           >
             查看全部 <ChevronRight className="w-4 h-4" />
           </button>
@@ -306,7 +306,7 @@ function TripRow({ trip }: { trip: WelfareTrip }) {
       draft: { bg: 'bg-gray-100', text: 'text-gray-600', label: '草稿' },
       open: { bg: 'bg-green-100', text: 'text-green-700', label: '報名中' },
       closing: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: '即將截止' },
-      confirmed: { bg: 'bg-blue-100', text: 'text-blue-700', label: '已確認' },
+      confirmed: { bg: 'bg-brand-100', text: 'text-brand-700', label: '已確認' },
       completed: { bg: 'bg-gray-100', text: 'text-gray-600', label: '已結束' },
     };
     return styles[status] || styles.draft;
@@ -391,7 +391,7 @@ function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: type
               className={cn(
                 'p-4 border-2 rounded-xl cursor-pointer transition-all',
                 selectedTemplate === template.id
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-brand-500 bg-brand-50'
                   : 'border-gray-200 hover:border-gray-300'
               )}
               onClick={() => setSelectedTemplate(template.id)}
@@ -401,7 +401,7 @@ function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: type
                   <h5 className="font-semibold text-gray-900">{template.name}</h5>
                   <p className="text-sm text-gray-500 mt-1">{template.destination} · {template.days}天</p>
                 </div>
-                <span className="text-lg font-bold text-blue-600">
+                <span className="text-lg font-bold text-brand-600">
                   NT${template.basePrice.toLocaleString()}
                 </span>
               </div>
@@ -486,7 +486,7 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-500" />
+            <Shield className="w-5 h-5 text-brand-500" />
             年資補助階梯
           </h4>
         </div>
@@ -495,8 +495,8 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
             <div key={rule.id} className="p-6 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Award className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center">
+                    <Award className="w-6 h-6 text-brand-600" />
                   </div>
                   <div>
                     <h5 className="font-semibold text-gray-900">{rule.name}</h5>
@@ -536,7 +536,7 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
-            <Users2 className="w-5 h-5 text-purple-500" />
+            <Users2 className="w-5 h-5 text-accent-500" />
             親友加購規則
           </h4>
         </div>
@@ -555,7 +555,7 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
           </div>
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
             <div className="flex items-center gap-3">
-              <Baby className="w-5 h-5 text-blue-500" />
+              <Baby className="w-5 h-5 text-brand-500" />
               <span className="font-medium text-gray-900">子女</span>
             </div>
             <div className="flex items-center gap-4">
@@ -795,7 +795,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
         </div>
         <div className="bg-white p-4 rounded-xl border border-gray-100">
           <p className="text-sm text-gray-500">已分配</p>
-          <p className="text-2xl font-bold text-blue-600">{assignedCount}</p>
+          <p className="text-2xl font-bold text-brand-600">{assignedCount}</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-gray-100">
           <p className="text-sm text-gray-500">可用</p>
@@ -811,7 +811,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
             <span className="text-sm text-gray-600">可用</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded" />
+            <div className="w-4 h-4 bg-brand-100 border border-brand-300 rounded" />
             <span className="text-sm text-gray-600">已分配</span>
           </div>
         </div>
@@ -840,7 +840,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
                 className={cn(
                   'aspect-square rounded-lg border-2 flex flex-col items-center justify-center text-xs font-medium transition-all',
                   assignment
-                    ? 'bg-blue-100 border-blue-300 text-blue-700'
+                    ? 'bg-brand-100 border-brand-300 text-brand-700'
                     : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
                 )}
               >
@@ -881,7 +881,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
                         'w-full p-3 rounded-lg text-left transition-colors',
                         isAssigned
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                          : 'bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50'
                       )}
                     >
                       <p className="font-medium">{emp.name}</p>
@@ -943,8 +943,8 @@ function RosterTab({ employees, rooms }: { employees: Employee[]; rooms: RoomAss
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Home className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
+                    <Home className="w-5 h-5 text-brand-600" />
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">房號 {room.roomNumber}</h4>
@@ -1058,7 +1058,7 @@ function PreparationTab() {
               <Send className="w-4 h-4" />
               發送 LINE 通知
             </button>
-            <button className="w-full py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-3 bg-brand-500 text-white rounded-xl font-medium hover:bg-brand-600 transition-colors flex items-center justify-center gap-2">
               <Mail className="w-4 h-4" />
               發送 Email 通知
             </button>
@@ -1206,7 +1206,7 @@ export default function WelfareDashboard() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/25">
               <Building2 className="w-7 h-7 text-white" />
             </div>
             <div>

@@ -24,7 +24,7 @@ export default function InsuranceExport() {
   const getStatusStyle = (status: string) => {
     const styles: Record<string, { bg: string; text: string; label: string }> = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: '待提交' },
-      submitted: { bg: 'bg-blue-100', text: 'text-blue-700', label: '已提交' },
+      submitted: { bg: 'bg-brand-100', text: 'text-brand-700', label: '已提交' },
       confirmed: { bg: 'bg-brand-100', text: 'text-brand-700', label: '已確認' },
     };
     return styles[status] || styles.pending;

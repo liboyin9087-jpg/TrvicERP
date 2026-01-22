@@ -174,7 +174,7 @@ function DashboardTab({ groups, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('create')}
-          className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl text-white shadow-lg"
+          className="flex items-center gap-4 p-6 bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl text-white shadow-lg"
         >
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <Plus className="w-6 h-6" />
@@ -224,7 +224,7 @@ function DashboardTab({ groups, onNavigate }: {
           <h3 className="font-bold text-gray-900">開放團體列表</h3>
           <button
             onClick={() => onNavigate('groups')}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            className="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center gap-1"
           >
             查看全部 <ChevronRight className="w-4 h-4" />
           </button>
@@ -266,7 +266,7 @@ function GroupRow({ group }: { group: GroupListItem }) {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string; text: string; label: string }> = {
       soliciting: { bg: 'bg-green-100', text: 'text-green-700', label: '招募中' },
-      guaranteed: { bg: 'bg-blue-100', text: 'text-blue-700', label: '已成團' },
+      guaranteed: { bg: 'bg-brand-100', text: 'text-brand-700', label: '已成團' },
       closed: { bg: 'bg-gray-100', text: 'text-gray-600', label: '已截止' },
       completed: { bg: 'bg-gray-100', text: 'text-gray-600', label: '已結案' },
     };
@@ -286,7 +286,7 @@ function GroupRow({ group }: { group: GroupListItem }) {
               {status.label}
             </span>
             {group.group_type === 'welfare' && (
-              <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+              <span className="px-2 py-1 bg-accent-100 text-accent-700 rounded-full text-xs font-semibold">
                 福委團
               </span>
             )}
@@ -424,7 +424,7 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                   <td className="px-6 py-4">
                     <span className={cn(
                       'px-2 py-1 rounded-full text-xs font-medium',
-                      group.group_type === 'welfare' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                      group.group_type === 'welfare' ? 'bg-accent-100 text-accent-700' : 'bg-gray-100 text-gray-600'
                     )}>
                       {group.group_type === 'welfare' ? '福委團' : '一般團'}
                     </span>
@@ -449,7 +449,7 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                     <span className={cn(
                       'px-2 py-1 rounded-full text-xs font-medium',
                       group.status === 'soliciting' && 'bg-green-100 text-green-700',
-                      group.status === 'guaranteed' && 'bg-blue-100 text-blue-700',
+                      group.status === 'guaranteed' && 'bg-brand-100 text-brand-700',
                       group.status === 'closed' && 'bg-gray-100 text-gray-600',
                     )}>
                       {group.status === 'soliciting' && '招募中'}
@@ -467,7 +467,7 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                       </button>
                       <button
                         onClick={() => onEdit(group.id)}
-                        className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                        className="p-1.5 bg-brand-100 text-brand-600 rounded-lg hover:bg-brand-200 transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
@@ -525,7 +525,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
       >
         <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-bold text-gray-900">建立新團體</h2>
@@ -759,7 +759,7 @@ export default function SessionManager() {
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+            <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-500/25">
               <Calendar className="w-7 h-7 text-white" />
             </div>
             <div>

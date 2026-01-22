@@ -219,7 +219,7 @@ function TabBar({ activeTab, onTabChange, notificationCount }: {
             onClick={() => onTabChange(key)}
             className={cn(
               'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all relative',
-              activeTab === key ? 'text-blue-600' : 'text-gray-500'
+              activeTab === key ? 'text-brand-600' : 'text-gray-500'
             )}
           >
             <Icon className="w-5 h-5" />
@@ -238,7 +238,7 @@ function TabBar({ activeTab, onTabChange, notificationCount }: {
 
 function EligibilityCard({ user }: { user: UserProfile }) {
   return (
-    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
+    <div className="bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl p-5 text-white">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -327,7 +327,7 @@ function TripCard({ trip, onRegister }: { trip: AvailableTrip; onRegister: () =>
 
         <div className="flex flex-wrap gap-1">
           {trip.highlights.slice(0, 3).map((h, i) => (
-            <span key={i} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">
+            <span key={i} className="text-xs bg-brand-50 text-brand-600 px-2 py-1 rounded-full">
               {h}
             </span>
           ))}
@@ -352,7 +352,7 @@ function TripCard({ trip, onRegister }: { trip: AvailableTrip; onRegister: () =>
           </div>
           <div className="border-t border-gray-200 pt-2 flex items-center justify-between">
             <span className="text-gray-700 font-medium">自付金額</span>
-            <span className="text-xl font-bold text-blue-600">NT${selfPay.toLocaleString()}</span>
+            <span className="text-xl font-bold text-brand-600">NT${selfPay.toLocaleString()}</span>
           </div>
         </div>
 
@@ -380,7 +380,7 @@ function TripCard({ trip, onRegister }: { trip: AvailableTrip; onRegister: () =>
               'px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors',
               trip.status === 'full'
                 ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-brand-600 text-white hover:bg-brand-700'
             )}
           >
             {trip.status === 'full' ? '已額滿' : '立即報名'}
@@ -417,7 +417,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
           <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
           <p className="text-sm text-gray-500">{user.department} · {user.employeeId}</p>
         </div>
-        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
+        <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
           {user.name[0]}
         </div>
       </div>
@@ -440,7 +440,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-blue-600">{daysUntilTrip}</p>
+                  <p className="text-3xl font-bold text-brand-600">{daysUntilTrip}</p>
                   <p className="text-xs text-gray-500">天後出發</p>
                 </div>
                 <div className="h-10 w-px bg-gray-200" />
@@ -451,7 +451,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
               </div>
               <button
                 onClick={() => onNavigate('mytrips')}
-                className="flex items-center gap-1 text-blue-600 text-sm font-medium"
+                className="flex items-center gap-1 text-brand-600 text-sm font-medium"
               >
                 查看詳情 <ChevronRight className="w-4 h-4" />
               </button>
@@ -477,7 +477,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onNavigate('mytrips')}
-          className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 rounded-2xl text-white text-left"
+          className="bg-gradient-to-r from-brand-500 to-brand-700 p-4 rounded-2xl text-white text-left"
         >
           <Calendar className="w-6 h-6 mb-2" />
           <p className="font-bold">我的行程</p>
@@ -520,7 +520,7 @@ function HomeTab({ user, registrations, notifications, onNavigate }: {
                 icon={<FileText className="w-4 h-4" />}
                 title="下載個人行程表"
                 subtitle={upcomingTrip.tripName}
-                action={<Download className="w-4 h-4 text-blue-600" />}
+                action={<Download className="w-4 h-4 text-brand-600" />}
               />
               <TodoItem
                 icon={<Info className="w-4 h-4" />}
@@ -575,10 +575,10 @@ function ExploreTab({ trips, user, onRegister }: {
       </div>
 
       {/* Eligibility reminder */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
-        <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
+      <div className="bg-brand-50 border border-brand-200 rounded-xl p-4 flex items-center gap-3">
+        <Shield className="w-5 h-5 text-brand-600 flex-shrink-0" />
         <div>
-          <p className="text-sm text-blue-900">
+          <p className="text-sm text-brand-900">
             您的補助資格：<span className="font-semibold">{user.subsidyTier}</span>，
             最高可補助 <span className="font-semibold">NT${user.maxSubsidy.toLocaleString()}</span>
           </p>
@@ -675,7 +675,7 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                 key={s}
                 className={cn(
                   'flex-1 h-1 rounded-full transition-colors',
-                  s <= step ? 'bg-blue-600' : 'bg-gray-200'
+                  s <= step ? 'bg-brand-600' : 'bg-gray-200'
                 )}
               />
             ))}
@@ -705,12 +705,12 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                       className={cn(
                         'p-3 rounded-xl border-2 flex flex-col items-center gap-1 transition-all',
                         roomType === value
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-brand-600 bg-brand-50'
                           : 'border-gray-200 hover:border-gray-300'
                       )}
                     >
-                      <Icon className={cn('w-5 h-5', roomType === value ? 'text-blue-600' : 'text-gray-500')} />
-                      <span className={cn('text-sm font-medium', roomType === value ? 'text-blue-600' : 'text-gray-700')}>
+                      <Icon className={cn('w-5 h-5', roomType === value ? 'text-brand-600' : 'text-gray-500')} />
+                      <span className={cn('text-sm font-medium', roomType === value ? 'text-brand-600' : 'text-gray-700')}>
                         {label}
                       </span>
                     </button>
@@ -733,7 +733,7 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                       className={cn(
                         'p-3 rounded-xl border-2 text-sm font-medium transition-all',
                         mealPreference === value
-                          ? 'border-blue-600 bg-blue-50 text-blue-600'
+                          ? 'border-brand-600 bg-brand-50 text-brand-600'
                           : 'border-gray-200 text-gray-700 hover:border-gray-300'
                       )}
                     >
@@ -760,7 +760,7 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                       className={cn(
                         'p-3 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2',
                         seatPreference === value
-                          ? 'border-blue-600 bg-blue-50 text-blue-600'
+                          ? 'border-brand-600 bg-brand-50 text-brand-600'
                           : 'border-gray-200 text-gray-700 hover:border-gray-300'
                       )}
                     >
@@ -781,7 +781,7 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                   <label className="text-sm font-medium text-gray-700">同行親友</label>
                   <button
                     onClick={addCompanion}
-                    className="text-sm text-blue-600 font-medium flex items-center gap-1"
+                    className="text-sm text-brand-600 font-medium flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" /> 新增
                   </button>
@@ -846,24 +846,24 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
 
           {step === 3 && (
             <>
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <h4 className="font-semibold text-blue-900 mb-3">報名確認</h4>
+              <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
+                <h4 className="font-semibold text-brand-900 mb-3">報名確認</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-blue-700">行程</span>
-                    <span className="text-blue-900 font-medium">{trip.name}</span>
+                    <span className="text-brand-700">行程</span>
+                    <span className="text-brand-900 font-medium">{trip.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">房型</span>
-                    <span className="text-blue-900 font-medium">
+                    <span className="text-brand-700">房型</span>
+                    <span className="text-brand-900 font-medium">
                       {roomType === 'single' && '單人房'}
                       {roomType === 'double' && '雙人房'}
                       {roomType === 'family' && '家庭房'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">餐食</span>
-                    <span className="text-blue-900 font-medium">
+                    <span className="text-brand-700">餐食</span>
+                    <span className="text-brand-900 font-medium">
                       {mealPreference === 'normal' && '一般餐食'}
                       {mealPreference === 'vegetarian' && '素食'}
                       {mealPreference === 'halal' && '清真'}
@@ -871,8 +871,8 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">座位偏好</span>
-                    <span className="text-blue-900 font-medium">
+                    <span className="text-brand-700">座位偏好</span>
+                    <span className="text-brand-900 font-medium">
                       {seatPreference === 'window' && '靠窗'}
                       {seatPreference === 'aisle' && '靠走道'}
                       {seatPreference === 'front' && '前排'}
@@ -882,8 +882,8 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-700">同行者</span>
-                    <span className="text-blue-900 font-medium">
+                    <span className="text-brand-700">同行者</span>
+                    <span className="text-brand-900 font-medium">
                       {companions.length > 0 ? companions.map(c => c.name).join(', ') : '無'}
                     </span>
                   </div>
@@ -901,7 +901,7 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
                 </div>
                 <div className="border-t border-gray-200 pt-3 flex justify-between">
                   <span className="font-medium text-gray-900">自付金額</span>
-                  <span className="text-xl font-bold text-blue-600">NT${selfPay.toLocaleString()}</span>
+                  <span className="text-xl font-bold text-brand-600">NT${selfPay.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -928,14 +928,14 @@ function RegistrationForm({ trip, user, onClose, onSubmit }: {
           {step < 3 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold"
+              className="flex-1 py-3 bg-brand-600 text-white rounded-xl font-semibold"
             >
               下一步
             </button>
           ) : (
             <button
               onClick={handleSubmit}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold"
+              className="flex-1 py-3 bg-brand-600 text-white rounded-xl font-semibold"
             >
               確認報名
             </button>
@@ -951,7 +951,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
     switch (status) {
       case 'pending': return { label: '審核中', color: 'bg-yellow-100 text-yellow-700' };
       case 'approved': return { label: '已通過', color: 'bg-green-100 text-green-700' };
-      case 'confirmed': return { label: '已確認', color: 'bg-blue-100 text-blue-700' };
+      case 'confirmed': return { label: '已確認', color: 'bg-brand-100 text-brand-700' };
       case 'completed': return { label: '已完成', color: 'bg-gray-100 text-gray-600' };
       default: return { label: '未知', color: 'bg-gray-100 text-gray-600' };
     }
@@ -1009,7 +1009,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                     </div>
                     <div>
                       <p className="text-gray-500">自付金額</p>
-                      <p className="font-medium text-blue-600">NT${reg.selfPay.toLocaleString()}</p>
+                      <p className="font-medium text-brand-600">NT${reg.selfPay.toLocaleString()}</p>
                     </div>
                   </div>
 
@@ -1025,7 +1025,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                       <Download className="w-4 h-4" />
                       下載行程表
                     </button>
-                    <button className="flex-1 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium flex items-center justify-center gap-1">
+                    <button className="flex-1 py-2 bg-brand-100 text-brand-700 rounded-lg text-sm font-medium flex items-center justify-center gap-1">
                       <ExternalLink className="w-4 h-4" />
                       查看詳情
                     </button>
@@ -1048,7 +1048,7 @@ function NotificationsTab({ notifications, onMarkRead }: {
     switch (type) {
       case 'success': return { icon: CheckCircle, color: 'text-green-600 bg-green-100' };
       case 'warning': return { icon: AlertCircle, color: 'text-yellow-600 bg-yellow-100' };
-      case 'info': return { icon: Info, color: 'text-blue-600 bg-blue-100' };
+      case 'info': return { icon: Info, color: 'text-brand-600 bg-brand-100' };
       default: return { icon: Bell, color: 'text-gray-600 bg-gray-100' };
     }
   };
@@ -1077,7 +1077,7 @@ function NotificationsTab({ notifications, onMarkRead }: {
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
                   'bg-white rounded-xl border p-4',
-                  notif.read ? 'border-gray-100' : 'border-blue-200 bg-blue-50/30'
+                  notif.read ? 'border-gray-100' : 'border-brand-200 bg-brand-50/30'
                 )}
                 onClick={() => !notif.read && onMarkRead(notif.id)}
               >
@@ -1089,7 +1089,7 @@ function NotificationsTab({ notifications, onMarkRead }: {
                     <div className="flex items-start justify-between">
                       <h4 className="font-semibold text-gray-900">{notif.title}</h4>
                       {!notif.read && (
-                        <span className="w-2 h-2 bg-blue-600 rounded-full" />
+                        <span className="w-2 h-2 bg-brand-600 rounded-full" />
                       )}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{notif.message}</p>
@@ -1184,7 +1184,7 @@ function FeedbackTab() {
           className={cn(
             'w-full py-3 rounded-xl font-semibold transition-colors',
             rating > 0
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-brand-600 text-white hover:bg-brand-700'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
           )}
         >

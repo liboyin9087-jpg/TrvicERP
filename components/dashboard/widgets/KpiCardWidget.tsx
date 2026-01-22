@@ -39,8 +39,8 @@ export default function KpiCardWidget({ widget }: { widget: Widget }) {
           <p className="text-xs uppercase tracking-wide text-gray-400">KPI</p>
           <p className="text-2xl font-bold text-gray-900">{formattedValue}</p>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-          <Icon size={18} className="text-blue-600" />
+        <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
+          <Icon size={18} className="text-brand-600" />
         </div>
       </div>
       {widget.config.showTrend !== false && (

@@ -107,7 +107,7 @@ export default function DraggableDashboard() {
               Edit dashboard
             </button>
           )}
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors shadow-sm">
             <Plus size={16} />
             New tour
           </button>
@@ -135,7 +135,7 @@ export default function DraggableDashboard() {
                   setEditMode(true);
                   setShowLibrary(true);
                 }}
-                className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700"
+                className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 text-sm text-brand-600 hover:text-brand-700"
               >
                 <Plus size={14} />
                 Add widgets
@@ -165,15 +165,15 @@ export default function DraggableDashboard() {
                 className={cn(
                   'relative rounded-xl bg-white border transition-all duration-200 overflow-hidden flex flex-col',
                   isEditMode
-                    ? 'border-dashed border-blue-300 shadow-lg'
+                    ? 'border-dashed border-brand-200 shadow-lg'
                     : 'border-gray-200 shadow-sm',
-                  selectedWidgetId === widget.id && 'ring-2 ring-blue-400'
+                  selectedWidgetId === widget.id && 'ring-2 ring-brand-400'
                 )}
               >
                 <div
                   className={cn(
                     'flex items-center justify-between px-4 py-3 border-b border-gray-100',
-                    isEditMode && 'bg-blue-50 widget-drag-handle cursor-move'
+                    isEditMode && 'bg-brand-50 widget-drag-handle cursor-move'
                   )}
                 >
                   <div className="flex items-center gap-2">

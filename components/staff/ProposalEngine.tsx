@@ -115,7 +115,7 @@ export default function ProposalEngine() {
               <input
                 value={baseItineraryId}
                 onChange={(event) => setBaseItineraryId(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -125,7 +125,7 @@ export default function ProposalEngine() {
                   type="number"
                   value={budgetMin}
                   onChange={(event) => setBudgetMin(Number(event.target.value))}
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </label>
               <label className="block text-xs text-gray-500">
@@ -134,7 +134,7 @@ export default function ProposalEngine() {
                   type="number"
                   value={budgetMax}
                   onChange={(event) => setBudgetMax(Number(event.target.value))}
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </label>
             </div>
@@ -144,7 +144,7 @@ export default function ProposalEngine() {
                 type="number"
                 value={paxCount}
                 onChange={(event) => setPaxCount(Number(event.target.value))}
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
             </label>
             <div>

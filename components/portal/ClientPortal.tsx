@@ -106,7 +106,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 placeholder="hr@company.com"
               />
             </div>
@@ -115,7 +115,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
               <input
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
-                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 placeholder="輸入 6 位數驗證碼"
               />
             </div>
@@ -185,7 +185,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <StatCard icon={<Users className="w-5 h-5 text-blue-600" />} label="報名完成率" value={`${stats.registrationRate}%`} helper="已確認 2 / 4" />
               <StatCard icon={<FileText className="w-5 h-5 text-emerald-600" />} label="護照繳交率" value={`${stats.passportRate}%`} helper="缺件 2 人" />
-              <StatCard icon={<CheckCircle className="w-5 h-5 text-indigo-600" />} label="保險完成率" value={`${stats.insuranceRate}%`} helper="缺件 1 人" />
+              <StatCard icon={<CheckCircle className="w-5 h-5 text-brand-600" />} label="保險完成率" value={`${stats.insuranceRate}%`} helper="缺件 1 人" />
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-4">
