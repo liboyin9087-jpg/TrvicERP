@@ -46,6 +46,8 @@ SILICONFLOW_MARKETING_MODEL = os.getenv(
     "SILICONFLOW_MARKETING_MODEL",
     "Qwen/Qwen2.5-32B-Instruct"
 )
+SILICONFLOW_MARKETING_TEMPERATURE = float(os.getenv("SILICONFLOW_MARKETING_TEMPERATURE", "0.7"))
+SILICONFLOW_MARKETING_MAX_TOKENS = int(os.getenv("SILICONFLOW_MARKETING_MAX_TOKENS", "15000"))
 
 BFL_BASE_URL = os.getenv("BFL_BASE_URL", "https://api.bfl.ml/v1")
 BFL_MODEL = os.getenv("BFL_MODEL", "flux-pro")
@@ -343,7 +345,8 @@ async def call_siliconflow(
     system_prompt: str,
     user_message: str,
     temperature: float = 0.5,
-    model: str = SILICONFLOW_MODEL
+    model: str = SILICONFLOW_MODEL,
+    max_tokens: int = 4096
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     呼叫 SiliconFlow API (DeepSeek-V3) - 備用
@@ -369,7 +372,7 @@ async def call_siliconflow(
         "tools": OPENAI_TOOLS,
         "tool_choice": "auto",
         "temperature": temperature,
-        "max_tokens": 4096
+        "max_tokens": max_tokens
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -395,7 +398,8 @@ async def call_llm(
     user_message: str,
     temperature: float = 0.5,
     provider: Optional[str] = None,
-    model: Optional[str] = None
+    model: Optional[str] = None,
+    max_tokens: Optional[int] = None
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     統一 LLM 呼叫介面，根據設定選擇提供者
@@ -406,7 +410,13 @@ async def call_llm(
 
     if selected_provider == "siliconflow":
         try:
-            return await call_siliconflow(system_prompt, user_message, temperature, model=selected_model)
+            return await call_siliconflow(
+                system_prompt,
+                user_message,
+                temperature,
+                model=selected_model,
+                max_tokens=max_tokens or 4096
+            )
         except HTTPException as e:
             if os.getenv("GOOGLE_API_KEY"):
                 print(f"⚠️ SiliconFlow 失敗 ({e.detail})，切換到 Gemini...")
@@ -417,19 +427,25 @@ async def call_llm(
     except HTTPException as e:
         if os.getenv("SILICONFLOW_API_KEY"):
             print(f"⚠️ Gemini 失敗 ({e.detail})，切換到 SiliconFlow...")
-            return await call_siliconflow(system_prompt, user_message, temperature, model=selected_model)
+            return await call_siliconflow(
+                system_prompt,
+                user_message,
+                temperature,
+                model=selected_model,
+                max_tokens=max_tokens or 4096
+            )
         raise
 
 
-def select_llm_for_mode(mode: str) -> Tuple[str, Optional[str]]:
+def select_llm_for_mode(mode: str) -> Tuple[str, Optional[str], Optional[float], Optional[int]]:
     """
     根據模式選擇 LLM 提供者與模型
     - 行銷文案：優先使用 Qwen2.5 (SiliconFlow)
     - 其他模式：依 LLM_PROVIDER 設定
     """
     if mode == "marketing":
-        return "siliconflow", SILICONFLOW_MARKETING_MODEL
-    return (LLM_PROVIDER or "gemini"), None
+        return "siliconflow", SILICONFLOW_MARKETING_MODEL, SILICONFLOW_MARKETING_TEMPERATURE, SILICONFLOW_MARKETING_MAX_TOKENS
+    return (LLM_PROVIDER or "gemini"), None, None, None
 
 
 def extract_image_url(payload: Dict[str, Any]) -> Optional[str]:
@@ -692,13 +708,15 @@ async def chat(req: ChatRequest):
 
     # 4. 執行 LLM 呼叫
     try:
-        provider, model = select_llm_for_mode(req.mode)
+        provider, model, override_temperature, max_tokens = select_llm_for_mode(req.mode)
+        final_temperature = override_temperature if override_temperature is not None else temperature
         response_text, function_calls = await call_llm(
             system_prompt=final_prompt,
             user_message=req.message,
-            temperature=temperature,
+            temperature=final_temperature,
             provider=provider,
-            model=model
+            model=model,
+            max_tokens=max_tokens
         )
 
         # 5. 解析函數呼叫（若工具呼叫為空，嘗試解析標記格式）
