@@ -123,6 +123,8 @@ export default function EdgeAssistant() {
         content: `${response.reply || '已完成操作。'}${executionSummary}`,
         timestamp: new Date(),
         functionCalls: response.function_calls || undefined,
+        imageUrl: response.image_url || undefined,
+        imagePrompt: response.image_prompt || undefined,
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
@@ -249,6 +251,20 @@ export default function EdgeAssistant() {
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              {message.imageUrl && (
+                <div className="mt-3">
+                  <img
+                    src={message.imageUrl}
+                    alt={message.imagePrompt || 'Marketing image'}
+                    className="rounded-xl border border-gray-200 max-h-64 object-cover"
+                  />
+                  {message.imagePrompt && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Image prompt: {message.imagePrompt}
+                    </p>
+                  )}
+                </div>
+              )}
               {message.functionCalls && message.functionCalls.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
                   <p className="text-xs text-gray-500">

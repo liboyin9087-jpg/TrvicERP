@@ -80,6 +80,10 @@ MARKETING_PROMPT = """
 1. 根據使用者提供的景點或團名撰寫
 2. 適合社群媒體（FB/IG）或提案簡報
 3. 字數控制在 200-300 字
+
+【圖片產出】：
+若支援 Function Calling，請在文案完成後呼叫 generateMarketingImage，
+並提供 1 句英文圖片描述（適合旅遊行銷海報）。
 """
 
 # =============================================================================
@@ -289,6 +293,7 @@ FUNCTION_CALLING_GUIDE = """
 6. addDashboardWidget(type, title?, config?, layout?)
 7. removeDashboardWidget(id)
 8. updateDashboardWidget(id, title?, config?, layout?)
+9. generateMarketingImage(prompt, width?, height?, seed?, steps?, guidance?, output_format?)
 
 【備援格式】
 若環境不支援 Function Calling，才使用下列標記格式：

@@ -93,6 +93,8 @@ export interface ChatResponse {
   mode: AIMode;
   mode_description: string;
   function_calls?: FunctionCall[] | null;
+  image_url?: string | null;
+  image_prompt?: string | null;
 }
 
 // 健康檢查回應
@@ -114,4 +116,6 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   functionCalls?: FunctionCall[];
+  imageUrl?: string;
+  imagePrompt?: string;
 }

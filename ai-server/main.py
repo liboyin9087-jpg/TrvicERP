@@ -13,6 +13,7 @@ import re
 import json
 import httpx
 from typing import Optional, List, Dict, Any, Tuple
+import asyncio
 import prompt_templates
 
 BASE_DIR = os.path.dirname(__file__)
@@ -40,7 +41,16 @@ app.add_middleware(
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 SILICONFLOW_API_URL = "https://api.siliconflow.com/v1/chat/completions"
-SILICONFLOW_MODEL = "deepseek-ai/DeepSeek-V3"
+SILICONFLOW_MODEL = os.getenv("SILICONFLOW_MODEL", "deepseek-ai/DeepSeek-V3")
+SILICONFLOW_MARKETING_MODEL = os.getenv(
+    "SILICONFLOW_MARKETING_MODEL",
+    "Qwen/Qwen2.5-72B-Instruct"
+)
+
+BFL_BASE_URL = os.getenv("BFL_BASE_URL", "https://api.bfl.ml/v1")
+BFL_MODEL = os.getenv("BFL_MODEL", "flux-pro")
+BFL_API_KEY = os.getenv("BFL_API_KEY")
+BFL_API_STYLE = os.getenv("BFL_API_STYLE", "auto")
 
 # 使用哪個 LLM 提供者：'gemini' 或 'siliconflow'
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
@@ -168,6 +178,23 @@ FUNCTION_DECLARATIONS = [
                 "layout": WIDGET_LAYOUT_SCHEMA,
             },
             "required": ["id"],
+        },
+    },
+    {
+        "name": "generateMarketingImage",
+        "description": "Generate a marketing image using a text prompt",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "prompt": {"type": "string"},
+                "width": {"type": "number"},
+                "height": {"type": "number"},
+                "seed": {"type": "number"},
+                "steps": {"type": "number"},
+                "guidance": {"type": "number"},
+                "output_format": {"type": "string"},
+            },
+            "required": ["prompt"],
         },
     },
 ]
@@ -315,7 +342,8 @@ async def call_gemini(
 async def call_siliconflow(
     system_prompt: str,
     user_message: str,
-    temperature: float = 0.5
+    temperature: float = 0.5,
+    model: str = SILICONFLOW_MODEL
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     呼叫 SiliconFlow API (DeepSeek-V3) - 備用
@@ -333,7 +361,7 @@ async def call_siliconflow(
     }
 
     payload = {
-        "model": SILICONFLOW_MODEL,
+        "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message}
@@ -365,16 +393,20 @@ async def call_siliconflow(
 async def call_llm(
     system_prompt: str,
     user_message: str,
-    temperature: float = 0.5
+    temperature: float = 0.5,
+    provider: Optional[str] = None,
+    model: Optional[str] = None
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     統一 LLM 呼叫介面，根據設定選擇提供者
     優先使用 Gemini (免費額度)，失敗時切換到 SiliconFlow
     """
-    provider = (LLM_PROVIDER or "gemini").lower()
-    if provider == "siliconflow":
+    selected_provider = (provider or LLM_PROVIDER or "gemini").lower()
+    selected_model = model or SILICONFLOW_MODEL
+
+    if selected_provider == "siliconflow":
         try:
-            return await call_siliconflow(system_prompt, user_message, temperature)
+            return await call_siliconflow(system_prompt, user_message, temperature, model=selected_model)
         except HTTPException as e:
             if os.getenv("GOOGLE_API_KEY"):
                 print(f"⚠️ SiliconFlow 失敗 ({e.detail})，切換到 Gemini...")
@@ -385,8 +417,166 @@ async def call_llm(
     except HTTPException as e:
         if os.getenv("SILICONFLOW_API_KEY"):
             print(f"⚠️ Gemini 失敗 ({e.detail})，切換到 SiliconFlow...")
-            return await call_siliconflow(system_prompt, user_message, temperature)
+            return await call_siliconflow(system_prompt, user_message, temperature, model=selected_model)
         raise
+
+
+def select_llm_for_mode(mode: str) -> Tuple[str, Optional[str]]:
+    """
+    根據模式選擇 LLM 提供者與模型
+    - 行銷文案：優先使用 Qwen2.5 (SiliconFlow)
+    - 其他模式：依 LLM_PROVIDER 設定
+    """
+    if mode == "marketing":
+        return "siliconflow", SILICONFLOW_MARKETING_MODEL
+    return (LLM_PROVIDER or "gemini"), None
+
+
+def extract_image_url(payload: Dict[str, Any]) -> Optional[str]:
+    if not payload:
+        return None
+    for key in ["image_url", "url", "sample", "output"]:
+        value = payload.get(key)
+        if isinstance(value, str):
+            return value
+    result = payload.get("result")
+    if isinstance(result, dict):
+        for key in ["sample", "image_url", "url"]:
+            value = result.get(key)
+            if isinstance(value, str):
+                return value
+    if isinstance(result, list) and result:
+        if isinstance(result[0], str):
+            return result[0]
+    data = payload.get("data")
+    if isinstance(data, list) and data:
+        first = data[0]
+        if isinstance(first, dict):
+            url = first.get("url") or first.get("image_url")
+            if isinstance(url, str):
+                return url
+            b64 = first.get("b64_json")
+            if isinstance(b64, str):
+                return f"data:image/png;base64,{b64}"
+    return None
+
+
+def is_siliconflow_bfl_style() -> bool:
+    if BFL_API_STYLE == "siliconflow":
+        return True
+    if BFL_API_STYLE == "bfl":
+        return False
+    return "siliconflow" in BFL_BASE_URL or "/chat/completions" in BFL_BASE_URL
+
+
+async def call_bfl_flux(
+    prompt: str,
+    width: int = 1024,
+    height: int = 1024,
+    steps: int = 30,
+    guidance: float = 3.5,
+    seed: Optional[int] = None,
+    output_format: str = "png"
+) -> Dict[str, Any]:
+    api_key = BFL_API_KEY or os.getenv("SILICONFLOW_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="後端未設定 BFL_API_KEY 或 SILICONFLOW_API_KEY，無法生成圖片"
+        )
+
+    if is_siliconflow_bfl_style():
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": BFL_MODEL,
+            "messages": [
+                {"role": "system", "content": "You are an image generator. Return an image URL if available."},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0.2,
+            "max_tokens": 1024,
+            "width": width,
+            "height": height,
+            "steps": steps,
+            "guidance": guidance,
+            "seed": seed,
+            "output_format": output_format,
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                BFL_BASE_URL,
+                headers=headers,
+                json=payload
+            )
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"BFL(SiliconFlow) API 錯誤: {response.text}"
+                )
+            data = response.json()
+            image_url = extract_image_url(data)
+            if not image_url:
+                text, _ = parse_openai_response(data)
+                image_url = extract_image_url({"text": text})
+            return {"image_url": image_url, "raw": data}
+
+    headers = {
+        "x-key": api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "prompt": prompt,
+        "width": width,
+        "height": height,
+        "steps": steps,
+        "guidance": guidance,
+        "output_format": output_format,
+    }
+    if seed is not None:
+        payload["seed"] = seed
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            f"{BFL_BASE_URL}/{BFL_MODEL}",
+            headers=headers,
+            json=payload
+        )
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"BFL API 錯誤: {response.text}"
+            )
+
+        data = response.json()
+        image_url = extract_image_url(data)
+        if image_url:
+            return {"image_url": image_url, "raw": data}
+
+        request_id = data.get("id") or data.get("request_id")
+        if not request_id:
+            return {"image_url": None, "raw": data}
+
+        for _ in range(20):
+            await asyncio.sleep(1)
+            result_resp = await client.get(
+                f"{BFL_BASE_URL}/get_result",
+                headers=headers,
+                params={"id": request_id}
+            )
+            if result_resp.status_code != 200:
+                continue
+            result_data = result_resp.json()
+            status = (result_data.get("status") or result_data.get("state") or "").lower()
+            if status in ["ready", "succeeded", "success", "completed"]:
+                return {"image_url": extract_image_url(result_data), "raw": result_data}
+            if status in ["failed", "error"]:
+                break
+
+        return {"image_url": None, "raw": data}
 
 
 # Request/Response Models
@@ -407,6 +597,8 @@ class ChatResponse(BaseModel):
     mode: str
     mode_description: str
     function_calls: Optional[List[FunctionCall]] = None
+    image_url: Optional[str] = None
+    image_prompt: Optional[str] = None
 
 
 def parse_function_calls(text: str) -> tuple[str, List[FunctionCall]]:
@@ -500,10 +692,13 @@ async def chat(req: ChatRequest):
 
     # 4. 執行 LLM 呼叫
     try:
+        provider, model = select_llm_for_mode(req.mode)
         response_text, function_calls = await call_llm(
             system_prompt=final_prompt,
             user_message=req.message,
-            temperature=temperature
+            temperature=temperature,
+            provider=provider,
+            model=model
         )
 
         # 5. 解析函數呼叫（若工具呼叫為空，嘗試解析標記格式）
@@ -513,11 +708,43 @@ async def chat(req: ChatRequest):
         if not clean_reply:
             clean_reply = "已完成操作。"
 
+        # 6. 行銷模式圖片產出 (Flux Pro)
+        image_url = None
+        image_prompt = None
+        image_args: Dict[str, Any] = {}
+        filtered_calls: List[FunctionCall] = []
+        for call in function_calls:
+            if call.name == "generateMarketingImage":
+                image_args = call.arguments or {}
+                image_prompt = str(image_args.get("prompt") or "").strip()
+            else:
+                filtered_calls.append(call)
+
+        if req.mode == "marketing":
+            if not image_prompt:
+                image_prompt = f"Travel marketing poster, {req.message}"
+            if image_prompt:
+                try:
+                    image_result = await call_bfl_flux(
+                        prompt=image_prompt,
+                        width=int(image_args.get("width") or 1024),
+                        height=int(image_args.get("height") or 1024),
+                        steps=int(image_args.get("steps") or 30),
+                        guidance=float(image_args.get("guidance") or 3.5),
+                        seed=image_args.get("seed"),
+                        output_format=str(image_args.get("output_format") or "png"),
+                    )
+                    image_url = image_result.get("image_url")
+                except HTTPException as e:
+                    print(f"⚠️ 圖片生成失敗: {e.detail}")
+
         return ChatResponse(
             reply=clean_reply,
             mode=req.mode,
             mode_description=prompt_templates.get_mode_description(req.mode),
-            function_calls=function_calls if function_calls else None
+            function_calls=filtered_calls if filtered_calls else None,
+            image_url=image_url,
+            image_prompt=image_prompt
         )
     except HTTPException:
         raise
