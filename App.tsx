@@ -48,6 +48,7 @@ import LegalAssistant from './components/shared/LegalAssistant';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
 import ViewSwitcher from './components/shared/ViewSwitcher';
+import LandingPage from './components/shared/LandingPage';
 
 // ============================================
 // Navigation Configuration
@@ -833,6 +834,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/*" element={<AppContent />} />
         <Route path="/proposal/*" element={<AppContent />} />
         <Route path="/line/*" element={<AppContent />} />
