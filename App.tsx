@@ -49,6 +49,7 @@ import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
 import ViewSwitcher from './components/shared/ViewSwitcher';
 import LandingPage from './components/shared/LandingPage';
+import ClientPortal from './components/portal/ClientPortal';
 
 // ============================================
 // Navigation Configuration
@@ -854,6 +855,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginRoute />} />
         <Route path="/landing" element={<LandingPage />} />
+        <Route path="/portal/*" element={<ClientPortal />} />
         <Route path="/*" element={<AppContent />} />
         <Route path="/proposal/*" element={<AppContent />} />
         <Route path="/line/*" element={<AppContent />} />
