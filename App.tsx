@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, LayoutDashboard, Calendar, Map, Users, CreditCard, FileText,
@@ -826,6 +826,24 @@ function AppContent() {
   );
 }
 
+function LoginRoute() {
+  const navigate = useNavigate();
+  const login = useAppStore((state) => state.login);
+  const logout = useAppStore((state) => state.logout);
+
+  React.useEffect(() => {
+    // Ensure a clean state when accessing the standalone login route.
+    logout();
+  }, [logout]);
+
+  const handleLogin = (role: UserRole, userId?: string, userName?: string) => {
+    login(role, userId, userName);
+    navigate('/');
+  };
+
+  return <LoginPage onLogin={handleLogin} />;
+}
+
 // ============================================
 // Main App Component with Router
 // ============================================
@@ -834,6 +852,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<LoginRoute />} />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/*" element={<AppContent />} />
         <Route path="/proposal/*" element={<AppContent />} />
