@@ -20,6 +20,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Iterable, Tuple
 from urllib import request as urllib_request
+from urllib.error import HTTPError
 
 
 EXPERT_PROMPTS: Dict[str, Dict[str, str]] = {
@@ -194,7 +195,7 @@ def build_context(config: ScanConfig, files: List[Tuple[str, int]]) -> str:
 
 
 def call_siliconflow(api_key: str, model: str, system_prompt: str, user_prompt: str, max_tokens: int) -> str:
-    endpoint = "https://api.siliconflow.com/v1/chat/completions"
+    endpoint = os.getenv("SILICONFLOW_API_URL", "https://api.siliconflow.com/v1/chat/completions")
     payload = {
         "model": model,
         "messages": [
@@ -213,8 +214,12 @@ def call_siliconflow(api_key: str, model: str, system_prompt: str, user_prompt: 
             "Content-Type": "application/json",
         },
     )
-    with urllib_request.urlopen(req, timeout=120) as resp:
-        raw = resp.read().decode("utf-8")
+    try:
+        with urllib_request.urlopen(req, timeout=120) as resp:
+            raw = resp.read().decode("utf-8")
+    except HTTPError as err:
+        body = err.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"SiliconFlow API error {err.code}: {body}") from err
     result = json.loads(raw)
     return result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
 
