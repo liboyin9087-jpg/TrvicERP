@@ -1,0 +1,62 @@
+[
+  {
+    "id": "legal-001",
+    "category": "refund",
+    "question": "出發前 1 天取消，依法規應賠償多少？",
+    "expected_keywords": ["50%", "賠償", "出發前 1 日"]
+  },
+  {
+    "id": "legal-002",
+    "category": "refund",
+    "question": "出發當日或 no show 的退費規定？",
+    "expected_keywords": ["100%", "賠償", "當日"]
+  },
+  {
+    "id": "legal-003",
+    "category": "passport",
+    "question": "護照效期不足應如何處理？",
+    "expected_keywords": ["6 個月", "效期", "通知"]
+  },
+  {
+    "id": "legal-004",
+    "category": "insurance",
+    "question": "旅行社責任保險最低保額是多少？",
+    "expected_keywords": ["200 萬", "責任保險", "意外險"]
+  },
+  {
+    "id": "legal-005",
+    "category": "advertising",
+    "question": "廣告宣稱可以用『保證最低價』嗎？",
+    "expected_keywords": ["不得", "消保法", "保證"]
+  },
+  {
+    "id": "legal-006",
+    "category": "refund",
+    "question": "出發前 2-20 日取消，需賠償多少？",
+    "expected_keywords": ["30%", "賠償", "2-20"]
+  },
+  {
+    "id": "legal-007",
+    "category": "refund",
+    "question": "出發前 31-40 日取消，需賠償多少？",
+    "expected_keywords": ["10%", "賠償", "31-40"]
+  },
+  {
+    "id": "legal-008",
+    "category": "operations",
+    "question": "日本行程司機工時限制？",
+    "expected_keywords": ["12 小時", "司機工時"]
+  },
+  {
+    "id": "legal-009",
+    "category": "contract",
+    "question": "旅遊定型化契約中，旅客取消的賠償依據是什麼？",
+    "expected_keywords": ["定型化契約", "第 13 條"]
+  },
+  {
+    "id": "legal-010",
+    "category": "compliance",
+    "question": "對旅客應如何告知保險範圍？",
+    "expected_keywords": ["明確告知", "保險範圍", "理賠"]
+  }
+]

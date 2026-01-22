@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, LayoutDashboard, Calendar, Map, Users, CreditCard, FileText,
@@ -32,6 +32,7 @@ import LeaderExpenseApp from './components/staff/LeaderExpenseApp';
 import LineChatMonitor from './components/staff/LineChatMonitor';
 import MiniTourEstimator from './components/staff/MiniTourEstimator';
 import ItineraryBuilder from './components/staff/ItineraryBuilder';
+import ProposalEngine from './components/staff/ProposalEngine';
 
 // Client Components
 import TravelerApp from './components/client/TravelerApp';
@@ -48,6 +49,8 @@ import LegalAssistant from './components/shared/LegalAssistant';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
 import ViewSwitcher from './components/shared/ViewSwitcher';
+import LandingPage from './components/shared/LandingPage';
+import ClientPortal from './components/portal/ClientPortal';
 
 // ============================================
 // Navigation Configuration
@@ -85,6 +88,7 @@ const STAFF_NAV: NavGroup[] = [
     label: '客戶關係',
     items: [
       { id: 'crm', label: '客戶管理', icon: <Users className="w-5 h-5" /> },
+      { id: 'client-portal', label: '企業入口', icon: <Building2 className="w-5 h-5" /> },
       { id: 'payments', label: '收款管理', icon: <CreditCard className="w-5 h-5" /> },
       { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-5 h-5" /> },
     ],
@@ -92,6 +96,7 @@ const STAFF_NAV: NavGroup[] = [
   {
     label: '業務工具',
     items: [
+      { id: 'proposal-engine', label: 'AI 提案', icon: <FileText className="w-5 h-5" /> },
       { id: 'quotation', label: '報價計算', icon: <Calculator className="w-5 h-5" /> },
       { id: 'estimator', label: '快速估價', icon: <Sparkles className="w-5 h-5" /> },
       { id: 'costing', label: '成本分析', icon: <Receipt className="w-5 h-5" /> },
@@ -170,6 +175,8 @@ function ViewRenderer({ view }: { view: ViewKey }) {
     case 'costing': return <CostingDashboard />;
     case 'insurance': return <InsuranceExport />;
     case 'quotation': return <QuotationBuilder />;
+    case 'proposal-engine': return <ProposalEngine />;
+    case 'client-portal': return <ClientPortal initialAuthenticated />;
     case 'operations': return <OperationHub />;
     case 'expense': return <LeaderExpenseApp />;
     case 'chat': return <LineChatMonitor />;
@@ -599,8 +606,8 @@ function AppContent() {
   } = useAppStore();
 
   // Handle login from LoginPage
-  const handleLogin = (role: UserRole) => {
-    login(role);
+  const handleLogin = (role: UserRole, userId?: string, userName?: string) => {
+    login(role, userId, userName);
   };
 
   // Show login page if not authenticated
@@ -825,6 +832,24 @@ function AppContent() {
   );
 }
 
+function LoginRoute() {
+  const navigate = useNavigate();
+  const login = useAppStore((state) => state.login);
+  const logout = useAppStore((state) => state.logout);
+
+  React.useEffect(() => {
+    // Ensure a clean state when accessing the standalone login route.
+    logout();
+  }, [logout]);
+
+  const handleLogin = (role: UserRole, userId?: string, userName?: string) => {
+    login(role, userId, userName);
+    navigate('/');
+  };
+
+  return <LoginPage onLogin={handleLogin} />;
+}
+
 // ============================================
 // Main App Component with Router
 // ============================================
@@ -833,6 +858,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<LoginRoute />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/portal/*" element={<ClientPortal />} />
         <Route path="/*" element={<AppContent />} />
         <Route path="/proposal/*" element={<AppContent />} />
         <Route path="/line/*" element={<AppContent />} />

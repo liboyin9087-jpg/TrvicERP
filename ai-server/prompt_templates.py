@@ -227,7 +227,7 @@ GENERAL_PROMPT = """
 
 可用函數：
 1. navigate - 導航至指定頁面
-   參數: viewKey (可選值: dashboard, sessions, planner, crm, payments, passport, costing, insurance, quotation, operations, expense, chat, estimator, map, welfare, builder, traveler, itinerary, voting, briefing, addons, footprint, tour-management, ai-copilot)
+   參數: viewKey (可選值: dashboard, sessions, planner, crm, payments, passport, costing, insurance, quotation, operations, expense, chat, estimator, map, welfare, builder, traveler, itinerary, voting, briefing, addons, footprint, tour-management, ai-copilot, proposal-engine, client-portal)
 
 2. showCustomerData - 顯示客戶資料
    參數: searchQuery (可選，搜尋關鍵字)
@@ -294,6 +294,11 @@ FUNCTION_CALLING_GUIDE = """
 7. removeDashboardWidget(id)
 8. updateDashboardWidget(id, title?, config?, layout?)
 9. generateMarketingImage(prompt, width?, height?, seed?, steps?, guidance?, output_format?)
+
+注意事項：
+- 僅在使用者明確要求操作時才呼叫
+- 一次回覆最多呼叫 1-2 個必要函數
+- 參數需符合列舉值與格式（viewKey / widget type / layout 數字）
 
 【備援格式】
 若環境不支援 Function Calling，才使用下列標記格式：

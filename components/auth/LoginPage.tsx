@@ -113,6 +113,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setSelectedDemoRole(role);
   };
 
+  const handleDemoEnter = () => {
+    const role = selectedDemoRole ?? 'staff';
+    const account = DEMO_ACCOUNTS[role];
+    showNotification('已使用 Demo 帳號登入', 'success');
+    setTimeout(() => {
+      onLogin(role, `demo_${role}`, account.label);
+    }, 300);
+  };
+
   // Handle form login
   const handleFormLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -444,6 +453,20 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 >
                   <QrCode className="w-5 h-5" />
                   使用 QR Code 登入
+                </motion.button>
+
+                {/* Demo Login Button */}
+                <motion.button
+                  type="button"
+                  onClick={handleDemoEnter}
+                  disabled={isLoading}
+                  whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                  whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                  className="w-full bg-blue-50 border-2 border-blue-100 text-blue-700 py-3.5 rounded-xl font-semibold hover:bg-blue-100 hover:border-blue-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                >
+                  {selectedDemoRole
+                    ? `以 ${DEMO_ACCOUNTS[selectedDemoRole].label} 進入`
+                    : 'Demo 直接進入'}
                 </motion.button>
               </div>
             </motion.form>

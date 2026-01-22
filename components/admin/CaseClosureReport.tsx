@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Download, Users, Calendar, MapPin, CheckCircle, AlertTriangle,
-  Star, MessageSquare, TrendingUp, Clock, Printer, Mail
+  Star, MessageSquare, TrendingUp, Clock, Printer, Mail, Loader2, Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { aiService } from '@/lib/ai/aiService';
+import { useToast } from '@/store/useToastStore';
+import type { NpsInsightOutput } from '../../src/types/ai';
 import type { TourSession, Booking } from '../../types';
 
 // ============================================
@@ -80,6 +83,15 @@ const MOCK_INCIDENTS: IncidentLog[] = [
     severity: 'low',
   },
 ];
+
+const MOCK_NPS_INSIGHT: NpsInsightOutput = {
+  nps_score: 52,
+  response_count: 28,
+  promoter_ratio: 68,
+  detractor_ratio: 16,
+  key_themes: ['導遊專業', '住宿舒適', '行程節奏適中'],
+  improvement_actions: ['縮短午餐等待時間', '增加自由活動彈性'],
+};
 
 // ============================================
 // Helper Components
@@ -180,10 +192,14 @@ export default function CaseClosureReport({
   session,
   bookings,
 }: CaseClosureReportProps) {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'overview' | 'feedback' | 'incidents' | 'export'>('overview');
+  const [npsInsight, setNpsInsight] = useState<NpsInsightOutput | null>(null);
+  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
 
   const feedback = MOCK_FEEDBACK;
   const incidents = MOCK_INCIDENTS;
+  const insight = npsInsight || MOCK_NPS_INSIGHT;
 
   // 計算統計數據
   const totalPax = session.current_pax;
@@ -199,6 +215,38 @@ export default function CaseClosureReport({
       printWindow.document.write(generateReportHTML());
       printWindow.document.close();
       printWindow.print();
+    }
+  };
+
+  const handleSendSurvey = () => {
+    toast.success('已發送 NPS 問卷 (Demo)');
+  };
+
+  const handleGenerateInsight = async () => {
+    setIsGeneratingInsight(true);
+    try {
+      const message = `
+請根據以下滿意度數據生成 NPS 分析摘要：
+- 平均評分: ${feedback.averageRating}
+- 回覆數: ${feedback.totalResponses}
+- 好評項目: ${feedback.highlights.join(', ')}
+- 待改進項目: ${feedback.improvements.join(', ')}
+      `.trim();
+
+      const response = await aiService.generateStructured<NpsInsightOutput>({
+        message,
+        mode: 'general',
+        schema: 'nps_insight',
+        context: '',
+        max_attempts: 2,
+      });
+      setNpsInsight(response.data);
+      toast.success('已產生 AI 結案摘要');
+    } catch (error) {
+      setNpsInsight(MOCK_NPS_INSIGHT);
+      toast.info('使用預設 NPS 分析 (Demo)');
+    } finally {
+      setIsGeneratingInsight(false);
     }
   };
 
@@ -449,6 +497,75 @@ export default function CaseClosureReport({
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-gray-900">NPS 回饋概覽</h4>
+                  <p className="text-sm text-gray-500">用於續約與改善追蹤</p>
+                </div>
+                <button
+                  onClick={handleSendSurvey}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100"
+                >
+                  <Mail className="w-4 h-4" />
+                  發送問卷
+                </button>
+              </div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-3xl font-bold text-gray-900">{insight.nps_score}</p>
+                  <p className="text-xs text-gray-500">NPS Score</p>
+                </div>
+                <div className="text-right text-xs text-gray-500">
+                  回覆數 {insight.response_count}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
+                <div className="rounded-lg bg-green-50 p-3">
+                  推薦者比例
+                  <div className="text-lg font-semibold text-green-600">{insight.promoter_ratio}%</div>
+                </div>
+                <div className="rounded-lg bg-red-50 p-3">
+                  負面者比例
+                  <div className="text-lg font-semibold text-red-500">{insight.detractor_ratio}%</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <h4 className="font-bold text-gray-900">AI 結案摘要</h4>
+                </div>
+                <button
+                  onClick={handleGenerateInsight}
+                  disabled={isGeneratingInsight}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60"
+                >
+                  {isGeneratingInsight ? <Loader2 className="w-4 h-4 animate-spin" /> : '生成摘要'}
+                </button>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-2">關鍵亮點</p>
+                <ul className="space-y-1 text-xs text-gray-700">
+                  {insight.key_themes.map((theme, idx) => (
+                    <li key={`${theme}-${idx}`}>• {theme}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-2">改進建議</p>
+                <ul className="space-y-1 text-xs text-gray-700">
+                  {insight.improvement_actions.map((item, idx) => (
+                    <li key={`${item}-${idx}`}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
           {/* Rating Overview */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">

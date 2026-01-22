@@ -35,10 +35,11 @@ export default function EdgeAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modeSelectorRef = useRef<HTMLDivElement>(null);
   const { executeFunctions } = useFunctionExecutor();
-  const { currentView, userRole, userName } = useAppStore((state) => ({
+  const { currentView, userRole, userName, userId } = useAppStore((state) => ({
     currentView: state.currentView,
     userRole: state.userRole,
     userName: state.userName,
+    userId: state.userId,
   }));
   const { widgets, isEditMode } = useDashboardStore((state) => ({
     widgets: state.widgets,
@@ -99,6 +100,8 @@ export default function EdgeAssistant() {
         message: input,
         mode: currentMode,
         context: aiContext,
+        user_role: userRole,
+        user_id: userId || undefined,
       });
 
       // 執行函數呼叫
@@ -125,6 +128,10 @@ export default function EdgeAssistant() {
         functionCalls: response.function_calls || undefined,
         imageUrl: response.image_url || undefined,
         imagePrompt: response.image_prompt || undefined,
+        ragSources: response.rag_sources || undefined,
+        pendingActions: response.pending_actions || undefined,
+        blockedActions: response.blocked_actions || undefined,
+        pendingResolved: false,
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
@@ -142,6 +149,50 @@ export default function EdgeAssistant() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleApprovePending = (messageId: string) => {
+    const target = messages.find((message) => message.id === messageId);
+    if (!target?.pendingActions || target.pendingActions.length === 0) return;
+    const calls = target.pendingActions.map((pending) => pending.call);
+    const results = executeFunctions(calls);
+    const executionSummary = results.length
+      ? `\n\n執行結果：\n${results
+          .map((result) => `${result.success ? '✅' : '⚠️'} ${result.message || result.functionName}`)
+          .join('\n')}`
+      : '';
+
+    const confirmMessage: ChatMessage = {
+      id: `${Date.now()}-confirm`,
+      role: 'assistant',
+      content: `已確認執行操作。${executionSummary}`,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) =>
+      prev
+        .map((message) =>
+          message.id === messageId
+            ? { ...message, pendingActions: undefined, pendingResolved: true }
+            : message
+        )
+        .concat(confirmMessage)
+    );
+  };
+
+  const handleRejectPending = (messageId: string) => {
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.id === messageId
+          ? {
+              ...message,
+              pendingActions: undefined,
+              pendingResolved: true,
+              content: `${message.content}\n\n已取消待確認的操作。`,
+            }
+          : message
+      )
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -270,6 +321,58 @@ export default function EdgeAssistant() {
                   <p className="text-xs text-gray-500">
                     已執行: {message.functionCalls.map((fc) => fc.name).join(', ')}
                   </p>
+                </div>
+              )}
+              {message.ragSources && message.ragSources.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">法規引用：</p>
+                  <ul className="space-y-1 text-xs text-gray-500">
+                    {message.ragSources.map((source, index) => (
+                      <li key={`${message.id}-rag-${index}`} className="line-clamp-2">
+                        {source}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {message.blockedActions && message.blockedActions.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-red-500 mb-1">已阻擋的操作：</p>
+                  <ul className="space-y-1 text-xs text-gray-500">
+                    {message.blockedActions.map((action) => (
+                      <li key={action.id} className="flex flex-col gap-0.5">
+                        <span className="font-medium">{action.call.name}</span>
+                        <span className="text-[11px] text-gray-400">{action.reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {message.pendingActions && message.pendingActions.length > 0 && !message.pendingResolved && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-amber-600 mb-2">待確認操作：</p>
+                  <ul className="space-y-1 text-xs text-gray-500 mb-3">
+                    {message.pendingActions.map((action) => (
+                      <li key={action.id} className="flex flex-col gap-0.5">
+                        <span className="font-medium">{action.call.name}</span>
+                        <span className="text-[11px] text-gray-400">{action.reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleApprovePending(message.id)}
+                      className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
+                    >
+                      確認執行
+                    </button>
+                    <button
+                      onClick={() => handleRejectPending(message.id)}
+                      className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      取消
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
