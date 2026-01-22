@@ -201,10 +201,6 @@ const CUSTOMER_VALIDATION_RULES: Record<string, ValidationRule[]> = {
     {
       type: 'emergency_contact',
       required: true,
-      customValidator: (value: string, context: any) => {
-        // 確保緊急聯絡人不是客戶本人
-        return value !== context.customerName;
-      },
       errorMessage: '緊急聯絡人不能是客戶本人'
     }
   ],
@@ -449,8 +445,11 @@ export class DataValidationService {
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
 
+    const title = quotation.title ?? quotation.quotationNumber ?? '';
+    const totalPrice = quotation.totalPrice ?? quotation.totalAmount ?? 0;
+
     // 驗證報價基本資訊
-    if (!quotation.title || quotation.title.trim().length === 0) {
+    if (!title || title.trim().length === 0) {
       errors.push({
         field: 'title',
         type: 'required',
@@ -459,7 +458,7 @@ export class DataValidationService {
       });
     }
 
-    if (quotation.title && quotation.title.length > 100) {
+    if (title && title.length > 100) {
       errors.push({
         field: 'title',
         type: 'name',
@@ -469,7 +468,7 @@ export class DataValidationService {
     }
 
     // 驗證金額
-    if (!quotation.totalPrice || quotation.totalPrice <= 0) {
+    if (!totalPrice || totalPrice <= 0) {
       errors.push({
         field: 'totalPrice',
         type: 'required',
@@ -799,8 +798,21 @@ export class DataValidationService {
       }
 
       // 自定義驗證
+      if (rule.type === 'emergency_contact' && context?.customerName) {
+        if (fieldValue === context.customerName) {
+          errors.push({
+            field: rule.type,
+            type: rule.type,
+            message: rule.errorMessage || `${rule.type} 驗證失敗`,
+            severity: 'error',
+            currentValue: fieldValue,
+            fixSuggestion: `請更換 ${rule.type} 的資料`
+          });
+        }
+      }
+
       if (rule.customValidator) {
-        const result = rule.customValidator(fieldValue, context);
+        const result = rule.customValidator(fieldValue);
         if (result === false) {
           errors.push({
             field: rule.type,
