@@ -125,6 +125,7 @@ export default function EdgeAssistant() {
         functionCalls: response.function_calls || undefined,
         imageUrl: response.image_url || undefined,
         imagePrompt: response.image_prompt || undefined,
+        ragSources: response.rag_sources || undefined,
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
@@ -270,6 +271,18 @@ export default function EdgeAssistant() {
                   <p className="text-xs text-gray-500">
                     已執行: {message.functionCalls.map((fc) => fc.name).join(', ')}
                   </p>
+                </div>
+              )}
+              {message.ragSources && message.ragSources.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-200">
+                  <p className="text-xs text-gray-500 mb-1">法規引用：</p>
+                  <ul className="space-y-1 text-xs text-gray-500">
+                    {message.ragSources.map((source, index) => (
+                      <li key={`${message.id}-rag-${index}`} className="line-clamp-2">
+                        {source}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>

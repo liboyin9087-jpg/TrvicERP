@@ -95,6 +95,7 @@ export interface ChatResponse {
   function_calls?: FunctionCall[] | null;
   image_url?: string | null;
   image_prompt?: string | null;
+  rag_sources?: string[] | null;
 }
 
 // 健康檢查回應
@@ -118,4 +119,5 @@ export interface ChatMessage {
   functionCalls?: FunctionCall[];
   imageUrl?: string;
   imagePrompt?: string;
+  ragSources?: string[];
 }

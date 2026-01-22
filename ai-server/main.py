@@ -12,6 +12,7 @@ import os
 import re
 import json
 import httpx
+import math
 from typing import Optional, List, Dict, Any, Tuple
 import asyncio
 import prompt_templates
@@ -228,6 +229,106 @@ def load_rules() -> str:
     return "暫無法規資料"
 
 RULES = load_rules()
+
+RAG_MAX_CHARS = int(os.getenv("RAG_MAX_CHARS", "900"))
+RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
+LEGAL_KEYWORDS = [
+    "法規", "條款", "合約", "契約", "退費", "取消", "賠償", "保險", "護照",
+    "簽證", "消保", "消費者", "旅遊定型化契約", "責任", "罰則", "違規"
+]
+
+
+def chunk_text(text: str, max_chars: int) -> List[str]:
+    paragraphs = [p.strip() for p in re.split(r"\n{2,}", text) if p.strip()]
+    chunks: List[str] = []
+    buffer: List[str] = []
+    current_len = 0
+
+    for paragraph in paragraphs:
+        if current_len + len(paragraph) + 2 > max_chars and buffer:
+            chunks.append("\n\n".join(buffer).strip())
+            buffer = [paragraph]
+            current_len = len(paragraph)
+        else:
+            buffer.append(paragraph)
+            current_len += len(paragraph) + 2
+
+    if buffer:
+        chunks.append("\n\n".join(buffer).strip())
+
+    return chunks
+
+
+RULES_CHUNKS = chunk_text(RULES, RAG_MAX_CHARS) if RULES and len(RULES) > 20 else []
+
+
+def extract_keywords(query: str) -> List[str]:
+    raw_tokens = re.findall(r"[A-Za-z0-9_]+|[\u4e00-\u9fff]{2,}", query)
+    tokens = []
+    for token in raw_tokens:
+        cleaned = token.strip().lower()
+        if len(cleaned) < 2:
+            continue
+        tokens.append(cleaned)
+    return list(dict.fromkeys(tokens))
+
+
+def score_chunk(chunk: str, keywords: List[str]) -> float:
+    if not keywords:
+        return 0.0
+    score = 0.0
+    lowered = chunk.lower()
+    for keyword in keywords:
+        count = lowered.count(keyword) if keyword.isascii() else chunk.count(keyword)
+        if count:
+            score += count * max(1.0, len(keyword) / 2)
+    return score
+
+
+def retrieve_rules_snippets(query: str, top_k: int = RAG_TOP_K) -> List[Dict[str, Any]]:
+    if not RULES_CHUNKS:
+        return []
+    keywords = extract_keywords(query)
+    if not keywords:
+        return []
+
+    scored = []
+    for idx, chunk in enumerate(RULES_CHUNKS):
+        score = score_chunk(chunk, keywords)
+        if score > 0:
+            scored.append((score, idx, chunk))
+
+    if not scored:
+        return []
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    snippets = []
+    for score, _, chunk in scored[:top_k]:
+        snippets.append({"score": score, "text": chunk})
+    return snippets
+
+
+def should_use_rag(mode: str, message: str) -> bool:
+    if mode == "legal":
+        return True
+    if mode == "general":
+        return any(keyword in message for keyword in LEGAL_KEYWORDS)
+    return False
+
+
+def build_rules_context(mode: str, message: str) -> Tuple[str, List[str]]:
+    if not should_use_rag(mode, message):
+        return "", []
+    snippets = retrieve_rules_snippets(message)
+    if not snippets:
+        return "", []
+    rendered = []
+    sources = []
+    for idx, snippet in enumerate(snippets, start=1):
+        text = snippet["text"]
+        rendered.append(f"{idx}. {text}")
+        sources.append(text[:240].replace("\n", " "))
+    return "以下為本次問題檢索到的法規摘要：\n" + "\n\n".join(rendered), sources
 
 
 def parse_gemini_response(result: Dict[str, Any]) -> Tuple[str, List["FunctionCall"]]:
@@ -641,6 +742,7 @@ class ChatResponse(BaseModel):
     function_calls: Optional[List[FunctionCall]] = None
     image_url: Optional[str] = None
     image_prompt: Optional[str] = None
+    rag_sources: Optional[List[str]] = None
 
 
 def parse_function_calls(text: str) -> tuple[str, List[FunctionCall]]:
@@ -674,6 +776,223 @@ def parse_function_calls(text: str) -> tuple[str, List[FunctionCall]]:
         clean_text = re.sub(pattern, '', text, flags=re.DOTALL).strip()
 
     return clean_text, function_calls
+
+
+def is_finite_number(value: Any) -> Optional[float]:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(number):
+        return None
+    return number
+
+
+def coerce_bool(value: Any) -> Optional[bool]:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)) and math.isfinite(value):
+        return bool(value)
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in ("true", "1", "yes", "y"):
+            return True
+        if lowered in ("false", "0", "no", "n"):
+            return False
+    return None
+
+
+def sanitize_layout(layout: Any) -> Dict[str, Any]:
+    if not isinstance(layout, dict):
+        return {}
+    sanitized: Dict[str, Any] = {}
+    for key in ["x", "y", "w", "h", "minW", "minH", "maxW", "maxH"]:
+        value = is_finite_number(layout.get(key))
+        if value is None:
+            continue
+        if key in ["w", "h", "minW", "minH", "maxW", "maxH"]:
+            value = max(1, int(value))
+        else:
+            value = int(value)
+        sanitized[key] = value
+    return sanitized
+
+
+def sanitize_widget_config(config: Any) -> Dict[str, Any]:
+    if not isinstance(config, dict):
+        return {}
+    sanitized: Dict[str, Any] = {}
+
+    kpi_type = config.get("kpiType")
+    if isinstance(kpi_type, str) and kpi_type in KPI_TYPES:
+        sanitized["kpiType"] = kpi_type
+
+    date_range = config.get("dateRange")
+    if isinstance(date_range, str) and date_range in DATE_RANGES:
+        sanitized["dateRange"] = date_range
+
+    chart_data_source = config.get("chartDataSource")
+    if isinstance(chart_data_source, str) and chart_data_source.strip():
+        sanitized["chartDataSource"] = chart_data_source.strip()
+
+    chart_period = is_finite_number(config.get("chartPeriod"))
+    if chart_period is not None:
+        sanitized["chartPeriod"] = max(1, int(chart_period))
+
+    table_columns = config.get("tableColumns")
+    if isinstance(table_columns, list):
+        columns = [str(item).strip() for item in table_columns if str(item).strip()]
+        if columns:
+            sanitized["tableColumns"] = columns
+
+    table_row_limit = is_finite_number(config.get("tableRowLimit"))
+    if table_row_limit is not None:
+        sanitized["tableRowLimit"] = max(1, int(table_row_limit))
+
+    refresh_interval = is_finite_number(config.get("refreshInterval"))
+    if refresh_interval is not None:
+        sanitized["refreshInterval"] = max(1, int(refresh_interval))
+
+    show_trend = coerce_bool(config.get("showTrend"))
+    if show_trend is not None:
+        sanitized["showTrend"] = show_trend
+
+    return sanitized
+
+
+def sanitize_function_calls(calls: Optional[List[FunctionCall]]) -> List[FunctionCall]:
+    if not calls:
+        return []
+
+    allowed = {
+        "navigate",
+        "showCustomerData",
+        "showQuotation",
+        "showItinerary",
+        "setDashboardEditMode",
+        "addDashboardWidget",
+        "removeDashboardWidget",
+        "updateDashboardWidget",
+        "generateMarketingImage",
+    }
+
+    sanitized_calls: List[FunctionCall] = []
+    for call in calls:
+        name = getattr(call, "name", None)
+        args = getattr(call, "arguments", None)
+        if isinstance(call, dict):
+            name = call.get("name") or name
+            args = call.get("arguments") or args
+        if not name or name not in allowed:
+            continue
+        if not isinstance(args, dict):
+            args = {}
+
+        if name == "navigate":
+            view_key = str(args.get("viewKey", "")).strip()
+            if view_key in VIEW_KEYS:
+                sanitized_calls.append(FunctionCall(name=name, arguments={"viewKey": view_key}))
+            continue
+
+        if name == "showCustomerData":
+            search_query = args.get("searchQuery")
+            payload: Dict[str, Any] = {}
+            if isinstance(search_query, str) and search_query.strip():
+                payload["searchQuery"] = search_query.strip()
+            sanitized_calls.append(FunctionCall(name=name, arguments=payload))
+            continue
+
+        if name == "showQuotation":
+            destination = args.get("destination")
+            payload = {}
+            if isinstance(destination, str) and destination.strip():
+                payload["destination"] = destination.strip()
+            sanitized_calls.append(FunctionCall(name=name, arguments=payload))
+            continue
+
+        if name == "showItinerary":
+            session_id = args.get("sessionId")
+            payload = {}
+            if isinstance(session_id, str) and session_id.strip():
+                payload["sessionId"] = session_id.strip()
+            sanitized_calls.append(FunctionCall(name=name, arguments=payload))
+            continue
+
+        if name == "setDashboardEditMode":
+            enabled = coerce_bool(args.get("enabled"))
+            if enabled is not None:
+                sanitized_calls.append(FunctionCall(name=name, arguments={"enabled": enabled}))
+            continue
+
+        if name == "addDashboardWidget":
+            widget_type = args.get("type")
+            if not isinstance(widget_type, str) or widget_type not in WIDGET_TYPES:
+                continue
+            payload: Dict[str, Any] = {"type": widget_type}
+            title = args.get("title")
+            if isinstance(title, str) and title.strip():
+                payload["title"] = title.strip()
+            config = sanitize_widget_config(args.get("config"))
+            if config:
+                payload["config"] = config
+            layout = sanitize_layout(args.get("layout"))
+            if layout:
+                payload["layout"] = layout
+            sanitized_calls.append(FunctionCall(name=name, arguments=payload))
+            continue
+
+        if name == "removeDashboardWidget":
+            widget_id = args.get("id")
+            if isinstance(widget_id, str) and widget_id.strip():
+                sanitized_calls.append(FunctionCall(name=name, arguments={"id": widget_id.strip()}))
+            continue
+
+        if name == "updateDashboardWidget":
+            widget_id = args.get("id")
+            if not isinstance(widget_id, str) or not widget_id.strip():
+                continue
+            payload = {"id": widget_id.strip()}
+            title = args.get("title")
+            if isinstance(title, str) and title.strip():
+                payload["title"] = title.strip()
+            config = sanitize_widget_config(args.get("config"))
+            if config:
+                payload["config"] = config
+            layout = sanitize_layout(args.get("layout"))
+            if layout:
+                payload["layout"] = layout
+            sanitized_calls.append(FunctionCall(name=name, arguments=payload))
+            continue
+
+        if name == "generateMarketingImage":
+            prompt = args.get("prompt")
+            if isinstance(prompt, str) and prompt.strip():
+                payload = {"prompt": prompt.strip()}
+            else:
+                payload = {}
+            width = is_finite_number(args.get("width"))
+            height = is_finite_number(args.get("height"))
+            steps = is_finite_number(args.get("steps"))
+            guidance = is_finite_number(args.get("guidance"))
+            seed = is_finite_number(args.get("seed"))
+            output_format = args.get("output_format")
+
+            if width is not None:
+                payload["width"] = int(width)
+            if height is not None:
+                payload["height"] = int(height)
+            if steps is not None:
+                payload["steps"] = int(steps)
+            if guidance is not None:
+                payload["guidance"] = float(guidance)
+            if seed is not None:
+                payload["seed"] = int(seed)
+            if isinstance(output_format, str) and output_format.strip():
+                payload["output_format"] = output_format.strip()
+
+            sanitized_calls.append(FunctionCall(name=name, arguments=payload))
+
+    return sanitized_calls
 
 
 class HealthResponse(BaseModel):
@@ -722,17 +1041,21 @@ async def chat(req: ChatRequest):
     # 1. 根據模式取得溫度
     temperature = prompt_templates.get_temperature(req.mode)
 
-    # 2. 根據模式取得專家 System Prompt
-    system_prompt = prompt_templates.get_prompt_template(req.mode, rules=RULES)
+    # 2. RAG 檢索法規摘要（僅法律/通用）
+    rag_context, rag_sources = build_rules_context(req.mode, req.message)
+    rules_context = rag_context if rag_context else RULES
 
-    # 3. 組合最終 Prompt
+    # 3. 根據模式取得專家 System Prompt
+    system_prompt = prompt_templates.get_prompt_template(req.mode, rules=rules_context)
+
+    # 4. 組合最終 Prompt
     final_prompt = f"""{system_prompt}
 
 【當前業務情境】：
 {req.context if req.context else "無額外情境資訊"}
 """
 
-    # 4. 執行 LLM 呼叫
+    # 5. 執行 LLM 呼叫
     try:
         provider, model, override_temperature, max_tokens, gemini_max_tokens = select_llm_for_mode(req.mode)
         final_temperature = override_temperature if override_temperature is not None else temperature
@@ -746,14 +1069,15 @@ async def chat(req: ChatRequest):
             gemini_max_tokens=gemini_max_tokens
         )
 
-        # 5. 解析函數呼叫（若工具呼叫為空，嘗試解析標記格式）
+        # 6. 解析函數呼叫（若工具呼叫為空，嘗試解析標記格式）
         clean_reply = response_text.strip()
         if not function_calls:
             clean_reply, function_calls = parse_function_calls(response_text)
         if not clean_reply:
             clean_reply = "已完成操作。"
+        function_calls = sanitize_function_calls(function_calls)
 
-        # 6. 行銷模式圖片產出 (Flux Pro)
+        # 7. 行銷模式圖片產出 (Flux Pro)
         image_url = None
         image_prompt = None
         image_args: Dict[str, Any] = {}
@@ -789,7 +1113,8 @@ async def chat(req: ChatRequest):
             mode_description=prompt_templates.get_mode_description(req.mode),
             function_calls=filtered_calls if filtered_calls else None,
             image_url=image_url,
-            image_prompt=image_prompt
+            image_prompt=image_prompt,
+            rag_sources=rag_sources if rag_sources else None
         )
     except HTTPException:
         raise
