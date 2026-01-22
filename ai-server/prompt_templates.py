@@ -227,7 +227,7 @@ GENERAL_PROMPT = """
 
 可用函數：
 1. navigate - 導航至指定頁面
-   參數: viewKey (可選值: dashboard, sessions, planner, crm, payments, passport, costing, insurance, quotation, operations, expense, chat, estimator, map, welfare, builder, traveler, itinerary, voting, briefing, addons, footprint, tour-management, ai-copilot, proposal-engine)
+   參數: viewKey (可選值: dashboard, sessions, planner, crm, payments, passport, costing, insurance, quotation, operations, expense, chat, estimator, map, welfare, builder, traveler, itinerary, voting, briefing, addons, footprint, tour-management, ai-copilot, proposal-engine, client-portal)
 
 2. showCustomerData - 顯示客戶資料
    參數: searchQuery (可選，搜尋關鍵字)

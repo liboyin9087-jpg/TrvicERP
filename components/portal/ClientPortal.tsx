@@ -51,9 +51,13 @@ function StatCard({ icon, label, value, helper }: { icon: React.ReactNode; label
   );
 }
 
-export default function ClientPortal() {
+interface ClientPortalProps {
+  initialAuthenticated?: boolean;
+}
+
+export default function ClientPortal({ initialAuthenticated = false }: ClientPortalProps) {
   const toast = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuthenticated);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');

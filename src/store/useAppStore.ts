@@ -13,7 +13,7 @@ export type ViewKey =
   | 'costing' | 'insurance' | 'quotation' | 'operations' | 'expense' | 'chat'
   | 'estimator' | 'map' | 'welfare' | 'builder'
   | 'traveler' | 'itinerary' | 'voting' | 'briefing' | 'addons' | 'footprint'
-  | 'tour-management' | 'ai-copilot' | 'proposal-engine';
+  | 'tour-management' | 'ai-copilot' | 'proposal-engine' | 'client-portal';
 
 export type ViewMode = 'edit' | 'proposal' | 'line';
 

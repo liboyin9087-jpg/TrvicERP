@@ -88,6 +88,7 @@ const STAFF_NAV: NavGroup[] = [
     label: '客戶關係',
     items: [
       { id: 'crm', label: '客戶管理', icon: <Users className="w-5 h-5" /> },
+      { id: 'client-portal', label: '企業入口', icon: <Building2 className="w-5 h-5" /> },
       { id: 'payments', label: '收款管理', icon: <CreditCard className="w-5 h-5" /> },
       { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-5 h-5" /> },
     ],
@@ -175,6 +176,7 @@ function ViewRenderer({ view }: { view: ViewKey }) {
     case 'insurance': return <InsuranceExport />;
     case 'quotation': return <QuotationBuilder />;
     case 'proposal-engine': return <ProposalEngine />;
+    case 'client-portal': return <ClientPortal initialAuthenticated />;
     case 'operations': return <OperationHub />;
     case 'expense': return <LeaderExpenseApp />;
     case 'chat': return <LineChatMonitor />;
