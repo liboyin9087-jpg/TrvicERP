@@ -44,7 +44,7 @@ SILICONFLOW_API_URL = "https://api.siliconflow.com/v1/chat/completions"
 SILICONFLOW_MODEL = os.getenv("SILICONFLOW_MODEL", "deepseek-ai/DeepSeek-V3")
 SILICONFLOW_MARKETING_MODEL = os.getenv(
     "SILICONFLOW_MARKETING_MODEL",
-    "Qwen/Qwen2.5-72B-Instruct"
+    "Qwen/Qwen2.5-32B-Instruct"
 )
 
 BFL_BASE_URL = os.getenv("BFL_BASE_URL", "https://api.bfl.ml/v1")
