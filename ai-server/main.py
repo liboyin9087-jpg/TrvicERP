@@ -40,6 +40,10 @@ app.add_middleware(
 # API 設定
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+GEMINI_DEFAULT_MAX_TOKENS = int(os.getenv("GEMINI_DEFAULT_MAX_TOKENS", "4096"))
+GEMINI_GENERAL_MAX_TOKENS = int(os.getenv("GEMINI_GENERAL_MAX_TOKENS", "4000"))
+GEMINI_LEGAL_MAX_TOKENS = int(os.getenv("GEMINI_LEGAL_MAX_TOKENS", "8000"))
+GEMINI_MARKETING_MAX_TOKENS = int(os.getenv("GEMINI_MARKETING_MAX_TOKENS", "8000"))
 SILICONFLOW_API_URL = "https://api.siliconflow.com/v1/chat/completions"
 SILICONFLOW_MODEL = os.getenv("SILICONFLOW_MODEL", "deepseek-ai/DeepSeek-V3")
 SILICONFLOW_MARKETING_MODEL = os.getenv(
@@ -284,7 +288,8 @@ def parse_openai_response(result: Dict[str, Any]) -> Tuple[str, List["FunctionCa
 async def call_gemini(
     system_prompt: str,
     user_message: str,
-    temperature: float = 0.5
+    temperature: float = 0.5,
+    max_tokens: int = GEMINI_DEFAULT_MAX_TOKENS
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     呼叫 Google Gemini API (免費額度)
@@ -317,7 +322,7 @@ async def call_gemini(
         },
         "generationConfig": {
             "temperature": temperature,
-            "maxOutputTokens": 4096,
+            "maxOutputTokens": max_tokens,
         }
     }
 
@@ -399,7 +404,8 @@ async def call_llm(
     temperature: float = 0.5,
     provider: Optional[str] = None,
     model: Optional[str] = None,
-    max_tokens: Optional[int] = None
+    max_tokens: Optional[int] = None,
+    gemini_max_tokens: Optional[int] = None
 ) -> Tuple[str, List["FunctionCall"]]:
     """
     統一 LLM 呼叫介面，根據設定選擇提供者
@@ -420,10 +426,20 @@ async def call_llm(
         except HTTPException as e:
             if os.getenv("GOOGLE_API_KEY"):
                 print(f"⚠️ SiliconFlow 失敗 ({e.detail})，切換到 Gemini...")
-                return await call_gemini(system_prompt, user_message, temperature)
+                return await call_gemini(
+                    system_prompt,
+                    user_message,
+                    temperature,
+                    max_tokens=gemini_max_tokens or GEMINI_DEFAULT_MAX_TOKENS
+                )
             raise
     try:
-        return await call_gemini(system_prompt, user_message, temperature)
+        return await call_gemini(
+            system_prompt,
+            user_message,
+            temperature,
+            max_tokens=gemini_max_tokens or GEMINI_DEFAULT_MAX_TOKENS
+        )
     except HTTPException as e:
         if os.getenv("SILICONFLOW_API_KEY"):
             print(f"⚠️ Gemini 失敗 ({e.detail})，切換到 SiliconFlow...")
@@ -437,15 +453,25 @@ async def call_llm(
         raise
 
 
-def select_llm_for_mode(mode: str) -> Tuple[str, Optional[str], Optional[float], Optional[int]]:
+def select_llm_for_mode(mode: str) -> Tuple[str, Optional[str], Optional[float], Optional[int], Optional[int]]:
     """
     根據模式選擇 LLM 提供者與模型
     - 行銷文案：優先使用 Qwen2.5 (SiliconFlow)
     - 其他模式：依 LLM_PROVIDER 設定
     """
     if mode == "marketing":
-        return "siliconflow", SILICONFLOW_MARKETING_MODEL, SILICONFLOW_MARKETING_TEMPERATURE, SILICONFLOW_MARKETING_MAX_TOKENS
-    return (LLM_PROVIDER or "gemini"), None, None, None
+        return (
+            "siliconflow",
+            SILICONFLOW_MARKETING_MODEL,
+            SILICONFLOW_MARKETING_TEMPERATURE,
+            SILICONFLOW_MARKETING_MAX_TOKENS,
+            GEMINI_MARKETING_MAX_TOKENS
+        )
+    if mode == "legal":
+        return (LLM_PROVIDER or "gemini"), None, None, None, GEMINI_LEGAL_MAX_TOKENS
+    if mode == "general":
+        return (LLM_PROVIDER or "gemini"), None, None, None, GEMINI_GENERAL_MAX_TOKENS
+    return (LLM_PROVIDER or "gemini"), None, None, None, GEMINI_DEFAULT_MAX_TOKENS
 
 
 def extract_image_url(payload: Dict[str, Any]) -> Optional[str]:
@@ -708,7 +734,7 @@ async def chat(req: ChatRequest):
 
     # 4. 執行 LLM 呼叫
     try:
-        provider, model, override_temperature, max_tokens = select_llm_for_mode(req.mode)
+        provider, model, override_temperature, max_tokens, gemini_max_tokens = select_llm_for_mode(req.mode)
         final_temperature = override_temperature if override_temperature is not None else temperature
         response_text, function_calls = await call_llm(
             system_prompt=final_prompt,
@@ -716,7 +742,8 @@ async def chat(req: ChatRequest):
             temperature=final_temperature,
             provider=provider,
             model=model,
-            max_tokens=max_tokens
+            max_tokens=max_tokens,
+            gemini_max_tokens=gemini_max_tokens
         )
 
         # 5. 解析函數呼叫（若工具呼叫為空，嘗試解析標記格式）
