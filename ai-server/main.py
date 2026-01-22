@@ -37,7 +37,8 @@ app.add_middleware(
 )
 
 # API 設定
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 SILICONFLOW_API_URL = "https://api.siliconflow.com/v1/chat/completions"
 SILICONFLOW_MODEL = "deepseek-ai/DeepSeek-V3"
 
