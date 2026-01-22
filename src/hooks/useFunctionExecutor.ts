@@ -5,12 +5,18 @@
 
 import { useCallback } from 'react';
 import { useAppStore, type ViewKey } from '../store/useAppStore';
+import { useDashboardStore } from '../store/useDashboardStore';
+import { createWidgetInstance } from '../lib/dashboardUtils';
 import type {
   FunctionCall,
   NavigateArguments,
   ShowCustomerDataArguments,
   ShowQuotationArguments,
   ShowItineraryArguments,
+  SetDashboardEditModeArguments,
+  AddDashboardWidgetArguments,
+  RemoveDashboardWidgetArguments,
+  UpdateDashboardWidgetArguments,
 } from '../types/ai';
 
 // 函數執行結果
@@ -27,6 +33,16 @@ export interface FunctionExecutionResult {
 export function useFunctionExecutor() {
   const setCurrentView = useAppStore((state) => state.setCurrentView);
   const setSelectedSession = useAppStore((state) => state.setSelectedSession);
+  const {
+    widgets,
+    availableWidgets,
+    setEditMode,
+    addWidget,
+    removeWidget,
+    updateWidgetConfig,
+    updateWidgetLayout,
+    updateWidgetTitle,
+  } = useDashboardStore();
 
   /**
    * 導航至指定頁面
@@ -139,6 +155,79 @@ export function useFunctionExecutor() {
           return handleShowQuotation(call.arguments as ShowQuotationArguments);
         case 'showItinerary':
           return handleShowItinerary(call.arguments as ShowItineraryArguments);
+        case 'setDashboardEditMode': {
+          const args = call.arguments as SetDashboardEditModeArguments;
+          setEditMode(Boolean(args.enabled));
+          return {
+            success: true,
+            functionName: 'setDashboardEditMode',
+            message: `已${args.enabled ? '啟用' : '關閉'}儀表板編輯模式`,
+          };
+        }
+        case 'addDashboardWidget': {
+          const args = call.arguments as AddDashboardWidgetArguments;
+          const libraryItem = availableWidgets.find((item) => item.type === args.type);
+          if (!libraryItem) {
+            return {
+              success: false,
+              functionName: 'addDashboardWidget',
+              message: `找不到 Widget 類型: ${args.type}`,
+            };
+          }
+          const widget = createWidgetInstance(libraryItem, {
+            title: args.title,
+            config: args.config,
+            layout: args.layout ? { ...libraryItem.defaultLayout, ...args.layout } : undefined,
+          });
+          addWidget(widget);
+          return {
+            success: true,
+            functionName: 'addDashboardWidget',
+            message: `已新增 Widget：${widget.title}`,
+          };
+        }
+        case 'removeDashboardWidget': {
+          const args = call.arguments as RemoveDashboardWidgetArguments;
+          const exists = widgets.some((widget) => widget.id === args.id);
+          if (!exists) {
+            return {
+              success: false,
+              functionName: 'removeDashboardWidget',
+              message: `找不到 Widget: ${args.id}`,
+            };
+          }
+          removeWidget(args.id);
+          return {
+            success: true,
+            functionName: 'removeDashboardWidget',
+            message: `已移除 Widget: ${args.id}`,
+          };
+        }
+        case 'updateDashboardWidget': {
+          const args = call.arguments as UpdateDashboardWidgetArguments;
+          const exists = widgets.find((widget) => widget.id === args.id);
+          if (!exists) {
+            return {
+              success: false,
+              functionName: 'updateDashboardWidget',
+              message: `找不到 Widget: ${args.id}`,
+            };
+          }
+          if (args.title) {
+            updateWidgetTitle(args.id, args.title);
+          }
+          if (args.config) {
+            updateWidgetConfig(args.id, args.config);
+          }
+          if (args.layout) {
+            updateWidgetLayout(args.id, args.layout);
+          }
+          return {
+            success: true,
+            functionName: 'updateDashboardWidget',
+            message: `已更新 Widget: ${args.id}`,
+          };
+        }
         default:
           return {
             success: false,
@@ -147,7 +236,20 @@ export function useFunctionExecutor() {
           };
       }
     },
-    [handleNavigate, handleShowCustomerData, handleShowQuotation, handleShowItinerary]
+    [
+      handleNavigate,
+      handleShowCustomerData,
+      handleShowQuotation,
+      handleShowItinerary,
+      setEditMode,
+      addWidget,
+      removeWidget,
+      updateWidgetConfig,
+      updateWidgetLayout,
+      updateWidgetTitle,
+      availableWidgets,
+      widgets,
+    ]
   );
 
   /**

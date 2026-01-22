@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, Maximize2, Minimize2, Sparkles, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { aiService } from '../../src/lib/ai/aiService';
 import { useFunctionExecutor } from '../../src/hooks/useFunctionExecutor';
+import { useAppStore } from '../../src/store/useAppStore';
+import { useDashboardStore } from '../../src/store/useDashboardStore';
 import type { AIMode, ChatMessage, AIModeOption } from '../../src/types/ai';
 
 // 預設模式選項
@@ -33,6 +35,34 @@ export default function EdgeAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modeSelectorRef = useRef<HTMLDivElement>(null);
   const { executeFunctions } = useFunctionExecutor();
+  const { currentView, userRole, userName } = useAppStore((state) => ({
+    currentView: state.currentView,
+    userRole: state.userRole,
+    userName: state.userName,
+  }));
+  const { widgets, isEditMode } = useDashboardStore((state) => ({
+    widgets: state.widgets,
+    isEditMode: state.isEditMode,
+  }));
+
+  const aiContext = useMemo(() => {
+    const dashboardWidgets = widgets.slice(0, 12).map((widget) => ({
+      id: widget.id,
+      type: widget.type,
+      title: widget.title,
+      config: widget.config,
+      layout: widget.layout,
+    }));
+    return JSON.stringify({
+      currentView,
+      userRole,
+      userName,
+      dashboard: {
+        editMode: isEditMode,
+        widgets: dashboardWidgets,
+      },
+    });
+  }, [currentView, isEditMode, userName, userRole, widgets]);
 
   // 滾動到最新訊息
   useEffect(() => {
@@ -68,19 +98,33 @@ export default function EdgeAssistant() {
       const response = await aiService.chat({
         message: input,
         mode: currentMode,
+        context: aiContext,
       });
 
       // 執行函數呼叫
+      const executionResults =
+        response.function_calls && response.function_calls.length > 0
+          ? executeFunctions(response.function_calls)
+          : [];
+
+      const executionSummary = executionResults.length
+        ? `\n\n執行結果：\n${executionResults
+            .map((result) => `${result.success ? '✅' : '⚠️'} ${result.message || result.functionName}`)
+            .join('\n')}`
+        : '';
+
       if (response.function_calls && response.function_calls.length > 0) {
-        executeFunctions(response.function_calls);
+        // already executed above
       }
 
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.reply,
+        content: `${response.reply || '已完成操作。'}${executionSummary}`,
         timestamp: new Date(),
         functionCalls: response.function_calls || undefined,
+        imageUrl: response.image_url || undefined,
+        imagePrompt: response.image_prompt || undefined,
       };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
@@ -207,6 +251,20 @@ export default function EdgeAssistant() {
               }`}
             >
               <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              {message.imageUrl && (
+                <div className="mt-3">
+                  <img
+                    src={message.imageUrl}
+                    alt={message.imagePrompt || 'Marketing image'}
+                    className="rounded-xl border border-gray-200 max-h-64 object-cover"
+                  />
+                  {message.imagePrompt && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Image prompt: {message.imagePrompt}
+                    </p>
+                  )}
+                </div>
+              )}
               {message.functionCalls && message.functionCalls.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
                   <p className="text-xs text-gray-500">

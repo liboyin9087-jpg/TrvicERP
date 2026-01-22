@@ -19,6 +19,8 @@ interface DashboardState {
   updateWidgetPosition: (id: string, x: number, y: number) => void;
   updateWidgetSize: (id: string, w: number, h: number) => void;
   applyLayout: (items: Array<{ i: string; x: number; y: number; w: number; h: number }>) => void;
+  updateWidgetLayout: (id: string, layout: Partial<Widget['layout']>) => void;
+  updateWidgetTitle: (id: string, title: string) => void;
   addWidget: (widget: Widget) => void;
   addWidgetByType: (type: Widget['type']) => void;
   removeWidget: (id: string) => void;
@@ -95,6 +97,20 @@ export const useDashboardStore = create<DashboardState>()(
           }),
         }));
       },
+
+      updateWidgetLayout: (id, layout) =>
+        set((state) => ({
+          widgets: state.widgets.map((widget) =>
+            widget.id === id ? { ...widget, layout: { ...widget.layout, ...layout } } : widget
+          ),
+        })),
+
+      updateWidgetTitle: (id, title) =>
+        set((state) => ({
+          widgets: state.widgets.map((widget) =>
+            widget.id === id ? { ...widget, title } : widget
+          ),
+        })),
 
       addWidget: (widget) =>
         set((state) => ({

@@ -80,6 +80,10 @@ MARKETING_PROMPT = """
 1. 根據使用者提供的景點或團名撰寫
 2. 適合社群媒體（FB/IG）或提案簡報
 3. 字數控制在 200-300 字
+
+【圖片產出】：
+若支援 Function Calling，請在文案完成後呼叫 generateMarketingImage，
+並提供 1 句英文圖片描述（適合旅遊行銷海報）。
 """
 
 # =============================================================================
@@ -277,6 +281,27 @@ GENERAL_PROMPT = """
 [/FUNCTION_CALLS]」
 """
 
+FUNCTION_CALLING_GUIDE = """
+【函數呼叫規範（優先）】
+當你需要執行 UI 操作或修改儀表板時，請使用 Function Calling 工具（不要用文字描述代替）。
+可用函數包含：
+1. navigate(viewKey)
+2. showCustomerData(searchQuery?)
+3. showQuotation(destination?)
+4. showItinerary(sessionId?)
+5. setDashboardEditMode(enabled)
+6. addDashboardWidget(type, title?, config?, layout?)
+7. removeDashboardWidget(id)
+8. updateDashboardWidget(id, title?, config?, layout?)
+9. generateMarketingImage(prompt, width?, height?, seed?, steps?, guidance?, output_format?)
+
+【備援格式】
+若環境不支援 Function Calling，才使用下列標記格式：
+[FUNCTION_CALLS]
+[{"name": "函數名稱", "arguments": {"參數名": "參數值"}}]
+[/FUNCTION_CALLS]
+"""
+
 # =============================================================================
 # Prompt Template Getter
 # =============================================================================
@@ -300,7 +325,8 @@ def get_prompt_template(mode: str, rules: str = "") -> str:
         'general': GENERAL_PROMPT.format(rules=rules)
     }
 
-    return templates.get(mode, GENERAL_PROMPT.format(rules=rules))
+    base_prompt = templates.get(mode, GENERAL_PROMPT.format(rules=rules))
+    return f"{base_prompt}\n\n{FUNCTION_CALLING_GUIDE}"
 
 
 def get_temperature(mode: str) -> float:
