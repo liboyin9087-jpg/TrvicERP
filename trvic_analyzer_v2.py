@@ -167,8 +167,8 @@ class RateLimiter:
     
     def get_retry_delay(self, attempt: int) -> float:
         """計算重試延遲（指數退避）"""
-        delay = self.config.retry_base_delay * (2 ** attempt)
-        return min(delay, 300)  # 最大 5 分鐘
+        delay = self.config.retry_base_delay * (1.5 ** attempt)
+        return min(delay, 60)  # 最大 60 秒
     
     def get_stats(self) -> Dict:
         """獲取統計資訊"""
@@ -1160,10 +1160,10 @@ class Orchestrator:
                 progress = (i + 1) / len(session.agent_order) * 100
                 logger.info(f"📊 整體進度: {progress:.0f}% ({i + 1}/{len(session.agent_order)} Agents)")
                 
-                # Agent 完成後休息 10 秒（如果不是最後一個 agent）
+                # Agent 完成後休息 2 秒（如果不是最後一個 agent）
                 if i < len(session.agent_order) - 1:
-                    logger.info(f"⏸️ Agent {agent_id} 完成，休息 10 秒...")
-                    time.sleep(10)
+                    logger.info(f"⏸️ Agent {agent_id} 完成，休息 2 秒...")
+                    time.sleep(2)
         
         session.current_agent_index = len(session.agent_order)
     
