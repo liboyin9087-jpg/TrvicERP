@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, LayoutDashboard, Calendar, Map, Users, CreditCard, FileText,
   MessageCircle, LogOut, Menu, Bell, Layers, Search, Settings,
-  Calculator, Shield, Activity, Receipt, Sparkles, Building2, ChevronLeft, X
+  Calculator, Shield, Activity, Receipt, Sparkles, Building2, ChevronLeft, X, Briefcase
 } from 'lucide-react';
 import { cn } from './src/lib/utils';
 
