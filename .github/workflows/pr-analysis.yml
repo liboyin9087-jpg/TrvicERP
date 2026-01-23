@@ -26,67 +26,58 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install requests
+          pip install -r requirements.txt
       
-      - name: Run TrvicERP Analysis - Software Engineer
+      - name: Run TrvicERP Analysis - All 5 Agents
         env:
           SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
         run: |
-          if [ -n "$SILICONFLOW_API_KEY" ]; then
-            echo "🔧 Running Software Engineer Agent..."
-            python trvic_analyzer_v2.py . --agents software_engineer --rpm 8 --delay 8
+          if [ -z "$SILICONFLOW_API_KEY" ]; then
+            echo "⚠️ SILICONFLOW_API_KEY not set"
+            echo "Please configure it in Settings → Secrets and variables → Actions"
+            echo "Add a secret named: SILICONFLOW_API_KEY"
+            exit 0
+          fi
+          
+          echo "🚀 Starting TrvicERP Analysis with 5 Agents..."
+          echo "================================================"
+          echo ""
+          echo "Agents to run:"
+          echo "  1. 🔧 Software Engineer (陳建宏)"
+          echo "  2. 🤖 AI Solution (林雅芳)"
+          echo "  3. 💼 Business Development (王志明)"
+          echo "  4. 🎨 Brand Strategy (張曉琪)"
+          echo "  5. 🖥️ UI/UX (李佳穎)"
+          echo ""
+          echo "Rate Limiting: 6 RPM, 10s delay (conservative)"
+          echo ""
+          
+          # Run all 5 agents in a single execution to maintain session
+          python trvic_analyzer_v2.py . \
+            --agents software_engineer ai_solution business_development brand_strategy ui_ux \
+            --rpm 6 \
+            --delay 10 \
+            --no-resume \
+            2>&1 | tee analysis.log
+          
+          exit_code=${PIPESTATUS[0]}
+          
+          if [ $exit_code -eq 0 ]; then
+            echo ""
+            echo "✅ Analysis completed successfully!"
           else
-            echo "⚠️ SILICONFLOW_API_KEY not set, skipping analysis"
+            echo ""
+            echo "⚠️ Analysis completed with warnings (exit code: $exit_code)"
+          fi
+          
+          # Show summary
+          if [ -d "analysis_reports" ]; then
+            echo ""
+            echo "📊 Generated reports:"
+            ls -lh analysis_reports/
           fi
         continue-on-error: true
-      
-      - name: Run TrvicERP Analysis - AI Solution
-        env:
-          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
-        run: |
-          if [ -n "$SILICONFLOW_API_KEY" ]; then
-            echo "🤖 Running AI Solution Agent..."
-            python trvic_analyzer_v2.py . --agents ai_solution --rpm 8 --delay 8
-          else
-            echo "⚠️ SILICONFLOW_API_KEY not set, skipping analysis"
-          fi
-        continue-on-error: true
-      
-      - name: Run TrvicERP Analysis - Business Development
-        env:
-          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
-        run: |
-          if [ -n "$SILICONFLOW_API_KEY" ]; then
-            echo "💼 Running Business Development Agent..."
-            python trvic_analyzer_v2.py . --agents business_development --rpm 8 --delay 8
-          else
-            echo "⚠️ SILICONFLOW_API_KEY not set, skipping analysis"
-          fi
-        continue-on-error: true
-      
-      - name: Run TrvicERP Analysis - Brand Strategy
-        env:
-          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
-        run: |
-          if [ -n "$SILICONFLOW_API_KEY" ]; then
-            echo "🎨 Running Brand Strategy Agent..."
-            python trvic_analyzer_v2.py . --agents brand_strategy --rpm 8 --delay 8
-          else
-            echo "⚠️ SILICONFLOW_API_KEY not set, skipping analysis"
-          fi
-        continue-on-error: true
-      
-      - name: Run TrvicERP Analysis - UI/UX
-        env:
-          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
-        run: |
-          if [ -n "$SILICONFLOW_API_KEY" ]; then
-            echo "🖥️ Running UI/UX Agent..."
-            python trvic_analyzer_v2.py . --agents ui_ux --rpm 8 --delay 8
-          else
-            echo "⚠️ SILICONFLOW_API_KEY not set, skipping analysis"
-          fi
-        continue-on-error: true
+        timeout-minutes: 60
       
       - name: Upload Analysis Reports
         uses: actions/upload-artifact@v4
@@ -97,6 +88,15 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
       
+      - name: Upload Analysis Log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: analysis-log
+          path: analysis.log
+          retention-days: 30
+          if-no-files-found: ignore
+      
       - name: Comment PR with Analysis Summary
         uses: actions/github-script@v7
         if: always()
@@ -104,33 +104,79 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const path = require('path');
             
-            let comment = '## 🔬 TrvicERP Analysis Report\n\n';
+            let comment = '## 🔬 TrvicERP Multi-Expert Analysis Report\n\n';
             
-            try {
-              const reportsDir = 'analysis_reports';
-              if (fs.existsSync(reportsDir)) {
-                const files = fs.readdirSync(reportsDir);
-                
-                if (files.length > 0) {
-                  comment += '✅ Analysis completed successfully!\n\n';
-                  comment += `📊 **${files.length} report(s) generated**\n\n`;
-                  comment += 'Download the detailed reports from the workflow artifacts.\n';
+            // Check if API key is configured
+            const hasApiKey = process.env.SILICONFLOW_API_KEY || false;
+            
+            if (!hasApiKey) {
+              comment += '⚠️ **SILICONFLOW_API_KEY not configured**\n\n';
+              comment += 'To enable automatic analysis on PRs:\n\n';
+              comment += '1. Go to **Settings** → **Secrets and variables** → **Actions**\n';
+              comment += '2. Click **New repository secret**\n';
+              comment += '3. Name: `SILICONFLOW_API_KEY`\n';
+              comment += '4. Value: Your SiliconFlow API Key\n\n';
+              comment += '[Get API Key from SiliconFlow](https://siliconflow.cn/)\n\n';
+            } else {
+              try {
+                const reportsDir = 'analysis_reports';
+                if (fs.existsSync(reportsDir)) {
+                  const files = fs.readdirSync(reportsDir);
+                  
+                  if (files.length > 0) {
+                    comment += '✅ **Analysis completed successfully!**\n\n';
+                    comment += '### 📊 Analysis Summary\n\n';
+                    comment += `- **Reports generated**: ${files.length}\n`;
+                    comment += '- **Agents executed**: 5 experts\n';
+                    comment += '- **Analysis scope**: Full project review\n\n';
+                    
+                    comment += '### 👥 Expert Agents\n\n';
+                    comment += '1. 🔧 **Software Engineer (陳建宏)** - Code quality & architecture\n';
+                    comment += '2. 🤖 **AI Solution (林雅芳)** - AI integration opportunities\n';
+                    comment += '3. 💼 **Business Development (王志明)** - Business model & market\n';
+                    comment += '4. 🎨 **Brand Strategy (張曉琪)** - Brand positioning & UX\n';
+                    comment += '5. 🖥️ **UI/UX (李佳穎)** - User experience & design\n\n';
+                    
+                    comment += '### 📥 Download Reports\n\n';
+                    comment += 'Click on **"Details"** next to this check → **"Summary"** → Download **analysis-reports** artifact\n\n';
+                    
+                    // Try to read summary from report
+                    const reportFile = files[0];
+                    const reportPath = `${reportsDir}/${reportFile}`;
+                    const reportContent = fs.readFileSync(reportPath, 'utf8');
+                    
+                    // Extract summary section
+                    const summaryMatch = reportContent.match(/## 📝 執行總結\n\n([\s\S]*?)\n\n---/);
+                    if (summaryMatch) {
+                      comment += '### 📝 Quick Summary\n\n';
+                      comment += summaryMatch[1].substring(0, 500);
+                      if (summaryMatch[1].length > 500) {
+                        comment += '...\n\n*See full report in artifacts*\n\n';
+                      } else {
+                        comment += '\n\n';
+                      }
+                    }
+                  } else {
+                    comment += '⚠️ **No reports generated**\n\n';
+                    comment += 'The analysis ran but no reports were created. This might indicate:\n';
+                    comment += '- API rate limiting issues\n';
+                    comment += '- Network connectivity problems\n';
+                    comment += '- API key permissions\n\n';
+                    comment += 'Check the workflow logs for details.\n\n';
+                  }
                 } else {
-                  comment += '⚠️ No analysis reports were generated.\n';
-                  comment += 'Please check if SILICONFLOW_API_KEY is configured in repository secrets.\n';
+                  comment += '⚠️ **Analysis directory not found**\n\n';
+                  comment += 'Check the workflow logs for error details.\n\n';
                 }
-              } else {
-                comment += '⚠️ Analysis reports directory not found.\n';
-                comment += 'Please check if SILICONFLOW_API_KEY is configured in repository secrets.\n';
+              } catch (error) {
+                comment += '❌ **Error processing analysis results**\n\n';
+                comment += `Error: ${error.message}\n\n`;
               }
-            } catch (error) {
-              comment += '❌ Error reading analysis reports: ' + error.message + '\n';
             }
             
-            comment += '\n---\n';
-            comment += '*Analysis performed by TrvicERP Multi-Expert Analyzer v2.0*';
+            comment += '---\n\n';
+            comment += '*🤖 Automated analysis by [TrvicERP Multi-Expert Analyzer v2.0](https://github.com/liboyin9087-jpg/TrvicERP)*';
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
