@@ -1,0 +1,47 @@
+name: PR Audit (Software Engineer)
+
+on:
+  pull_request:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Download analyzer
+        run: |
+          curl -L "https://raw.githubusercontent.com/${{ github.repository }}/main/files.zip" -o files.zip
+          unzip -q files.zip -d files_zip
+
+      - name: Run software engineer audit
+        env:
+          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+        run: |
+          if [ -z "${SILICONFLOW_API_KEY}" ]; then
+            echo "Missing SILICONFLOW_API_KEY secret."
+            exit 1
+          fi
+          python3 files_zip/trvic_analyzer_v2.py . \
+            --agents software_engineer \
+            --no-resume \
+            --rpm 10 \
+            --delay 6
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-audit-report
+          path: |
+            analysis_reports/*.md
+            .trvic_sessions/*.json
