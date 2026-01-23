@@ -2,6 +2,16 @@ name: PR Audit (All Agents)
 
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      rpm:
+        description: "Requests per minute"
+        required: false
+        default: "10"
+      delay:
+        description: "Delay between requests (seconds)"
+        required: false
+        default: "10"
 
 jobs:
   audit:
@@ -27,16 +37,20 @@ jobs:
       - name: Run full audit
         env:
           SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+          RPM: ${{ inputs.rpm }}
+          DELAY: ${{ inputs.delay }}
         run: |
           if [ -z "${SILICONFLOW_API_KEY}" ]; then
             echo "Missing SILICONFLOW_API_KEY secret."
             exit 1
           fi
+          RPM="${RPM:-10}"
+          DELAY="${DELAY:-10}"
           python3 files_zip/trvic_analyzer_v2.py . \
             --agents software_engineer ai_solution business_development brand_strategy ui_ux \
             --no-resume \
-            --rpm 10 \
-            --delay 6
+            --rpm "${RPM}" \
+            --delay "${DELAY}"
 
       - name: Upload audit report
         uses: actions/upload-artifact@v4
