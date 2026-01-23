@@ -19,7 +19,7 @@ GitHub Actions 已配置為在每次 Pull Request 時自動執行 TrvicERP 多�
 
 ### 步驟 1：獲取 API Key
 
-1. 訪問 [SiliconFlow](https://siliconflow.cn/)
+1. 訪問 [SiliconFlow](https://siliconflow.com/)
 2. 註冊或登入帳號
 3. 前往 API 管理頁面
 4. 創建或複製您的 API Key

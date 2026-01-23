@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class APIConfig:
     """API 配置"""
-    base_url: str = "https://api.siliconflow.cn/v1/chat/completions"
+    base_url: str = "https://api.siliconflow.com/v1/chat/completions"
     api_key: str = ""
     model: str = "Qwen/Qwen2.5-72B-Instruct"
     

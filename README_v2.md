@@ -347,4 +347,4 @@ MIT License
 ## 🔗 參考
 
 - [everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Claude Code 配置集合
-- [SiliconFlow](https://siliconflow.cn/) - API 服務商
+- [SiliconFlow](https://siliconflow.com/) - API 服務商

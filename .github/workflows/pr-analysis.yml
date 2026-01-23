@@ -117,7 +117,7 @@ jobs:
               comment += '2. Click **New repository secret**\n';
               comment += '3. Name: `SILICONFLOW_API_KEY`\n';
               comment += '4. Value: Your SiliconFlow API Key\n\n';
-              comment += '[Get API Key from SiliconFlow](https://siliconflow.cn/)\n\n';
+              comment += '[Get API Key from SiliconFlow](https://siliconflow.com/)\n\n';
             } else {
               try {
                 const reportsDir = 'analysis_reports';

@@ -191,4 +191,4 @@ MIT License
 
 ---
 
-**注意**：執行分析需要有效的 SiliconFlow API Key。請訪問 [SiliconFlow](https://siliconflow.cn/) 註冊並獲取 API Key。
+**注意**：執行分析需要有效的 SiliconFlow API Key。請訪問 [SiliconFlow](https://siliconflow.com/) 註冊並獲取 API Key。
