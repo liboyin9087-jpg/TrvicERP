@@ -19,7 +19,7 @@ export default function WidgetToolbar({
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-lg border border-gray-200">
       <div className="flex items-center gap-2 pr-3 border-r border-gray-200">
-        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+        <div className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
         <span className="text-sm font-medium text-gray-700">Edit mode</span>
       </div>
       {lastSavedAt && (
@@ -48,7 +48,7 @@ export default function WidgetToolbar({
       </button>
       <button
         onClick={onSave}
-        className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1"
+        className="px-4 py-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors flex items-center gap-1"
       >
         <Check size={16} />
         Save layout

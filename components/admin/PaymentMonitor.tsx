@@ -36,14 +36,14 @@ const itemVariants = {
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; label: string; icon: React.ElementType }> = {
   pending: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500', label: '待付款', icon: Clock },
-  processing: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', label: '處理中', icon: RefreshCw },
+  processing: { bg: 'bg-brand-50', text: 'text-brand-700', dot: 'bg-brand-500', label: '處理中', icon: RefreshCw },
   completed: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', label: '已完成', icon: CheckCircle },
   failed: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500', label: '失敗', icon: XCircle },
 };
 
 const METHOD_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
   credit_card: { icon: CreditCard, label: '信用卡', color: 'text-slate-600' },
-  bank_transfer: { icon: Building2, label: '銀行轉帳', color: 'text-blue-600' },
+  bank_transfer: { icon: Building2, label: '銀行轉帳', color: 'text-brand-600' },
   line_pay: { icon: Smartphone, label: 'LINE Pay', color: 'text-green-600' },
 };
 
@@ -258,7 +258,7 @@ function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
   const colorStyles = {
     emerald: 'from-emerald-500 to-teal-500',
     amber: 'from-amber-500 to-orange-500',
-    blue: 'from-blue-500 to-indigo-500',
+    blue: 'from-brand-500 to-brand-700',
   };
 
   return (

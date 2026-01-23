@@ -5,9 +5,9 @@ const STATUS_CONFIG: Record<
   { bg: string; text: string; label: string }
 > = {
   draft: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Draft' },
-  quoted: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Quoted' },
+  quoted: { bg: 'bg-brand-100', text: 'text-brand-800', label: 'Quoted' },
   confirmed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Confirmed' },
-  ongoing: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Ongoing' },
+  ongoing: { bg: 'bg-accent-100', text: 'text-accent-800', label: 'Ongoing' },
   completed: { bg: 'bg-gray-200', text: 'text-gray-700', label: 'Completed' },
   cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Cancelled' },
   pending: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending' },

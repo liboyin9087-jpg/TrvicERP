@@ -56,9 +56,9 @@ const COLUMNS_CONFIG = [
     id: 'reviewing',
     title: '審核中',
     icon: Eye,
-    gradient: 'from-blue-400 to-indigo-500',
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
+    gradient: 'from-brand-500 to-brand-700',
+    bg: 'bg-brand-50',
+    text: 'text-brand-700',
   },
   {
     id: 'completed',
@@ -282,7 +282,7 @@ export default function PassportKanban() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
@@ -401,7 +401,7 @@ interface StatCardProps {
 function StatCard({ icon: Icon, label, value, color, warning }: StatCardProps) {
   const colorStyles = {
     amber: 'from-amber-500 to-orange-500',
-    blue: 'from-blue-500 to-indigo-500',
+    blue: 'from-brand-500 to-brand-700',
     emerald: 'from-emerald-500 to-teal-500',
     red: 'from-red-500 to-rose-500',
   };

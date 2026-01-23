@@ -387,7 +387,7 @@ export default function DocumentGenerator({
             className="bg-white p-6 rounded-2xl border border-gray-100"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+              <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center text-brand-600">
                 {doc.icon}
               </div>
               <div>

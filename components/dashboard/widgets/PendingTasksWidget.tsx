@@ -21,7 +21,7 @@ export default function PendingTasksWidget(_: { widget: Widget }) {
             type="checkbox"
             checked={task.done}
             onChange={() => toggleTask(task.id)}
-            className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-1 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
           />
           <div>
             <div className={`text-sm ${task.done ? 'line-through text-gray-400' : 'text-gray-800'}`}>

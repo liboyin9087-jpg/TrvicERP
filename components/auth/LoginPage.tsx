@@ -119,6 +119,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     showNotification('已使用 Demo 帳號登入', 'success');
     setTimeout(() => {
       onLogin(role, `demo_${role}`, account.label);
+      if (window.location.pathname.startsWith('/login')) {
+        window.location.assign('/');
+      }
     }, 300);
   };
 
@@ -213,7 +216,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-6xl font-bold leading-tight mb-6 bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent"
+            className="text-6xl font-bold leading-tight mb-6 bg-gradient-to-r from-white via-brand-100 to-brand-200 bg-clip-text text-transparent"
           >
             智慧旅遊
             <br />
@@ -371,7 +374,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full pl-10 pr-4 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -389,7 +392,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-12 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-12 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                   />
                   <button
                     type="button"
@@ -466,7 +469,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 >
                   {selectedDemoRole
                     ? `以 ${DEMO_ACCOUNTS[selectedDemoRole].label} 進入`
-                    : 'Demo 直接進入'}
+                    : '直接進主畫面'}
                 </motion.button>
               </div>
             </motion.form>

@@ -41,7 +41,7 @@ const VIP_CONFIG: Record<string, { bg: string; text: string; gradient: string; i
   bronze: { bg: 'bg-orange-50', text: 'text-orange-700', gradient: 'from-orange-400 to-amber-500', icon: Medal, label: 'Bronze' },
   silver: { bg: 'bg-slate-100', text: 'text-slate-700', gradient: 'from-slate-400 to-slate-500', icon: Shield, label: 'Silver' },
   gold: { bg: 'bg-amber-50', text: 'text-amber-700', gradient: 'from-amber-400 to-yellow-500', icon: Award, label: 'Gold' },
-  platinum: { bg: 'bg-purple-50', text: 'text-purple-700', gradient: 'from-purple-400 to-indigo-500', icon: Crown, label: 'Platinum' },
+  platinum: { bg: 'bg-brand-50', text: 'text-brand-700', gradient: 'from-brand-500 to-brand-700', icon: Crown, label: 'Platinum' },
 };
 
 export default function CustomerCDP() {
@@ -71,7 +71,7 @@ export default function CustomerCDP() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
@@ -269,7 +269,7 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
   const colorStyles = {
-    purple: 'from-purple-500 to-indigo-500',
+    purple: 'from-brand-500 to-brand-700',
     amber: 'from-amber-500 to-yellow-500',
     emerald: 'from-emerald-500 to-teal-500',
   };

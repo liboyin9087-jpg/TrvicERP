@@ -30,9 +30,9 @@ export const RECENT_ORDERS = [
 ];
 
 export const QUICK_ACTIONS = [
-  { id: 'new-tour', label: 'Create Tour', color: 'bg-blue-500' },
+  { id: 'new-tour', label: 'Create Tour', color: 'bg-brand-500' },
   { id: 'new-quote', label: 'Create Quote', color: 'bg-emerald-500' },
-  { id: 'manage-customers', label: 'Customer CRM', color: 'bg-purple-500' },
+  { id: 'manage-customers', label: 'Customer CRM', color: 'bg-accent-500' },
   { id: 'export-report', label: 'Export Report', color: 'bg-amber-500' },
 ];
 

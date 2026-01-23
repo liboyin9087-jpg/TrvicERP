@@ -28,10 +28,10 @@ export default function AddWidgetPanel({ isOpen, onClose, onAdd }: AddWidgetPane
             <button
               key={widget.type}
               onClick={() => onAdd(widget.type)}
-              className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-200 hover:bg-brand-50 transition-all text-left"
             >
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Plus size={20} className="text-blue-600" />
+              <div className="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center">
+                <Plus size={20} className="text-brand-600" />
               </div>
               <div>
                 <div className="font-medium text-gray-800 text-sm">{widget.title}</div>

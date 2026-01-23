@@ -518,10 +518,10 @@ export const MOCK_SPOTS: Spot[] = [
 export const CATEGORY_CONFIG: Record<SpotCategory, { label: string; color: string; icon: string }> = {
   '綠色永續景點': { label: '綠色永續', color: 'bg-emerald-500', icon: '🌱' },
   '山林秘境': { label: '山林秘境', color: 'bg-green-600', icon: '🏔️' },
-  '海岸離島': { label: '海岸離島', color: 'bg-blue-500', icon: '🏝️' },
+  '海岸離島': { label: '海岸離島', color: 'bg-brand-500', icon: '🏝️' },
   '文化深度體驗': { label: '文化體驗', color: 'bg-amber-500', icon: '🎭' },
   '農村慢旅': { label: '農村慢旅', color: 'bg-yellow-600', icon: '🌾' },
-  '都市邊緣秘境': { label: '都市秘境', color: 'bg-purple-500', icon: '🏙️' },
+  '都市邊緣秘境': { label: '都市秘境', color: 'bg-accent-500', icon: '🏙️' },
 };
 
 // ============================================

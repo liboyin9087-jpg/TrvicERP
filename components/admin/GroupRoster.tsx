@@ -83,8 +83,8 @@ export default function GroupRoster({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Users className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
+              <Users className="w-5 h-5 text-brand-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">總報名人數</p>
@@ -93,7 +93,7 @@ export default function GroupRoster({
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-600 rounded-full transition-all"
+              className="h-full bg-brand-600 rounded-full transition-all"
               style={{ width: `${registrationProgress}%` }}
             />
           </div>
@@ -126,12 +126,12 @@ export default function GroupRoster({
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Bed className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center">
+              <Bed className="w-5 h-5 text-accent-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">已分房</p>
-              <p className="text-2xl font-bold text-purple-600">{roomAssignments.length}</p>
+              <p className="text-2xl font-bold text-accent-600">{roomAssignments.length}</p>
             </div>
           </div>
         </div>
@@ -268,7 +268,7 @@ export default function GroupRoster({
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <h4 className="font-bold text-gray-900 flex items-center gap-2">
-              <Bed className="w-5 h-5 text-purple-600" />
+              <Bed className="w-5 h-5 text-accent-600" />
               分房表預覽
             </h4>
             <span className="text-sm text-gray-500">{roomAssignments.length} 間</span>
@@ -301,7 +301,7 @@ export default function GroupRoster({
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <h4 className="font-bold text-gray-900 flex items-center gap-2">
-              <Bus className="w-5 h-5 text-blue-600" />
+              <Bus className="w-5 h-5 text-brand-600" />
               座位表預覽
             </h4>
             <span className="text-sm text-gray-500">
@@ -317,7 +317,7 @@ export default function GroupRoster({
                     className={cn(
                       'aspect-square rounded border-2 flex items-center justify-center text-xs font-medium',
                       seat.is_assigned
-                        ? 'bg-blue-100 border-blue-300 text-blue-700'
+                        ? 'bg-brand-100 border-brand-300 text-brand-700'
                         : 'bg-gray-50 border-gray-200 text-gray-400'
                     )}
                   >

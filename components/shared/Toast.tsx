@@ -16,7 +16,7 @@ const iconMap = {
 const colorMap = {
   success: 'bg-emerald-500',
   error: 'bg-red-500',
-  info: 'bg-blue-500',
+  info: 'bg-brand-500',
 };
 
 export default function Toast({ toast, onClose }: ToastProps) {

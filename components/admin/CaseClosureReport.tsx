@@ -146,7 +146,7 @@ function RatingBar({ label, rating, maxRating = 5 }: {
           className={cn(
             'h-full rounded-full',
             rating >= 4.5 ? 'bg-green-500' :
-            rating >= 4.0 ? 'bg-blue-500' :
+            rating >= 4.0 ? 'bg-brand-500' :
             rating >= 3.5 ? 'bg-yellow-500' : 'bg-red-500'
           )}
         />
@@ -160,8 +160,8 @@ function IncidentCard({ incident }: { incident: IncidentLog }) {
   const typeLabels: Record<string, { label: string; color: string }> = {
     delay: { label: '延誤', color: 'bg-yellow-100 text-yellow-700' },
     complaint: { label: '客訴', color: 'bg-red-100 text-red-700' },
-    medical: { label: '醫療', color: 'bg-blue-100 text-blue-700' },
-    lost_item: { label: '遺失', color: 'bg-purple-100 text-purple-700' },
+    medical: { label: '醫療', color: 'bg-brand-100 text-brand-700' },
+    lost_item: { label: '遺失', color: 'bg-accent-100 text-accent-700' },
     other: { label: '其他', color: 'bg-gray-100 text-gray-700' },
   };
 
@@ -396,7 +396,7 @@ export default function CaseClosureReport({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleExportPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium"
           >
             <Printer className="w-4 h-4" />
             列印報告
@@ -506,7 +506,7 @@ export default function CaseClosureReport({
                 </div>
                 <button
                   onClick={handleSendSurvey}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100"
                 >
                   <Mail className="w-4 h-4" />
                   發送問卷
@@ -669,10 +669,10 @@ export default function CaseClosureReport({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleExportPDF}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all"
+            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all"
           >
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-brand-600" />
             </div>
             <div className="text-left">
               <h4 className="font-bold text-gray-900">匯出 PDF 報告</h4>
@@ -699,10 +699,10 @@ export default function CaseClosureReport({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => alert('Email 發送功能開發中')}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-purple-200 hover:bg-purple-50 transition-all"
+            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-accent-200 hover:bg-accent-50 transition-all"
           >
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Mail className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center">
+              <Mail className="w-6 h-6 text-accent-600" />
             </div>
             <div className="text-left">
               <h4 className="font-bold text-gray-900">Email 發送報告</h4>
