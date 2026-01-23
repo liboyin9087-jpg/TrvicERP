@@ -1,0 +1,46 @@
+{
+    "api": {
+        "base_url": "https://api.siliconflow.com/v1/chat/completions",
+        "api_key": "",
+        "model": "Qwen/Qwen2.5-72B-Instruct",
+        
+        "_comment_rate_limiting": "以下是 Rate Limiting 配置，用於避免 API 呼叫過於密集",
+        "requests_per_minute": 10,
+        "min_delay_between_requests": 6.0,
+        "max_retries": 5,
+        "retry_base_delay": 10.0
+    },
+    
+    "scan": {
+        "max_file_size_mb": 10,
+        "supported_extensions": [
+            ".py", ".js", ".ts", ".tsx", ".jsx", ".vue",
+            ".html", ".css", ".scss", ".json", ".yaml", ".yml",
+            ".md", ".txt", ".sql", ".sh", ".toml", ".ini"
+        ],
+        "excluded_dirs": [
+            "node_modules", "__pycache__", ".git", ".venv",
+            "venv", "env", "dist", "build", ".next", ".nuxt"
+        ],
+        "excluded_files": [
+            "package-lock.json", "yarn.lock", "pnpm-lock.yaml"
+        ]
+    },
+    
+    "session": {
+        "session_dir": ".trvic_sessions",
+        "output_dir": "analysis_reports",
+        "auto_save_interval": 60
+    },
+    
+    "agents": {
+        "_comment": "五位專家的執行順序，可自行調整",
+        "order": [
+            "software_engineer",
+            "ai_solution", 
+            "business_development",
+            "brand_strategy",
+            "ui_ux"
+        ]
+    }
+}
