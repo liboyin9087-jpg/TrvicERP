@@ -1,4 +1,4 @@
-name: PR Audit (Software Engineer)
+name: PR Audit (All Agents)
 
 on:
   pull_request:
@@ -24,7 +24,7 @@ jobs:
           curl -L "https://raw.githubusercontent.com/${{ github.repository }}/main/files.zip" -o files.zip
           unzip -q files.zip -d files_zip
 
-      - name: Run software engineer audit
+      - name: Run full audit
         env:
           SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
         run: |
@@ -33,7 +33,7 @@ jobs:
             exit 1
           fi
           python3 files_zip/trvic_analyzer_v2.py . \
-            --agents software_engineer \
+            --agents software_engineer ai_solution business_development brand_strategy ui_ux \
             --no-resume \
             --rpm 10 \
             --delay 6
