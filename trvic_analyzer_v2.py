@@ -1159,6 +1159,11 @@ class Orchestrator:
                 # 顯示進度
                 progress = (i + 1) / len(session.agent_order) * 100
                 logger.info(f"📊 整體進度: {progress:.0f}% ({i + 1}/{len(session.agent_order)} Agents)")
+                
+                # Agent 完成後休息 10 秒（如果不是最後一個 agent）
+                if i < len(session.agent_order) - 1:
+                    logger.info(f"⏸️ Agent {agent_id} 完成，休息 10 秒...")
+                    time.sleep(10)
         
         session.current_agent_index = len(session.agent_order)
     
