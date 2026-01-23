@@ -1,0 +1,17 @@
+name: CodePQCWS
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+jobs:
+  codepqcws:
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: "test"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run CodePQCWS action
+        uses: ./.github/actions/codepqcws
