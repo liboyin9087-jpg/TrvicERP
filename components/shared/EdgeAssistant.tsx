@@ -35,16 +35,14 @@ export default function EdgeAssistant() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modeSelectorRef = useRef<HTMLDivElement>(null);
   const { executeFunctions } = useFunctionExecutor();
-  const { currentView, userRole, userName, userId } = useAppStore((state) => ({
-    currentView: state.currentView,
-    userRole: state.userRole,
-    userName: state.userName,
-    userId: state.userId,
-  }));
-  const { widgets, isEditMode } = useDashboardStore((state) => ({
-    widgets: state.widgets,
-    isEditMode: state.isEditMode,
-  }));
+  
+  // Use individual selectors to avoid getSnapshot issue
+  const currentView = useAppStore((state) => state.currentView);
+  const userRole = useAppStore((state) => state.userRole);
+  const userName = useAppStore((state) => state.userName);
+  const userId = useAppStore((state) => state.userId);
+  const widgets = useDashboardStore((state) => state.widgets);
+  const isEditMode = useDashboardStore((state) => state.isEditMode);
 
   const aiContext = useMemo(() => {
     const dashboardWidgets = widgets.slice(0, 12).map((widget) => ({

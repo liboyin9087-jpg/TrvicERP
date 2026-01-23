@@ -15,30 +15,32 @@ import 'react-resizable/css/styles.css';
 const ResponsiveGridLayout = WidthProvider(ReactGridLayout);
 
 export default function DraggableDashboard() {
-  const { userRole, userName } = useAppStore((state) => ({
-    userRole: state.userRole,
-    userName: state.userName,
-  }));
-  const {
-    widgets,
-    isEditMode,
-    selectedWidgetId,
-    lastSavedAt,
-    setRole,
-    setEditMode,
-    setSelectedWidgetId,
-    applyLayout,
-    removeWidget,
-    addWidgetByType,
-    saveLayout,
-    discardChanges,
-    resetToDefault,
-  } = useDashboardStore();
+  const userRole = useAppStore((state) => state.userRole);
+  const userName = useAppStore((state) => state.userName);
+  
+  const widgets = useDashboardStore((state) => state.widgets);
+  const currentRole = useDashboardStore((state) => state.currentRole);
+  const isEditMode = useDashboardStore((state) => state.isEditMode);
+  const selectedWidgetId = useDashboardStore((state) => state.selectedWidgetId);
+  const lastSavedAt = useDashboardStore((state) => state.lastSavedAt);
+  const setRole = useDashboardStore((state) => state.setRole);
+  const setEditMode = useDashboardStore((state) => state.setEditMode);
+  const setSelectedWidgetId = useDashboardStore((state) => state.setSelectedWidgetId);
+  const applyLayout = useDashboardStore((state) => state.applyLayout);
+  const removeWidget = useDashboardStore((state) => state.removeWidget);
+  const addWidgetByType = useDashboardStore((state) => state.addWidgetByType);
+  const saveLayout = useDashboardStore((state) => state.saveLayout);
+  const discardChanges = useDashboardStore((state) => state.discardChanges);
+  const resetToDefault = useDashboardStore((state) => state.resetToDefault);
+  
   const [showLibrary, setShowLibrary] = useState(false);
 
   useEffect(() => {
-    setRole(userRole);
-  }, [userRole, setRole]);
+    // Only set role once on mount or when userRole changes
+    if (currentRole !== userRole) {
+      setRole(userRole);
+    }
+  }, [userRole]);
 
   const layout = useMemo<Layout>(
     () =>

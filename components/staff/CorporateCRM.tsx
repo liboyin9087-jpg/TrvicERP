@@ -14,7 +14,7 @@ import {
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Modal from '@/components/shared/Modal';
+import Modal from '../shared/Modal';
 import { useToast } from '@/store/useToastStore';
 import CorporateService from '@/modules/corporate/services/corporateService';
 import type {
@@ -283,16 +283,16 @@ export default function CorporateCRM() {
       return;
     }
     setIsSaving(true);
-    const payload: CreateCorporateAccountData | UpdateCorporateAccountData = {
-      name: accountForm.name.trim(),
-      industry: accountForm.industry.trim(),
-      size: accountForm.size.trim(),
-      status: accountForm.status,
-      nextRenewal: accountForm.nextRenewal,
-      pipelineValue: Number(accountForm.pipelineValue) || 0,
-    };
     try {
       if (editingAccount) {
+        const payload: UpdateCorporateAccountData = {
+          name: accountForm.name.trim(),
+          industry: accountForm.industry.trim(),
+          size: accountForm.size.trim(),
+          status: accountForm.status,
+          nextRenewal: accountForm.nextRenewal,
+          pipelineValue: Number(accountForm.pipelineValue) || 0,
+        };
         const result = await CorporateService.updateAccount(editingAccount.id, payload);
         const updated = result.data || {
           ...editingAccount,
@@ -303,6 +303,14 @@ export default function CorporateCRM() {
         );
         toast.success('已更新企業帳戶');
       } else {
+        const payload: CreateCorporateAccountData = {
+          name: accountForm.name.trim(),
+          industry: accountForm.industry.trim(),
+          size: accountForm.size.trim(),
+          status: accountForm.status,
+          nextRenewal: accountForm.nextRenewal,
+          pipelineValue: Number(accountForm.pipelineValue) || 0,
+        };
         const result = await CorporateService.createAccount(payload);
         const created: CorporateAccount = result.data || {
           id: `corp_${Date.now()}`,
@@ -332,16 +340,16 @@ export default function CorporateCRM() {
       return;
     }
     setIsSaving(true);
-    const payload: CreateContactPersonData | UpdateContactPersonData = {
-      name: contactForm.name.trim(),
-      title: contactForm.title.trim(),
-      role: contactForm.role,
-      concern: contactForm.concern.trim(),
-      phone: contactForm.phone.trim(),
-      email: contactForm.email.trim(),
-    };
     try {
       if (editingContact) {
+        const payload: UpdateContactPersonData = {
+          name: contactForm.name.trim(),
+          title: contactForm.title.trim(),
+          role: contactForm.role,
+          concern: contactForm.concern.trim(),
+          phone: contactForm.phone.trim(),
+          email: contactForm.email.trim(),
+        };
         const result = await CorporateService.updateContact(
           selectedAccountId,
           editingContact.id,
@@ -353,6 +361,14 @@ export default function CorporateCRM() {
         );
         toast.success('已更新聯絡人');
       } else {
+        const payload: CreateContactPersonData = {
+          name: contactForm.name.trim(),
+          title: contactForm.title.trim(),
+          role: contactForm.role,
+          concern: contactForm.concern.trim(),
+          phone: contactForm.phone.trim(),
+          email: contactForm.email.trim(),
+        };
         const result = await CorporateService.addContact(selectedAccountId, payload);
         const created: ContactPerson = result.data || {
           id: `contact_${Date.now()}`,
