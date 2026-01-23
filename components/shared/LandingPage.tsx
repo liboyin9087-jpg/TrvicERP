@@ -81,11 +81,11 @@ const STATS = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <header className="border-b border-white/5">
+    <div className="min-h-screen bg-brand-900 text-white">
+      <header className="border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center font-bold text-slate-900">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-accent flex items-center justify-center font-bold text-white">
               TM
             </div>
             <div>
@@ -116,7 +116,7 @@ export default function LandingPage() {
             </a>
             <a
               href="#cta"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-slate-900 text-sm font-semibold hover:bg-slate-100 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500 text-white text-sm font-semibold hover:bg-brand-600 transition-colors"
             >
               Book a demo
               <ArrowRight className="w-4 h-4" />
@@ -127,12 +127,12 @@ export default function LandingPage() {
 
       <main>
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.25),_transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(31,111,235,0.22),_transparent_55%)]" />
           <div className="max-w-6xl mx-auto px-6 py-20 relative">
             <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] items-center">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 text-xs text-slate-200 border border-white/10">
-                  <Sparkles className="w-4 h-4 text-emerald-300" />
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs text-slate-100 border border-white/10">
+                  <Sparkles className="w-4 h-4 text-accent" />
                   Built for group travel operators
                 </div>
                 <h1 className="text-4xl md:text-5xl font-bold leading-tight mt-6">
@@ -145,7 +145,7 @@ export default function LandingPage() {
                 <div className="mt-6 grid gap-3 text-sm text-slate-200">
                   {FEATURE_LIST.map((item) => (
                     <div key={item} className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-emerald-300" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                       <span>{item}</span>
                     </div>
                   ))}
@@ -153,7 +153,7 @@ export default function LandingPage() {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <a
                     href="#cta"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-400 text-slate-900 font-semibold hover:bg-emerald-300 transition-colors"
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-brand-500 text-white font-semibold hover:bg-brand-600 transition-colors"
                   >
                     Request demo
                     <ArrowRight className="w-4 h-4" />
@@ -168,12 +168,12 @@ export default function LandingPage() {
               </div>
 
               <div className="relative">
-                <div className="absolute -top-6 -right-6 w-32 h-32 bg-emerald-400/20 blur-3xl rounded-full" />
-                <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 shadow-2xl">
+                <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent/20 blur-3xl rounded-full" />
+                  <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl">
                   <div className="flex items-center justify-between text-xs text-slate-400">
                     <span>Operations Dashboard</span>
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="w-2 h-2 rounded-full bg-accent" />
                       Live
                     </span>
                   </div>
@@ -183,7 +183,7 @@ export default function LandingPage() {
                         <div key={label} className="rounded-2xl bg-white/5 p-3">
                           <div className="text-xs text-slate-400">{label}</div>
                           <div className="text-lg font-semibold mt-2">92%</div>
-                          <div className="text-[11px] text-emerald-300 mt-1">On track</div>
+                          <div className="text-[11px] text-accent mt-1">On track</div>
                         </div>
                       ))}
                     </div>
@@ -196,7 +196,7 @@ export default function LandingPage() {
                         {['Tokyo 5D', 'Bali 4D', 'Kenting 2D'].map((trip) => (
                           <div key={trip} className="flex items-center justify-between">
                             <span>{trip}</span>
-                            <span className="text-emerald-300">Ready</span>
+                            <span className="text-accent">Ready</span>
                           </div>
                         ))}
                       </div>
@@ -204,22 +204,22 @@ export default function LandingPage() {
                     <div className="rounded-2xl bg-white/5 p-4">
                       <div className="flex items-center justify-between text-xs text-slate-400">
                         <span>Risk alerts</span>
-                        <span className="text-amber-300">2 pending</span>
+                        <span className="text-warning">2 pending</span>
                       </div>
                       <div className="mt-3 grid gap-2 text-xs">
                         <div className="flex items-center justify-between">
                           <span>Passport expiry</span>
-                          <span className="text-amber-300">3 pax</span>
+                          <span className="text-warning">3 pax</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span>Final payment</span>
-                          <span className="text-amber-300">2 orders</span>
+                          <span className="text-warning">2 orders</span>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div className="mt-5 flex items-center gap-3 text-xs text-slate-400">
-                    <Gauge className="w-4 h-4 text-emerald-300" />
+                    <Gauge className="w-4 h-4 text-accent" />
                     99.9% uptime • SOC-ready workflows
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="border-y border-white/5 bg-slate-950/60">
+        <section className="border-y border-white/5 bg-brand-900/80">
           <div className="max-w-6xl mx-auto px-6 py-10 grid gap-6 md:grid-cols-4">
             {STATS.map((stat) => (
               <div key={stat.label} className="rounded-2xl bg-white/5 p-4">
@@ -241,7 +241,7 @@ export default function LandingPage() {
 
         <section id="roles" className="max-w-6xl mx-auto px-6 py-16">
           <div className="text-center max-w-2xl mx-auto">
-            <div className="text-xs uppercase tracking-[0.2em] text-emerald-300">
+            <div className="text-xs uppercase tracking-[0.2em] text-accent">
               Role-based experiences
             </div>
             <h2 className="text-3xl font-bold mt-4">Three roles, one unified workflow.</h2>
@@ -252,7 +252,7 @@ export default function LandingPage() {
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {ROLE_CARDS.map((role) => (
               <div key={role.title} className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <div className="flex items-center gap-2 text-emerald-300 text-sm">
+                <div className="flex items-center gap-2 text-accent text-sm">
                   <Users className="w-4 h-4" />
                   {role.title}
                 </div>
@@ -260,7 +260,7 @@ export default function LandingPage() {
                 <ul className="mt-4 space-y-2 text-sm text-slate-300">
                   {role.items.map((item) => (
                     <li key={item} className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-300" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                       {item}
                     </li>
                   ))}
@@ -274,7 +274,7 @@ export default function LandingPage() {
           <div className="max-w-6xl mx-auto px-6 py-16">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-emerald-300">
+                <div className="text-xs uppercase tracking-[0.2em] text-accent">
                   Capabilities
                 </div>
                 <h2 className="text-3xl font-bold mt-4">
@@ -285,7 +285,7 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 text-sm text-slate-300">
-                <Zap className="w-4 h-4 text-emerald-300" />
+                <Zap className="w-4 h-4 text-accent" />
                 AI copilots included
               </div>
             </div>
@@ -297,8 +297,8 @@ export default function LandingPage() {
                     key={capability.title}
                     className="rounded-2xl border border-white/10 bg-slate-950/60 p-5"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-400/15 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-emerald-300" />
+                    <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-accent" />
                     </div>
                     <h3 className="mt-4 font-semibold">{capability.title}</h3>
                     <p className="text-sm text-slate-300 mt-2">{capability.description}</p>
@@ -311,7 +311,7 @@ export default function LandingPage() {
 
         <section id="workflow" className="max-w-6xl mx-auto px-6 py-16">
           <div className="text-center max-w-2xl mx-auto">
-            <div className="text-xs uppercase tracking-[0.2em] text-emerald-300">
+            <div className="text-xs uppercase tracking-[0.2em] text-accent">
               Workflow alignment
             </div>
             <h2 className="text-3xl font-bold mt-4">Plan. Sell. Execute. Close.</h2>
@@ -327,7 +327,7 @@ export default function LandingPage() {
               { title: 'Close', desc: 'Settlement, reports, and retention.' },
             ].map((step, index) => (
               <div key={step.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <div className="text-xs text-emerald-300">Step {index + 1}</div>
+              <div className="text-xs text-accent">Step {index + 1}</div>
                 <h3 className="text-lg font-semibold mt-2">{step.title}</h3>
                 <p className="text-sm text-slate-300 mt-2">{step.desc}</p>
               </div>
@@ -364,15 +364,15 @@ export default function LandingPage() {
               <div className="mt-4 grid gap-3 text-xs text-slate-400">
                 <div className="flex items-center justify-between">
                   <span>Policy and compliance templates</span>
-                  <span className="text-emerald-300">Included</span>
+                  <span className="text-accent">Included</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>AI copilots for ops + legal</span>
-                  <span className="text-emerald-300">Included</span>
+                  <span className="text-accent">Included</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Vercel-ready deployment</span>
-                  <span className="text-emerald-300">Ready</span>
+                  <span className="text-accent">Ready</span>
                 </div>
               </div>
             </div>

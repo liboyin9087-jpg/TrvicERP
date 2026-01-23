@@ -69,7 +69,7 @@ VIEW_KEYS = [
     "costing", "insurance", "quotation", "operations", "expense", "chat",
     "estimator", "map", "welfare", "builder", "traveler", "itinerary",
     "voting", "briefing", "addons", "footprint", "tour-management", "ai-copilot",
-    "proposal-engine", "client-portal"
+    "proposal-engine", "client-portal", "corporate-crm"
 ]
 
 WIDGET_TYPES = [

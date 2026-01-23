@@ -89,10 +89,10 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-surface flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-semibold">
+            <div className="w-12 h-12 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-semibold">
               TM
             </div>
             <div>
@@ -121,7 +121,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
             </div>
             <button
               onClick={handleLogin}
-              className="w-full rounded-xl bg-blue-600 text-white py-3 text-sm font-semibold hover:bg-blue-700 transition-colors"
+              className="w-full rounded-xl bg-brand-500 text-white py-3 text-sm font-semibold hover:bg-brand-600 transition-colors"
             >
               登入企業入口
             </button>
@@ -135,11 +135,11 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-surface">
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-semibold">
+            <div className="w-11 h-11 rounded-2xl bg-brand-500 text-white flex items-center justify-center font-semibold">
               TM
             </div>
             <div>
@@ -171,8 +171,8 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
               className={cn(
                 'px-4 py-2 rounded-full text-sm font-medium transition-colors',
                 activeTab === tab.key
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-slate-200 text-gray-600 hover:border-blue-300'
+                  ? 'bg-brand-500 text-white'
+                  : 'bg-white border border-slate-200 text-gray-600 hover:border-brand-200'
               )}
             >
               {tab.label}
@@ -183,7 +183,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <StatCard icon={<Users className="w-5 h-5 text-blue-600" />} label="報名完成率" value={`${stats.registrationRate}%`} helper="已確認 2 / 4" />
+              <StatCard icon={<Users className="w-5 h-5 text-brand-600" />} label="報名完成率" value={`${stats.registrationRate}%`} helper="已確認 2 / 4" />
               <StatCard icon={<FileText className="w-5 h-5 text-emerald-600" />} label="護照繳交率" value={`${stats.passportRate}%`} helper="缺件 2 人" />
               <StatCard icon={<CheckCircle className="w-5 h-5 text-brand-600" />} label="保險完成率" value={`${stats.insuranceRate}%`} helper="缺件 1 人" />
             </div>
@@ -196,7 +196,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
                 </div>
                 <button
                   onClick={() => handleDownload('風險清單')}
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600"
                 >
                   <Download className="w-4 h-4" />
                   匯出清單
@@ -231,7 +231,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
               </div>
               <button
                 onClick={() => handleDownload('報名名單')}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600"
               >
                 <Download className="w-4 h-4" />
                 下載名單
@@ -257,7 +257,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
                         <span className={cn(
                           'px-2 py-1 rounded-full text-xs font-semibold',
                           employee.status === 'confirmed' && 'bg-green-100 text-green-700',
-                          employee.status === 'approved' && 'bg-blue-100 text-blue-700',
+                          employee.status === 'approved' && 'bg-brand-100 text-brand-700',
                           employee.status === 'pending' && 'bg-amber-100 text-amber-700'
                         )}>
                           {employee.status}
@@ -302,7 +302,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
                   </div>
                   <button
                     onClick={() => handleDownload(doc.title)}
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                    className="flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600"
                   >
                     <Download className="w-4 h-4" />
                     下載
@@ -330,7 +330,7 @@ export default function ClientPortal({ initialAuthenticated = false }: ClientPor
             </div>
             <button
               onClick={() => handleDownload('行前說明會資料')}
-              className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+              className="inline-flex items-center gap-2 text-sm text-brand-500 hover:text-brand-600"
             >
               <Download className="w-4 h-4" />
               下載行前資料

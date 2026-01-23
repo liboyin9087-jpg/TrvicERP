@@ -65,6 +65,17 @@ export const API_ENDPOINTS = {
     update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/customers/${id}`,
     delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/customers/${id}`,
   },
+  corporateAccounts: {
+    list: `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts`,
+    create: `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts`,
+    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}`,
+    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}`,
+    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}`,
+    contacts: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}/contacts`,
+    contactDetail: (id: string, contactId: string) =>
+      `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}/contacts/${contactId}`,
+    engagements: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}/engagements`,
+  },
   // 使用者管理（RESTful）
   users: {
     list: `${API_BASE_URL}/api/${API_VERSION}/users`,
@@ -127,6 +138,9 @@ const MOCK_LIST_ENDPOINTS: RegExp[] = [
   /\/api\/v1\/tours\/?$/,
   /\/api\/v1\/sessions\/?$/,
   /\/api\/v1\/customers\/?$/,
+  /\/api\/v1\/corporate-accounts\/?$/,
+  /\/api\/v1\/corporate-accounts\/[^/]+\/contacts\/?$/,
+  /\/api\/v1\/corporate-accounts\/[^/]+\/engagements\/?$/,
   /\/api\/v1\/users\/?$/,
   /\/api\/v1\/polls\/?$/,
   /\/api\/v1\/budgets\/?$/,

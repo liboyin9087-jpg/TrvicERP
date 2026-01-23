@@ -18,6 +18,9 @@ export * from './sessions';
 // 客戶管理
 export * from './customers';
 
+// 企業客戶管理
+export * from './corporate';
+
 // 行程產品
 export * from './tours';
 

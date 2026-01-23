@@ -25,6 +25,7 @@ import DraggableDashboard from './components/dashboard/DraggableDashboard';
 // Staff Components
 import VisualPlanner from './components/staff/VisualPlanner';
 import CustomerCDP from './components/staff/CustomerCDP';
+import CorporateCRM from './components/staff/CorporateCRM';
 import InsuranceExport from './components/staff/InsuranceExport';
 import QuotationBuilder from './components/staff/QuotationBuilder';
 import OperationHub from './components/staff/OperationHub';
@@ -89,6 +90,7 @@ const STAFF_NAV: NavGroup[] = [
     items: [
       { id: 'crm', label: '客戶管理', icon: <Users className="w-5 h-5" /> },
       { id: 'client-portal', label: '企業入口', icon: <Building2 className="w-5 h-5" /> },
+      { id: 'corporate-crm', label: '企業 CRM', icon: <Briefcase className="w-5 h-5" /> },
       { id: 'payments', label: '收款管理', icon: <CreditCard className="w-5 h-5" /> },
       { id: 'chat', label: 'LINE 客服', icon: <MessageCircle className="w-5 h-5" /> },
     ],
@@ -170,6 +172,7 @@ function ViewRenderer({ view }: { view: ViewKey }) {
     case 'planner': return <VisualPlanner />;
     case 'builder': return <ItineraryBuilder />;
     case 'crm': return <CustomerCDP />;
+    case 'corporate-crm': return <CorporateCRM />;
     case 'payments': return <PaymentMonitor />;
     case 'passport': return <PassportKanban />;
     case 'costing': return <CostingDashboard />;
