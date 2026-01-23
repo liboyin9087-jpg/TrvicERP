@@ -49,14 +49,14 @@ jobs:
           echo "  4. 🎨 Brand Strategy (張曉琪)"
           echo "  5. 🖥️ UI/UX (李佳穎)"
           echo ""
-          echo "Rate Limiting: 6 RPM, 10s delay (conservative)"
+          echo "Rate Limiting: 10 RPM, 6s delay (standard)"
           echo ""
           
           # Run all 5 agents in a single execution to maintain session
           python trvic_analyzer_v2.py . \
             --agents software_engineer ai_solution business_development brand_strategy ui_ux \
-            --rpm 6 \
-            --delay 10 \
+            --rpm 10 \
+            --delay 6 \
             --no-resume \
             2>&1 | tee analysis.log
           
@@ -77,7 +77,7 @@ jobs:
             ls -lh analysis_reports/
           fi
         continue-on-error: true
-        timeout-minutes: 60
+        timeout-minutes: 20
       
       - name: Upload Analysis Reports
         uses: actions/upload-artifact@v4
