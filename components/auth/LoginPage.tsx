@@ -119,6 +119,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     showNotification('已使用 Demo 帳號登入', 'success');
     setTimeout(() => {
       onLogin(role, `demo_${role}`, account.label);
+      if (window.location.pathname.startsWith('/login')) {
+        window.location.assign('/');
+      }
     }, 300);
   };
 
@@ -466,7 +469,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 >
                   {selectedDemoRole
                     ? `以 ${DEMO_ACCOUNTS[selectedDemoRole].label} 進入`
-                    : 'Demo 直接進入'}
+                    : '直接進主畫面'}
                 </motion.button>
               </div>
             </motion.form>
