@@ -89,11 +89,18 @@ Agent 1 → 等待 → Agent 2 → 等待 → Agent 3 → 等待 → Agent 4 →
 
 ### 實際觀察時間
 根據問題描述：**30 分鐘完成 10 個 agents**
-- 這不太合理，因為配置中只有 5 個 agents
-- 可能情況：
-  1. 執行了兩次完整流程（失敗重跑）
-  2. API 延遲或重試次數過多
-  3. 網路問題導致多次 timeout
+
+**說明**: 
+- 配置中實際只有 5 個 agents (software_engineer, ai_solution, business_development, brand_strategy, ui_ux)
+- "10 個 agents" 可能指的是：
+  1. **兩次完整執行**（5 agents × 2 次）：可能是失敗後重跑整個流程
+  2. **包含 API 重試**: 如果每個 agent 都觸發了 API 重試，總 API 呼叫次數可能達到 10 次以上
+  3. **測量範圍**: 可能包含了其他 workflow 步驟（setup, 依賴安裝等）
+
+實際單次 5 個 agents 執行預估時間：
+- 最佳情況：~5 分鐘（無重試）
+- 典型情況：~10-15 分鐘（少量重試）
+- 最壞情況：~30 分鐘（多次重試或多次完整執行）
 
 ---
 
