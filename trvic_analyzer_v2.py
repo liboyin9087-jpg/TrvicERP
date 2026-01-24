@@ -471,6 +471,19 @@ class BaseAgent(ABC):
     所有專家 Agent 繼承此類
     """
     
+    # 反饋迴圈提示模板
+    FEEDBACK_LOOP_PROMPT_TEMPLATE = """
+## 💡 先前專家的分析（供參考）
+
+{prior_analyses}
+
+請在你的分析中考慮以上專家的觀點，但仍需從你的專業角度進行獨立分析。你可以：
+- 補充他們未涵蓋的領域
+- 從不同角度解讀相同問題
+- 識別跨領域的關聯與影響
+- 建立在他們的發現之上提出更深入的建議
+"""
+    
     def __init__(
         self,
         agent_id: str,
@@ -544,18 +557,9 @@ class BaseAgent(ABC):
                 f"**{ctx['agent_name']}（{ctx['agent_title']}）的分析摘要**:\n{ctx['summary']}"
                 for ctx in self.prior_context
             ])
-            system_content = f"""{self.system_prompt}
-
-## 💡 先前專家的分析（供參考）
-
-{prior_analyses}
-
-請在你的分析中考慮以上專家的觀點，但仍需從你的專業角度進行獨立分析。你可以：
-- 補充他們未涵蓋的領域
-- 從不同角度解讀相同問題
-- 識別跨領域的關聯與影響
-- 建立在他們的發現之上提出更深入的建議
-"""
+            system_content = self.system_prompt + self.FEEDBACK_LOOP_PROMPT_TEMPLATE.format(
+                prior_analyses=prior_analyses
+            )
         
         messages = [
             {"role": "system", "content": system_content},
@@ -758,6 +762,30 @@ class UIUXAgent(BaseAgent):
 
 # ==================== Agent 工廠 ====================
 
+# Agent 元數據（統一管理）
+AGENT_METADATA = {
+    "software_engineer": {
+        "name": "陳建宏",
+        "title": "資深軟體工程師"
+    },
+    "ai_solution": {
+        "name": "林雅芳",
+        "title": "AI 解決方案架構師"
+    },
+    "business_development": {
+        "name": "王志明",
+        "title": "商業發展總監"
+    },
+    "brand_strategy": {
+        "name": "張曉琪",
+        "title": "品牌策略顧問"
+    },
+    "ui_ux": {
+        "name": "李佳穎",
+        "title": "UI/UX 設計主管"
+    }
+}
+
 class AgentFactory:
     """Agent 工廠"""
     
@@ -802,6 +830,30 @@ class AgentFactory:
                 agent_class = cls.AGENT_CLASSES[agent_id]
                 agents.append(agent_class(client, config, prior_context=prior_context))
         return agents
+    
+    @staticmethod
+    def get_agent_name(agent_id: str) -> str:
+        """取得 Agent 名稱"""
+        return AGENT_METADATA.get(agent_id, {}).get("name", agent_id)
+    
+    @staticmethod
+    def get_agent_title(agent_id: str) -> str:
+        """取得 Agent 職稱"""
+        return AGENT_METADATA.get(agent_id, {}).get("title", agent_id)
+    
+    @staticmethod
+    def create_context_summary(agent_id: str, analysis: str, max_length: int) -> Dict[str, str]:
+        """創建上下文摘要（避免重複邏輯）"""
+        summary = analysis[:max_length]
+        if len(analysis) > max_length:
+            summary += "..."
+        
+        return {
+            "agent_id": agent_id,
+            "agent_name": AgentFactory.get_agent_name(agent_id),
+            "agent_title": AgentFactory.get_agent_title(agent_id),
+            "summary": summary
+        }
 
 
 # ==================== Session 管理 ====================
@@ -1179,16 +1231,14 @@ class Orchestrator:
                 agent_id = session.agent_order[i]
                 if agent_id in session.agent_results:
                     result = session.agent_results[agent_id]
-                    if result.get("status") == "completed":
-                        # 重建上下文
+                    if result.get("status") == AgentStatus.COMPLETED.value:
+                        # 重建上下文（使用工廠方法）
                         analysis = result.get("analysis", "")
-                        summary_length = self.config.api.feedback_summary_length
-                        context_history.append({
-                            "agent_id": agent_id,
-                            "agent_name": self._get_agent_name(agent_id),
-                            "agent_title": self._get_agent_title(agent_id),
-                            "summary": analysis[:summary_length] + ("..." if len(analysis) > summary_length else "")
-                        })
+                        context_history.append(
+                            AgentFactory.create_context_summary(
+                                agent_id, analysis, self.config.api.feedback_summary_length
+                            )
+                        )
         
         for i in range(start_index, len(session.agent_order)):
             agent_id = session.agent_order[i]
@@ -1197,7 +1247,7 @@ class Orchestrator:
             # 檢查是否已完成
             if agent_id in session.agent_results:
                 result = session.agent_results[agent_id]
-                if result.get("status") == "completed":
+                if result.get("status") == AgentStatus.COMPLETED.value:
                     logger.info(f"⏭️ 跳過已完成的 Agent: {agent_id}")
                     continue
             
@@ -1221,13 +1271,11 @@ class Orchestrator:
                 
                 # 將此 agent 的分析加入上下文歷史（供後續 agents 使用）
                 if self.config.api.enable_feedback_loop and result.status == AgentStatus.COMPLETED:
-                    summary_length = self.config.api.feedback_summary_length
-                    context_history.append({
-                        "agent_id": agent_id,
-                        "agent_name": agent.name,
-                        "agent_title": agent.title,
-                        "summary": result.analysis[:summary_length] + ("..." if len(result.analysis) > summary_length else "")
-                    })
+                    context_history.append(
+                        AgentFactory.create_context_summary(
+                            agent_id, result.analysis, self.config.api.feedback_summary_length
+                        )
+                    )
                 
                 # 保存進度
                 self.session_manager.save_session(session)
@@ -1243,28 +1291,6 @@ class Orchestrator:
         
         session.current_agent_index = len(session.agent_order)
     
-    def _get_agent_name(self, agent_id: str) -> str:
-        """取得 Agent 名稱"""
-        agent_info = {
-            "software_engineer": "陳建宏",
-            "ai_solution": "林雅芳",
-            "business_development": "王志明",
-            "brand_strategy": "張曉琪",
-            "ui_ux": "李佳穎"
-        }
-        return agent_info.get(agent_id, agent_id)
-    
-    def _get_agent_title(self, agent_id: str) -> str:
-        """取得 Agent 職稱"""
-        agent_titles = {
-            "software_engineer": "資深軟體架構師",
-            "ai_solution": "AI 技術架構師",
-            "business_development": "商業發展總監",
-            "brand_strategy": "品牌策略顧問",
-            "ui_ux": "UI/UX 設計主管"
-        }
-        return agent_titles.get(agent_id, agent_id)
-    
     def _generate_summary(self, session: Session):
         """生成總結報告"""
         logger.info("\n📝 生成總結報告...")
@@ -1272,7 +1298,7 @@ class Orchestrator:
         # 收集所有分析
         summaries = []
         for agent_id, result in session.agent_results.items():
-            if result.get("status") == "completed":
+            if result.get("status") == AgentStatus.COMPLETED.value:
                 analysis = result.get("analysis", "")[:2000]
                 summaries.append(f"### {agent_id}\n{analysis}")
         
