@@ -4,7 +4,17 @@
  */
 
 // Theme and types
-export * from './kintone/theme';
+export { 
+  kintoneColors, 
+  kintoneSpacing, 
+  kintoneBorderRadius, 
+  kintoneShadows, 
+  kintoneTypography, 
+  kintoneBreakpoints, 
+  kintoneZIndex,
+  kintoneMobileTheme 
+} from './kintone/theme';
+export type { KintoneTheme as KintoneThemeType } from './kintone/theme';
 export * from './kintone/types';
 export * from './kintone/ui-commands';
 
