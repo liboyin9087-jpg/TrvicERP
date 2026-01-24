@@ -60,6 +60,10 @@ class APIConfig:
     # Token 配置
     max_tokens_per_request: int = 4096
     max_context_tokens: int = 6000
+    
+    # Continuous Loop 配置（Claude Code 風格）
+    enable_feedback_loop: bool = True  # 啟用反饋迴圈
+    feedback_summary_length: int = 1000  # 每位專家摘要長度（用於下一位專家的上下文）
 
 
 @dataclass  
@@ -475,7 +479,8 @@ class BaseAgent(ABC):
         focus_areas: List[str],
         system_prompt: str,
         client: SiliconFlowClient,
-        config: Config
+        config: Config,
+        prior_context: Optional[List[Dict[str, str]]] = None
     ):
         self.agent_id = agent_id
         self.name = name
@@ -484,6 +489,7 @@ class BaseAgent(ABC):
         self.system_prompt = system_prompt
         self.client = client
         self.config = config
+        self.prior_context = prior_context or []  # 前置專家的分析上下文
         self.result = AgentResult(agent_id=agent_id, status=AgentStatus.PENDING)
     
     def run(self, chunks: List[Dict]) -> AgentResult:
@@ -529,8 +535,30 @@ class BaseAgent(ABC):
     
     def _analyze_chunk(self, chunk: Dict, index: int, total: int) -> str:
         """分析單個 chunk"""
+        # 構建基礎系統提示
+        system_content = self.system_prompt
+        
+        # 如果啟用反饋迴圈且有先前分析，則增強系統提示
+        if self.config.api.enable_feedback_loop and self.prior_context:
+            prior_analyses = "\n\n".join([
+                f"**{ctx['agent_name']}（{ctx['agent_title']}）的分析摘要**:\n{ctx['summary']}"
+                for ctx in self.prior_context
+            ])
+            system_content = f"""{self.system_prompt}
+
+## 💡 先前專家的分析（供參考）
+
+{prior_analyses}
+
+請在你的分析中考慮以上專家的觀點，但仍需從你的專業角度進行獨立分析。你可以：
+- 補充他們未涵蓋的領域
+- 從不同角度解讀相同問題
+- 識別跨領域的關聯與影響
+- 建立在他們的發現之上提出更深入的建議
+"""
+        
         messages = [
-            {"role": "system", "content": self.system_prompt},
+            {"role": "system", "content": system_content},
             {"role": "user", "content": f"""
 請分析以下程式碼專案內容（區塊 {index + 1}/{total}）：
 
@@ -581,7 +609,7 @@ class BaseAgent(ABC):
 class SoftwareEngineerAgent(BaseAgent):
     """軟體工程師 Agent"""
     
-    def __init__(self, client: SiliconFlowClient, config: Config):
+    def __init__(self, client: SiliconFlowClient, config: Config, prior_context: Optional[List[Dict[str, str]]] = None):
         super().__init__(
             agent_id="software_engineer",
             name="陳建宏",
@@ -603,14 +631,15 @@ class SoftwareEngineerAgent(BaseAgent):
 5. 重構建議與優先級
 6. 具體改進程式碼範例""",
             client=client,
-            config=config
+            config=config,
+            prior_context=prior_context
         )
 
 
 class AISolutionAgent(BaseAgent):
     """AI 解決方案架構師 Agent"""
     
-    def __init__(self, client: SiliconFlowClient, config: Config):
+    def __init__(self, client: SiliconFlowClient, config: Config, prior_context: Optional[List[Dict[str, str]]] = None):
         super().__init__(
             agent_id="ai_solution",
             name="林雅芳",
@@ -632,14 +661,15 @@ class AISolutionAgent(BaseAgent):
 5. 智能化升級路線圖
 6. 預估 ROI 與實施優先級""",
             client=client,
-            config=config
+            config=config,
+            prior_context=prior_context
         )
 
 
 class BDAgent(BaseAgent):
     """商業發展 Agent"""
     
-    def __init__(self, client: SiliconFlowClient, config: Config):
+    def __init__(self, client: SiliconFlowClient, config: Config, prior_context: Optional[List[Dict[str, str]]] = None):
         super().__init__(
             agent_id="business_development",
             name="王志明",
@@ -661,14 +691,15 @@ class BDAgent(BaseAgent):
 5. 客戶價值主張強化
 6. 商業化路線圖""",
             client=client,
-            config=config
+            config=config,
+            prior_context=prior_context
         )
 
 
 class BrandStrategyAgent(BaseAgent):
     """品牌策略 Agent"""
     
-    def __init__(self, client: SiliconFlowClient, config: Config):
+    def __init__(self, client: SiliconFlowClient, config: Config, prior_context: Optional[List[Dict[str, str]]] = None):
         super().__init__(
             agent_id="brand_strategy",
             name="張曉琪",
@@ -690,14 +721,15 @@ class BrandStrategyAgent(BaseAgent):
 5. 品牌體驗優化
 6. 品牌發展路線圖""",
             client=client,
-            config=config
+            config=config,
+            prior_context=prior_context
         )
 
 
 class UIUXAgent(BaseAgent):
     """UI/UX Agent"""
     
-    def __init__(self, client: SiliconFlowClient, config: Config):
+    def __init__(self, client: SiliconFlowClient, config: Config, prior_context: Optional[List[Dict[str, str]]] = None):
         super().__init__(
             agent_id="ui_ux",
             name="李佳穎",
@@ -719,7 +751,8 @@ class UIUXAgent(BaseAgent):
 5. 設計系統建議
 6. UX 優化優先級""",
             client=client,
-            config=config
+            config=config,
+            prior_context=prior_context
         )
 
 
@@ -759,14 +792,15 @@ class AgentFactory:
         cls,
         agent_ids: List[str],
         client: SiliconFlowClient,
-        config: Config
+        config: Config,
+        prior_context: Optional[List[Dict[str, str]]] = None
     ) -> List[BaseAgent]:
         """創建指定的 Agents"""
         agents = []
         for agent_id in agent_ids:
             if agent_id in cls.AGENT_CLASSES:
                 agent_class = cls.AGENT_CLASSES[agent_id]
-                agents.append(agent_class(client, config))
+                agents.append(agent_class(client, config, prior_context=prior_context))
         return agents
 
 
@@ -1132,8 +1166,29 @@ class Orchestrator:
         return int(chinese * 1.5 + other * 0.25)
     
     def _run_agents(self, session: Session):
-        """執行所有 Agents"""
+        """執行所有 Agents（支援持續反饋迴圈）"""
         start_index = session.current_agent_index
+        
+        # 用於累積先前專家的分析（Claude Code 風格）
+        context_history = []
+        
+        # 如果啟用反饋迴圈，從已完成的 agents 重建上下文
+        if self.config.api.enable_feedback_loop and start_index > 0:
+            logger.info("🔄 啟用持續反饋迴圈模式（類似 Claude Code）")
+            for i in range(start_index):
+                agent_id = session.agent_order[i]
+                if agent_id in session.agent_results:
+                    result = session.agent_results[agent_id]
+                    if result.get("status") == "completed":
+                        # 重建上下文
+                        analysis = result.get("analysis", "")
+                        summary_length = self.config.api.feedback_summary_length
+                        context_history.append({
+                            "agent_id": agent_id,
+                            "agent_name": self._get_agent_name(agent_id),
+                            "agent_title": self._get_agent_title(agent_id),
+                            "summary": analysis[:summary_length] + ("..." if len(analysis) > summary_length else "")
+                        })
         
         for i in range(start_index, len(session.agent_order)):
             agent_id = session.agent_order[i]
@@ -1146,12 +1201,33 @@ class Orchestrator:
                     logger.info(f"⏭️ 跳過已完成的 Agent: {agent_id}")
                     continue
             
-            # 創建並執行 Agent
-            agents = AgentFactory.create_by_ids([agent_id], self.client, self.config)
+            # 創建 Agent 並注入先前上下文（持續反饋迴圈）
+            agents = AgentFactory.create_by_ids(
+                [agent_id], 
+                self.client, 
+                self.config,
+                prior_context=context_history if self.config.api.enable_feedback_loop else None
+            )
+            
             if agents:
                 agent = agents[0]
+                
+                # 顯示上下文資訊
+                if self.config.api.enable_feedback_loop and context_history:
+                    logger.info(f"   💭 使用 {len(context_history)} 位先前專家的分析作為上下文")
+                
                 result = agent.run(session.chunks)
                 session.agent_results[agent_id] = result.to_dict()
+                
+                # 將此 agent 的分析加入上下文歷史（供後續 agents 使用）
+                if self.config.api.enable_feedback_loop and result.status == AgentStatus.COMPLETED:
+                    summary_length = self.config.api.feedback_summary_length
+                    context_history.append({
+                        "agent_id": agent_id,
+                        "agent_name": agent.name,
+                        "agent_title": agent.title,
+                        "summary": result.analysis[:summary_length] + ("..." if len(result.analysis) > summary_length else "")
+                    })
                 
                 # 保存進度
                 self.session_manager.save_session(session)
@@ -1166,6 +1242,28 @@ class Orchestrator:
                     time.sleep(2)
         
         session.current_agent_index = len(session.agent_order)
+    
+    def _get_agent_name(self, agent_id: str) -> str:
+        """取得 Agent 名稱"""
+        agent_info = {
+            "software_engineer": "陳建宏",
+            "ai_solution": "林雅芳",
+            "business_development": "王志明",
+            "brand_strategy": "張曉琪",
+            "ui_ux": "李佳穎"
+        }
+        return agent_info.get(agent_id, agent_id)
+    
+    def _get_agent_title(self, agent_id: str) -> str:
+        """取得 Agent 職稱"""
+        agent_titles = {
+            "software_engineer": "資深軟體架構師",
+            "ai_solution": "AI 技術架構師",
+            "business_development": "商業發展總監",
+            "brand_strategy": "品牌策略顧問",
+            "ui_ux": "UI/UX 設計主管"
+        }
+        return agent_titles.get(agent_id, agent_id)
     
     def _generate_summary(self, session: Session):
         """生成總結報告"""
@@ -1333,6 +1431,12 @@ def main():
     parser.add_argument('--rpm', type=int, default=10, help='每分鐘最大請求數 (預設: 10)')
     parser.add_argument('--delay', type=float, default=6.0, help='請求間最小延遲秒數 (預設: 6.0)')
     
+    # Continuous Loop 配置（Claude Code 風格）
+    parser.add_argument('--no-feedback-loop', action='store_true', 
+                       help='停用持續反饋迴圈（預設啟用，類似 Claude Code）')
+    parser.add_argument('--feedback-summary-length', type=int, default=1000,
+                       help='每位專家摘要長度（供後續專家參考，預設: 1000）')
+    
     args = parser.parse_args()
     
     # 創建配置
@@ -1344,6 +1448,10 @@ def main():
     # 套用 Rate Limiting 配置
     config.api.requests_per_minute = args.rpm
     config.api.min_delay_between_requests = args.delay
+    
+    # 套用 Continuous Loop 配置
+    config.api.enable_feedback_loop = not args.no_feedback_loop
+    config.api.feedback_summary_length = args.feedback_summary_length
     
     # 檢查 API Key
     if not config.api.api_key and not args.list_sessions:

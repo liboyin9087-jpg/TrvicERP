@@ -1,6 +1,6 @@
 # 🔬 TrvicERP 多專家代碼分析器 v2.0
 
-採用 **Claude Code 風格的 Agent 架構**，具備智能 API 排程與 Session 持久化功能。
+採用 **Claude Code 風格的 Agent 架構**，具備智能 API 排程、Session 持久化與**持續反饋迴圈**功能。
 
 ## ✨ v2.0 新功能
 
@@ -13,6 +13,13 @@ Orchestrator（協調器）
     ├── BrandStrategyAgent（品牌策略）
     └── UIUXAgent（UI/UX 設計）
 ```
+
+### 🔄 **持續反饋迴圈（NEW！）**
+- **類似 Claude Code** - 每位專家都能看到前面專家的分析
+- **累積智慧** - 後續專家建立在先前發現之上
+- **跨領域洞察** - 識別不同專業視角的關聯
+- **動態上下文** - 自動注入先前分析摘要
+- **可配置** - 支援開關與摘要長度調整
 
 ### ⏱️ 智能 Rate Limiter
 - **Token Bucket 算法** - 精確控制 API 呼叫頻率
@@ -41,11 +48,14 @@ export SILICONFLOW_API_KEY="your_api_key"
 
 ### 3. 執行分析
 ```bash
-# 分析專案（五位專家依序執行）
+# 分析專案（五位專家依序執行，啟用持續反饋迴圈）
 python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main
 
 # 使用自訂 Rate Limiting
 python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main --rpm 8 --delay 8
+
+# 停用持續反饋迴圈（傳統獨立模式）
+python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main --no-feedback-loop
 ```
 
 ---
@@ -92,6 +102,19 @@ python trvic_analyzer_v2.py --delay 10
 python trvic_analyzer_v2.py --rpm 6 --delay 10
 ```
 
+### 持續反饋迴圈配置
+
+```bash
+# 預設啟用（推薦）- 專家間相互參考分析
+python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main
+
+# 停用反饋迴圈 - 每位專家獨立分析
+python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main --no-feedback-loop
+
+# 調整摘要長度（預設 1000 字符）
+python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main --feedback-summary-length 1500
+```
+
 ### Session 管理
 
 ```bash
@@ -109,13 +132,14 @@ python trvic_analyzer_v2.py --no-resume /path/to/project
 
 ## 🏗️ 架構說明
 
-### Agent 系統
+### Agent 系統（支援持續反饋迴圈）
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      Orchestrator                           │
 │  • 管理執行流程                                              │
 │  • Session 持久化                                            │
+│  • 持續反饋迴圈管理（NEW！）                                 │
 │  • 生成最終報告                                              │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -125,14 +149,18 @@ python trvic_analyzer_v2.py --no-resume /path/to/project
 ┌─────────┐      ┌─────────┐         ┌─────────┐
 │ Agent 1 │ ───▶ │ Agent 2 │ ───▶ ...│ Agent 5 │
 └─────────┘      └─────────┘         └─────────┘
-    │                    │                    │
-    │ Rate              │ Rate              │ Rate
-    │ Limiter           │ Limiter           │ Limiter
-    ▼                    ▼                    ▼
+    │ 分析           │ 分析 +            │ 分析 +
+    │                │ Agent 1           │ Agent 1-4
+    │ Rate          │ 上下文            │ 上下文
+    │ Limiter       │ Rate              │ Rate
+    │               │ Limiter           │ Limiter
+    ▼                ▼                    ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   SiliconFlow API                           │
 │                   Qwen 2.5 72B                              │
 └─────────────────────────────────────────────────────────────┘
+
+🔄 持續反饋迴圈：每位專家的分析會自動傳遞給後續專家作為上下文
 ```
 
 ### Rate Limiter 工作原理
@@ -156,20 +184,47 @@ python trvic_analyzer_v2.py --no-resume /path/to/project
     │
     ├──▶ 掃描專案 ──▶ 保存 Session
     │
-    ├──▶ Agent 1 執行 ──▶ 保存進度
+    ├──▶ Agent 1 執行 ──▶ 保存進度 ──▶ 累積上下文
     │
-    ├──▶ Agent 2 執行 ──▶ 保存進度
+    ├──▶ Agent 2 執行（+ Agent 1 上下文）──▶ 保存進度 ──▶ 累積上下文
     │         │
     │         ▼ (Ctrl+C 中斷)
-    │    Session 已保存，下次可恢復
+    │    Session 已保存，下次可恢復（包含上下文）
     │
-    ├──▶ Agent 3 執行 ──▶ 保存進度
+    ├──▶ Agent 3 執行（+ Agent 1-2 上下文）──▶ 保存進度 ──▶ 累積上下文
     │
-    ├──▶ Agent 4 執行 ──▶ 保存進度
+    ├──▶ Agent 4 執行（+ Agent 1-3 上下文）──▶ 保存進度 ──▶ 累積上下文
     │
-    ├──▶ Agent 5 執行 ──▶ 保存進度
+    ├──▶ Agent 5 執行（+ Agent 1-4 上下文）──▶ 保存進度
     │
     └──▶ 生成報告 ──▶ 完成
+```
+
+### 持續反饋迴圈原理
+
+```
+Agent 1（軟體工程師）分析程式碼
+            │
+            ├──▶ 發現：使用了 React + TypeScript
+            ├──▶ 建議：改進類型定義
+            └──▶ 摘要傳遞給 Agent 2
+                    │
+Agent 2（AI 解決方案）基於 Agent 1 的發現
+            │
+            ├──▶ 看到 React 架構
+            ├──▶ 建議：整合 AI Copilot 功能
+            ├──▶ 補充：可以用 TypeScript 強化 AI API 類型
+            └──▶ 摘要傳遞給 Agent 3
+                    │
+Agent 3（商業發展）基於 Agent 1-2 的洞察
+            │
+            ├──▶ 了解技術棧與 AI 潛力
+            ├──▶ 建議：將 AI 功能作為差異化賣點
+            └──▶ 摘要傳遞給 Agent 4
+                    │
+            （持續累積智慧...）
+
+🎯 效果：每位專家都能看到全局，提供更有針對性的建議！
 ```
 
 ---
@@ -203,6 +258,8 @@ export SILICONFLOW_API_KEY="your_api_key"
 | `--agents`, `-a` | 指定 Agents | 全部 5 位 |
 | `--rpm` | 每分鐘最大請求數 | 10 |
 | `--delay` | 請求間最小延遲（秒） | 6.0 |
+| `--no-feedback-loop` | **停用持續反饋迴圈** | False（預設啟用） |
+| `--feedback-summary-length` | 專家摘要長度（字符） | 1000 |
 | `--no-resume` | 不恢復上次 Session | False |
 | `--list-sessions`, `-l` | 列出所有 Sessions | - |
 | `--resume`, `-r` | 恢復指定 Session | - |
