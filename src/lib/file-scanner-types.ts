@@ -250,15 +250,28 @@ export function formatFileSize(bytes: number): string {
 
 /**
  * Check if path matches any pattern
+ * Properly escapes special regex characters including backslashes
  */
 export function matchesPattern(path: string, patterns: string[]): boolean {
   return patterns.some(pattern => {
-    const regex = new RegExp(
-      '^' + pattern
-        .replace(/\./g, '\\.')
-        .replace(/\*/g, '.*')
-        .replace(/\?/g, '.') + '$'
-    );
+    // Escape all special regex characters including backslash
+    const escapedPattern = pattern
+      .replace(/\\/g, '\\\\')  // Escape backslash first
+      .replace(/\./g, '\\.')
+      .replace(/\+/g, '\\+')
+      .replace(/\^/g, '\\^')
+      .replace(/\$/g, '\\$')
+      .replace(/\(/g, '\\(')
+      .replace(/\)/g, '\\)')
+      .replace(/\[/g, '\\[')
+      .replace(/\]/g, '\\]')
+      .replace(/\{/g, '\\{')
+      .replace(/\}/g, '\\}')
+      .replace(/\|/g, '\\|')
+      .replace(/\*/g, '.*')    // Convert glob * to regex .*
+      .replace(/\?/g, '.');    // Convert glob ? to regex .
+    
+    const regex = new RegExp('^' + escapedPattern + '$');
     return regex.test(path);
   });
 }
