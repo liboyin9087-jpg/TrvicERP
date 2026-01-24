@@ -1818,6 +1818,7 @@ def main():
     parser.add_argument('--list-sessions', '-l', action='store_true', help='列出所有 Sessions')
     parser.add_argument('--resume', '-r', metavar='SESSION_ID', help='恢復指定 Session')
     parser.add_argument('--interactive', '-i', action='store_true', help='啟動互動式介面')
+    parser.add_argument('--scan', '-s', action='store_true', help='僅掃描專案結構（不需要 API Key）')
 
     # Rate Limiting 配置
     parser.add_argument('--rpm', type=int, default=10, help='每分鐘最大請求數 (預設: 10)')
@@ -1834,6 +1835,42 @@ def main():
     # 套用 Rate Limiting 配置
     config.api.requests_per_minute = args.rpm
     config.api.min_delay_between_requests = args.delay
+
+    # 僅掃描模式（不需要 API Key）
+    if args.scan:
+        project_path = args.project_path or os.path.expanduser('~/Desktop/TrvicERP-main')
+        path = Path(project_path).expanduser().resolve()
+
+        if not path.exists():
+            print(f"❌ 路徑不存在: {path}")
+            return
+
+        print(f"""
+╔══════════════════════════════════════════════════════════════════╗
+║  🔍 TrvicERP 專案掃描模式                                         ║
+╚══════════════════════════════════════════════════════════════════╝
+""")
+        scanner = FileScanner(config)
+        project = scanner.scan(path)
+
+        print(f"\n📊 掃描結果:")
+        print(f"   • 專案路徑: {project.root_path}")
+        print(f"   • 總檔案數: {project.total_files}")
+        print(f"   • 總行數: {project.total_lines:,}")
+        print(f"   • 總大小: {project.total_size_bytes / 1024:.1f} KB")
+
+        print(f"\n📁 檔案類型統計:")
+        for ext, count in sorted(project.file_type_stats.items(), key=lambda x: x[1], reverse=True)[:10]:
+            print(f"   • {ext}: {count} 個")
+
+        print(f"\n📂 目錄結構:")
+        print(project.directory_tree)
+
+        print(f"\n💡 下一步:")
+        print(f"   1. 取得 API Key: https://siliconflow.com")
+        print(f"   2. 設定環境變數: export SILICONFLOW_API_KEY=your_key")
+        print(f"   3. 執行完整分析: python3 trvic_analyzer_v2.py {project_path}")
+        return
 
     # 列出 Sessions（不需要 API Key）
     if args.list_sessions:
@@ -1859,6 +1896,10 @@ def main():
         print("請使用以下方式之一：")
         print("  1. 環境變數: export SILICONFLOW_API_KEY=your_key")
         print("  2. 參數: --api-key your_key")
+        print("")
+        print("💡 提示：")
+        print("  • 取得 API Key: https://siliconflow.com")
+        print("  • 使用掃描模式測試: python3 trvic_analyzer_v2.py --scan /path/to/project")
         return
 
     # 決定執行模式
