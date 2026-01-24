@@ -71,9 +71,7 @@ export function FileScannerDemo() {
             </label>
             <input
               type="file"
-              // @ts-ignore
-              webkitdirectory=""
-              directory=""
+              {...({ webkitdirectory: '', directory: '' } as any)}
               onChange={handleFileSelect}
               disabled={loading}
               className="block w-full text-sm text-gray-500

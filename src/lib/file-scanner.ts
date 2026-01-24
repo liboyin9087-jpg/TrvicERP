@@ -120,7 +120,7 @@ export class FileScanner {
             const fileInfo: FileInfo = {
               path: fullPath,
               relativePath,
-              type: entry.name,
+              type: entry.name.split('.').pop() || 'unknown',
               size: stats.size,
               extension,
               category,

@@ -2,9 +2,10 @@
 /**
  * File Scanner CLI Tool
  * Usage: node scan-project.mjs [directory] [options]
+ * Note: Requires building the project first with 'npm run build'
  */
 
-import { createScanner } from '../src/lib/file-scanner.ts';
+import { createScanner } from '../dist/lib/file-scanner.js';
 import * as path from 'path';
 import * as fs from 'fs';
 

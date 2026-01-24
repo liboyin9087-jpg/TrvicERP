@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { KintoneModalProps } from '../kintone/types';
-import { KintoneButton } from './KintoneButton';
 
 /**
  * KintoneModal - A Kintone-styled modal component
