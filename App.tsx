@@ -201,6 +201,8 @@ function ViewRenderer({ view }: { view: ViewKey }) {
 // FloatingSidebar Component
 // ============================================
 function FloatingSidebar() {
+  // Note: Using individual selectors instead of combined object selector
+  // to avoid unnecessary re-renders caused by object reference changes
   const isSidebarOpen = useAppStore((state) => state.isSidebarOpen);
   const setSidebarOpen = useAppStore((state) => state.setSidebarOpen);
   const userRole = useAppStore((state) => state.userRole);
@@ -349,6 +351,7 @@ function FloatingSidebar() {
 // GlassHeader Component
 // ============================================
 function GlassHeader() {
+  // Note: Using individual selectors to prevent unnecessary re-renders
   const userName = useAppStore((state) => state.userName);
   const userRole = useAppStore((state) => state.userRole);
   const setMobileMenuOpen = useAppStore((state) => state.setMobileMenuOpen);
@@ -409,6 +412,7 @@ function GlassHeader() {
 // MobileMenu Component
 // ============================================
 function MobileMenu() {
+  // Note: Using individual selectors to avoid re-render issues from object creation
   const isMobileMenuOpen = useAppStore((state) => state.isMobileMenuOpen);
   const setMobileMenuOpen = useAppStore((state) => state.setMobileMenuOpen);
   const userRole = useAppStore((state) => state.userRole);
