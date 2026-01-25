@@ -177,14 +177,20 @@ async function getWeatherFromCWB(
     if (data.records && data.records.Station) {
       for (const station of data.records.Station) {
         // 獲取測站經緯度
-        const stationLat = parseFloat(station.GeoInfo?.Coordinates?.[0]?.StationLatitude || 0);
-        const stationLon = parseFloat(station.GeoInfo?.Coordinates?.[0]?.StationLongitude || 0);
+        const stationLatStr = station.GeoInfo?.Coordinates?.[0]?.StationLatitude;
+        const stationLonStr = station.GeoInfo?.Coordinates?.[0]?.StationLongitude;
 
-        if (stationLat && stationLon) {
-          const distance = calculateDistance(lat, lon, stationLat, stationLon);
-          if (distance < minDistance) {
-            minDistance = distance;
-            nearestStation = station;
+        if (stationLatStr !== undefined && stationLatStr !== null && 
+            stationLonStr !== undefined && stationLonStr !== null) {
+          const stationLat = parseFloat(stationLatStr);
+          const stationLon = parseFloat(stationLonStr);
+          
+          if (!isNaN(stationLat) && !isNaN(stationLon)) {
+            const distance = calculateDistance(lat, lon, stationLat, stationLon);
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestStation = station;
+            }
           }
         }
       }
@@ -198,21 +204,25 @@ async function getWeatherFromCWB(
     const weatherElements = nearestStation.WeatherElement || {};
     
     // 溫度 (TEMP)
-    const temp = parseFloat(weatherElements.AirTemperature || 0);
+    const tempStr = weatherElements.AirTemperature;
+    const temp = tempStr !== undefined && tempStr !== null ? parseFloat(tempStr) : NaN;
     
     // 濕度 (HUMD)
-    const humidity = parseFloat(weatherElements.RelativeHumidity || 0);
+    const humidityStr = weatherElements.RelativeHumidity;
+    const humidity = humidityStr !== undefined && humidityStr !== null ? parseFloat(humidityStr) : NaN;
     
     // 風速 (WDSD) - CWA 給的是 m/s，轉換為 km/h
-    const windSpeed = Math.round(parseFloat(weatherElements.WindSpeed || 0) * 3.6);
+    const windSpeedStr = weatherElements.WindSpeed;
+    const windSpeedMs = windSpeedStr !== undefined && windSpeedStr !== null ? parseFloat(windSpeedStr) : NaN;
+    const windSpeed = !isNaN(windSpeedMs) ? Math.round(windSpeedMs * 3.6) : 0;
     
     // 天氣描述 (Weather)
     const weatherDesc = weatherElements.Weather || '多雲';
     
     return {
-      temperature: Math.round(temp),
+      temperature: !isNaN(temp) ? Math.round(temp) : 20, // 預設 20°C
       condition: mapCWAWeatherToCondition(weatherDesc),
-      humidity: Math.round(humidity),
+      humidity: !isNaN(humidity) ? Math.round(humidity) : 60, // 預設 60%
       windSpeed,
       description: weatherDesc,
     };
@@ -363,14 +373,20 @@ export async function getWeatherForecast(
 
         for (const location of data.records.location) {
           // 使用縣市中心點座標（簡化處理）
-          const locLat = parseFloat(location.lat || 0);
-          const locLon = parseFloat(location.lon || 0);
+          const locLatStr = location.lat;
+          const locLonStr = location.lon;
 
-          if (locLat && locLon) {
-            const distance = calculateDistance(lat, lon, locLat, locLon);
-            if (distance < minDistance) {
-              minDistance = distance;
-              nearestLocation = location;
+          if (locLatStr !== undefined && locLatStr !== null &&
+              locLonStr !== undefined && locLonStr !== null) {
+            const locLat = parseFloat(locLatStr);
+            const locLon = parseFloat(locLonStr);
+            
+            if (!isNaN(locLat) && !isNaN(locLon)) {
+              const distance = calculateDistance(lat, lon, locLat, locLon);
+              if (distance < minDistance) {
+                minDistance = distance;
+                nearestLocation = location;
+              }
             }
           }
         }
