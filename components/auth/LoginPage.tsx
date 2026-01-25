@@ -119,9 +119,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     showNotification('已使用 Demo 帳號登入', 'success');
     setTimeout(() => {
       onLogin(role, `demo_${role}`, account.label);
-      if (window.location.pathname.startsWith('/login')) {
-        window.location.assign('/');
-      }
     }, 300);
   };
 
@@ -149,10 +146,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         showNotification('登入成功！', 'success');
         setTimeout(() => {
           onLogin(mapUserRoleToAppRole(result.user!.role), result.user!.id, result.user!.name);
-          // Ensure navigation if we're on the standalone /login route
-          if (window.location.pathname.startsWith('/login')) {
-            window.location.assign('/');
-          }
         }, 500);
       } else {
         showNotification(result.error || '登入失敗', 'error');
