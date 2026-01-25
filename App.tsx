@@ -53,6 +53,9 @@ import ViewSwitcher from './components/shared/ViewSwitcher';
 import LandingPage from './components/shared/LandingPage';
 import ClientPortal from './components/portal/ClientPortal';
 
+// Glassmorphism Demo
+import GlassmorphismDemo from './pages/GlassmorphismDemo';
+
 // ============================================
 // Navigation Configuration
 // ============================================
@@ -864,6 +867,7 @@ export default function App() {
         <Route path="/login" element={<LoginRoute />} />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/portal/*" element={<ClientPortal />} />
+        <Route path="/glass" element={<GlassmorphismDemo />} />
         <Route path="/*" element={<AppContent />} />
         <Route path="/proposal/*" element={<AppContent />} />
         <Route path="/line/*" element={<AppContent />} />
