@@ -799,12 +799,12 @@ function AppContent() {
         />
 
         {/* Main Content Area */}
-        <motion.div
-          animate={{
-            marginLeft: isSidebarOpen ? 296 : 96, // 280 + 16 or 80 + 16
-          }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="flex-1 flex flex-col min-w-0 lg:mr-4 lg:my-4"
+        <div
+          className={cn(
+            "flex-1 flex flex-col min-w-0 lg:mr-4 lg:my-4 transition-all duration-300",
+            // Only apply margin on desktop (lg breakpoint)
+            isSidebarOpen ? "lg:ml-[296px]" : "lg:ml-[96px]"
+          )}
         >
           {/* Glass Header */}
           <div className="lg:rounded-t-2xl overflow-hidden">
@@ -825,7 +825,7 @@ function AppContent() {
           >
             <ViewRenderer view={currentView} />
           </motion.main>
-        </motion.div>
+        </div>
 
         {/* AI Assistant */}
         <EdgeAssistant />
