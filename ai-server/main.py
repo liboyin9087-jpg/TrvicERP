@@ -30,13 +30,25 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# 允許 React 前端跨域呼叫
+# CORS 安全設定 - 生產環境限制來源
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",      # Vite 開發伺服器
+    "http://localhost:3000",      # 備用開發埠
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    os.getenv("FRONTEND_URL", ""),  # 生產環境前端 URL
+    os.getenv("CORS_ORIGIN", ""),   # 額外允許的來源
+]
+
+# 過濾空值
+ALLOWED_ORIGINS = [origin for origin in ALLOWED_ORIGINS if origin]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 開發階段允許所有來源
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
 # API 設定

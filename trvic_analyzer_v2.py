@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
 """
-TrvicERP 多專家代碼分析器 v2.0
+TrvicERP 多專家代碼分析器 v3.0
 =============================
 採用 Claude Code 風格的 Agent 架構
-- 子代理（Subagent）模式
+參考 everything-claude-code 最佳實踐
+
+功能特色：
+- 子代理（Subagent）模式 - 5 位專家依序分析
 - 智能 API 排程器（Rate Limiter）
 - Session 持久化與恢復
-- 五位專家自動依序執行
+- 驗證迴圈（Validation Loop）
+- 持續學習（Continuous Learning）
+- 斜線命令系統（/commands）
+- 完整檔案內容讀取
+- 實作建議與程式碼修復
 
 使用 SiliconFlow Qwen 2.5 72B
+API: https://api.siliconflow.com
 
 作者：綠
-版本：2.0.0
+版本：3.0.0
 """
 
 import os
@@ -31,6 +39,15 @@ import requests
 from threading import Lock
 from collections import deque
 import traceback
+import readline  # 命令行自動完成
+import signal
+import textwrap
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# ==================== 版本資訊 ====================
+
+__version__ = "3.0.0"
+__author__ = "綠"
 
 # ==================== 日誌配置 ====================
 
@@ -1302,25 +1319,497 @@ class Orchestrator:
 """)
 
 
+# ==================== 驗證迴圈 ====================
+
+class ValidationLoop:
+    """
+    驗證迴圈系統（參考 everything-claude-code）
+    - 檢查點（Checkpoint）
+    - 持續評估
+    - Pass@k 指標
+    """
+
+    def __init__(self, client: SiliconFlowClient, config: Config):
+        self.client = client
+        self.config = config
+        self.checkpoints: List[Dict] = []
+
+    def create_checkpoint(self, session: Session, description: str = "") -> Dict:
+        """創建檢查點"""
+        checkpoint = {
+            "id": f"cp_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "timestamp": datetime.now().isoformat(),
+            "description": description,
+            "session_id": session.session_id,
+            "agent_index": session.current_agent_index,
+            "completed_agents": list(session.agent_results.keys()),
+            "status": session.status
+        }
+        self.checkpoints.append(checkpoint)
+        logger.info(f"📍 檢查點已創建: {checkpoint['id']}")
+        return checkpoint
+
+    def verify(self, session: Session) -> Dict:
+        """執行驗證"""
+        logger.info("🔍 執行驗證迴圈...")
+
+        results = {
+            "passed": [],
+            "failed": [],
+            "warnings": [],
+            "score": 0
+        }
+
+        # 驗證所有 Agent 結果
+        for agent_id, result in session.agent_results.items():
+            if result.get("status") == "completed":
+                analysis = result.get("analysis", "")
+                if len(analysis) > 100:
+                    results["passed"].append(f"{agent_id}: 分析完成 ({len(analysis)} 字元)")
+                else:
+                    results["warnings"].append(f"{agent_id}: 分析內容過短")
+            else:
+                results["failed"].append(f"{agent_id}: 未完成")
+
+        # 計算分數
+        total = len(session.agent_order)
+        passed = len(results["passed"])
+        results["score"] = (passed / total * 100) if total > 0 else 0
+
+        return results
+
+
+# ==================== 持續學習系統 ====================
+
+class ContinuousLearning:
+    """
+    持續學習系統（參考 everything-claude-code）
+    - 從 Session 中提取模式
+    - 自動保存學習結果
+    """
+
+    def __init__(self, client: SiliconFlowClient, config: Config):
+        self.client = client
+        self.config = config
+        self.patterns_file = Path(".trvic_patterns.json")
+        self.patterns: List[Dict] = self._load_patterns()
+
+    def _load_patterns(self) -> List[Dict]:
+        """載入已學習的模式"""
+        if self.patterns_file.exists():
+            try:
+                with open(self.patterns_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except:
+                pass
+        return []
+
+    def _save_patterns(self):
+        """保存模式"""
+        with open(self.patterns_file, 'w', encoding='utf-8') as f:
+            json.dump(self.patterns, f, ensure_ascii=False, indent=2)
+
+    def extract_patterns(self, session: Session) -> List[Dict]:
+        """從 Session 中提取模式"""
+        logger.info("🧠 從 Session 中提取學習模式...")
+
+        # 收集所有分析結果
+        all_analyses = []
+        for agent_id, result in session.agent_results.items():
+            if result.get("status") == "completed":
+                all_analyses.append({
+                    "agent": agent_id,
+                    "analysis": result.get("analysis", "")[:1500]
+                })
+
+        if not all_analyses:
+            return []
+
+        # 請求 AI 提取模式
+        messages = [
+            {"role": "system", "content": """你是一位模式識別專家。
+請從分析結果中提取可重複使用的模式和最佳實踐。"""},
+            {"role": "user", "content": f"""
+請從以下分析中提取 3-5 個重要模式：
+
+{json.dumps(all_analyses, ensure_ascii=False, indent=2)}
+
+輸出 JSON 格式：
+[{{"pattern": "模式描述", "category": "分類", "importance": "high/medium/low"}}]
+"""}
+        ]
+
+        try:
+            response = self.client.chat(messages, temperature=0.3)
+
+            import re
+            json_match = re.search(r'\[[\s\S]*\]', response)
+            if json_match:
+                new_patterns = json.loads(json_match.group())
+
+                # 添加元數據
+                for pattern in new_patterns:
+                    pattern["session_id"] = session.session_id
+                    pattern["extracted_at"] = datetime.now().isoformat()
+
+                self.patterns.extend(new_patterns)
+                self._save_patterns()
+
+                logger.info(f"✅ 提取了 {len(new_patterns)} 個新模式")
+                return new_patterns
+        except Exception as e:
+            logger.error(f"模式提取失敗: {e}")
+
+        return []
+
+
+# ==================== 命令系統 ====================
+
+class CommandSystem:
+    """
+    斜線命令系統（參考 everything-claude-code）
+    支援：/analyze, /verify, /learn, /checkpoint, /status, /help
+    """
+
+    COMMANDS = {
+        "/analyze": "開始分析專案",
+        "/verify": "執行驗證迴圈",
+        "/learn": "從 Session 提取學習模式",
+        "/checkpoint": "創建檢查點",
+        "/status": "顯示當前狀態",
+        "/agents": "列出所有專家 Agents",
+        "/sessions": "列出所有 Sessions",
+        "/resume": "恢復 Session",
+        "/export": "匯出報告",
+        "/fix": "自動修復建議",
+        "/help": "顯示幫助",
+        "/quit": "退出"
+    }
+
+    def __init__(self, orchestrator: 'Orchestrator'):
+        self.orchestrator = orchestrator
+        self.current_session: Optional[Session] = None
+        self.validation = ValidationLoop(orchestrator.client, orchestrator.config)
+        self.learning = ContinuousLearning(orchestrator.client, orchestrator.config)
+
+    def execute(self, command: str, args: List[str] = None) -> bool:
+        """執行命令，返回是否繼續"""
+        args = args or []
+
+        if command == "/analyze":
+            path = args[0] if args else os.path.expanduser('~/Desktop/TrvicERP-main')
+            self.current_session = self.orchestrator.run(path, resume=True)
+
+        elif command == "/verify":
+            if self.current_session:
+                results = self.validation.verify(self.current_session)
+                self._print_verification(results)
+            else:
+                print("⚠️ 沒有活動的 Session，請先執行 /analyze")
+
+        elif command == "/learn":
+            if self.current_session:
+                patterns = self.learning.extract_patterns(self.current_session)
+                self._print_patterns(patterns)
+            else:
+                print("⚠️ 沒有活動的 Session，請先執行 /analyze")
+
+        elif command == "/checkpoint":
+            if self.current_session:
+                desc = " ".join(args) if args else "手動檢查點"
+                cp = self.validation.create_checkpoint(self.current_session, desc)
+                print(f"✅ 檢查點已創建: {cp['id']}")
+            else:
+                print("⚠️ 沒有活動的 Session")
+
+        elif command == "/status":
+            self._print_status()
+
+        elif command == "/agents":
+            self._print_agents()
+
+        elif command == "/sessions":
+            self._print_sessions()
+
+        elif command == "/resume":
+            if args:
+                session = self.orchestrator.session_manager.load_session(args[0])
+                if session:
+                    self.current_session = self.orchestrator.run(session.project_path, resume=True)
+                else:
+                    print(f"❌ 找不到 Session: {args[0]}")
+            else:
+                print("用法: /resume <session_id>")
+
+        elif command == "/export":
+            if self.current_session:
+                self._export_report(args[0] if args else None)
+            else:
+                print("⚠️ 沒有活動的 Session")
+
+        elif command == "/fix":
+            if self.current_session:
+                self._generate_fixes()
+            else:
+                print("⚠️ 沒有活動的 Session")
+
+        elif command == "/help":
+            self._print_help()
+
+        elif command == "/quit":
+            print("👋 再見！")
+            return False
+
+        else:
+            print(f"❌ 未知命令: {command}")
+            print("輸入 /help 查看可用命令")
+
+        return True
+
+    def _print_verification(self, results: Dict):
+        """印出驗證結果"""
+        print(f"\n📊 驗證結果 (分數: {results['score']:.1f}%)\n")
+
+        if results["passed"]:
+            print("✅ 通過:")
+            for item in results["passed"]:
+                print(f"   • {item}")
+
+        if results["warnings"]:
+            print("\n⚠️ 警告:")
+            for item in results["warnings"]:
+                print(f"   • {item}")
+
+        if results["failed"]:
+            print("\n❌ 失敗:")
+            for item in results["failed"]:
+                print(f"   • {item}")
+        print()
+
+    def _print_patterns(self, patterns: List[Dict]):
+        """印出學習模式"""
+        if not patterns:
+            print("沒有提取到新模式")
+            return
+
+        print(f"\n🧠 提取的模式 ({len(patterns)} 個):\n")
+        for i, p in enumerate(patterns, 1):
+            importance_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(p.get("importance", "low"), "⚪")
+            print(f"{i}. {importance_icon} [{p.get('category', '未分類')}] {p.get('pattern', '')}")
+        print()
+
+    def _print_status(self):
+        """印出狀態"""
+        print("\n📊 當前狀態\n")
+
+        if self.current_session:
+            s = self.current_session
+            print(f"  Session: {s.session_id}")
+            print(f"  專案: {s.project_path}")
+            print(f"  狀態: {s.status}")
+            print(f"  進度: {s.current_agent_index}/{len(s.agent_order)} Agents")
+            print(f"  檢查點: {len(self.validation.checkpoints)} 個")
+        else:
+            print("  沒有活動的 Session")
+
+        stats = self.orchestrator.client.get_stats()
+        print(f"\n  API 統計:")
+        print(f"    請求數: {stats['total_requests']}")
+        print(f"    Tokens: {stats['total_tokens']:,}")
+        print()
+
+    def _print_agents(self):
+        """印出 Agents"""
+        print("\n👥 專家 Agents:\n")
+        for i, agent_id in enumerate(AgentFactory.DEFAULT_ORDER, 1):
+            agents = AgentFactory.create_by_ids([agent_id], self.orchestrator.client, self.orchestrator.config)
+            if agents:
+                agent = agents[0]
+                print(f"  {i}. {agent.name} ({agent.title})")
+                print(f"     ID: {agent_id}")
+                print(f"     專長: {', '.join(agent.focus_areas[:3])}")
+                print()
+
+    def _print_sessions(self):
+        """印出 Sessions"""
+        sessions = self.orchestrator.session_manager.list_sessions()
+        if not sessions:
+            print("沒有找到任何 Session")
+            return
+
+        print("\n📋 所有 Sessions:\n")
+        for s in sessions:
+            status_icon = "✅" if s["status"] == "completed" else "🔄" if s["status"] == "running" else "❌"
+            print(f"  {status_icon} {s['session_id']}")
+            print(f"     路徑: {s['project_path']}")
+            print(f"     進度: {s['current_agent_index']}/{s['total_agents']} Agents")
+            print()
+
+    def _export_report(self, format_type: str = None):
+        """匯出報告"""
+        if format_type == "json":
+            filename = f"report_{self.current_session.session_id}.json"
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(self.current_session.to_dict(), f, ensure_ascii=False, indent=2)
+        else:
+            filename = f"report_{self.current_session.session_id}.md"
+            report = self.orchestrator._generate_markdown_report(self.current_session)
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(report)
+
+        print(f"✅ 報告已匯出: {filename}")
+
+    def _generate_fixes(self):
+        """生成修復建議"""
+        print("\n🔧 生成實作修復建議...\n")
+
+        # 收集問題
+        issues = []
+        for agent_id, result in self.current_session.agent_results.items():
+            if result.get("status") == "completed":
+                analysis = result.get("analysis", "")
+                issues.append(f"[{agent_id}]\n{analysis[:1000]}")
+
+        if not issues:
+            print("沒有可用的分析結果")
+            return
+
+        messages = [
+            {"role": "system", "content": """你是一位資深軟體架構師，專門提供可執行的程式碼修復建議。
+請根據分析結果，提供具體的程式碼修改建議，包含：
+1. 問題描述
+2. 建議的修改（含程式碼範例）
+3. 修改優先級
+4. 預估影響範圍"""},
+            {"role": "user", "content": f"""
+根據以下分析結果，請提供 TOP 5 最重要的程式碼修復建議：
+
+{chr(10).join(issues[:3])}
+
+請用繁體中文回覆，提供具體可執行的建議。
+"""}
+        ]
+
+        try:
+            response = self.orchestrator.client.chat(messages, temperature=0.4)
+            print(response)
+        except Exception as e:
+            print(f"❌ 生成修復建議失敗: {e}")
+
+    def _print_help(self):
+        """印出幫助"""
+        print("\n📖 可用命令:\n")
+        for cmd, desc in self.COMMANDS.items():
+            print(f"  {cmd:<15} {desc}")
+        print("\n提示：直接輸入專案路徑也可以開始分析")
+        print()
+
+
+# ==================== 互動式 CLI ====================
+
+class InteractiveCLI:
+    """
+    互動式命令列介面（類似 Claude Code）
+    """
+
+    def __init__(self, config: Config):
+        self.config = config
+        self.orchestrator = Orchestrator(config)
+        self.command_system = CommandSystem(self.orchestrator)
+        self.running = True
+
+    def run(self):
+        """執行互動式介面"""
+        self._print_banner()
+
+        # 設置命令補全
+        try:
+            commands = list(CommandSystem.COMMANDS.keys())
+            readline.set_completer(lambda text, state:
+                ([c for c in commands if c.startswith(text)] + [None])[state])
+            readline.parse_and_bind("tab: complete")
+        except:
+            pass
+
+        while self.running:
+            try:
+                user_input = input("\n🤖 trvic> ").strip()
+
+                if not user_input:
+                    continue
+
+                # 解析命令
+                if user_input.startswith("/"):
+                    parts = user_input.split()
+                    command = parts[0]
+                    args = parts[1:] if len(parts) > 1 else []
+                    self.running = self.command_system.execute(command, args)
+                else:
+                    # 非命令輸入視為路徑
+                    if os.path.exists(os.path.expanduser(user_input)):
+                        self.command_system.execute("/analyze", [user_input])
+                    else:
+                        print(f"❌ 路徑不存在: {user_input}")
+                        print("提示：輸入 /help 查看可用命令")
+
+            except KeyboardInterrupt:
+                print("\n\n⚠️ 按 Ctrl+C 中斷，輸入 /quit 退出")
+            except EOFError:
+                break
+
+    def _print_banner(self):
+        """印出 Banner"""
+        print(f"""
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║     🔬 TrvicERP 多專家代碼分析器 v{__version__}                        ║
+║                                                                  ║
+║     類似 Claude Code 的 Agent 架構                                ║
+║     • 5 位專家自動依序分析                                         ║
+║     • 驗證迴圈 & 持續學習                                          ║
+║     • Session 持久化（可中斷恢復）                                  ║
+║     • 使用 SiliconFlow Qwen 2.5 72B                               ║
+║                                                                  ║
+║     輸入 /help 查看可用命令                                        ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+""")
+
+
 # ==================== CLI ====================
 
 def main():
     """主程式入口"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
-        description='TrvicERP 多專家代碼分析器 v2.0',
+        description=f'TrvicERP 多專家代碼分析器 v{__version__}',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 範例：
-  %(prog)s ~/Desktop/TrvicERP-main
-  %(prog)s ~/Desktop/TrvicERP-main --api-key YOUR_KEY
-  %(prog)s --list-sessions
-  %(prog)s --resume SESSION_ID
+  %(prog)s                           # 啟動互動式介面
+  %(prog)s ~/Desktop/TrvicERP-main   # 直接分析專案
+  %(prog)s --api-key YOUR_KEY        # 指定 API Key
+  %(prog)s --list-sessions           # 列出所有 Sessions
+  %(prog)s --resume SESSION_ID       # 恢復指定 Session
+  %(prog)s --interactive             # 強制互動模式
+
+命令（互動模式下）：
+  /analyze <path>    開始分析專案
+  /verify            執行驗證迴圈
+  /learn             從 Session 提取學習模式
+  /checkpoint        創建檢查點
+  /fix               生成修復建議
+  /status            顯示當前狀態
+  /agents            列出所有專家
+  /sessions          列出所有 Sessions
+  /export [format]   匯出報告 (md/json)
+  /help              顯示幫助
+  /quit              退出
         """
     )
-    
-    parser.add_argument('project_path', nargs='?', help='專案路徑')
+
+    parser.add_argument('project_path', nargs='?', help='專案路徑（若提供則直接分析）')
     parser.add_argument('--api-key', '-k', help='SiliconFlow API Key')
     parser.add_argument('--agents', '-a', nargs='+',
                        choices=['software_engineer', 'ai_solution', 'business_development', 'brand_strategy', 'ui_ux'],
@@ -1328,41 +1817,69 @@ def main():
     parser.add_argument('--no-resume', action='store_true', help='不恢復上次 Session')
     parser.add_argument('--list-sessions', '-l', action='store_true', help='列出所有 Sessions')
     parser.add_argument('--resume', '-r', metavar='SESSION_ID', help='恢復指定 Session')
-    
+    parser.add_argument('--interactive', '-i', action='store_true', help='啟動互動式介面')
+    parser.add_argument('--scan', '-s', action='store_true', help='僅掃描專案結構（不需要 API Key）')
+
     # Rate Limiting 配置
     parser.add_argument('--rpm', type=int, default=10, help='每分鐘最大請求數 (預設: 10)')
     parser.add_argument('--delay', type=float, default=6.0, help='請求間最小延遲秒數 (預設: 6.0)')
-    
+
     args = parser.parse_args()
-    
+
     # 創建配置
     config = Config()
-    
+
     if args.api_key:
         config.api.api_key = args.api_key
-    
+
     # 套用 Rate Limiting 配置
     config.api.requests_per_minute = args.rpm
     config.api.min_delay_between_requests = args.delay
-    
-    # 檢查 API Key
-    if not config.api.api_key and not args.list_sessions:
-        print("⚠️ 未設定 API Key")
-        print("請使用以下方式之一：")
-        print("  1. 環境變數: export SILICONFLOW_API_KEY=your_key")
-        print("  2. 參數: --api-key your_key")
+
+    # 僅掃描模式（不需要 API Key）
+    if args.scan:
+        project_path = args.project_path or os.path.expanduser('~/Desktop/TrvicERP-main')
+        path = Path(project_path).expanduser().resolve()
+
+        if not path.exists():
+            print(f"❌ 路徑不存在: {path}")
+            return
+
+        print(f"""
+╔══════════════════════════════════════════════════════════════════╗
+║  🔍 TrvicERP 專案掃描模式                                         ║
+╚══════════════════════════════════════════════════════════════════╝
+""")
+        scanner = FileScanner(config)
+        project = scanner.scan(path)
+
+        print(f"\n📊 掃描結果:")
+        print(f"   • 專案路徑: {project.root_path}")
+        print(f"   • 總檔案數: {project.total_files}")
+        print(f"   • 總行數: {project.total_lines:,}")
+        print(f"   • 總大小: {project.total_size_bytes / 1024:.1f} KB")
+
+        print(f"\n📁 檔案類型統計:")
+        for ext, count in sorted(project.file_type_stats.items(), key=lambda x: x[1], reverse=True)[:10]:
+            print(f"   • {ext}: {count} 個")
+
+        print(f"\n📂 目錄結構:")
+        print(project.directory_tree)
+
+        print(f"\n💡 下一步:")
+        print(f"   1. 取得 API Key: https://siliconflow.com")
+        print(f"   2. 設定環境變數: export SILICONFLOW_API_KEY=your_key")
+        print(f"   3. 執行完整分析: python3 trvic_analyzer_v2.py {project_path}")
         return
-    
-    # 創建協調器
-    orchestrator = Orchestrator(config)
-    
-    # 列出 Sessions
+
+    # 列出 Sessions（不需要 API Key）
     if args.list_sessions:
+        orchestrator = Orchestrator(config)
         sessions = orchestrator.session_manager.list_sessions()
         if not sessions:
             print("沒有找到任何 Session")
             return
-        
+
         print("\n📋 所有 Sessions:\n")
         for s in sessions:
             status_icon = "✅" if s["status"] == "completed" else "🔄" if s["status"] == "running" else "❌"
@@ -1372,25 +1889,42 @@ def main():
             print(f"     建立: {s['created_at']}")
             print()
         return
-    
-    # 恢復指定 Session
-    if args.resume:
-        session = orchestrator.session_manager.load_session(args.resume)
-        if not session:
-            print(f"❌ 找不到 Session: {args.resume}")
-            return
-        
-        # 繼續執行
-        project_path = session.project_path
+
+    # 檢查 API Key
+    if not config.api.api_key:
+        print("⚠️ 未設定 API Key")
+        print("請使用以下方式之一：")
+        print("  1. 環境變數: export SILICONFLOW_API_KEY=your_key")
+        print("  2. 參數: --api-key your_key")
+        print("")
+        print("💡 提示：")
+        print("  • 取得 API Key: https://siliconflow.com")
+        print("  • 使用掃描模式測試: python3 trvic_analyzer_v2.py --scan /path/to/project")
+        return
+
+    # 決定執行模式
+    if args.interactive or (not args.project_path and not args.resume):
+        # 互動模式
+        cli = InteractiveCLI(config)
+        cli.run()
     else:
-        project_path = args.project_path or os.path.expanduser('~/Desktop/TrvicERP-main')
-    
-    # 執行分析
-    orchestrator.run(
-        project_path=project_path,
-        agent_ids=args.agents,
-        resume=not args.no_resume
-    )
+        # 直接執行模式
+        orchestrator = Orchestrator(config)
+
+        if args.resume:
+            session = orchestrator.session_manager.load_session(args.resume)
+            if not session:
+                print(f"❌ 找不到 Session: {args.resume}")
+                return
+            project_path = session.project_path
+        else:
+            project_path = args.project_path or os.path.expanduser('~/Desktop/TrvicERP-main')
+
+        orchestrator.run(
+            project_path=project_path,
+            agent_ids=args.agents,
+            resume=not args.no_resume
+        )
 
 
 if __name__ == '__main__':
