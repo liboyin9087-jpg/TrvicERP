@@ -40,9 +40,10 @@ function base64ToArrayBuffer(base64: string): ArrayBuffer {
 
 // 生成加密密鑰
 async function getEncryptionKey(): Promise<CryptoKey> {
+  const keyData = stringToUint8Array(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32));
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    stringToUint8Array(ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)),
+    keyData.buffer as ArrayBuffer,
     'AES-GCM',
     false,
     ['encrypt', 'decrypt']
@@ -64,7 +65,7 @@ export async function encryptData(data: string): Promise<string> {
     const encryptedBuffer = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
       key,
-      encodedData
+      encodedData.buffer as ArrayBuffer
     );
 
     // 組合 IV 和加密資料
@@ -113,7 +114,7 @@ export async function decryptData(encryptedData: string): Promise<string> {
  */
 export async function hashData(data: string): Promise<string> {
   const encoded = stringToUint8Array(data);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoded.buffer as ArrayBuffer);
   return arrayBufferToBase64(hashBuffer);
 }
 
