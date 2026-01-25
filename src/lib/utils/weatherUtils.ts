@@ -33,7 +33,10 @@ export interface WeatherForecast {
 const WEATHER_API_CONFIG = {
   provider: import.meta.env.VITE_WEATHER_PROVIDER || 'openweathermap', // 'openweathermap' | 'cwb' | 'mock'
   apiKey: import.meta.env.VITE_WEATHER_API_KEY || '',
-  baseUrl: import.meta.env.VITE_WEATHER_API_URL || 'https://api.openweathermap.org/data/2.5',
+  baseUrl: import.meta.env.VITE_WEATHER_API_URL || 
+    (import.meta.env.VITE_WEATHER_PROVIDER === 'cwb' 
+      ? 'https://opendata.cwa.gov.tw/api/v1/rest/datastore' 
+      : 'https://api.openweathermap.org/data/2.5'),
 };
 
 /**
@@ -116,15 +119,107 @@ async function getWeatherFromOpenWeatherMap(
 }
 
 /**
+ * 將 CWA 天氣描述轉換為條件
+ */
+function mapCWAWeatherToCondition(weatherStr: string): WeatherData['condition'] {
+  if (!weatherStr) return 'cloudy';
+  
+  if (weatherStr.includes('晴')) return 'sunny';
+  if (weatherStr.includes('雨')) return 'rainy';
+  if (weatherStr.includes('多雲') || weatherStr.includes('陰')) return 'cloudy';
+  if (weatherStr.includes('雪')) return 'snowy';
+  if (weatherStr.includes('風')) return 'windy';
+  
+  return 'cloudy';
+}
+
+/**
+ * 計算兩點之間的距離（使用 Haversine 公式）
+ */
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // 地球半徑（公里）
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
  * 使用中央氣象局 API 取得天氣（台灣地區）
  */
 async function getWeatherFromCWB(
   lat: number,
   lon: number
 ): Promise<WeatherData> {
-  // 中央氣象局 API 需要特殊處理
-  // 這裡提供基本結構，實際需要根據 CWB API 文件實作
-  throw new Error('中央氣象局 API 尚未實作');
+  if (!WEATHER_API_CONFIG.apiKey) {
+    throw new Error('CWA API Key 未設定');
+  }
+
+  // 使用 O-A0003-001 (自動氣象站-氣象觀測資料) 資料集
+  const url = `${WEATHER_API_CONFIG.baseUrl}/O-A0003-001?Authorization=${WEATHER_API_CONFIG.apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`CWA API 錯誤: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // 找出最近的氣象站
+    let nearestStation: any = null;
+    let minDistance = Infinity;
+
+    if (data.records && data.records.Station) {
+      for (const station of data.records.Station) {
+        // 獲取測站經緯度
+        const stationLat = parseFloat(station.GeoInfo?.Coordinates?.[0]?.StationLatitude || 0);
+        const stationLon = parseFloat(station.GeoInfo?.Coordinates?.[0]?.StationLongitude || 0);
+
+        if (stationLat && stationLon) {
+          const distance = calculateDistance(lat, lon, stationLat, stationLon);
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestStation = station;
+          }
+        }
+      }
+    }
+
+    if (!nearestStation) {
+      throw new Error('找不到附近的氣象站');
+    }
+
+    // 從觀測資料提取天氣資訊
+    const weatherElements = nearestStation.WeatherElement || {};
+    
+    // 溫度 (TEMP)
+    const temp = parseFloat(weatherElements.AirTemperature || 0);
+    
+    // 濕度 (HUMD)
+    const humidity = parseFloat(weatherElements.RelativeHumidity || 0);
+    
+    // 風速 (WDSD) - CWA 給的是 m/s，轉換為 km/h
+    const windSpeed = Math.round(parseFloat(weatherElements.WindSpeed || 0) * 3.6);
+    
+    // 天氣描述 (Weather)
+    const weatherDesc = weatherElements.Weather || '多雲';
+    
+    return {
+      temperature: Math.round(temp),
+      condition: mapCWAWeatherToCondition(weatherDesc),
+      humidity: Math.round(humidity),
+      windSpeed,
+      description: weatherDesc,
+    };
+  } catch (error) {
+    console.error('CWA API 錯誤:', error);
+    throw error;
+  }
 }
 
 /**
@@ -244,6 +339,81 @@ export async function getWeatherForecast(
       return forecasts.slice(0, days);
     } catch (error) {
       console.error('天氣預報 API 錯誤:', error);
+    }
+  }
+
+  if (WEATHER_API_CONFIG.provider === 'cwb' && WEATHER_API_CONFIG.apiKey) {
+    try {
+      // 使用 F-C0032-001 (一般天氣預報-今明 36 小時天氣預報)
+      // 或 F-D0047-091 (鄉鎮天氣預報-臺灣未來1週天氣預報)
+      const url = `${WEATHER_API_CONFIG.baseUrl}/F-C0032-001?Authorization=${WEATHER_API_CONFIG.apiKey}`;
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`CWA 預報 API 錯誤: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const forecasts: WeatherForecast[] = [];
+
+      if (data.records && data.records.location) {
+        // 找出最近的縣市
+        let nearestLocation: any = null;
+        let minDistance = Infinity;
+
+        for (const location of data.records.location) {
+          // 使用縣市中心點座標（簡化處理）
+          const locLat = parseFloat(location.lat || 0);
+          const locLon = parseFloat(location.lon || 0);
+
+          if (locLat && locLon) {
+            const distance = calculateDistance(lat, lon, locLat, locLon);
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestLocation = location;
+            }
+          }
+        }
+
+        if (nearestLocation && nearestLocation.weatherElement) {
+          // 提取天氣元素
+          const wxElement = nearestLocation.weatherElement.find((e: any) => e.elementName === 'Wx');
+          const maxTElement = nearestLocation.weatherElement.find((e: any) => e.elementName === 'MaxT');
+          const minTElement = nearestLocation.weatherElement.find((e: any) => e.elementName === 'MinT');
+
+          if (wxElement && maxTElement && minTElement) {
+            const timeCount = Math.min(
+              wxElement.time?.length || 0,
+              maxTElement.time?.length || 0,
+              minTElement.time?.length || 0,
+              days
+            );
+
+            for (let i = 0; i < timeCount; i++) {
+              const startTime = wxElement.time[i].startTime;
+              const date = new Date(startTime).toISOString().split('T')[0];
+              const weatherDesc = wxElement.time[i].parameter?.parameterName || '多雲';
+              const maxTemp = parseFloat(maxTElement.time[i].parameter?.parameterName || 25);
+              const minTemp = parseFloat(minTElement.time[i].parameter?.parameterName || 20);
+
+              forecasts.push({
+                date,
+                high: Math.round(maxTemp),
+                low: Math.round(minTemp),
+                condition: mapCWAWeatherToCondition(weatherDesc),
+                description: weatherDesc,
+              });
+            }
+          }
+        }
+      }
+
+      // 如果有預報資料，回傳
+      if (forecasts.length > 0) {
+        return forecasts.slice(0, days);
+      }
+    } catch (error) {
+      console.error('CWA 預報 API 錯誤:', error);
     }
   }
 
