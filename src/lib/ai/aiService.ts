@@ -14,10 +14,19 @@ import type {
   StructuredOutputResponse,
   ProposalComparisonOutput,
 } from '../../types/ai';
+import { apiRequest, ApiError, ApiErrorType, withRetry } from '../apiError';
 
 // API 基礎 URL - 可透過環境變數配置
 const API_BASE_URL = import.meta.env.VITE_AI_API_URL || 'http://localhost:4000';
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
+
+// 重試配置
+const AI_RETRY_CONFIG = {
+  maxRetries: 2,
+  baseDelay: 1000,
+  maxDelay: 5000,
+  backoffMultiplier: 2,
+};
 
 const MOCK_MODE_OPTIONS: AIModeOption[] = [
   { id: 'general', label: '一般諮詢', description: 'Mock 模式 (無後端)' },
@@ -64,26 +73,30 @@ class AIService {
       };
     }
 
-    const response = await fetch(`${this.baseUrl}/api/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: request.message,
-        mode: request.mode,
-        context: request.context || '',
-        user_role: request.user_role,
-        user_id: request.user_id,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: '未知錯誤' }));
-      throw new Error(error.detail || `AI 服務錯誤: ${response.status}`);
+    try {
+      return await apiRequest<ChatResponse>(
+        `${this.baseUrl}/api/chat`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            message: request.message,
+            mode: request.mode,
+            context: request.context || '',
+            user_role: request.user_role,
+            user_id: request.user_id,
+          }),
+        },
+        {
+          timeout: 60000, // AI 回應可能較慢
+          retry: AI_RETRY_CONFIG,
+        }
+      );
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(error.userMessage);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   /**
@@ -98,13 +111,18 @@ class AIService {
       };
     }
 
-    const response = await fetch(`${this.baseUrl}/health`);
-
-    if (!response.ok) {
+    try {
+      return await apiRequest<HealthResponse>(
+        `${this.baseUrl}/health`,
+        { method: 'GET' },
+        { timeout: 10000, retry: { maxRetries: 1 } }
+      );
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(error.userMessage);
+      }
       throw new Error('AI 服務無法連線');
     }
-
-    return response.json();
   }
 
   /**
@@ -115,13 +133,18 @@ class AIService {
       return { modes: MOCK_MODE_OPTIONS };
     }
 
-    const response = await fetch(`${this.baseUrl}/api/modes`);
-
-    if (!response.ok) {
+    try {
+      return await apiRequest<ModesResponse>(
+        `${this.baseUrl}/api/modes`,
+        { method: 'GET' },
+        { timeout: 10000 }
+      );
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(error.userMessage);
+      }
       throw new Error('無法取得模式列表');
     }
-
-    return response.json();
   }
 
   /**
@@ -177,28 +200,32 @@ class AIService {
       };
     }
 
-    const response = await fetch(`${this.baseUrl}/api/structured`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: request.message,
-        mode: request.mode,
-        context: request.context || '',
-        schema: request.schema,
-        user_role: request.user_role,
-        user_id: request.user_id,
-        max_attempts: request.max_attempts,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: '未知錯誤' }));
-      throw new Error(error.detail || `AI 服務錯誤: ${response.status}`);
+    try {
+      return await apiRequest<StructuredOutputResponse<T>>(
+        `${this.baseUrl}/api/structured`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            message: request.message,
+            mode: request.mode,
+            context: request.context || '',
+            schema: request.schema,
+            user_role: request.user_role,
+            user_id: request.user_id,
+            max_attempts: request.max_attempts,
+          }),
+        },
+        {
+          timeout: 90000, // 結構化輸出可能需要更長時間
+          retry: AI_RETRY_CONFIG,
+        }
+      );
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw new Error(error.userMessage);
+      }
+      throw error;
     }
-
-    return response.json();
   }
 }
 

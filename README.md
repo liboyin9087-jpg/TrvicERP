@@ -1,350 +1,211 @@
-# 🔬 TrvicERP 多專家代碼分析器 v2.0
+# TrvicERP - 旅遊業企業資源規劃系統
 
-採用 **Claude Code 風格的 Agent 架構**，具備智能 API 排程與 Session 持久化功能。
+智能化旅遊業 ERP 解決方案，整合 AI 助手、多角色權限、即時協作等企業級功能。
 
-## ✨ v2.0 新功能
+## 功能特色
 
-### 🤖 Agent 架構（類似 Claude Code）
-```
-Orchestrator（協調器）
-    ├── SoftwareEngineerAgent（軟體工程師）
-    ├── AISolutionAgent（AI 解決方案）
-    ├── BDAgent（商業發展）
-    ├── BrandStrategyAgent（品牌策略）
-    └── UIUXAgent（UI/UX 設計）
-```
+### 核心功能
+- **Dashboard 儀表板** - 可自訂的 KPI 儀表板，支援拖拉排版
+- **團期管理** - 完整的出團排程、人數追蹤、資源分配
+- **CRM 客戶管理** - 客戶資料、互動記錄、消費分析
+- **報價系統** - 多版本報價產出、毛利試算
+- **行程規劃** - 拖拉式行程編輯器、版本控制
+- **護照管理** - 護照流轉追蹤、到期提醒
+- **費用報銷** - 領隊報帳、多幣別支援
 
-### ⏱️ 智能 Rate Limiter
-- **Token Bucket 算法** - 精確控制 API 呼叫頻率
-- **每分鐘請求限制** - 預設 10 次/分鐘
-- **自動延遲** - 請求間最小 6 秒間隔
-- **指數退避重試** - 失敗後智能等待
+### AI Copilot 智能助手
+- **多模式專家** - 行程規劃、行銷文案、成本估算、法規諮詢
+- **RAG 法規知識庫** - 旅遊定型化契約、消保法規即時查詢
+- **Function Calling** - AI 可直接操作系統功能
+- **結構化輸出** - JSON Schema 驗證的報價單、行程表
 
-### 💾 Session 持久化
-- **自動保存進度** - 每完成一個 Agent 即保存
-- **中斷恢復** - Ctrl+C 後下次可繼續
-- **Session 管理** - 列出、恢復、追蹤所有分析
+### 多角色支援
+- **Staff (員工)** - 完整後台功能
+- **Welfare (福委)** - 企業福委專用介面
+- **Traveler (旅客)** - 行程查詢、投票、報名
 
----
+## 技術架構
 
-## 🚀 快速開始
+### 前端
+- **React 18** + TypeScript
+- **Zustand** - 狀態管理
+- **Tailwind CSS** - UI 樣式
+- **Framer Motion** - 動畫效果
+- **React Grid Layout** - 儀表板佈局
+- **DnD Kit** - 拖拉功能
 
-### 1. 安裝
-```bash
-pip install requests
-```
+### 後端 (AI Server)
+- **FastAPI** - Python API 框架
+- **Google Gemini / SiliconFlow** - LLM 提供者
+- **RAG** - 法規知識檢索
 
-### 2. 設定 API Key
-```bash
-export SILICONFLOW_API_KEY="your_api_key"
-```
+## 快速開始
 
-### 3. 執行分析
-```bash
-# 分析專案（五位專家依序執行）
-python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main
+### 環境需求
+- Node.js >= 18
+- Python >= 3.10 (AI 服務)
 
-# 使用自訂 Rate Limiting
-python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main --rpm 8 --delay 8
-```
-
----
-
-## 📖 完整使用說明
-
-### 基本指令
+### 安裝
 
 ```bash
-# 分析專案（預設路徑）
-python trvic_analyzer_v2.py
+# 安裝前端依賴
+npm install
 
-# 指定路徑
-python trvic_analyzer_v2.py /path/to/project
-
-# 指定 API Key
-python trvic_analyzer_v2.py --api-key YOUR_KEY /path/to/project
+# 安裝 AI 服務依賴
+cd ai-server
+pip install -r requirements.txt
 ```
-
-### 選擇專家
-
-```bash
-# 只使用特定專家
-python trvic_analyzer_v2.py --agents software_engineer ai_solution
-
-# 可選專家：
-#   software_engineer   - 軟體工程師
-#   ai_solution         - AI 解決方案
-#   business_development - 商業發展
-#   brand_strategy      - 品牌策略
-#   ui_ux               - UI/UX 設計
-```
-
-### Rate Limiting 配置
-
-```bash
-# 調整每分鐘請求數（預設 10）
-python trvic_analyzer_v2.py --rpm 8
-
-# 調整請求間隔（預設 6 秒）
-python trvic_analyzer_v2.py --delay 10
-
-# 保守設定（避免 API 限制）
-python trvic_analyzer_v2.py --rpm 6 --delay 10
-```
-
-### Session 管理
-
-```bash
-# 列出所有 Sessions
-python trvic_analyzer_v2.py --list-sessions
-
-# 恢復指定 Session
-python trvic_analyzer_v2.py --resume SESSION_ID
-
-# 不恢復，強制重新開始
-python trvic_analyzer_v2.py --no-resume /path/to/project
-```
-
----
-
-## 🏗️ 架構說明
-
-### Agent 系統
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Orchestrator                           │
-│  • 管理執行流程                                              │
-│  • Session 持久化                                            │
-│  • 生成最終報告                                              │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-    ┌────────────────────┼────────────────────┐
-    │                    │                    │
-    ▼                    ▼                    ▼
-┌─────────┐      ┌─────────┐         ┌─────────┐
-│ Agent 1 │ ───▶ │ Agent 2 │ ───▶ ...│ Agent 5 │
-└─────────┘      └─────────┘         └─────────┘
-    │                    │                    │
-    │ Rate              │ Rate              │ Rate
-    │ Limiter           │ Limiter           │ Limiter
-    ▼                    ▼                    ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   SiliconFlow API                           │
-│                   Qwen 2.5 72B                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Rate Limiter 工作原理
-
-```
-請求 1 ──────────────────────────────────────────▶
-                    等待 6 秒
-請求 2 ─────────────────────────────────────────▶
-                    等待 6 秒
-請求 3 ────────────────────────────────────────▶
-                        .
-                        .
-                        .
-        如果達到每分鐘上限，自動等待
-```
-
-### Session 持久化流程
-
-```
-開始分析
-    │
-    ├──▶ 掃描專案 ──▶ 保存 Session
-    │
-    ├──▶ Agent 1 執行 ──▶ 保存進度
-    │
-    ├──▶ Agent 2 執行 ──▶ 保存進度
-    │         │
-    │         ▼ (Ctrl+C 中斷)
-    │    Session 已保存，下次可恢復
-    │
-    ├──▶ Agent 3 執行 ──▶ 保存進度
-    │
-    ├──▶ Agent 4 執行 ──▶ 保存進度
-    │
-    ├──▶ Agent 5 執行 ──▶ 保存進度
-    │
-    └──▶ 生成報告 ──▶ 完成
-```
-
----
-
-## 👥 五位專家
-
-| Agent | 名稱 | 專長 |
-|-------|------|------|
-| `software_engineer` | 陳建宏 | 程式碼品質、架構、效能、安全性 |
-| `ai_solution` | 林雅芳 | AI 整合、自動化、數據管道 |
-| `business_development` | 王志明 | 商業模式、市場、合作夥伴 |
-| `brand_strategy` | 張曉琪 | 品牌定位、用戶洞察、差異化 |
-| `ui_ux` | 李佳穎 | 用戶體驗、介面設計、可用性 |
-
----
-
-## ⚙️ 配置選項
 
 ### 環境變數
 
-```bash
-# API Key（必須）
-export SILICONFLOW_API_KEY="your_api_key"
+建立 `.env` 檔案：
+
+```env
+# 前端
+VITE_AI_API_URL=http://localhost:4000
+VITE_USE_MOCK=false
+
+# AI 服務 (ai-server/.env)
+GOOGLE_API_KEY=your_gemini_api_key
+SILICONFLOW_API_KEY=your_siliconflow_key  # 備用
 ```
 
-### 命令列參數
-
-| 參數 | 說明 | 預設值 |
-|------|------|--------|
-| `--api-key`, `-k` | API Key | 環境變數 |
-| `--agents`, `-a` | 指定 Agents | 全部 5 位 |
-| `--rpm` | 每分鐘最大請求數 | 10 |
-| `--delay` | 請求間最小延遲（秒） | 6.0 |
-| `--no-resume` | 不恢復上次 Session | False |
-| `--list-sessions`, `-l` | 列出所有 Sessions | - |
-| `--resume`, `-r` | 恢復指定 Session | - |
-
-### 建議的 Rate Limiting 設定
-
-| 情境 | RPM | Delay | 說明 |
-|------|-----|-------|------|
-| 標準 | 10 | 6.0 | 預設設定 |
-| 保守 | 6 | 10.0 | 避免 API 限制 |
-| 積極 | 15 | 4.0 | API 配額充足時 |
-
----
-
-## 📁 輸出檔案
-
-### 目錄結構
-
-```
-./
-├── .trvic_sessions/          # Session 資料
-│   ├── 20250123_143052_abc123.json
-│   └── ...
-│
-├── analysis_reports/         # 分析報告
-│   ├── report_20250123_143052_abc123.md
-│   └── ...
-│
-└── trvic_analyzer_v2.py      # 主程式
-```
-
-### 報告格式
-
-```markdown
-# 🔬 TrvicERP 專案分析報告
-
-## 📊 專案概覽
-- 基本統計
-
-## 📝 執行總結
-- 整體評估
-
-## 🎯 優先改進事項
-1. 建議 1
-2. 建議 2
-...
-
-## 👥 專家分析報告
-### 🤖 software_engineer
-...
-### 🤖 ai_solution
-...
-```
-
----
-
-## 🔧 進階用法
-
-### 作為模組使用
-
-```python
-from trvic_analyzer_v2 import Config, Orchestrator
-
-# 自訂配置
-config = Config()
-config.api.api_key = "your_key"
-config.api.requests_per_minute = 8
-config.api.min_delay_between_requests = 8.0
-
-# 創建協調器
-orchestrator = Orchestrator(config)
-
-# 執行分析
-session = orchestrator.run(
-    project_path="~/Desktop/TrvicERP-main",
-    agent_ids=["software_engineer", "ai_solution"],
-    resume=True
-)
-
-# 取得結果
-print(session.summary)
-print(session.recommendations)
-```
-
-### 自訂 Agent
-
-```python
-from trvic_analyzer_v2 import BaseAgent
-
-class CustomAgent(BaseAgent):
-    def __init__(self, client, config):
-        super().__init__(
-            agent_id="custom",
-            name="自訂專家",
-            title="領域專家",
-            focus_areas=["特定領域"],
-            system_prompt="你是一位...",
-            client=client,
-            config=config
-        )
-```
-
----
-
-## 🐛 常見問題
-
-### Q: API Rate Limit 錯誤？
-
-調整 Rate Limiting 設定：
-```bash
-python trvic_analyzer_v2.py --rpm 6 --delay 12
-```
-
-### Q: 分析中斷了怎麼辦？
-
-Session 會自動保存，下次執行會詢問是否繼續：
-```bash
-python trvic_analyzer_v2.py ~/Desktop/TrvicERP-main
-# 提示：發現可恢復的 Session，是否繼續？
-```
-
-### Q: 如何查看之前的分析？
+### 啟動
 
 ```bash
-python trvic_analyzer_v2.py --list-sessions
+# 啟動前端開發伺服器
+npm run dev
+
+# 啟動 AI 服務 (另一終端)
+cd ai-server
+python main.py
 ```
 
-### Q: 如何強制重新分析？
+開啟瀏覽器訪問 `http://localhost:5173`
 
+## 專案結構
+
+```
+TrvicERP/
+├── src/
+│   ├── components/       # 共用元件
+│   │   └── ErrorBoundary.tsx
+│   ├── core/             # 核心模組
+│   │   ├── hooks/        # 共用 Hooks
+│   │   ├── services/     # 核心服務
+│   │   └── types/        # 型別定義
+│   ├── hooks/            # 功能 Hooks
+│   │   ├── useGlobalSearch.ts
+│   │   ├── useVirtualList.ts
+│   │   └── useFunctionExecutor.ts
+│   ├── lib/              # 工具函式庫
+│   │   ├── ai/           # AI 服務
+│   │   ├── apiError.ts   # API 錯誤處理
+│   │   ├── crypto.ts     # 加密工具
+│   │   └── performance.ts # 效能工具
+│   ├── modules/          # 業務模組
+│   │   ├── customers/
+│   │   ├── itineraries/
+│   │   ├── orders/
+│   │   ├── quotations/
+│   │   └── sessions/
+│   ├── store/            # 狀態管理
+│   │   ├── useAppStore.ts
+│   │   └── useDashboardStore.ts
+│   └── App.tsx           # 主應用
+├── ai-server/            # AI 後端服務
+│   ├── main.py           # FastAPI 主程式
+│   ├── prompt_templates.py
+│   └── rules.txt         # 法規知識庫
+├── types.ts              # 共用型別
+└── package.json
+```
+
+## 核心功能說明
+
+### 全局搜尋
+支援跨模組搜尋客戶、訂單、團期、旅客：
+
+```typescript
+import { useGlobalSearch } from './hooks/useGlobalSearch';
+
+const { query, results, setQuery } = useGlobalSearch();
+```
+
+### API 錯誤處理
+統一的錯誤處理與自動重試：
+
+```typescript
+import { apiRequest, ApiError } from './lib/apiError';
+
+const data = await apiRequest('/api/data', { method: 'GET' }, {
+  timeout: 30000,
+  retry: { maxRetries: 3 }
+});
+```
+
+### 敏感資料加密
+使用 AES-GCM 加密敏感資料：
+
+```typescript
+import { encryptData, maskPhone, maskEmail } from './lib/crypto';
+
+const encrypted = await encryptData(sensitiveData);
+const maskedPhone = maskPhone('0912345678'); // 091***678
+```
+
+### 效能優化工具
+提供 memoize、debounce、虛擬列表等：
+
+```typescript
+import { useVirtualList } from './hooks/useVirtualList';
+import { debounce, memoize } from './lib/performance';
+
+const { virtualItems, totalHeight } = useVirtualList(items, { itemHeight: 50 });
+```
+
+## AI Copilot API
+
+### 聊天端點
 ```bash
-python trvic_analyzer_v2.py --no-resume ~/Desktop/TrvicERP-main
+POST /api/chat
+{
+  "message": "幫我規劃東京五日遊",
+  "mode": "itinerary",
+  "context": "預算 50000，家庭旅遊"
+}
 ```
 
----
+### 可用模式
+| 模式 | 說明 |
+|------|------|
+| `general` | 通用助手 |
+| `itinerary` | 行程規劃專家 |
+| `marketing` | 行銷文案專家 |
+| `costing` | 成本試算專家 |
+| `legal` | 法規諮詢專家 |
 
-## 📄 授權
+## 開發指南
+
+### 程式碼風格
+- TypeScript strict mode
+- ESLint 檢查
+- Prettier 格式化
+
+### 建置
+```bash
+npm run build
+```
+
+### 環境檢查
+```bash
+npm run check:env
+```
+
+## 授權
 
 MIT License
 
----
+## 貢獻
 
-## 🔗 參考
-
-- [everything-claude-code](https://github.com/affaan-m/everything-claude-code) - Claude Code 配置集合
-- [SiliconFlow](https://siliconflow.com/) - API 服務商
+歡迎提交 Issue 和 Pull Request。
