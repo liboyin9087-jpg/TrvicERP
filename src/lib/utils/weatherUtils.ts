@@ -134,6 +134,15 @@ function mapCWAWeatherToCondition(weatherStr: string): WeatherData['condition'] 
 }
 
 /**
+ * 安全解析浮點數值
+ */
+function parseWeatherValue(value: any, defaultValue: number = 0): number {
+  if (value == null) return defaultValue;
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
+
+/**
  * 計算兩點之間的距離（使用 Haversine 公式）
  */
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -180,8 +189,7 @@ async function getWeatherFromCWB(
         const stationLatStr = station.GeoInfo?.Coordinates?.[0]?.StationLatitude;
         const stationLonStr = station.GeoInfo?.Coordinates?.[0]?.StationLongitude;
 
-        if (stationLatStr !== undefined && stationLatStr !== null && 
-            stationLonStr !== undefined && stationLonStr !== null) {
+        if (stationLatStr != null && stationLonStr != null) {
           const stationLat = parseFloat(stationLatStr);
           const stationLon = parseFloat(stationLonStr);
           
@@ -203,26 +211,23 @@ async function getWeatherFromCWB(
     // 從觀測資料提取天氣資訊
     const weatherElements = nearestStation.WeatherElement || {};
     
-    // 溫度 (TEMP)
-    const tempStr = weatherElements.AirTemperature;
-    const temp = tempStr !== undefined && tempStr !== null ? parseFloat(tempStr) : NaN;
+    // 溫度 (TEMP) - 預設 20°C
+    const temp = parseWeatherValue(weatherElements.AirTemperature, 20);
     
-    // 濕度 (HUMD)
-    const humidityStr = weatherElements.RelativeHumidity;
-    const humidity = humidityStr !== undefined && humidityStr !== null ? parseFloat(humidityStr) : NaN;
+    // 濕度 (HUMD) - 預設 60%
+    const humidity = parseWeatherValue(weatherElements.RelativeHumidity, 60);
     
     // 風速 (WDSD) - CWA 給的是 m/s，轉換為 km/h
-    const windSpeedStr = weatherElements.WindSpeed;
-    const windSpeedMs = windSpeedStr !== undefined && windSpeedStr !== null ? parseFloat(windSpeedStr) : NaN;
-    const windSpeed = !isNaN(windSpeedMs) ? Math.round(windSpeedMs * 3.6) : 0;
+    const windSpeedMs = parseWeatherValue(weatherElements.WindSpeed, 0);
+    const windSpeed = Math.round(windSpeedMs * 3.6);
     
     // 天氣描述 (Weather)
     const weatherDesc = weatherElements.Weather || '多雲';
     
     return {
-      temperature: !isNaN(temp) ? Math.round(temp) : 20, // 預設 20°C
+      temperature: Math.round(temp),
       condition: mapCWAWeatherToCondition(weatherDesc),
-      humidity: !isNaN(humidity) ? Math.round(humidity) : 60, // 預設 60%
+      humidity: Math.round(humidity),
       windSpeed,
       description: weatherDesc,
     };
@@ -376,8 +381,7 @@ export async function getWeatherForecast(
           const locLatStr = location.lat;
           const locLonStr = location.lon;
 
-          if (locLatStr !== undefined && locLatStr !== null &&
-              locLonStr !== undefined && locLonStr !== null) {
+          if (locLatStr != null && locLonStr != null) {
             const locLat = parseFloat(locLatStr);
             const locLon = parseFloat(locLonStr);
             
@@ -409,8 +413,8 @@ export async function getWeatherForecast(
               const startTime = wxElement.time[i].startTime;
               const date = new Date(startTime).toISOString().split('T')[0];
               const weatherDesc = wxElement.time[i].parameter?.parameterName || '多雲';
-              const maxTemp = parseFloat(maxTElement.time[i].parameter?.parameterName || 25);
-              const minTemp = parseFloat(minTElement.time[i].parameter?.parameterName || 20);
+              const maxTemp = parseWeatherValue(maxTElement.time[i].parameter?.parameterName, 25);
+              const minTemp = parseWeatherValue(minTElement.time[i].parameter?.parameterName, 20);
 
               forecasts.push({
                 date,
