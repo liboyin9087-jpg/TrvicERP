@@ -61,7 +61,7 @@ class APIConfig:
     max_tokens_per_request: int = 4096
     max_context_tokens: int = 6000
     
-    # Continuous Loop 配置（Claude Code 風格）
+    # 持續反饋迴圈配置（Claude Code 風格）
     enable_feedback_loop: bool = True  # 啟用反饋迴圈
     feedback_summary_length: int = 1000  # 每位專家摘要長度（用於下一位專家的上下文）
 
@@ -1457,7 +1457,7 @@ def main():
     parser.add_argument('--rpm', type=int, default=10, help='每分鐘最大請求數 (預設: 10)')
     parser.add_argument('--delay', type=float, default=6.0, help='請求間最小延遲秒數 (預設: 6.0)')
     
-    # Continuous Loop 配置（Claude Code 風格）
+    # 持續反饋迴圈配置（Claude Code 風格）
     parser.add_argument('--no-feedback-loop', action='store_true', 
                        help='停用持續反饋迴圈（預設啟用，類似 Claude Code）')
     parser.add_argument('--feedback-summary-length', type=int, default=1000,
@@ -1475,7 +1475,7 @@ def main():
     config.api.requests_per_minute = args.rpm
     config.api.min_delay_between_requests = args.delay
     
-    # 套用 Continuous Loop 配置
+    # 套用持續反饋迴圈配置
     config.api.enable_feedback_loop = not args.no_feedback_loop
     config.api.feedback_summary_length = args.feedback_summary_length
     
