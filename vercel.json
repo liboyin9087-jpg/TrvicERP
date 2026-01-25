@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "framework": null,
+  "framework": "vite",
   "builds": [
     {
       "src": "package.json",
@@ -23,10 +23,17 @@
     }
   ],
   "git": {
-    "deploymentEnabled": false
+    "deploymentEnabled": true
   },
   "github": {
-    "enabled": false,
-    "autoAlias": false
-  }
+    "enabled": true,
+    "autoAlias": true,
+    "silent": false
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
