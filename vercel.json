@@ -29,11 +29,5 @@
     "enabled": true,
     "autoAlias": true,
     "silent": false
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  }
 }

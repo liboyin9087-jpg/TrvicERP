@@ -33,3 +33,5 @@ yarn-error.log*
 .trvic_sessions/
 .trvic_patterns.json
 analysis_reports/
+.vercel
+.env*.local
