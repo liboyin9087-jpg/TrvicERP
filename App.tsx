@@ -50,6 +50,7 @@ const TravelFootprint = lazy(() => import('./components/client/TravelFootprint')
 const EdgeAssistant = lazy(() => import('./components/shared/EdgeAssistant'));
 const InteractiveMap = lazy(() => import('./components/shared/InteractiveMap'));
 const LegalAssistant = lazy(() => import('./components/shared/LegalAssistant'));
+const AICopilotPanel = lazy(() => import('./components/shared/AICopilotPanel'));
 // ErrorBoundary, ToastContainer, ViewSwitcher 保持靜態，因為它們是全域共用的
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
@@ -539,11 +540,20 @@ function AppContent() {
 
 // Protected Layout
 function ProtectedLayout() {
+  const [isAICopilotOpen, setIsAICopilotOpen] = React.useState(false);
+
   return (
     <div className="flex h-screen overflow-hidden">
       <FloatingSidebar />
       <AppContent />
       <MobileMenu />
+      {/* AI Copilot Panel */}
+      <Suspense fallback={null}>
+        <AICopilotPanel
+          isOpen={isAICopilotOpen}
+          onToggle={() => setIsAICopilotOpen(!isAICopilotOpen)}
+        />
+      </Suspense>
     </div>
   );
 }
