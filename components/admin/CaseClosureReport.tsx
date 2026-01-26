@@ -218,6 +218,157 @@ export default function CaseClosureReport({
     }
   };
 
+  const handleExportExcel = () => {
+    const filename = `結案報告_${session.group_number || session.series_id}_${new Date().toISOString().split('T')[0]}`;
+
+    // 生成 Excel XML 格式
+    const escapeXML = (str: string) =>
+      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const excelContent = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#F0F0F0" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="Title"><Font ss:Bold="1" ss:Size="14"/></Style>
+  </Styles>
+  <Worksheet ss:Name="結案報告">
+    <Table>
+      <Row ss:StyleID="Title">
+        <Cell><Data ss:Type="String">結案報告 - ${escapeXML(session.group_number || session.series_id || '')}</Data></Cell>
+      </Row>
+      <Row><Cell></Cell></Row>
+      <Row ss:StyleID="Header">
+        <Cell><Data ss:Type="String">項目</Data></Cell>
+        <Cell><Data ss:Type="String">數值</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">團號</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXML(session.group_number || 'N/A')}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">出發日期</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXML(session.start_date)} ~ ${escapeXML(session.end_date)}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">總人數</Data></Cell>
+        <Cell><Data ss:Type="Number">${totalPax}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">天數</Data></Cell>
+        <Cell><Data ss:Type="Number">${duration}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">平均評分</Data></Cell>
+        <Cell><Data ss:Type="Number">${feedback.averageRating}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">回覆數</Data></Cell>
+        <Cell><Data ss:Type="Number">${feedback.totalResponses}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell><Data ss:Type="String">事件數</Data></Cell>
+        <Cell><Data ss:Type="Number">${incidents.length}</Data></Cell>
+      </Row>
+      <Row><Cell></Cell></Row>
+      <Row ss:StyleID="Header">
+        <Cell><Data ss:Type="String">評分項目</Data></Cell>
+        <Cell><Data ss:Type="String">評分</Data></Cell>
+      </Row>
+      ${feedback.categoryRatings.map(cat => `
+      <Row>
+        <Cell><Data ss:Type="String">${escapeXML(cat.category)}</Data></Cell>
+        <Cell><Data ss:Type="Number">${cat.rating}</Data></Cell>
+      </Row>`).join('')}
+      <Row><Cell></Cell></Row>
+      <Row ss:StyleID="Header">
+        <Cell><Data ss:Type="String">好評項目</Data></Cell>
+      </Row>
+      ${feedback.highlights.map(h => `
+      <Row>
+        <Cell><Data ss:Type="String">${escapeXML(h)}</Data></Cell>
+      </Row>`).join('')}
+      <Row><Cell></Cell></Row>
+      <Row ss:StyleID="Header">
+        <Cell><Data ss:Type="String">待改進項目</Data></Cell>
+      </Row>
+      ${feedback.improvements.map(i => `
+      <Row>
+        <Cell><Data ss:Type="String">${escapeXML(i)}</Data></Cell>
+      </Row>`).join('')}
+    </Table>
+  </Worksheet>
+  <Worksheet ss:Name="事件記錄">
+    <Table>
+      <Row ss:StyleID="Header">
+        <Cell><Data ss:Type="String">類型</Data></Cell>
+        <Cell><Data ss:Type="String">說明</Data></Cell>
+        <Cell><Data ss:Type="String">處理方式</Data></Cell>
+        <Cell><Data ss:Type="String">時間</Data></Cell>
+        <Cell><Data ss:Type="String">嚴重性</Data></Cell>
+      </Row>
+      ${incidents.map(inc => `
+      <Row>
+        <Cell><Data ss:Type="String">${escapeXML(inc.type)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXML(inc.description)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXML(inc.resolution)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXML(inc.timestamp)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXML(inc.severity)}</Data></Cell>
+      </Row>`).join('')}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+    const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filename}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Excel 報告已下載');
+  };
+
+  const handleSendEmail = () => {
+    // 建立 mailto 連結，包含報告摘要
+    const subject = encodeURIComponent(`結案報告 - ${session.group_number || session.series_id}`);
+    const body = encodeURIComponent(`
+團次結案報告摘要
+==================
+
+團號：${session.group_number || 'N/A'}
+出發日期：${session.start_date} ~ ${session.end_date}
+總人數：${totalPax} 人
+天數：${duration} 天
+
+滿意度分析
+----------
+平均評分：${feedback.averageRating.toFixed(1)} / 5.0
+回覆率：${feedback.totalResponses}/${totalPax} (${Math.round(feedback.totalResponses / totalPax * 100)}%)
+
+評分明細：
+${feedback.categoryRatings.map(cat => `- ${cat.category}：${cat.rating.toFixed(1)}`).join('\n')}
+
+好評項目：
+${feedback.highlights.map(h => `✓ ${h}`).join('\n')}
+
+待改進項目：
+${feedback.improvements.map(i => `△ ${i}`).join('\n')}
+
+事件記錄：${incidents.length} 件
+${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description} → ${inc.resolution}`).join('\n') : '無特殊事件'}
+
+---
+本報告由 TrvicERP 旅遊管理系統自動生成
+    `.trim());
+
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    toast.success('已開啟郵件編輯器');
+  };
+
   const handleSendSurvey = () => {
     toast.success('已發送 NPS 問卷 (Demo)');
   };
@@ -683,7 +834,7 @@ export default function CaseClosureReport({
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => alert('Excel 匯出功能開發中')}
+            onClick={handleExportExcel}
             className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:bg-green-50 transition-all"
           >
             <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -698,7 +849,7 @@ export default function CaseClosureReport({
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => alert('Email 發送功能開發中')}
+            onClick={handleSendEmail}
             className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-accent-200 hover:bg-accent-50 transition-all"
           >
             <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center">

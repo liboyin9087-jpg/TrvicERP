@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.database import Base, engine
 from app.api import (
-    auth, users, orders, quotations, customers, tours, 
-    sessions, corporate_accounts, budgets, polls, reports
+    auth, users, orders, quotations, customers, tours,
+    sessions, corporate_accounts, budgets, polls, reports, line
 )
 import json
 from typing import Dict, Set
@@ -46,6 +46,7 @@ app.include_router(corporate_accounts.router)
 app.include_router(budgets.router)
 app.include_router(polls.router)
 app.include_router(reports.router)
+app.include_router(line.router)
 
 
 # WebSocket connection manager
@@ -158,26 +159,6 @@ async def websocket_endpoint(websocket: WebSocket):
         # Clean up all session subscriptions
         for session_id in list(manager.active_connections.keys()):
             manager.disconnect(websocket, session_id)
-
-
-# LINE webhook endpoint
-@app.post("/api/v1/line/webhook")
-async def line_webhook():
-    """LINE webhook for receiving messages"""
-    # TODO: Implement LINE webhook handler
-    return {"status": "ok"}
-
-
-# LINE send endpoint
-@app.post("/api/v1/line/send")
-async def line_send():
-    """Send LINE messages"""
-    # TODO: Implement LINE message sending
-    return {
-        "success": True,
-        "sentCount": 0,
-        "failedCount": 0
-    }
 
 
 if __name__ == "__main__":

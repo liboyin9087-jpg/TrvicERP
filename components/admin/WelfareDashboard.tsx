@@ -4,10 +4,15 @@ import {
   Building2, Users, Calendar, FileText, TrendingUp, Clock, CheckCircle,
   AlertCircle, Plus, Copy, Settings, UserCheck, UserX, Home, Bed,
   Mail, Download, BarChart3, Filter, Search, ChevronRight, X,
-  Edit, Trash2, Eye, Send, FileDown, PieChart, DollarSign,
+  Edit, Trash2, Eye, Send, FileDown, PieChart as PieChartIcon, DollarSign,
   ClipboardList, UserPlus, Shield, Award, Baby, Heart, Users2
 } from 'lucide-react';
 import { cn } from '../../src/lib/utils';
+import {
+  BarChart,
+  PieChart,
+  HorizontalBarChart,
+} from '../../src/components/charts/SimpleCharts';
 
 // ============================================
 // Types
@@ -1118,29 +1123,52 @@ function ReportsTab() {
         <StatCard icon={<Users className="w-5 h-5" />} label="報名完成率" value="78%" trend="+5%" trendUp />
         <StatCard icon={<TrendingUp className="w-5 h-5" />} label="平均參與人數" value="64" />
         <StatCard icon={<Calendar className="w-5 h-5" />} label="年度活動數" value="4" />
-        <StatCard icon={<PieChart className="w-5 h-5" />} label="員工涵蓋率" value="85%" />
+        <StatCard icon={<PieChartIcon className="w-5 h-5" />} label="員工涵蓋率" value="85%" />
       </div>
 
-      {/* Charts Placeholder */}
+      {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h4 className="font-bold text-gray-900 mb-4">報名趨勢</h4>
-          <div className="h-64 bg-gray-50 rounded-xl flex items-center justify-center">
-            <div className="text-center">
-              <BarChart3 className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">圖表功能開發中</p>
-            </div>
-          </div>
+          <BarChart
+            data={[
+              { label: '1月', value: 45, color: '#3b82f6' },
+              { label: '2月', value: 52, color: '#3b82f6' },
+              { label: '3月', value: 68, color: '#3b82f6' },
+              { label: '4月', value: 74, color: '#22c55e' },
+              { label: '5月', value: 58, color: '#3b82f6' },
+              { label: '6月', value: 85, color: '#22c55e' },
+            ]}
+            height={220}
+          />
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <h4 className="font-bold text-gray-900 mb-4">部門參與率</h4>
-          <div className="h-64 bg-gray-50 rounded-xl flex items-center justify-center">
-            <div className="text-center">
-              <PieChart className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">圖表功能開發中</p>
-            </div>
-          </div>
+          <PieChart
+            data={[
+              { label: '業務部', value: 32, color: '#3b82f6' },
+              { label: '研發部', value: 28, color: '#22c55e' },
+              { label: '行政部', value: 18, color: '#f59e0b' },
+              { label: '財務部', value: 12, color: '#8b5cf6' },
+              { label: '其他', value: 10, color: '#6b7280' },
+            ]}
+            size={180}
+          />
         </div>
+      </div>
+
+      {/* Additional Analysis */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h4 className="font-bold text-gray-900 mb-4">各部門報名狀況</h4>
+        <HorizontalBarChart
+          data={[
+            { label: '業務部', value: 95, color: '#22c55e' },
+            { label: '研發部', value: 82, color: '#3b82f6' },
+            { label: '行政部', value: 78, color: '#3b82f6' },
+            { label: '財務部', value: 65, color: '#f59e0b' },
+            { label: '人資部', value: 58, color: '#f59e0b' },
+          ]}
+        />
       </div>
 
       {/* Export Options */}

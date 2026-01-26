@@ -7,6 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, RoomAssignment, MeetingInfo } from '../../types';
 import { LineService, LineSendTarget } from '@/core/services/lineService';
+import { exportToPDF, exportToExcel, type DocumentType as ExportDocType } from '@/lib/exportService';
 
 // ============================================
 // Types
@@ -79,18 +80,23 @@ export default function DocumentGenerator({
   };
 
   const handleExportPDF = (type: DocumentType) => {
-    // TODO: 實作 PDF 匯出
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(generateHTML(type));
-      printWindow.document.close();
-      printWindow.print();
-    }
+    exportToPDF(type as ExportDocType, {
+      session,
+      bookings,
+      roomAssignments,
+      seatAssignments,
+      meetingInfo,
+    });
   };
 
   const handleExportExcel = (type: DocumentType) => {
-    // TODO: 實作 Excel 匯出
-    alert(`匯出 ${documents.find(d => d.type === type)?.label} Excel 功能開發中`);
+    exportToExcel(type as ExportDocType, {
+      session,
+      bookings,
+      roomAssignments,
+      seatAssignments,
+      meetingInfo,
+    });
   };
 
   const handleSendLine = async (type: DocumentType) => {
