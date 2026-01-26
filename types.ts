@@ -1,4 +1,3 @@
-
 export interface Attraction {
   id: string;
   name: string;
@@ -13,7 +12,7 @@ export interface Attraction {
 
 export interface ItineraryItem extends Attraction {
   time?: string;
-  instanceId?: string; 
+  instanceId?: string;
 }
 
 export interface ItineraryState {
@@ -24,15 +23,15 @@ export interface TourSession {
   id: string;
   series_id: string;
   group_number?: string; // 團號
-  group_type?: 'welfare' | 'regular'; // 團型：福委團/一般團
+  group_type?: "welfare" | "regular"; // 團型：福委團/一般團
   start_date: string;
   end_date: string;
-  status: 'soliciting' | 'guaranteed' | 'closed' | 'completed';
+  status: "soliciting" | "guaranteed" | "closed" | "completed";
   min_pax: number;
   max_pax: number;
   current_pax: number;
   seat_release_date: string;
-  price_twd: number; 
+  price_twd: number;
   agent_commission: number;
   // 資源分配
   hotel_rooms?: HotelRoomAllocation[];
@@ -42,6 +41,7 @@ export interface TourSession {
   // 版本控制
   itinerary_version?: number;
   itinerary_versions?: ItineraryVersion[];
+  itinerary_days?: any[]; // 新增屬性
   // 出團前文件
   meeting_info?: MeetingInfo;
   created_at?: string;
@@ -52,7 +52,7 @@ export interface TourSession {
 export interface HotelRoomAllocation {
   id: string;
   hotel_name: string;
-  room_type: 'single' | 'double' | 'twin' | 'family' | 'suite';
+  room_type: "single" | "double" | "twin" | "family" | "suite";
   room_type_label: string; // 顯示用：單人房、雙人房等
   total_count: number; // 總房數
   locked_count: number; // 已鎖定房數
@@ -64,7 +64,7 @@ export interface HotelRoomAllocation {
 // 座位分配
 export interface SeatAssignment {
   id: string;
-  vehicle_type: 'bus' | 'train' | 'plane' | 'ferry';
+  vehicle_type: "bus" | "train" | "plane" | "ferry";
   vehicle_number?: string; // 車號/航班號
   seat_number: string; // 座位號
   passenger_id?: string;
@@ -136,23 +136,25 @@ export interface PassportData {
   nationality: string;
   birthday?: string;
   personal_id?: string;
+  english_name?: string; // 新增屬性
+  gender?: string; // 新增屬性
 }
 
 export interface Booking {
   id: string;
   session_id: string;
-  user_id?: string; 
+  user_id?: string;
   customer_name: string;
   passport_data?: PassportData;
   receipt_number?: string;
-  status: 'confirmed' | 'pending' | 'paid' | 'pending_payment' | 'verifying';
+  status: "confirmed" | "pending" | "paid" | "pending_payment" | "verifying";
   total_amount: number;
   payment_proof_url?: string;
   tags?: string[];
   email?: string;
   // 報名資訊
-  room_type?: 'single' | 'double' | 'twin' | 'family';
-  meal_preference?: 'normal' | 'vegetarian' | 'halal' | 'other';
+  room_type?: "single" | "double" | "twin" | "family";
+  meal_preference?: "normal" | "vegetarian" | "halal" | "other";
   special_needs?: string; // 特殊需求
   seat_preference?: string; // 座位偏好（靠窗、靠走道等）
   companions?: Companion[];
@@ -172,7 +174,7 @@ export interface UserFootprint {
 export interface Supplier {
   id: string;
   name: string;
-  category: 'hotel' | 'airline' | 'transport' | 'restaurant';
+  category: "hotel" | "airline" | "transport" | "restaurant";
   contact_email: string;
   payment_terms: string;
 }
@@ -181,16 +183,22 @@ export interface TourCost {
   id: string;
   session_id: string;
   supplier_id: string;
-  supplier_name: string; 
+  supplier_name: string;
   item_name: string;
-  cost_type: 'fixed' | 'per_pax';
+  cost_type: "fixed" | "per_pax";
   unit_cost: number;
   currency: string;
   exchange_rate: number;
-  status: 'estimated' | 'committed' | 'paid';
+  status: "estimated" | "committed" | "paid";
 }
 
-export type PassportStatus = 'customer' | 'sales' | 'op_safe' | 'embassy' | 'tour_leader' | 'returned';
+export type PassportStatus =
+  | "customer"
+  | "sales"
+  | "op_safe"
+  | "embassy"
+  | "tour_leader"
+  | "returned";
 
 export interface Passenger {
   id: string;
@@ -210,7 +218,7 @@ export interface PassportLog {
   passenger_id: string;
   from_user: string;
   to_user: string;
-  action: 'check_in' | 'transfer' | 'check_out';
+  action: "check_in" | "transfer" | "check_out";
   timestamp: string;
 }
 
@@ -219,54 +227,54 @@ export interface TourExpense {
   session_id: string;
   tour_leader_id: string;
   amount_foreign: number;
-  currency: 'JPY' | 'USD' | 'EUR' | 'CNY';
+  currency: "JPY" | "USD" | "EUR" | "CNY";
   exchange_rate: number;
   amount_twd: number;
-  category: 'meal' | 'ticket' | 'transport' | 'tip' | 'other';
+  category: "meal" | "ticket" | "transport" | "tip" | "other";
   receipt_image_url?: string;
   created_at: string;
   note?: string;
 }
 
 export interface QuoteItem {
-    id: string;
-    name: string;
-    type: 'flight' | 'hotel' | 'transport' | 'activity' | 'guide';
-    cost_per_pax: number;
-    currency: string;
+  id: string;
+  name: string;
+  type: "flight" | "hotel" | "transport" | "activity" | "guide";
+  cost_per_pax: number;
+  currency: string;
 }
 
 export interface MiniQuoteItem {
   id: string;
   item_name: string;
-  cost_type: 'fixed' | 'per_pax';
+  cost_type: "fixed" | "per_pax";
   amount: number;
 }
 
 export interface LineChatLog {
   id: string;
   line_user_id: string;
-  message_type: 'text' | 'image';
+  message_type: "text" | "image";
   content: string;
   timestamp: string;
-  direction: 'inbound' | 'outbound';
+  direction: "inbound" | "outbound";
 }
 
 export interface CustomerInteraction {
-    id: string;
-    type: 'line' | 'call' | 'email' | 'counter';
-    content: string;
-    agent_name: string;
-    timestamp: string;
-    sentiment?: 'positive' | 'neutral' | 'negative';
+  id: string;
+  type: "line" | "call" | "email" | "counter";
+  content: string;
+  agent_name: string;
+  timestamp: string;
+  sentiment?: "positive" | "neutral" | "negative";
 }
 
 export interface CustomerProfile {
-    id: string;
-    name: string;
-    tags: string[];
-    total_spend: number;
-    interactions: CustomerInteraction[];
+  id: string;
+  name: string;
+  tags: string[];
+  total_spend: number;
+  interactions: CustomerInteraction[];
 }
 
 export interface PublicTourData {
@@ -296,9 +304,9 @@ export interface Poll {
   title: string;
   description: string;
   deadline: string;
-  status: 'active' | 'closed';
+  status: "active" | "closed";
   total_votes: number;
-  ai_summary?: string; 
+  ai_summary?: string;
 }
 
 export interface PollOption {
@@ -314,18 +322,18 @@ export interface PollOption {
 export interface ChangeRequest {
   id: string;
   requester_name: string;
-  category: 'itinerary' | 'hotel' | 'meal' | 'pax_count';
+  category: "itinerary" | "hotel" | "meal" | "pax_count";
   description: string;
-  status: 'pending' | 'op_review' | 'client_review' | 'approved' | 'rejected';
+  status: "pending" | "op_review" | "client_review" | "approved" | "rejected";
   cost_impact: number;
   created_at: string;
-  comments?: string; 
+  comments?: string;
 }
 
 export interface Incident {
   id: string;
   title: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   status_message: string;
   timestamp: string;
   is_active: boolean;
@@ -335,7 +343,7 @@ export interface Incident {
 export interface Companion {
   id: string;
   name: string;
-  relationship: 'spouse' | 'child' | 'parent' | 'other';
+  relationship: "spouse" | "child" | "parent" | "other";
   age?: number;
   passport_number?: string;
   special_needs?: string;
@@ -366,7 +374,7 @@ export interface GroupRoster {
 // 房間分配（用於名單表）
 export interface RoomAssignment {
   roomNumber: string;
-  roomType: 'single' | 'double' | 'twin' | 'family' | 'suite';
+  roomType: "single" | "double" | "twin" | "family" | "suite";
   hotelName: string;
   occupants: { id: string; name: string }[];
   checkIn: string;
