@@ -168,14 +168,14 @@ export function exportRosterToExcel(options: ExportOptions): void {
   const rows = bookings.map((booking, idx) => [
     String(idx + 1),
     booking.customer_name || '',
-    booking.passport_data?.english_name || '',
+    (booking.passport_data as any)?.english_name || booking.passport_data?.name || '',
     booking.passport_data?.passport_number || '',
-    booking.passport_data?.id_number || '',
-    booking.passport_data?.gender || '',
+    booking.passport_data?.personal_id || '',
+    (booking as any).gender || (booking.passport_data as any)?.gender || '',
     booking.assigned_room || '',
     booking.assigned_seat || '',
     booking.special_needs || '',
-    booking.notes || '',
+    booking.special_needs || '',
   ]);
 
   const excelContent = generateExcelXML('名單清冊', headers, rows);
@@ -231,7 +231,10 @@ export function exportItineraryToExcel(options: ExportOptions): void {
   const headers = ['日期', '天數', '行程內容', '餐食', '住宿'];
 
   // 如果有行程資料則使用，否則顯示基本資訊
-  const rows = session.itinerary_days?.map((day, idx) => [
+  const itineraryDays =
+    (session as any).itinerary_days ?? session.itinerary_versions?.[0]?.itinerary_data?.days ?? [];
+
+  const rows = itineraryDays?.map((day: any, idx: number) => [
     day.date || '',
     `第 ${idx + 1} 天`,
     day.activities?.join('、') || '',
@@ -412,7 +415,7 @@ export function exportRosterToPDF(options: ExportOptions): void {
             <tr>
               <td>${idx + 1}</td>
               <td>${booking.customer_name || ''}</td>
-              <td>${booking.passport_data?.english_name || ''}</td>
+              <td>${(booking.passport_data as any)?.english_name || booking.passport_data?.name || ''}</td>
               <td>${booking.passport_data?.passport_number || ''}</td>
               <td>${booking.assigned_room || '-'}</td>
               <td>${booking.assigned_seat || '-'}</td>
@@ -644,14 +647,15 @@ export function exportMeetingInfoToPDF(options: ExportOptions): void {
  */
 export function exportItineraryToPDF(options: ExportOptions): void {
   const { session } = options;
+  const itineraryDays = (session as any).itinerary_days ?? session.itinerary_versions?.[0]?.itinerary_data?.days ?? [];
 
-  const itineraryHTML = session.itinerary_days
+  const itineraryHTML = itineraryDays
     ?.map(
-      (day, idx) => `
+      (day: any, idx: number) => `
       <div class="section">
         <div class="section-title">第 ${idx + 1} 天 - ${day.date || ''}</div>
         <div style="padding-left: 15px;">
-          ${day.activities?.map(a => `<p>• ${a}</p>`).join('') || '<p>行程資料待補充</p>'}
+          ${day.activities?.map((a: any) => `<p>• ${a}</p>`).join('') || '<p>行程資料待補充</p>'}
           ${day.meals ? `<p style="color: #666; margin-top: 10px;">餐食：${day.meals.join('、')}</p>` : ''}
           ${day.hotel ? `<p style="color: #666;">住宿：${day.hotel}</p>` : ''}
         </div>

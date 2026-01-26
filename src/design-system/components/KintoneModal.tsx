@@ -1,8 +1,8 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
-import { cn } from '../../lib/utils';
-import type { KintoneModalProps } from '../kintone/types';
+import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
+import { cn } from "../../lib/utils";
+import type { KintoneModalProps } from "../kintone/types";
 
 /**
  * KintoneModal - A Kintone-styled modal component
@@ -14,27 +14,27 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
   title,
   children,
   footer,
-  size = 'medium',
+  size = "medium",
   className,
   style,
 }) => {
   // Prevent body scroll when modal is open
   React.useEffect(() => {
     if (open) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [open]);
 
   const sizeStyles = {
-    small: 'max-w-md',
-    medium: 'max-w-2xl',
-    large: 'max-w-4xl',
-    full: 'max-w-full mx-4',
+    small: "max-w-md",
+    medium: "max-w-2xl",
+    large: "max-w-4xl",
+    full: "max-w-full mx-4",
   };
 
   return (
@@ -47,7 +47,7 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1040]"
+            className="fixed inset-0 overlay backdrop-blur-sm z-[1040]"
           />
 
           {/* Modal */}
@@ -59,11 +59,11 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ duration: 0.2 }}
                 className={cn(
-                  'relative w-full bg-white rounded-lg shadow-xl',
-                  'max-h-[90vh] sm:max-h-[85vh]',
-                  'flex flex-col',
+                  "relative w-full bg-white rounded-lg shadow-xl",
+                  "max-h-[90vh] sm:max-h-[85vh]",
+                  "flex flex-col",
                   sizeStyles[size],
-                  className
+                  className,
                 )}
                 style={style}
                 onClick={(e) => e.stopPropagation()}
@@ -76,7 +76,7 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
                     </h2>
                     <button
                       onClick={onClose}
-                      className="p-2 rounded-md hover:bg-gray-100 transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                      className="p-2 rounded-md hover:bg-secondary-100 transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                       aria-label="Close modal"
                     >
                       <X className="w-5 h-5 text-gray-500" />

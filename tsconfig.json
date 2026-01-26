@@ -4,16 +4,9 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "ESNext",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-    "types": [
-      "node",
-      "vite/client"
-    ],
+    "types": ["node", "vite/client"],
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
@@ -25,7 +18,7 @@
       "@/core/*": ["./src/core/*"],
       "@/modules/*": ["./src/modules/*"],
       "@/lib/*": ["./src/lib/*"],
-      "@/types/*": ["./src/core/types/*"],
+      "@/types/*": ["./src/types/*"],
       "@/store/*": ["./src/store/*"],
       "@/data/*": ["./src/data/*"]
     },
@@ -37,15 +30,6 @@
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": [
-    "src/**/*",
-    "components/**/*",
-    "*.ts",
-    "*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    ".vercel"
-  ]
+  "include": ["src/**/*", "components/**/*", "*.ts", "*.tsx"],
+  "exclude": ["node_modules", "dist", ".vercel"]
 }
