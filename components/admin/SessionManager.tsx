@@ -728,8 +728,13 @@ export default function SessionManager() {
   };
 
   const handleEdit = (id: string) => {
-    // TODO: 實作編輯功能
-    console.log('Edit group:', id);
+    const group = groups.find(g => g.id === id);
+    if (group) {
+      // 預填表單並切換到編輯模式
+      setActiveTab('create');
+      // 將編輯的資料存入 sessionStorage 供表單使用
+      sessionStorage.setItem('editingGroup', JSON.stringify(group));
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -739,8 +744,16 @@ export default function SessionManager() {
   };
 
   const handleView = (id: string) => {
-    // TODO: 實作查看詳情功能
-    console.log('View group:', id);
+    const group = groups.find(g => g.id === id);
+    if (group) {
+      // 顯示詳情 Modal
+      alert(`團號：${group.group_number}\n` +
+        `系列：${group.series_name}\n` +
+        `日期：${group.start_date} ~ ${group.end_date}\n` +
+        `人數：${group.current_pax}/${group.max_pax}\n` +
+        `狀態：${group.status}\n` +
+        `報價：NT$ ${group.price_twd.toLocaleString()}`);
+    }
   };
 
   const tabs: { key: TabKey; label: string; icon: React.ReactNode; badge?: number }[] = [

@@ -550,7 +550,7 @@ interface ItineraryBuilderActions {
   // Plan management
   createNewPlan: (name: string, destination: string, days: number) => void;
   loadPlan: (planId: string) => void;
-  savePlan: (changes?: string) => void;
+  savePlan: (changes?: string, createdBy?: string) => void;
   deletePlan: (planId: string) => void;
   updatePlanInfo: (updates: Partial<Pick<ItineraryPlan, 'name' | 'destination' | 'startDate' | 'endDate'>>) => void;
   loadVersion: (version: number) => void; // 載入特定版本
@@ -635,7 +635,7 @@ export const useItineraryBuilderStore = create<ItineraryBuilderStore>()(
         }
       },
 
-      savePlan: (changes?: string) => {
+      savePlan: (changes?: string, createdBy?: string) => {
         const { currentPlan, savedPlans } = get();
         if (!currentPlan) return;
 
@@ -647,7 +647,7 @@ export const useItineraryBuilderStore = create<ItineraryBuilderStore>()(
         const versionRecord: ItineraryVersion = {
           version: newVersion,
           created_at: now,
-          created_by: '系統管理員', // TODO: 從認證系統取得
+          created_by: createdBy || '系統使用者',
           changes: changes || '行程更新',
           itinerary_data: {
             days: JSON.parse(JSON.stringify(currentPlan.days)), // 深拷貝
