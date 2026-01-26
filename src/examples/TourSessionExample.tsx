@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { DataGrid, Column } from "@/design-system";
 import { useDataGrid, useAudit } from "@/hooks/useDataGrid";
 import { auditService } from "@/services/auditService";
+import AICopilotPanel from "@/components/shared/AICopilotPanel";
 
 // ============================================
 // Example Data
@@ -196,6 +197,13 @@ export default function TourSessionManager() {
     });
   };
 
+  // State to manage AICopilotPanel visibility
+  const [isAICopilotOpen, setAICopilotOpen] = useState(false);
+
+  const toggleAICopilot = () => {
+    setAICopilotOpen((prev) => !prev);
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -283,6 +291,9 @@ export default function TourSessionManager() {
         hoverable
         bordered
       />
+
+      {/* AI Copilot Panel */}
+      <AICopilotPanel isOpen={isAICopilotOpen} onToggle={toggleAICopilot} />
     </div>
   );
 }
