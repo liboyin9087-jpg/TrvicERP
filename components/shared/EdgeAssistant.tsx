@@ -209,7 +209,7 @@ export default function EdgeAssistant() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-black text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform z-50"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-primary-900 text-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform z-50"
         title="開啟 AI 助理"
       >
         <Sparkles className="w-6 h-6" />
@@ -226,12 +226,12 @@ export default function EdgeAssistant() {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-primary-900 rounded-lg flex items-center justify-center">
             <Bot className="w-5 h-5 text-white" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900">AI 助理</h3>
-            <p className="text-xs text-gray-500">隨時為您服務</p>
+            <p className="text-sm text-gray-500">隨時為您服務</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export default function EdgeAssistant() {
                   }`}
                 >
                   <div className="font-medium">{mode.label}</div>
-                  <div className="text-xs text-gray-500">{mode.description}</div>
+                  <div className="text-sm text-gray-500">{mode.description}</div>
                 </button>
               ))}
             </div>
@@ -295,7 +295,7 @@ export default function EdgeAssistant() {
             <div
               className={`max-w-[80%] px-4 py-3 rounded-2xl ${
                 message.role === 'user'
-                  ? 'bg-black text-white rounded-br-none'
+                  ? 'bg-primary-900 text-white rounded-br-none'
                   : 'bg-gray-100 text-gray-900 rounded-bl-none'
               }`}
             >
@@ -305,10 +305,10 @@ export default function EdgeAssistant() {
                   <img
                     src={message.imageUrl}
                     alt={message.imagePrompt || 'Marketing image'}
-                    className="rounded-xl border border-gray-200 max-h-64 object-cover"
+                    className="rounded-lg border border-gray-200 max-h-64 object-cover"
                   />
                   {message.imagePrompt && (
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-sm text-gray-500">
                       Image prompt: {message.imagePrompt}
                     </p>
                   )}
@@ -316,15 +316,15 @@ export default function EdgeAssistant() {
               )}
               {message.functionCalls && message.functionCalls.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm text-gray-500">
                     已執行: {message.functionCalls.map((fc) => fc.name).join(', ')}
                   </p>
                 </div>
               )}
               {message.ragSources && message.ragSources.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 mb-1">法規引用：</p>
-                  <ul className="space-y-1 text-xs text-gray-500">
+                  <p className="text-sm text-gray-500 mb-1">法規引用：</p>
+                  <ul className="space-y-1 text-sm text-gray-500">
                     {message.ragSources.map((source, index) => (
                       <li key={`${message.id}-rag-${index}`} className="line-clamp-2">
                         {source}
@@ -335,8 +335,8 @@ export default function EdgeAssistant() {
               )}
               {message.blockedActions && message.blockedActions.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="text-xs text-red-500 mb-1">已阻擋的操作：</p>
-                  <ul className="space-y-1 text-xs text-gray-500">
+                  <p className="text-sm text-red-500 mb-1">已阻擋的操作：</p>
+                  <ul className="space-y-1 text-sm text-gray-500">
                     {message.blockedActions.map((action) => (
                       <li key={action.id} className="flex flex-col gap-0.5">
                         <span className="font-medium">{action.call.name}</span>
@@ -348,8 +348,8 @@ export default function EdgeAssistant() {
               )}
               {message.pendingActions && message.pendingActions.length > 0 && !message.pendingResolved && (
                 <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="text-xs text-amber-600 mb-2">待確認操作：</p>
-                  <ul className="space-y-1 text-xs text-gray-500 mb-3">
+                  <p className="text-sm text-amber-600 mb-2">待確認操作：</p>
+                  <ul className="space-y-1 text-sm text-gray-500 mb-3">
                     {message.pendingActions.map((action) => (
                       <li key={action.id} className="flex flex-col gap-0.5">
                         <span className="font-medium">{action.call.name}</span>
@@ -360,13 +360,13 @@ export default function EdgeAssistant() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleApprovePending(message.id)}
-                      className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-colors"
                     >
                       確認執行
                     </button>
                     <button
                       onClick={() => handleRejectPending(message.id)}
-                      className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-300 transition-colors"
                     >
                       取消
                     </button>
@@ -407,7 +407,7 @@ export default function EdgeAssistant() {
             <button
               key={quick}
               onClick={() => setInput(quick)}
-              className="px-3 py-1.5 bg-gray-100 rounded-full text-xs font-medium text-gray-700 whitespace-nowrap hover:bg-gray-200 transition-colors"
+              className="px-3 py-1.5 bg-gray-100 rounded-full text-sm font-medium text-gray-700 whitespace-nowrap hover:bg-gray-200 transition-colors"
             >
               {quick}
             </button>
@@ -423,12 +423,12 @@ export default function EdgeAssistant() {
             onKeyDown={handleKeyDown}
             placeholder="輸入訊息..."
             disabled={isLoading}
-            className="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50"
           />
           <button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-12 h-12 bg-primary-900 text-white rounded-lg flex items-center justify-center hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />

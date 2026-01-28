@@ -32,7 +32,7 @@ export default function LineChatMonitor() {
             <input
               type="text"
               placeholder="搜尋對話..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
             />
           </div>
         </div>
@@ -52,12 +52,12 @@ export default function LineChatMonitor() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="font-semibold text-gray-900">{thread.customerName}</p>
-                    <span className="text-xs text-gray-500">{thread.timestamp}</span>
+                    <span className="text-sm text-gray-500">{thread.timestamp}</span>
                   </div>
                   <p className="text-sm text-gray-500 truncate mt-1">{thread.lastMessage}</p>
                 </div>
                 {thread.unreadCount > 0 && (
-                  <span className="w-5 h-5 bg-brand-500 text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="w-5 h-5 bg-brand-500 text-white text-sm rounded-full flex items-center justify-center">
                     {thread.unreadCount}
                   </span>
                 )}
@@ -79,7 +79,7 @@ export default function LineChatMonitor() {
                 <p className="font-semibold text-gray-900">
                   {threads.find(t => t.id === selectedThread)?.customerName}
                 </p>
-                <p className="text-xs text-gray-500">LINE 用戶</p>
+                <p className="text-sm text-gray-500">LINE 用戶</p>
               </div>
             </div>
             <div className="flex-1 p-4 overflow-y-auto space-y-4">
@@ -87,14 +87,14 @@ export default function LineChatMonitor() {
               <div className="flex justify-start">
                 <div className="bg-gray-100 rounded-2xl rounded-bl-none px-4 py-2 max-w-xs">
                   <p className="text-sm text-gray-900">請問東京團還有名額嗎？</p>
-                  <p className="text-xs text-gray-500 mt-1">10:30</p>
+                  <p className="text-sm text-gray-500 mt-1">10:30</p>
                 </div>
               </div>
               <div className="flex justify-end">
-                <div className="bg-black text-white rounded-2xl rounded-br-none px-4 py-2 max-w-xs">
+                <div className="bg-primary-900 text-white rounded-2xl rounded-br-none px-4 py-2 max-w-xs">
                   <p className="text-sm">您好！目前3/15的東京團還有8個名額</p>
                   <div className="flex items-center justify-end gap-1 mt-1">
-                    <p className="text-xs text-gray-400">10:32</p>
+                    <p className="text-sm text-gray-400">10:32</p>
                     <CheckCheck className="w-3 h-3 text-brand-400" />
                   </div>
                 </div>
@@ -107,9 +107,9 @@ export default function LineChatMonitor() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="輸入訊息..."
-                  className="flex-1 px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
+                  className="flex-1 px-4 py-3 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                 />
-                <button className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center hover:bg-gray-800 transition-colors">
+                <button className="w-12 h-12 bg-primary-900 text-white rounded-lg flex items-center justify-center hover:bg-gray-800 transition-colors">
                   <Send className="w-5 h-5" />
                 </button>
               </div>

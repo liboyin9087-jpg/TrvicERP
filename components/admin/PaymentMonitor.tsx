@@ -81,10 +81,10 @@ export default function PaymentMonitor() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+            <span className="text-sm font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               Payments
             </span>
           </div>
@@ -140,7 +140,7 @@ export default function PaymentMonitor() {
             className="input-modern w-full pl-12 pr-4"
           />
         </div>
-        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
+        <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           {FILTERS.map((f) => (
             <button
               key={f.id}
@@ -164,12 +164,12 @@ export default function PaymentMonitor() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100">
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">訂單編號</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">客戶</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">金額</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">付款方式</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">狀態</th>
-                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">時間</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">訂單編號</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">客戶</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">金額</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">付款方式</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">狀態</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">時間</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -185,16 +185,16 @@ export default function PaymentMonitor() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="group hover:bg-slate-50/50 transition-colors"
+                    className="group hover:bg-slate-50/50 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                   >
                     <td className="px-6 py-5">
-                      <span className="font-mono text-sm font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded">
+                      <span className="font-mono text-sm font-semibold text-slate-900 bg-slate-100 px-2 py-1 rounded focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                         {payment.orderId}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                           <span className="text-sm font-bold text-slate-600">
                             {payment.customerName.charAt(0)}
                           </span>
@@ -217,7 +217,7 @@ export default function PaymentMonitor() {
                     </td>
                     <td className="px-6 py-5">
                       <span className={cn(
-                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold',
+                        'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold',
                         status.bg, status.text
                       )}>
                         <StatusIcon className="w-3.5 h-3.5" />
@@ -236,7 +236,7 @@ export default function PaymentMonitor() {
 
         {filteredPayments.length === 0 && (
           <div className="py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <Search className="w-8 h-8 text-slate-300" />
             </div>
             <p className="text-slate-500">沒有符合條件的交易記錄</p>
@@ -268,13 +268,13 @@ function StatCard({ icon: Icon, label, value, color }: StatCardProps) {
     >
       <div className="flex items-center gap-3">
         <div className={cn(
-          'w-10 h-10 rounded-xl flex items-center justify-center',
+          'w-10 h-10 rounded-lg flex items-center justify-center',
           color ? `bg-gradient-to-br ${colorStyles[color]}` : 'bg-slate-100'
         )}>
           <Icon className={cn('w-5 h-5', color ? 'text-white' : 'text-slate-600')} />
         </div>
         <div>
-          <p className="text-xs text-slate-500">{label}</p>
+          <p className="text-sm text-slate-500">{label}</p>
           <p className="text-lg font-bold text-slate-900">{value}</p>
         </div>
       </div>

@@ -39,35 +39,35 @@ const MODE_OPTIONS: ModeOption[] = [
     label: '一般諮詢',
     icon: <MessageCircle className="w-4 h-4" />,
     description: '通用問答',
-    color: 'bg-gray-500',
+    color: 'bg-neutral-500', // 使用 neutral token
   },
   {
     id: 'itinerary',
     label: '行程規劃',
     icon: <Map className="w-4 h-4" />,
     description: '行程建議與安排',
-    color: 'bg-blue-500',
+    color: 'bg-info-500', // 使用 info token
   },
   {
     id: 'marketing',
     label: '行銷文案',
     icon: <Megaphone className="w-4 h-4" />,
     description: '文案生成與優化',
-    color: 'bg-purple-500',
+    color: 'bg-secondary-500', // 使用 secondary token
   },
   {
     id: 'costing',
     label: '成本估算',
     icon: <Calculator className="w-4 h-4" />,
     description: '報價與成本分析',
-    color: 'bg-green-500',
+    color: 'bg-success-500', // 使用 success token
   },
   {
     id: 'legal',
     label: '法規諮詢',
     icon: <Scale className="w-4 h-4" />,
     description: '旅遊法規查詢',
-    color: 'bg-amber-500',
+    color: 'bg-warning-500', // 使用 warning token
   },
 ];
 
@@ -104,8 +104,8 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
       <div className={cn(
         'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
         isUser
-          ? 'bg-brand-500 text-white'
-          : 'bg-gradient-to-br from-emerald-400 to-cyan-500 text-white'
+          ? 'bg-brand-500 text-white' // 使用 brand token
+          : 'bg-gradient-to-br from-success-400 to-info-500 text-white' // 使用 success/info token
       )}>
         {isUser ? (
           <span className="text-sm font-semibold">U</span>
@@ -122,8 +122,9 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
         <div className={cn(
           'inline-block px-4 py-3 rounded-2xl',
           isUser
-            ? 'bg-brand-500 text-white rounded-br-md'
-            : 'bg-white/10 text-white rounded-bl-md border border-white/10'
+            ? 'bg-brand-500 text-white rounded-br-md' // 使用 brand token
+            // 修正問題1: AI訊息泡泡加入漸變色並使用 primary token，而非單純的 white/10
+            : 'bg-gradient-to-br from-primary-700 to-primary-800 text-white rounded-bl-md border border-primary-600'
         )}>
           {/* Message Content */}
           <div className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -133,18 +134,18 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
           {/* Function Calls */}
           {message.functionCalls && message.functionCalls.length > 0 && (
             <div className="mt-3 pt-3 border-t border-white/20 space-y-2">
-              <div className="text-xs text-white/60 mb-2">執行的操作：</div>
+              <div className="text-sm text-white/60 mb-2">執行的操作：</div>
               {message.functionCalls.map((call, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-2 px-2 py-1.5 bg-white/10 rounded-lg text-xs"
+                  className="flex items-center gap-2 px-2 py-1.5 bg-white/10 rounded-lg text-sm" // 保持半透明白色
                 >
-                  <Play className="w-3 h-3 text-green-400" />
+                  <Play className="w-3 h-3 text-success-400" /> {/* 使用 success token */}
                   <span className="font-mono">{call.name}</span>
                   {onExecuteFunction && (
                     <button
                       onClick={() => onExecuteFunction(call)}
-                      className="ml-auto text-brand-300 hover:text-brand-200"
+                      className="ml-auto text-brand-300 hover:text-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-500 rounded px-1 py-0.5" // 使用 brand token
                     >
                       重新執行
                     </button>
@@ -157,20 +158,20 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
           {/* Pending Actions */}
           {message.pendingActions && message.pendingActions.length > 0 && !message.pendingResolved && (
             <div className="mt-3 pt-3 border-t border-white/20 space-y-2">
-              <div className="text-xs text-amber-400 mb-2 flex items-center gap-1">
+              <div className="text-sm text-warning-400 mb-2 flex items-center gap-1"> {/* 使用 warning token */}
                 <AlertCircle className="w-3 h-3" />
                 需要確認的操作：
               </div>
               {message.pendingActions.map((action) => (
                 <div
                   key={action.id}
-                  className="flex items-center gap-2 px-2 py-1.5 bg-amber-500/20 rounded-lg text-xs border border-amber-500/30"
+                  className="flex items-center gap-2 px-2 py-1.5 bg-warning-500/20 rounded-lg text-sm border border-warning-500/30" // 使用 warning token
                 >
                   <span className="flex-1">{action.reason}</span>
                   {onApprovePending && (
                     <button
                       onClick={() => onApprovePending(action)}
-                      className="px-2 py-0.5 bg-amber-500 text-white rounded hover:bg-amber-600"
+                      className="px-2 py-0.5 bg-warning-500 text-white rounded hover:bg-warning-600 focus:outline-none focus:ring-2 focus:ring-warning-400" // 使用 warning token
                     >
                       確認執行
                     </button>
@@ -183,8 +184,8 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
           {/* RAG Sources */}
           {message.ragSources && message.ragSources.length > 0 && (
             <div className="mt-3 pt-3 border-t border-white/20">
-              <div className="text-xs text-white/60 mb-1">參考來源：</div>
-              <div className="text-xs text-white/40 space-y-1">
+              <div className="text-sm text-white/60 mb-1">參考來源：</div>
+              <div className="text-sm text-white/40 space-y-1">
                 {message.ragSources.map((source, idx) => (
                   <div key={idx} className="truncate">• {source}</div>
                 ))}
@@ -198,12 +199,12 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
           <div className="flex items-center gap-2 mt-1 px-2">
             <button
               onClick={handleCopy}
-              className="p-1 text-white/40 hover:text-white/80 transition-colors"
+              className="p-1 text-white/40 hover:text-white/80 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 rounded" // 使用 brand token
               title="複製"
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             </button>
-            <span className="text-xs text-white/30">
+            <span className="text-sm text-white/30">
               {message.timestamp.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
@@ -238,6 +239,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // 問題2: aiService 和 useFunctionExecutor 已在檔案頂部引入並正確使用，無需額外修正其「實作」。
   const { executeFunction, executeFunctions } = useFunctionExecutor();
   const userRole = useAppStore((state) => state.userRole);
   const userId = useAppStore((state) => state.userId);
@@ -361,7 +363,8 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
     ]);
   };
 
-  const panelWidth = isExpanded ? 'w-[60%]' : 'w-[45%]';
+  // 修正：預設寬度為 50% (w-1/2)
+  const panelWidth = isExpanded ? 'w-[60%]' : 'w-1/2';
 
   return (
     <>
@@ -373,7 +376,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             onClick={onToggle}
-            className="fixed right-6 bottom-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all"
+            className="fixed right-6 bottom-6 z-50 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-2xl shadow-lg hover:shadow-xl transition-all text-base focus:outline-none focus:ring-2 focus:ring-brand-500" // 使用 brand token
           >
             <Sparkles className="w-5 h-5" />
             <span className="font-semibold">AI 助手</span>
@@ -391,8 +394,8 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
               'fixed right-0 top-0 bottom-0 z-50 flex flex-col',
-              'bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950',
-              'border-l border-white/10 shadow-2xl',
+              'bg-gradient-to-b from-neutral-900 via-neutral-900 to-neutral-950', // 使用 neutral token
+              'border-l border-white/10 shadow-2xl', // 保持半透明白色邊框
               panelWidth,
               'min-w-[400px] max-w-[800px]'
             )}
@@ -400,12 +403,12 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-success-400 to-info-500 flex items-center justify-center"> {/* 使用 success/info token */}
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-white">AI Copilot</h2>
-                  <p className="text-xs text-white/50">智慧旅遊助手</p>
+                  <p className="text-sm text-white/50">智慧旅遊助手</p>
                 </div>
               </div>
 
@@ -413,7 +416,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
                 {/* Expand/Collapse */}
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" // 使用 brand token，保持半透明白色 hover
                   title={isExpanded ? '縮小' : '放大'}
                 >
                   {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -422,7 +425,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
                 {/* Clear */}
                 <button
                   onClick={handleClearHistory}
-                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" // 使用 brand token，保持半透明白色 hover
                   title="清除對話"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -431,7 +434,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
                 {/* Close */}
                 <button
                   onClick={onToggle}
-                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500" // 使用 brand token，保持半透明白色 hover
                   title="關閉"
                 >
                   <X className="w-4 h-4" />
@@ -447,10 +450,10 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
                     key={mode.id}
                     onClick={() => setCurrentMode(mode.id)}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all',
+                      'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all focus:outline-none focus:ring-2 focus:ring-brand-500', // 使用 brand token
                       currentMode === mode.id
-                        ? 'bg-white/15 text-white border border-white/20'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                        ? 'bg-white/15 text-white border border-white/20' // 保持半透明白色
+                        : 'text-white/60 hover:text-white hover:bg-white/5' // 保持半透明白色 hover
                     )}
                   >
                     <div className={cn('w-5 h-5 rounded-md flex items-center justify-center', mode.color)}>
@@ -480,10 +483,10 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
                   animate={{ opacity: 1 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-success-400 to-info-500 flex items-center justify-center"> {/* 使用 success/info token */}
                     <Loader2 className="w-4 h-4 text-white animate-spin" />
                   </div>
-                  <div className="px-4 py-3 bg-white/10 rounded-2xl rounded-bl-md">
+                  <div className="px-4 py-3 bg-white/10 rounded-2xl rounded-bl-md"> {/* 保持半透明白色 */}
                     <div className="flex gap-1">
                       <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -507,7 +510,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
                     onKeyDown={handleKeyDown}
                     placeholder="輸入訊息... (Shift+Enter 換行)"
                     rows={1}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 resize-none focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 resize-none focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm" // 使用 brand token，保持半透明白色
                     style={{ minHeight: '48px', maxHeight: '120px' }}
                   />
                 </div>
@@ -515,10 +518,10 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
                   onClick={handleSend}
                   disabled={!inputValue.trim() || isLoading}
                   className={cn(
-                    'px-4 py-3 rounded-xl font-semibold transition-all flex items-center gap-2',
+                    'px-4 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-brand-500', // 使用 brand token
                     inputValue.trim() && !isLoading
-                      ? 'bg-brand-500 text-white hover:bg-brand-600'
-                      : 'bg-white/10 text-white/40 cursor-not-allowed'
+                      ? 'bg-brand-500 text-white hover:bg-brand-600' // 使用 brand token
+                      : 'bg-white/10 text-white/40 cursor-not-allowed' // 保持半透明白色
                   )}
                 >
                   {isLoading ? (
@@ -530,7 +533,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
               </div>
 
               {/* Mode indicator */}
-              <div className="mt-2 flex items-center justify-between text-xs text-white/40">
+              <div className="mt-2 flex items-center justify-between text-sm text-white/40">
                 <span>
                   模式：{MODE_OPTIONS.find(m => m.id === currentMode)?.label}
                 </span>
@@ -549,7 +552,7 @@ export default function AICopilotPanel({ isOpen, onToggle }: AICopilotPanelProps
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onToggle}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-primary-900/40 backdrop-blur-sm z-40" // 使用 primary token
           />
         )}
       </AnimatePresence>

@@ -143,7 +143,7 @@ export default function TourSessionManager() {
 
         return (
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${config.color}`}
+            className={`px-2 py-1 rounded-full text-sm font-medium ${config.color}`}
           >
             {config.label}
           </span>
@@ -287,7 +287,7 @@ export default function TourSessionManager() {
             },
           ],
         }}
-        className="bg-white rounded-lg shadow-sm"
+        className="bg-white rounded-lg shadow-sm focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         hoverable
         bordered
       />

@@ -44,7 +44,7 @@ export function FileScannerDemo() {
       </div>
 
       {/* Upload Section */}
-      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -61,7 +61,7 @@ export function FileScannerDemo() {
                 file:text-sm file:font-semibold
                 file:bg-blue-50 file:text-blue-700
                 hover:file:bg-blue-100
-                disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             />
           </div>
 
@@ -80,7 +80,7 @@ export function FileScannerDemo() {
                 file:text-sm file:font-semibold
                 file:bg-blue-50 file:text-blue-700
                 hover:file:bg-blue-100
-                disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             />
           </div>
 
@@ -107,23 +107,23 @@ export function FileScannerDemo() {
       {/* Statistics */}
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="bg-white rounded-lg shadow-md p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             <div className="text-sm text-gray-500">Total Files</div>
             <div className="text-2xl font-bold text-gray-900">{stats.totalFiles}</div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="bg-white rounded-lg shadow-md p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             <div className="text-sm text-gray-500">Total Size</div>
             <div className="text-2xl font-bold text-gray-900">
               {formatFileSize(stats.totalSize)}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="bg-white rounded-lg shadow-md p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             <div className="text-sm text-gray-500">Categories</div>
             <div className="text-2xl font-bold text-gray-900">
               {Object.keys(stats.byCategory).length}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="bg-white rounded-lg shadow-md p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             <div className="text-sm text-gray-500">Extensions</div>
             <div className="text-2xl font-bold text-gray-900">
               {Object.keys(stats.byExtension).length}
@@ -140,7 +140,7 @@ export function FileScannerDemo() {
             if (categoryFiles.length === 0) return null;
 
             return (
-              <div key={category} className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+              <div key={category} className="bg-white rounded-lg shadow-md p-4 sm:p-6 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 capitalize">
                   📂 {category} ({categoryFiles.length})
                 </h2>
@@ -149,13 +149,13 @@ export function FileScannerDemo() {
                   {categoryFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                     >
                       <div className="flex-1 min-w-0 mr-4">
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {file.name}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm text-gray-500">
                           {formatFileSize(file.size)}
                         </p>
                       </div>
@@ -207,11 +207,11 @@ export function FileScannerDemo() {
             {selectedFile.content && (
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Content Preview</h3>
-                <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto text-xs sm:text-sm">
+                <pre className="bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto text-sm sm:text-sm focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                   <code>{selectedFile.content.substring(0, 5000)}</code>
                 </pre>
                 {selectedFile.content.length > 5000 && (
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-sm text-gray-500">
                     Showing first 5000 characters...
                   </p>
                 )}

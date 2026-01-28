@@ -144,12 +144,12 @@ function StatCard({ icon, label, value, trend, trendUp }: {
       className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
     >
       <div className="flex items-start justify-between">
-        <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600">
+        <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg flex items-center justify-center text-slate-600">
           {icon}
         </div>
         {trend && (
           <span className={cn(
-            'text-xs font-medium px-2 py-1 rounded-full',
+            'text-sm font-medium px-2 py-1 rounded-full',
             trendUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
           )}>
             {trend}
@@ -171,7 +171,7 @@ function TabButton({ active, icon, label, onClick, badge }: {
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all relative',
+        'flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all relative',
         active
           ? 'bg-slate-900 text-white shadow-lg'
           : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
@@ -181,7 +181,7 @@ function TabButton({ active, icon, label, onClick, badge }: {
       <span>{label}</span>
       {badge !== undefined && badge > 0 && (
         <span className={cn(
-          'absolute -top-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold',
+          'absolute -top-1 -right-1 w-5 h-5 rounded-full text-sm flex items-center justify-center font-bold',
           active ? 'bg-red-500 text-white' : 'bg-red-500 text-white'
         )}>
           {badge}
@@ -221,7 +221,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           onClick={() => onNavigate('groups')}
           className="flex items-center gap-4 p-6 bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl text-white shadow-lg"
         >
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
             <Plus className="w-6 h-6" />
           </div>
           <div className="text-left">
@@ -236,7 +236,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           onClick={() => onNavigate('registration')}
           className="flex items-center gap-4 p-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl text-white shadow-lg"
         >
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
             <ClipboardList className="w-6 h-6" />
           </div>
           <div className="text-left">
@@ -251,7 +251,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
           onClick={() => onNavigate('reports')}
           className="flex items-center gap-4 p-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl text-white shadow-lg"
         >
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
             <BarChart3 className="w-6 h-6" />
           </div>
           <div className="text-left">
@@ -283,7 +283,7 @@ function DashboardTab({ trips, employees, onNavigate }: {
       {pendingCount > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-amber-600" />
             </div>
             <div className="flex-1">
@@ -326,7 +326,7 @@ function TripRow({ trip }: { trip: WelfareTrip }) {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h4 className="font-semibold text-gray-900">{trip.name}</h4>
-            <span className={cn('px-2 py-1 rounded-full text-xs font-semibold', status.bg, status.text)}>
+            <span className={cn('px-2 py-1 rounded-full text-sm font-semibold', status.bg, status.text)}>
               {status.label}
             </span>
           </div>
@@ -348,7 +348,7 @@ function TripRow({ trip }: { trip: WelfareTrip }) {
                 {trip.participants}/{trip.maxParticipants}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">報名進度</p>
+            <p className="text-sm text-gray-500 mt-1">報名進度</p>
           </div>
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -375,7 +375,7 @@ function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: type
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm"
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium text-sm"
         >
           <Plus className="w-4 h-4" />
           建立新活動
@@ -394,7 +394,7 @@ function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: type
               key={template.id}
               whileHover={{ scale: 1.01 }}
               className={cn(
-                'p-4 border-2 rounded-xl cursor-pointer transition-all',
+                'p-4 border-2 rounded-lg cursor-pointer transition-all',
                 selectedTemplate === template.id
                   ? 'border-brand-500 bg-brand-50'
                   : 'border-gray-200 hover:border-gray-300'
@@ -480,7 +480,7 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowAddRule(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm"
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium text-sm"
         >
           <Plus className="w-4 h-4" />
           新增規則
@@ -500,7 +500,7 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
             <div key={rule.id} className="p-6 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center">
                     <Award className="w-6 h-6 text-brand-600" />
                   </div>
                   <div>
@@ -517,12 +517,12 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
                         ? `NT$${rule.amount.toLocaleString()}`
                         : `${rule.amount}%`}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-gray-500">
                       上限 NT${rule.maxAmount.toLocaleString()}
                     </p>
                   </div>
                   <span className={cn(
-                    'px-2 py-1 rounded-full text-xs font-medium',
+                    'px-2 py-1 rounded-full text-sm font-medium',
                     rule.taxExempt ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
                   )}>
                     {rule.taxExempt ? '免稅' : '需申報'}
@@ -546,38 +546,38 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
           </h4>
         </div>
         <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
               <Heart className="w-5 h-5 text-pink-500" />
               <span className="font-medium text-gray-900">配偶</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">可加購 1 位</span>
-              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+              <span className="px-2 py-1 bg-green-100 text-green-700 text-sm rounded-full font-medium">
                 享 50% 補助
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
               <Baby className="w-5 h-5 text-brand-500" />
               <span className="font-medium text-gray-900">子女</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">可加購 2 位</span>
-              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+              <span className="px-2 py-1 bg-green-100 text-green-700 text-sm rounded-full font-medium">
                 12歲以下半價
               </span>
             </div>
           </div>
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-3">
               <Users className="w-5 h-5 text-gray-500" />
               <span className="font-medium text-gray-900">其他親友</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500">可加購 1 位</span>
-              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
+              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-full font-medium">
                 自費全額
               </span>
             </div>
@@ -628,7 +628,7 @@ function RegistrationTab({ employees, onApprove, onReject }: {
             placeholder="搜尋員工姓名或部門..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-400"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
           />
         </div>
         <div className="flex gap-2">
@@ -674,7 +674,7 @@ function RegistrationTab({ employees, onApprove, onReject }: {
                   <td className="px-6 py-4">
                     <div>
                       <p className="font-medium text-gray-900">{emp.name}</p>
-                      <p className="text-xs text-gray-500">{emp.email}</p>
+                      <p className="text-sm text-gray-500">{emp.email}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{emp.department}</td>
@@ -696,7 +696,7 @@ function RegistrationTab({ employees, onApprove, onReject }: {
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
-                      'px-2 py-1 rounded-full text-xs font-medium',
+                      'px-2 py-1 rounded-full text-sm font-medium',
                       emp.status === 'approved' && 'bg-green-100 text-green-700',
                       emp.status === 'pending' && 'bg-yellow-100 text-yellow-700',
                       emp.status === 'rejected' && 'bg-red-100 text-red-700',
@@ -794,15 +794,15 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-gray-100">
+        <div className="bg-white p-4 rounded-lg border border-gray-100">
           <p className="text-sm text-gray-500">總座位數</p>
           <p className="text-2xl font-bold text-gray-900">{totalSeats}</p>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100">
+        <div className="bg-white p-4 rounded-lg border border-gray-100">
           <p className="text-sm text-gray-500">已分配</p>
           <p className="text-2xl font-bold text-brand-600">{assignedCount}</p>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100">
+        <div className="bg-white p-4 rounded-lg border border-gray-100">
           <p className="text-sm text-gray-500">可用</p>
           <p className="text-2xl font-bold text-green-600">{availableCount}</p>
         </div>
@@ -843,7 +843,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleSeatClick(seatNum)}
                 className={cn(
-                  'aspect-square rounded-lg border-2 flex flex-col items-center justify-center text-xs font-medium transition-all',
+                  'aspect-square rounded-lg border-2 flex flex-col items-center justify-center text-sm font-medium transition-all',
                   assignment
                     ? 'bg-brand-100 border-brand-300 text-brand-700'
                     : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
@@ -861,7 +861,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
 
       {/* Assign Modal */}
       {showAssignModal && selectedSeat !== null && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -890,7 +890,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
                       )}
                     >
                       <p className="font-medium">{emp.name}</p>
-                      {isAssigned && <p className="text-xs text-gray-400 mt-1">已分配座位</p>}
+                      {isAssigned && <p className="text-sm text-gray-400 mt-1">已分配座位</p>}
                     </button>
                   );
                 })}
@@ -948,12 +948,12 @@ function RosterTab({ employees, rooms }: { employees: Employee[]; rooms: RoomAss
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center">
                     <Home className="w-5 h-5 text-brand-600" />
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900">房號 {room.roomNumber}</h4>
-                    <p className="text-xs text-gray-500">{room.roomType}</p>
+                    <p className="text-sm text-gray-500">{room.roomType}</p>
                   </div>
                 </div>
                 <button className="p-2 hover:bg-gray-100 rounded-lg">
@@ -1003,7 +1003,7 @@ function RosterTab({ employees, rooms }: { employees: Employee[]; rooms: RoomAss
                   <p className="text-sm text-orange-600">{emp.specialNeeds}</p>
                 </div>
               </div>
-              <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
+              <span className="px-2 py-1 bg-orange-100 text-orange-700 text-sm rounded-full font-medium">
                 需注意
               </span>
             </div>
@@ -1027,7 +1027,7 @@ function PreparationTab() {
         {/* PDF Generation */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
               <FileDown className="w-6 h-6 text-red-600" />
             </div>
             <div>
@@ -1036,11 +1036,11 @@ function PreparationTab() {
             </div>
           </div>
           <div className="space-y-3">
-            <button className="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-3 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
               <Download className="w-4 h-4" />
               產生全部行程表
             </button>
-            <button className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
               <FileText className="w-4 h-4" />
               預覽範本
             </button>
@@ -1050,7 +1050,7 @@ function PreparationTab() {
         {/* Notifications */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <Send className="w-6 h-6 text-green-600" />
             </div>
             <div>
@@ -1059,11 +1059,11 @@ function PreparationTab() {
             </div>
           </div>
           <div className="space-y-3">
-            <button className="w-full py-3 bg-[#00B900] text-white rounded-xl font-medium hover:bg-[#009900] transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-3 bg-[#00B900] text-white rounded-lg font-medium hover:bg-[#009900] transition-colors flex items-center justify-center gap-2">
               <Send className="w-4 h-4" />
               發送 LINE 通知
             </button>
-            <button className="w-full py-3 bg-brand-500 text-white rounded-xl font-medium hover:bg-brand-600 transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-3 bg-brand-500 text-white rounded-lg font-medium hover:bg-brand-600 transition-colors flex items-center justify-center gap-2">
               <Mail className="w-4 h-4" />
               發送 Email 通知
             </button>
@@ -1175,11 +1175,11 @@ function ReportsTab() {
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <h4 className="font-bold text-gray-900 mb-4">匯出報表</h4>
         <div className="flex gap-4">
-          <button className="flex-1 py-3 bg-green-100 text-green-700 rounded-xl font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-2">
+          <button className="flex-1 py-3 bg-green-100 text-green-700 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-2">
             <Download className="w-4 h-4" />
             匯出 Excel
           </button>
-          <button className="flex-1 py-3 bg-red-100 text-red-700 rounded-xl font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-2">
+          <button className="flex-1 py-3 bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-2">
             <FileDown className="w-4 h-4" />
             匯出 PDF
           </button>

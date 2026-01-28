@@ -59,7 +59,7 @@ export default function ViewSwitcher({ className }: ViewSwitcherProps) {
   };
 
   return (
-    <div className={cn('flex items-center gap-1 p-1 bg-slate-100 rounded-xl', className)}>
+    <div className={cn('flex items-center gap-1 p-1 bg-slate-100 rounded-lg', className)}>
       {VIEW_OPTIONS.map((option) => {
         const Icon = option.icon;
         const isActive = currentMode === option.id;

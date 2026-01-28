@@ -92,7 +92,7 @@ export default function SeasonFilter({ value, onChange, className }: SeasonFilte
             key={season}
             onClick={() => onChange(season)}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
+              'px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5',
               isActive
                 ? config.color
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

@@ -36,10 +36,10 @@ export default function KpiCardWidget({ widget }: { widget: Widget }) {
     <div className="h-full flex flex-col justify-between gap-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-gray-400">KPI</p>
+          <p className="text-sm uppercase tracking-wide text-gray-400">KPI</p>
           <p className="text-2xl font-bold text-gray-900">{formattedValue}</p>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <Icon size={18} className="text-brand-600" />
         </div>
       </div>

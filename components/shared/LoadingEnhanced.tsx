@@ -42,9 +42,9 @@ export function Loading({
   if (variant === 'pulse') {
     return (
       <div className={cn('flex items-center space-x-2', className)}>
-        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-100" />
-        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-200" />
+        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+        <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse delay-200 focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
         {text && <span className="ml-2 text-sm text-gray-600">{text}</span>}
       </div>
     );
@@ -87,7 +87,7 @@ export function CardSkeleton({ count = 1 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-white rounded-lg shadow-md p-4 space-y-3">
+        <div key={i} className="bg-white rounded-lg shadow-md p-4 space-y-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <Skeleton height="24px" width="60%" />
           <Skeleton height="16px" width="80%" />
           <Skeleton height="16px" width="90%" />

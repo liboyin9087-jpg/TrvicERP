@@ -20,7 +20,7 @@ const sizeConfig = {
     iconWrapper: 'w-10 h-10 mb-3',
     icon: 'w-5 h-5',
     title: 'text-base',
-    description: 'text-xs',
+    description: 'text-sm',
   },
   md: {
     container: 'py-12',
@@ -80,7 +80,7 @@ export default function EmptyState({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={action.onClick}
-          className="mt-4 px-4 py-2 bg-black text-white rounded-xl font-semibold text-sm hover:bg-gray-800 transition-colors"
+          className="mt-4 px-4 py-2 bg-primary-900 text-white rounded-lg font-semibold text-sm hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         >
           {action.label}
         </motion.button>

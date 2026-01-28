@@ -19,7 +19,7 @@ export default function WeatherWidget(_: { widget: Widget }) {
         <div className="text-sm text-gray-500">
           {WEATHER_DATA.location} · {WEATHER_DATA.condition}
         </div>
-        <div className="text-xs text-amber-600 mt-1">{WEATHER_DATA.note}</div>
+        <div className="text-sm text-amber-600 mt-1">{WEATHER_DATA.note}</div>
       </div>
       <Icon size={48} className="text-amber-400" />
     </div>

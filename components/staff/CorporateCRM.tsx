@@ -430,10 +430,10 @@ export default function CorporateCRM() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+            <span className="text-sm font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
               B2B CRM
             </span>
           </div>
@@ -442,7 +442,7 @@ export default function CorporateCRM() {
         </div>
         <button
           onClick={openCreateAccount}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
         >
           <Plus className="w-4 h-4" />
           新增企業
@@ -461,7 +461,7 @@ export default function CorporateCRM() {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  'px-4 py-2 rounded-xl text-sm font-medium transition-all',
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-all',
                   activeTab === tab.key ? 'bg-brand-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                 )}
               >
@@ -486,14 +486,14 @@ export default function CorporateCRM() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900">{account.name}</h3>
-                        <p className="text-xs text-slate-500">{account.industry} · {account.size}</p>
+                        <p className="text-sm text-slate-500">{account.industry} · {account.size}</p>
                       </div>
-                      <div className={cn('flex items-center gap-1 text-xs font-semibold', status.color)}>
+                      <div className={cn('flex items-center gap-1 text-sm font-semibold', status.color)}>
                         {status.icon}
                         {status.label}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 mt-4 text-xs text-slate-500">
+                    <div className="grid grid-cols-2 gap-3 mt-4 text-sm text-slate-500">
                       <div>
                         <p>續約日期</p>
                         <p className="text-sm font-semibold text-slate-900">{account.nextRenewal}</p>
@@ -511,7 +511,7 @@ export default function CorporateCRM() {
                           event.stopPropagation();
                           openEditAccount(account);
                         }}
-                        className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+                        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                         編輯
@@ -528,7 +528,7 @@ export default function CorporateCRM() {
               <div className="flex justify-end">
                 <button
                   onClick={openCreateContact}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-xs font-semibold hover:bg-brand-800"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
                 >
                   <Plus className="w-4 h-4" />
                   新增聯絡人
@@ -543,19 +543,19 @@ export default function CorporateCRM() {
                         <p className="text-sm text-slate-500">{contact.title}</p>
                         <h3 className="text-lg font-semibold text-slate-900">{contact.name}</h3>
                       </div>
-                      <span className={cn('px-3 py-1 rounded-full text-xs font-semibold', roleStyle.color)}>
+                      <span className={cn('px-3 py-1 rounded-full text-sm font-semibold', roleStyle.color)}>
                         {roleStyle.label}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-3">關注點：{contact.concern}</p>
-                    <div className="flex flex-wrap gap-3 mt-3 text-xs text-slate-600">
+                    <p className="text-sm text-slate-500 mt-3">關注點：{contact.concern}</p>
+                    <div className="flex flex-wrap gap-3 mt-3 text-sm text-slate-600">
                       <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{contact.phone}</span>
                       <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{contact.email}</span>
                     </div>
                     <div className="mt-4 flex justify-end">
                       <button
                         onClick={() => openEditContact(contact)}
-                        className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+                        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                         編輯
@@ -572,7 +572,7 @@ export default function CorporateCRM() {
               <div className="flex justify-end">
                 <button
                   onClick={openCreateEngagement}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-xs font-semibold hover:bg-brand-800"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
                 >
                   <Plus className="w-4 h-4" />
                   新增互動
@@ -581,14 +581,14 @@ export default function CorporateCRM() {
               {engagementLogs.map((log) => (
                 <div key={log.id} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
                       <Calendar className="w-4 h-4" />
                       {log.date}
                     </div>
-                    <span className="text-xs text-slate-400">{log.channel}</span>
+                    <span className="text-sm text-slate-400">{log.channel}</span>
                   </div>
                   <h4 className="text-sm font-semibold text-slate-900">{log.summary}</h4>
-                  <div className="mt-3 text-xs text-slate-500">
+                  <div className="mt-3 text-sm text-slate-500">
                     <p className="font-semibold text-slate-600">客戶疑慮</p>
                     <ul className="list-disc list-inside mt-1">
                       {log.objections.map((item) => (
@@ -596,7 +596,7 @@ export default function CorporateCRM() {
                       ))}
                     </ul>
                   </div>
-                  <div className="mt-3 text-xs text-slate-500">
+                  <div className="mt-3 text-sm text-slate-500">
                     <p className="font-semibold text-slate-600">回應策略</p>
                     <p>{log.response}</p>
                   </div>
@@ -610,12 +610,12 @@ export default function CorporateCRM() {
           <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500">目前帳戶</p>
+                <p className="text-sm text-slate-500">目前帳戶</p>
                 <h3 className="text-lg font-semibold text-slate-900">{selectedAccount?.name || '未選擇'}</h3>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="mt-4 space-y-2 text-xs text-slate-500">
+            <div className="mt-4 space-y-2 text-sm text-slate-500">
               <div className="flex items-center justify-between">
                 <span>產業</span>
                 <span className="text-slate-700">{selectedAccount?.industry || '-'}</span>
@@ -636,7 +636,7 @@ export default function CorporateCRM() {
               <Users className="w-4 h-4 text-indigo-500" />
               決策角色摘要
             </div>
-            <div className="mt-4 space-y-3 text-xs text-slate-500">
+            <div className="mt-4 space-y-3 text-sm text-slate-500">
               {accountContacts.map((contact) => (
                 <div key={contact.id} className="flex items-center justify-between">
                   <span>{contact.name}</span>
@@ -651,7 +651,7 @@ export default function CorporateCRM() {
               <MessageSquare className="w-4 h-4 text-amber-500" />
               下一步建議
             </div>
-            <ul className="mt-3 text-xs text-slate-500 space-y-2">
+            <ul className="mt-3 text-sm text-slate-500 space-y-2">
               <li>• 排程下一次簡報會議 (Decision Maker)</li>
               <li>• 提供三版本提案與毛利差異</li>
               <li>• 強調 Portal 風險可視化能力</li>
@@ -668,7 +668,7 @@ export default function CorporateCRM() {
       >
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               企業名稱
               <input
                 value={accountForm.name}
@@ -676,7 +676,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               產業類別
               <input
                 value={accountForm.industry}
@@ -684,7 +684,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               公司規模
               <input
                 value={accountForm.size}
@@ -692,7 +692,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               狀態
               <select
                 value={accountForm.status}
@@ -706,7 +706,7 @@ export default function CorporateCRM() {
                 <option value="at_risk">At Risk</option>
               </select>
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               續約日期
               <input
                 type="date"
@@ -715,7 +715,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               預估案值 (TWD)
               <input
                 type="number"
@@ -753,7 +753,7 @@ export default function CorporateCRM() {
       >
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               姓名
               <input
                 value={contactForm.name}
@@ -761,7 +761,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               職稱
               <input
                 value={contactForm.title}
@@ -769,7 +769,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               角色
               <select
                 value={contactForm.role}
@@ -783,7 +783,7 @@ export default function CorporateCRM() {
                 <option value="user">User</option>
               </select>
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               關注點
               <input
                 value={contactForm.concern}
@@ -791,7 +791,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               電話
               <input
                 value={contactForm.phone}
@@ -799,7 +799,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               Email
               <input
                 value={contactForm.email}
@@ -834,7 +834,7 @@ export default function CorporateCRM() {
       >
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               日期
               <input
                 type="date"
@@ -843,7 +843,7 @@ export default function CorporateCRM() {
                 className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-sm text-slate-500">
               互動管道
               <select
                 value={engagementForm.channel}
@@ -858,7 +858,7 @@ export default function CorporateCRM() {
               </select>
             </label>
           </div>
-          <label className="text-xs text-slate-500">
+          <label className="text-sm text-slate-500">
             摘要
             <textarea
               value={engagementForm.summary}
@@ -866,7 +866,7 @@ export default function CorporateCRM() {
               className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[90px]"
             />
           </label>
-          <label className="text-xs text-slate-500">
+          <label className="text-sm text-slate-500">
             客戶疑慮 (每行一條)
             <textarea
               value={objectionsText}
@@ -874,7 +874,7 @@ export default function CorporateCRM() {
               className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[70px]"
             />
           </label>
-          <label className="text-xs text-slate-500">
+          <label className="text-sm text-slate-500">
             回應策略
             <textarea
               value={engagementForm.response}

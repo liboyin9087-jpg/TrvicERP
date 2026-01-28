@@ -36,11 +36,11 @@ export default function AudienceSelector({ value, onChange, className }: Audienc
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-500">客群篩選</span>
+        <span className="text-sm text-slate-500">客群篩選</span>
         {value.length > 0 && (
           <button
             onClick={clearAll}
-            className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
           >
             清除全部
           </button>
@@ -54,7 +54,7 @@ export default function AudienceSelector({ value, onChange, className }: Audienc
               key={audience}
               onClick={() => toggleAudience(audience)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5',
+                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5',
                 isActive
                   ? 'bg-rose-500 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

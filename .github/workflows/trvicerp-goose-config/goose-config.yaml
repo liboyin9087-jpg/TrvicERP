@@ -6,7 +6,7 @@
 # LLM 提供者設定
 GOOSE_PROVIDER: "openai"
 OPENAI_API_KEY: "${SILICONFLOW_API_KEY}"  # 從環境變數讀取
-OPENAI_API_BASE: "https://api.siliconflow.cn/v1"  # 中國區域
+OPENAI_API_BASE: "https://api.siliconflow.com/v1"  # 中國區域
 # OPENAI_API_BASE: "https://api.siliconflow.com/v1"  # 國際區域
 GOOSE_MODEL: "deepseek-ai/DeepSeek-V3"
 

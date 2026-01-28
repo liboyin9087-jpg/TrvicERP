@@ -257,19 +257,19 @@ export default function QuotationBuilder() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowPDFPreview(true)}
-            className="px-4 py-2 bg-gray-100 rounded-xl font-semibold text-gray-700 hover:bg-gray-200 transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-gray-100 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 transition-colors flex items-center gap-2"
           >
             <Eye className="w-4 h-4" /> 預覽 PDF
           </button>
           <button
             onClick={handleExportPDF}
-            className="px-4 py-2 bg-gray-100 rounded-xl font-semibold text-gray-700 hover:bg-gray-200 transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-gray-100 rounded-lg font-semibold text-gray-700 hover:bg-gray-200 transition-colors flex items-center gap-2"
           >
             <FileText className="w-4 h-4" /> 列印 PDF
           </button>
           <button
             onClick={() => setShowSendModal(true)}
-            className="bg-black text-white px-5 py-2 rounded-xl font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors"
+            className="bg-primary-900 text-white px-5 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors"
           >
             <Send className="w-4 h-4" /> 發送報價
           </button>
@@ -283,13 +283,13 @@ export default function QuotationBuilder() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">行程名稱</label>
-                <input type="text" value={tripName} onChange={(e) => setTripName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black" />
+                <input type="text" value={tripName} onChange={(e) => setTripName(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">預估人數</label>
                 <div className="flex items-center gap-2">
                   <button onClick={() => setPaxCount(Math.max(1, paxCount - 1))} className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><Minus className="w-4 h-4" /></button>
-                  <input type="number" value={paxCount} onChange={(e) => setPaxCount(parseInt(e.target.value) || 1)} className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-center focus:outline-none focus:ring-2 focus:ring-black" />
+                  <input type="number" value={paxCount} onChange={(e) => setPaxCount(parseInt(e.target.value) || 1)} className="flex-1 px-4 py-3 border border-gray-200 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-black" />
                   <button onClick={() => setPaxCount(paxCount + 1)} className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200"><Plus className="w-4 h-4" /></button>
                 </div>
               </div>
@@ -300,9 +300,9 @@ export default function QuotationBuilder() {
             <h3 className="font-bold text-gray-900 mb-4">成本項目</h3>
             <div className="space-y-3">
               {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                <div key={item.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1">
-                    <span className="text-xs bg-gray-200 px-2 py-0.5 rounded text-gray-600 font-medium">{item.category}</span>
+                    <span className="text-sm bg-gray-200 px-2 py-0.5 rounded text-gray-600 font-medium">{item.category}</span>
                     <p className="font-semibold text-gray-900 mt-1">{item.name}</p>
                   </div>
                   <span className="text-sm font-semibold text-gray-600">NT$ {item.unitPrice.toLocaleString()}</span>
@@ -320,7 +320,7 @@ export default function QuotationBuilder() {
           </div>
         </div>
 
-        <div className="bg-black text-white p-6 rounded-2xl sticky top-6 h-fit">
+        <div className="bg-primary-900 text-white p-6 rounded-2xl sticky top-6 h-fit">
           <h3 className="font-bold mb-6 flex items-center gap-2"><Calculator className="w-5 h-5" /> 報價摘要</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center pb-4 border-b border-gray-800">
@@ -363,12 +363,12 @@ export default function QuotationBuilder() {
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 placeholder="customer@example.com"
                 disabled={isSending}
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-xl">
+          <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-500 mb-2">將發送以下報價資訊：</p>
             <p className="font-semibold text-gray-900">{tripName}</p>
             <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
@@ -380,7 +380,7 @@ export default function QuotationBuilder() {
           <button
             onClick={handleSendQuotation}
             disabled={isSending}
-            className="w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-primary-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {isSending ? (
               <>

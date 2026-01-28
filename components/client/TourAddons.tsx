@@ -51,17 +51,17 @@ export default function TourAddons() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 animate-fade-in">
-      <header className="bg-black text-white px-6 py-4">
+    <div className="min-h-screen bg-gray-50 animate-fade-in focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+      <header className="bg-primary-900 text-white px-6 py-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <div className="flex items-center gap-3"><ShoppingBag className="w-6 h-6" /><h1 className="text-xl font-bold">自費行程</h1></div>
         <p className="text-sm text-gray-400 mt-1">選購加值服務</p>
       </header>
       <main className="p-6 space-y-4 pb-24">
         {addons.map((addon) => (
-          <div key={addon.id} className={`bg-white rounded-xl border-2 overflow-hidden transition-all ${addon.selected ? 'border-brand-500' : 'border-gray-100'}`}>
+          <div key={addon.id} className={`bg-white rounded-lg border-2 overflow-hidden transition-all ${addon.selected ? 'border-brand-500' : 'border-gray-100'}`}>
             <div className="relative h-32">
               <img src={addon.image} alt={addon.name} className="w-full h-full object-cover" />
-              {addon.popular && <span className="absolute top-2 left-2 bg-yellow-400 text-black px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Star className="w-3 h-3" />人氣</span>}
+              {addon.popular && <span className="absolute top-2 left-2 bg-yellow-400 text-black px-2 py-1 rounded-full text-sm font-bold flex items-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"><Star className="w-3 h-3" />人氣</span>}
             </div>
             <div className="p-4">
               <div className="flex items-start justify-between">
@@ -76,12 +76,12 @@ export default function TourAddons() {
         ))}
       </main>
       {totalPrice > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <div className="flex items-center justify-between">
             <div><p className="text-sm text-gray-500">已選 {selectedItems.length} 項</p><p className="text-xl font-bold text-gray-900">NT$ {totalPrice.toLocaleString()}</p></div>
             <button
               onClick={() => setShowConfirmModal(true)}
-              className="bg-black text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors"
+              className="bg-primary-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             >
               確認選購
             </button>
@@ -99,12 +99,12 @@ export default function TourAddons() {
         <div className="space-y-4">
           <div className="space-y-2">
             {selectedItems.map(item => (
-              <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+              <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <div className="flex items-center gap-3">
                   <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                   <div>
                     <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-xs text-gray-500">{item.description}</p>
+                    <p className="text-sm text-gray-500">{item.description}</p>
                   </div>
                 </div>
                 <span className="font-semibold text-gray-700">NT$ {item.price.toLocaleString()}</span>
@@ -119,7 +119,7 @@ export default function TourAddons() {
             </div>
           </div>
 
-          <div className="bg-green-50 p-3 rounded-xl flex items-start gap-2">
+          <div className="bg-green-50 p-3 rounded-lg flex items-start gap-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-green-700">
               確認後將加入您的行程訂單，費用將於出發前統一收取。
@@ -129,7 +129,7 @@ export default function TourAddons() {
           <button
             onClick={handleConfirmPurchase}
             disabled={isSubmitting}
-            className="w-full bg-black text-white py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-primary-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           >
             {isSubmitting ? (
               <>

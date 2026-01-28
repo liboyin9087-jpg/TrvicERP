@@ -57,7 +57,7 @@ export function BarChart({
             <div key={index} className="flex-1 flex flex-col items-center gap-2">
               <div className="w-full flex flex-col items-center justify-end" style={{ height: height - 30 }}>
                 {showValues && (
-                  <span className="text-xs font-medium text-gray-600 mb-1">
+                  <span className="text-sm font-medium text-gray-600 mb-1">
                     {item.value}
                   </span>
                 )}
@@ -70,7 +70,7 @@ export function BarChart({
                   }}
                 />
               </div>
-              <span className="text-xs text-gray-500 truncate w-full text-center">
+              <span className="text-sm text-gray-500 truncate w-full text-center">
                 {item.label}
               </span>
             </div>
@@ -113,7 +113,7 @@ export function HorizontalBarChart({
                 {showPercentage ? `${Math.round(percentage)}%` : item.value}
               </span>
             </div>
-            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <div
                 className="h-full rounded-full transition-all duration-500 ease-out"
                 style={{
@@ -312,7 +312,7 @@ export function LineChart({
             x={point.x}
             y={height - 8}
             textAnchor="middle"
-            className="text-xs fill-gray-500"
+            className="text-sm fill-gray-500"
           >
             {point.label}
           </text>
@@ -326,7 +326,7 @@ export function LineChart({
             y={padding.top + chartHeight * (1 - ratio)}
             textAnchor="end"
             dominantBaseline="middle"
-            className="text-xs fill-gray-500"
+            className="text-sm fill-gray-500"
           >
             {Math.round(minValue + valueRange * ratio)}
           </text>
@@ -397,7 +397,7 @@ export function DonutChart({
         <span className="text-2xl font-bold text-gray-900">
           {Math.round(percentage * 100)}%
         </span>
-        {label && <span className="text-xs text-gray-500">{label}</span>}
+        {label && <span className="text-sm text-gray-500">{label}</span>}
       </div>
     </div>
   );

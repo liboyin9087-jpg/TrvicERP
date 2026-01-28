@@ -23,7 +23,7 @@ const MOCK_POLLS: Poll[] = [
       { id: "c", text: "銀座購物區", votes: 4 },
     ],
     totalVotes: 24,
-    hasVoted: false,
+    hasVoted: false, // Default to false, determined by localStorage
   },
   {
     id: "2",
@@ -35,8 +35,8 @@ const MOCK_POLLS: Poll[] = [
       { id: "f", text: "一蘭拉麵", votes: 3 },
     ],
     totalVotes: 24,
-    hasVoted: true,
-    selectedOption: "d",
+    hasVoted: false, // Default to false, determined by localStorage
+    // selectedOption removed, determined by localStorage
   },
 ];
 
@@ -54,12 +54,16 @@ export default function VotingPage() {
       setPolls((prev) =>
         prev.map((poll) => {
           const selected = saved[poll.id];
-          if (selected && !poll.hasVoted) {
-            // apply persisted vote (increment counts locally)
+          // Apply persisted vote if found and not already marked as voted (or if poll was reset)
+          // Also, ensure the option exists in the current poll, preventing errors if poll options change
+          const optionExists = poll.options.some(opt => opt.id === selected);
+
+          if (selected && !poll.hasVoted && optionExists) {
             return {
               ...poll,
               hasVoted: true,
               selectedOption: selected,
+              // Increment counts because MOCK_POLLS is a base state without current user's vote
               totalVotes: poll.totalVotes + 1,
               options: poll.options.map((opt) =>
                 opt.id === selected ? { ...opt, votes: opt.votes + 1 } : opt,
@@ -92,7 +96,7 @@ export default function VotingPage() {
       }),
     );
 
-    // persist selection for this poll
+    // Persist selection for this poll
     try {
       const raw = localStorage.getItem("trvicerp_voting");
       const saved: Record<string, string> = raw ? JSON.parse(raw) : {};
@@ -105,7 +109,7 @@ export default function VotingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 animate-fade-in">
-      <header className="bg-black text-white px-6 py-4">
+      <header className="bg-primary-900 text-white px-6 py-4">
         <div className="flex items-center gap-3">
           <Vote className="w-6 h-6" />
           <h1 className="text-xl font-bold">團體投票</h1>
@@ -115,20 +119,20 @@ export default function VotingPage() {
         {polls.map((poll) => (
           <div
             key={poll.id}
-            className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
+            className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
           >
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-gray-900">{poll.title}</h2>
                 {poll.hasVoted && (
-                  <span className="text-xs bg-brand-100 text-brand-700 px-2 py-1 rounded-full flex items-center gap-1">
+                  <span className="text-sm bg-success-100 text-success-700 px-2 py-1 rounded-full flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" />
                     已投票
                   </span>
                 )}
               </div>
               <p className="text-sm text-gray-500 mt-1">{poll.description}</p>
-              <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+              <p className="text-sm text-gray-400 mt-2 flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 {poll.totalVotes} 人已投票
               </p>
@@ -140,18 +144,29 @@ export default function VotingPage() {
                     ? Math.round((option.votes / poll.totalVotes) * 100)
                     : 0;
                 const isSelected = poll.selectedOption === option.id;
+                const isDisabled = poll.hasVoted;
+
+                const buttonBaseClasses = `w-full p-4 rounded-lg border-2 transform transition duration-200 ease`;
+                const interactiveClasses = isDisabled
+                  ? "cursor-default opacity-80" // Slightly dim disabled options
+                  : `cursor-pointer focus:ring-2 focus:ring-primary-300 focus:outline-none 
+                     ${isSelected ? "hover:bg-primary-100 active:bg-primary-200" : "hover:bg-gray-50 active:bg-gray-100 hover:border-gray-200"}`;
+
+                const selectedStyles = `scale-100 border-primary-500 bg-primary-50 text-primary-700`;
+                const unselectedStyles = `border-gray-100 text-gray-900 ${!isSelected ? "hover:scale-[0.995]" : ""}`; // Apply hover scale only if not selected
+
                 return (
                   <Button
                     key={option.id}
                     onClick={() => handleVote(poll.id, option.id)}
-                    disabled={poll.hasVoted}
-                    aria-disabled={poll.hasVoted}
-                    variant="ghost"
-                    className={`w-full p-4 rounded-xl border-2 transform transition duration-200 ease ${isSelected ? "scale-100 border-brand-500 bg-brand-50" : "hover:scale-[0.995] border-gray-100 hover:border-gray-200"} ${poll.hasVoted ? "cursor-default" : "cursor-pointer"}`}
+                    disabled={isDisabled}
+                    aria-disabled={isDisabled}
+                    variant="ghost" // Assuming 'ghost' is the correct variant for this styling
+                    className={`${buttonBaseClasses} ${isSelected ? selectedStyles : unselectedStyles} ${interactiveClasses}`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span
-                        className={`font-semibold ${isSelected ? "text-brand-700" : "text-gray-900"}`}
+                        className="font-semibold" // Text color is set on the parent button's className
                       >
                         {option.text}
                       </span>
@@ -164,7 +179,7 @@ export default function VotingPage() {
                     {poll.hasVoted && (
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${isSelected ? "bg-brand-500" : "bg-gray-300"}`}
+                          className={`h-full rounded-full ${isSelected ? "bg-primary-500" : "bg-gray-300"}`}
                           style={{
                             width: `${percentage}%`,
                             transition: "width 400ms ease",

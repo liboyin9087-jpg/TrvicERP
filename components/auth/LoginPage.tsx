@@ -315,7 +315,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleDemoLogin(role)}
-                    className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all overflow-hidden ${
+                    className={`relative flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all overflow-hidden ${
                       selectedDemoRole === role
                         ? `border-transparent bg-gradient-to-br ${account.color} text-white shadow-lg`
                         : 'border-gray-200 bg-white/50 hover:border-gray-300 text-gray-700 hover:bg-white/80'
@@ -333,7 +333,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     <div className={`${selectedDemoRole === role ? 'text-white' : 'text-gray-600'}`}>
                       {account.icon}
                     </div>
-                    <span className={`text-xs font-semibold ${selectedDemoRole === role ? 'text-white' : 'text-gray-700'}`}>
+                    <span className={`text-sm font-semibold ${selectedDemoRole === role ? 'text-white' : 'text-gray-700'}`}>
                       {account.label}
                     </span>
                   </motion.button>
@@ -371,7 +371,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="w-full pl-10 pr-4 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-3 bg-white/80 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -389,7 +389,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-12 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-12 py-3 bg-white/80 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                   />
                   <button
                     type="button"
@@ -423,7 +423,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="w-full bg-gradient-to-r from-brand-500 to-brand-700 text-white py-3.5 rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
+                  className="w-full bg-gradient-to-r from-brand-500 to-brand-700 text-white py-3.5 rounded-lg font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all"
                 >
                   {isLoading ? (
                     <>
@@ -449,7 +449,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="w-full bg-white/80 border-2 border-gray-200 text-gray-700 py-3.5 rounded-xl font-semibold hover:bg-white hover:border-gray-300 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                  className="w-full bg-white/80 border-2 border-gray-200 text-gray-700 py-3.5 rounded-lg font-semibold hover:bg-white hover:border-gray-300 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                 >
                   <QrCode className="w-5 h-5" />
                   使用 QR Code 登入
@@ -462,7 +462,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   disabled={isLoading}
                   whileHover={{ scale: isLoading ? 1 : 1.02 }}
                   whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                  className="w-full bg-brand-50 border-2 border-brand-100 text-brand-700 py-3.5 rounded-xl font-semibold hover:bg-brand-100 hover:border-brand-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
+                  className="w-full bg-brand-50 border-2 border-brand-100 text-brand-700 py-3.5 rounded-lg font-semibold hover:bg-brand-100 hover:border-brand-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                 >
                   {selectedDemoRole
                     ? `以 ${DEMO_ACCOUNTS[selectedDemoRole].label} 進入`
@@ -494,7 +494,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-primary-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => !isScanning && setShowQRModal(false)}
           >
             <motion.div
@@ -556,7 +556,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleQRLogin}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3.5 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3.5 rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                   >
                     <QrCode className="w-5 h-5" />
                     模擬掃描
@@ -590,7 +590,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <motion.div
               initial={{ y: -20 }}
               animate={{ y: 0 }}
-              className={`flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-sm border ${
+              className={`flex items-center gap-3 px-6 py-4 rounded-lg shadow-2xl backdrop-blur-sm border ${
                 toastType === 'success'
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-green-400/30'
                   : 'bg-gradient-to-r from-red-500 to-rose-500 text-white border-red-400/30'

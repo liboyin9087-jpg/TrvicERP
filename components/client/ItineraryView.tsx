@@ -35,15 +35,40 @@ export default function ItineraryView() {
   return (
     <div className="min-h-screen bg-gray-50 animate-fade-in">
       {/* Day Selector */}
-      <div className="bg-black text-white px-6 py-4">
+      <div className="bg-primary-900 text-white px-6 py-4">
         <div className="flex items-center justify-between">
-          <button onClick={() => setCurrentDay(Math.max(1, currentDay - 1))} disabled={currentDay === 1} className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30"><ChevronLeft className="w-5 h-5" /></button>
-          <div className="text-center"><p className="text-sm text-gray-400">東京五日深度遊</p><h2 className="text-xl font-bold">Day {currentDay}</h2></div>
-          <button onClick={() => setCurrentDay(Math.min(totalDays, currentDay + 1))} disabled={currentDay === totalDays} className="p-2 hover:bg-gray-800 rounded-lg disabled:opacity-30"><ChevronRight className="w-5 h-5" /></button>
+          <button
+            onClick={() => setCurrentDay(Math.max(1, currentDay - 1))}
+            disabled={currentDay === 1}
+            className="p-2 hover:bg-primary-800 rounded-lg disabled:opacity-30 focus:outline-none focus:ring-2 focus:ring-primary-300 active:bg-primary-800 transition-colors duration-200"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="text-center">
+            <p className="text-sm text-primary-300">東京五日深度遊</p>
+            <h2 className="text-xl font-bold">Day {currentDay}</h2>
+          </div>
+          <button
+            onClick={() => setCurrentDay(Math.min(totalDays, currentDay + 1))}
+            disabled={currentDay === totalDays}
+            className="p-2 hover:bg-primary-800 rounded-lg disabled:opacity-30 focus:outline-none focus:ring-2 focus:ring-primary-300 active:bg-primary-800 transition-colors duration-200"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
         <div className="flex justify-center gap-2 mt-4">
           {Array.from({ length: totalDays }).map((_, idx) => (
-            <button key={idx} onClick={() => setCurrentDay(idx + 1)} className={`w-8 h-8 rounded-full font-semibold text-sm ${currentDay === idx + 1 ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}>{idx + 1}</button>
+            <button
+              key={idx}
+              onClick={() => setCurrentDay(idx + 1)}
+              className={`w-8 h-8 rounded-full font-semibold text-sm transition-colors duration-200
+                ${currentDay === idx + 1
+                  ? 'bg-white text-primary-900 focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-gray-100'
+                  : 'bg-primary-700 text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-300 hover:bg-primary-600'
+                }`}
+            >
+              {idx + 1}
+            </button>
           ))}
         </div>
       </div>
@@ -55,8 +80,8 @@ export default function ItineraryView() {
           <div className="space-y-6">
             {dayItems.map((item, idx) => (
               <div key={item.id} className="relative pl-10">
-                <div className={`absolute left-2.5 w-3 h-3 rounded-full ${idx === 0 ? 'bg-brand-500' : 'bg-gray-300'} ring-4 ring-white`} />
-                <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                <div className={`absolute left-2.5 w-3 h-3 rounded-full ${idx === 0 ? 'bg-brand-500' : 'bg-primary-300'} ring-4 ring-white`} />
+                <div className="bg-white rounded-lg border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:border-primary-300 transition-all duration-200">
                   {item.image && <img src={item.image} alt={item.title} className="w-full h-32 object-cover" />}
                   <div className="p-4">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">

@@ -194,7 +194,7 @@ export function FileScannerInput({
           file:text-sm file:font-semibold
           file:bg-blue-50 file:text-blue-700
           hover:file:bg-blue-100
-          disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
       />
       {loading && <p className="mt-2 text-sm text-gray-500">Scanning files...</p>}
     </div>

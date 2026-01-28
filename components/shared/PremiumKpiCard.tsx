@@ -73,13 +73,13 @@ const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
       />
 
       {/* Layer 2: 卡片主體 (The Glass) */}
-      <div className="relative h-full w-full rounded-[24px] bg-[#0A0F1C]/80 backdrop-blur-2xl border border-white/[0.08] overflow-hidden">
+      <div className="relative h-full w-full rounded-[24px] bg-[#0A0F1C]/80 backdrop-blur-2xl border border-white/[0.08] overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
 
         {/* Layer 2.1: 內部頂部的高光反射 (Top Highlight) */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50 focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
 
         {/* Layer 2.2: 噪點紋理 (Noise Texture) - 質感來源 */}
-        <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay pointer-events-none" />
+        <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay pointer-events-none focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
 
         {/* Layer 2.3: 內部的彩色極光 (Inner Aurora) */}
         <div
@@ -88,10 +88,10 @@ const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
             auroraColors[variant]
           )}
         />
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-600/10 rounded-full blur-[60px]" />
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-600/10 rounded-full blur-[60px] focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
 
         {/* Layer 2.4: Hover 時的掃光效果 */}
-        <div className="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/[0.03] to-transparent skew-x-12 transition-all duration-700 group-hover:left-[100%]" />
+        <div className="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/[0.03] to-transparent skew-x-12 transition-all duration-700 group-hover:left-[100%] focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
 
         {/* Layer 3: 內容層 (Content) */}
         <div className="relative z-10 p-6 flex flex-col justify-between h-full">
@@ -99,7 +99,7 @@ const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
           <div className="flex justify-between items-start">
             <div
               className={cn(
-                "p-3 bg-white/[0.03] border border-white/[0.05] rounded-xl shadow-inner transition-transform duration-300 group-hover:scale-110",
+                "p-3 bg-white/[0.03] border border-white/[0.05] rounded-lg shadow-inner transition-transform duration-300 group-hover:scale-110",
                 iconColors[variant]
               )}
             >
@@ -110,7 +110,7 @@ const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
             {trend !== undefined && (
               <div
                 className={cn(
-                  "flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.05] text-xs font-medium backdrop-blur-md",
+                  "flex items-center gap-1 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.05] text-sm font-medium backdrop-blur-md",
                   isPositive ? 'text-emerald-400' : 'text-red-400'
                 )}
               >
@@ -126,11 +126,11 @@ const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
               {title}
             </h3>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 drop-shadow-lg tracking-tight">
+              <span className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 drop-shadow-lg tracking-tight focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 {value}
               </span>
               {subtext && (
-                <span className="text-xs text-gray-500 font-light">{subtext}</span>
+                <span className="text-sm text-gray-500 font-light">{subtext}</span>
               )}
             </div>
           </div>

@@ -9,7 +9,7 @@ import {
 import { aiService } from '@/lib/ai/aiService';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/store/useToastStore';
-import type { ProposalComparisonOutput, ProposalTier } from '../../src/types/ai';
+import { ProposalComparisonOutput, ProposalTier } from '@/types/ai';
 
 const TAGS = ['奢華', '親子', '冒險', '員工旅遊', 'CSR', '美食'];
 
@@ -76,18 +76,18 @@ export default function ProposalEngine() {
   };
 
   return (
-    <div className="min-h-screen bg-surface p-6 space-y-6">
+    <div className="min-h-screen bg-neutral-50 p-6 space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI 提案引擎</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-neutral-900">AI 提案引擎</h1>
+          <p className="text-sm text-neutral-500">
             生成三版本企業提案，快速對齊預算與體驗落差。
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleExport}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 bg-white hover:border-gray-300"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-200 text-neutral-600 bg-white hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:ring-offset-1"
           >
             <FileText className="w-4 h-4" />
             匯出 PDF
@@ -95,7 +95,7 @@ export default function ProposalEngine() {
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:ring-offset-1"
           >
             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
             生成提案
@@ -104,61 +104,61 @@ export default function ProposalEngine() {
       </div>
 
       <div className="grid lg:grid-cols-[1.05fr_1.95fr] gap-6">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Sparkles className="w-4 h-4 text-brand-500" />
+        <div className="bg-white rounded-2xl border border-neutral-100 p-5 space-y-5">
+          <div className="flex items-center gap-2 text-sm text-neutral-500">
+            <Sparkles className="w-4 h-4 text-primary-500" />
             需求輸入
           </div>
           <div className="space-y-4">
-            <label className="block text-xs text-gray-500">
+            <label className="block text-sm text-neutral-500">
               基礎行程 ID
               <input
                 value={baseItineraryId}
                 onChange={(event) => setBaseItineraryId(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="mt-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
               />
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <label className="block text-xs text-gray-500">
+              <label className="block text-sm text-neutral-500">
                 預算下限
                 <input
                   type="number"
                   value={budgetMin}
                   onChange={(event) => setBudgetMin(Number(event.target.value))}
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="mt-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
                 />
               </label>
-              <label className="block text-xs text-gray-500">
+              <label className="block text-sm text-neutral-500">
                 預算上限
                 <input
                   type="number"
                   value={budgetMax}
                   onChange={(event) => setBudgetMax(Number(event.target.value))}
-                  className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  className="mt-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
                 />
               </label>
             </div>
-            <label className="block text-xs text-gray-500">
+            <label className="block text-sm text-neutral-500">
               估算人數
               <input
                 type="number"
                 value={paxCount}
                 onChange={(event) => setPaxCount(Number(event.target.value))}
-                className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                className="mt-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
               />
             </label>
             <div>
-              <p className="text-xs text-gray-500 mb-2">偏好標籤</p>
+              <p className="text-sm text-neutral-500 mb-2">偏好標籤</p>
               <div className="flex flex-wrap gap-2">
                 {TAGS.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => handleToggleTag(tag)}
                     className={cn(
-                      'px-3 py-1 rounded-full text-xs border transition-colors',
+                      'px-3 py-1 rounded-full text-sm border transition-colors',
                       selectedTags.includes(tag)
-                        ? 'bg-brand-500 text-white border-brand-500'
-                        : 'border-gray-200 text-gray-600 hover:border-brand-200'
+                        ? 'bg-primary-500 text-white border-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1'
+                        : 'border-neutral-200 text-neutral-600 hover:border-primary-200 focus:outline-none focus:ring-2 focus:ring-neutral-300 focus:ring-offset-1'
                     )}
                   >
                     {tag}
@@ -169,14 +169,14 @@ export default function ProposalEngine() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+        <div className="bg-white rounded-2xl border border-neutral-100 p-6 space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">{proposal.title || '提案比較表'}</h2>
-              <p className="text-sm text-gray-500 mt-1">{proposal.summary || '請先生成提案。'}</p>
+              <h2 className="text-lg font-semibold text-neutral-900">{proposal.title || '提案比較表'}</h2>
+              <p className="text-sm text-neutral-500 mt-1">{proposal.summary || '請先生成提案。'}</p>
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <BarChart3 className="w-4 h-4 text-brand-500" />
+            <div className="flex items-center gap-2 text-sm text-neutral-500">
+              <BarChart3 className="w-4 h-4 text-primary-500" />
               毛利差異可視化
             </div>
           </div>
@@ -184,23 +184,23 @@ export default function ProposalEngine() {
           <div className="grid md:grid-cols-3 gap-4">
             {tiers.length > 0 ? (
               tiers.map((tier) => (
-                <div key={tier.name} className="rounded-xl border border-gray-200 p-4 space-y-3">
+                <div key={tier.name} className="rounded-lg border border-neutral-200 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900">{tier.name}</h3>
-                    <span className="text-xs text-brand-600 font-semibold">
+                    <h3 className="font-semibold text-neutral-900">{tier.name}</h3>
+                    <span className="text-sm text-primary-600 font-semibold">
                       毛利 {tier.margin_percent}%
                     </span>
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-neutral-900">
                     NT$ {tier.price_per_person.toLocaleString()}
-                    <span className="text-xs text-gray-400">/人</span>
+                    <span className="text-sm text-neutral-400">/人</span>
                   </div>
-                  <div className="text-xs text-gray-500 space-y-1">
+                  <div className="text-sm text-neutral-500 space-y-1">
                     <p>住宿：{tier.lodging}</p>
                     <p>交通：{tier.transport}</p>
                     <p>餐食：{tier.meals}</p>
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-sm text-neutral-500">
                     {tier.highlights && tier.highlights.length > 0 && (
                       <ul className="list-disc list-inside space-y-1">
                         {tier.highlights.map((item) => (
@@ -212,32 +212,32 @@ export default function ProposalEngine() {
                 </div>
               ))
             ) : (
-              <div className="col-span-3 text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl p-6 text-center">
+              <div className="col-span-3 text-sm text-neutral-400 border border-dashed border-neutral-200 rounded-lg p-6 text-center">
                 尚未生成提案內容
               </div>
             )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="rounded-xl border border-gray-100 p-4">
-              <p className="text-xs text-gray-500 mb-2">費用包含</p>
-              <ul className="text-xs text-gray-600 space-y-1">
+            <div className="rounded-lg border border-neutral-100 p-4">
+              <p className="text-sm text-neutral-500 mb-2">費用包含</p>
+              <ul className="text-sm text-neutral-600 space-y-1">
                 {(proposal.inclusions || []).map((item) => (
                   <li key={item}>• {item}</li>
                 ))}
               </ul>
             </div>
-            <div className="rounded-xl border border-gray-100 p-4">
-              <p className="text-xs text-gray-500 mb-2">費用不含</p>
-              <ul className="text-xs text-gray-600 space-y-1">
+            <div className="rounded-lg border border-neutral-100 p-4">
+              <p className="text-sm text-neutral-500 mb-2">費用不含</p>
+              <ul className="text-sm text-neutral-600 space-y-1">
                 {(proposal.exclusions || []).map((item) => (
                   <li key={item}>• {item}</li>
                 ))}
               </ul>
             </div>
-            <div className="rounded-xl border border-gray-100 p-4">
-              <p className="text-xs text-gray-500 mb-2">安全承諾</p>
-              <ul className="text-xs text-gray-600 space-y-1">
+            <div className="rounded-lg border border-neutral-100 p-4">
+              <p className="text-sm text-neutral-500 mb-2">安全承諾</p>
+              <ul className="text-sm text-neutral-600 space-y-1">
                 {(proposal.safety_commitments || []).map((item) => (
                   <li key={item}>• {item}</li>
                 ))}

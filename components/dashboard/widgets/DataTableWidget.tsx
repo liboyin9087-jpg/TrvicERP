@@ -11,7 +11,7 @@ export default function DataTableWidget({ widget }: { widget: Widget }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+        <thead className="bg-gray-50 text-sm text-gray-500 uppercase focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <tr>
             <th className="px-3 py-2 text-left">Company</th>
             <th className="px-3 py-2 text-left">Trip</th>
@@ -23,7 +23,7 @@ export default function DataTableWidget({ widget }: { widget: Widget }) {
         </thead>
         <tbody className="divide-y divide-gray-100">
           {rows.map((order) => (
-            <tr key={order.id} className="hover:bg-gray-50">
+            <tr key={order.id} className="hover:bg-gray-50 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <td className="px-3 py-2 font-medium text-gray-900">{order.company}</td>
               <td className="px-3 py-2 text-gray-600">{order.trip}</td>
               <td className="px-3 py-2 text-gray-500">{order.date}</td>

@@ -13,11 +13,11 @@ export default function RecentOrdersWidget({ widget }: { widget: Widget }) {
       {rows.map((order) => (
         <div
           key={order.id}
-          className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         >
           <div className="flex-1 min-w-0">
             <div className="font-medium text-gray-900 text-sm truncate">{order.company}</div>
-            <div className="text-xs text-gray-500 truncate">{order.trip}</div>
+            <div className="text-sm text-gray-500 truncate">{order.trip}</div>
           </div>
           <div className="text-right ml-3">
             <div className="font-semibold text-gray-900 text-sm">{formatCurrency(order.amount)}</div>

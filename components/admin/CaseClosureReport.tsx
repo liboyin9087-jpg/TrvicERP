@@ -105,9 +105,9 @@ function StatCard({ icon, label, value, subValue, trend }: {
   trend?: 'up' | 'down' | 'neutral';
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-600">
+        <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600">
           {icon}
         </div>
         <span className="text-sm text-gray-500">{label}</span>
@@ -117,8 +117,8 @@ function StatCard({ icon, label, value, subValue, trend }: {
         {subValue && (
           <span className={cn(
             'text-sm',
-            trend === 'up' && 'text-green-600',
-            trend === 'down' && 'text-red-600',
+            trend === 'up' && 'text-success-600',
+            trend === 'down' && 'text-danger-600',
             trend === 'neutral' && 'text-gray-500'
           )}>
             {subValue}
@@ -145,9 +145,9 @@ function RatingBar({ label, rating, maxRating = 5 }: {
           transition={{ duration: 0.5 }}
           className={cn(
             'h-full rounded-full',
-            rating >= 4.5 ? 'bg-green-500' :
+            rating >= 4.5 ? 'bg-success-500' :
             rating >= 4.0 ? 'bg-brand-500' :
-            rating >= 3.5 ? 'bg-yellow-500' : 'bg-red-500'
+            rating >= 3.5 ? 'bg-warning-500' : 'bg-danger-500'
           )}
         />
       </div>
@@ -158,8 +158,8 @@ function RatingBar({ label, rating, maxRating = 5 }: {
 
 function IncidentCard({ incident }: { incident: IncidentLog }) {
   const typeLabels: Record<string, { label: string; color: string }> = {
-    delay: { label: '延誤', color: 'bg-yellow-100 text-yellow-700' },
-    complaint: { label: '客訴', color: 'bg-red-100 text-red-700' },
+    delay: { label: '延誤', color: 'bg-warning-100 text-warning-700' },
+    complaint: { label: '客訴', color: 'bg-danger-100 text-danger-700' },
     medical: { label: '醫療', color: 'bg-brand-100 text-brand-700' },
     lost_item: { label: '遺失', color: 'bg-accent-100 text-accent-700' },
     other: { label: '其他', color: 'bg-gray-100 text-gray-700' },
@@ -168,16 +168,16 @@ function IncidentCard({ incident }: { incident: IncidentLog }) {
   const { label, color } = typeLabels[incident.type] || typeLabels.other;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
+    <div className="bg-white rounded-lg border border-gray-100 p-4 hover:border-gray-200 hover:shadow-sm transition-all focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
       <div className="flex items-start justify-between mb-2">
-        <span className={cn('px-2 py-1 rounded-lg text-xs font-medium', color)}>
+        <span className={cn('px-2 py-1 rounded-lg text-sm font-medium', color)}>
           {label}
         </span>
-        <span className="text-xs text-gray-400">{incident.timestamp}</span>
+        <span className="text-sm text-gray-400">{incident.timestamp}</span>
       </div>
       <p className="text-sm text-gray-900 mb-2">{incident.description}</p>
       <div className="flex items-start gap-2 text-sm">
-        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+        <CheckCircle className="w-4 h-4 text-success-500 mt-0.5 shrink-0" />
         <span className="text-gray-600">{incident.resolution}</span>
       </div>
     </div>
@@ -204,7 +204,7 @@ export default function CaseClosureReport({
   // 計算統計數據
   const totalPax = session.current_pax;
   const confirmedPax = bookings.filter(b => b.status === 'confirmed' || b.status === 'paid').length;
-  const specialNeedsCount = bookings.filter(b => b.special_needs).length;
+  // const specialNeedsCount = bookings.filter(b => b.special_needs).length; // Variable not used
   const duration = Math.ceil(
     (new Date(session.end_date).getTime() - new Date(session.start_date).getTime()) / (1000 * 60 * 60 * 24)
   );
@@ -227,11 +227,12 @@ export default function CaseClosureReport({
 
     const excelContent = `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Workbook xmlns="urn:schemas-microsoft-com:office/spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office/spreadsheet">
   <Styles>
-    <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#F0F0F0" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#E5E7EB" ss:Pattern="Solid"/></Style>
     <Style ss:ID="Title"><Font ss:Bold="1" ss:Size="14"/></Style>
+    <Style ss:ID="Default"><Font ss:Size="12"/></Style>
   </Styles>
   <Worksheet ss:Name="結案報告">
     <Table>
@@ -243,31 +244,31 @@ export default function CaseClosureReport({
         <Cell><Data ss:Type="String">項目</Data></Cell>
         <Cell><Data ss:Type="String">數值</Data></Cell>
       </Row>
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">團號</Data></Cell>
         <Cell><Data ss:Type="String">${escapeXML(session.group_number || 'N/A')}</Data></Cell>
       </Row>
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">出發日期</Data></Cell>
         <Cell><Data ss:Type="String">${escapeXML(session.start_date)} ~ ${escapeXML(session.end_date)}</Data></Cell>
       </Row>
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">總人數</Data></Cell>
         <Cell><Data ss:Type="Number">${totalPax}</Data></Cell>
       </Row>
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">天數</Data></Cell>
         <Cell><Data ss:Type="Number">${duration}</Data></Cell>
       </Row>
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">平均評分</Data></Cell>
         <Cell><Data ss:Type="Number">${feedback.averageRating}</Data></Cell>
       </Row>
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">回覆數</Data></Cell>
         <Cell><Data ss:Type="Number">${feedback.totalResponses}</Data></Cell>
       </Row>
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">事件數</Data></Cell>
         <Cell><Data ss:Type="Number">${incidents.length}</Data></Cell>
       </Row>
@@ -277,7 +278,7 @@ export default function CaseClosureReport({
         <Cell><Data ss:Type="String">評分</Data></Cell>
       </Row>
       ${feedback.categoryRatings.map(cat => `
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">${escapeXML(cat.category)}</Data></Cell>
         <Cell><Data ss:Type="Number">${cat.rating}</Data></Cell>
       </Row>`).join('')}
@@ -286,7 +287,7 @@ export default function CaseClosureReport({
         <Cell><Data ss:Type="String">好評項目</Data></Cell>
       </Row>
       ${feedback.highlights.map(h => `
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">${escapeXML(h)}</Data></Cell>
       </Row>`).join('')}
       <Row><Cell></Cell></Row>
@@ -294,7 +295,7 @@ export default function CaseClosureReport({
         <Cell><Data ss:Type="String">待改進項目</Data></Cell>
       </Row>
       ${feedback.improvements.map(i => `
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">${escapeXML(i)}</Data></Cell>
       </Row>`).join('')}
     </Table>
@@ -309,7 +310,7 @@ export default function CaseClosureReport({
         <Cell><Data ss:Type="String">嚴重性</Data></Cell>
       </Row>
       ${incidents.map(inc => `
-      <Row>
+      <Row ss:StyleID="Default">
         <Cell><Data ss:Type="String">${escapeXML(inc.type)}</Data></Cell>
         <Cell><Data ss:Type="String">${escapeXML(inc.description)}</Data></Cell>
         <Cell><Data ss:Type="String">${escapeXML(inc.resolution)}</Data></Cell>
@@ -409,7 +410,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
         <meta charset="UTF-8">
         <title>結案報告 - ${session.group_number || session.series_id}</title>
         <style>
-          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; line-height: 1.6; }
+          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; line-height: 1.6; font-size: 14px; }
           .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
           .title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
           .meta { color: #666; font-size: 14px; }
@@ -418,16 +419,18 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
           .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
           .stat-box { background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center; }
           .stat-value { font-size: 24px; font-weight: bold; color: #333; }
-          .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+          .stat-label { font-size: 14px; color: #666; margin-top: 5px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
           th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
           th { background: #f5f5f5; font-weight: bold; }
-          .rating { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; }
-          .rating-high { background: #dcfce7; color: #166534; }
-          .rating-mid { background: #fef3c7; color: #92400e; }
-          .highlight { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 10px 15px; margin: 5px 0; }
-          .improvement { background: #fef2f2; border-left: 4px solid #ef4444; padding: 10px 15px; margin: 5px 0; }
-          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 12px; }
+          .rating { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;}
+          .rating-high { background: #dcfce7; color: #166534; } /* Success colors */
+          .rating-mid { background: #fef3c7; color: #92400e; } /* Warning colors */
+          .highlight { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 10px 15px; margin: 5px 0; font-size: 14px; } /* Success colors */
+          .improvement { background: #fff5f5; border-left: 4px solid #ef4444; padding: 10px 15px; margin: 5px 0; font-size: 14px; } /* Danger colors */
+          h4 { font-size: 16px; }
+          p { font-size: 14px; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 14px; }
         </style>
       </head>
       <body>
@@ -485,9 +488,9 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
 
         <div class="section">
           <div class="section-title">旅客回饋</div>
-          <h4 style="margin: 15px 0 10px; color: #166534;">✓ 好評項目</h4>
+          <h4 style="margin: 15px 0 10px; color: #166534; font-size: 16px;">✓ 好評項目</h4>
           ${feedback.highlights.map(h => `<div class="highlight">${h}</div>`).join('')}
-          <h4 style="margin: 15px 0 10px; color: #dc2626;">△ 待改進項目</h4>
+          <h4 style="margin: 15px 0 10px; color: #dc2626; font-size: 16px;">△ 待改進項目</h4>
           ${feedback.improvements.map(i => `<div class="improvement">${i}</div>`).join('')}
         </div>
 
@@ -547,7 +550,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleExportPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 focus:ring-2 focus:ring-primary-300 active:bg-brand-800"
           >
             <Printer className="w-4 h-4" />
             列印報告
@@ -562,9 +565,9 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:ring-2 focus:ring-primary-300 active:bg-primary-800',
               activeTab === tab.key
-                ? 'bg-gray-900 text-white'
+                ? 'bg-gray-900 text-white hover:bg-gray-800'
                 : 'text-gray-600 hover:bg-gray-100'
             )}
           >
@@ -613,7 +616,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
           {/* Quick Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Top Ratings */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
               <h4 className="font-bold text-gray-900 mb-4">滿意度概覽</h4>
               <div className="space-y-3">
                 {feedback.categoryRatings.map((cat) => (
@@ -623,7 +626,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
             </div>
 
             {/* Recent Incidents */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
               <h4 className="font-bold text-gray-900 mb-4">事件摘要</h4>
               {incidents.length > 0 ? (
                 <div className="space-y-3">
@@ -633,8 +636,8 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-                  <p>本團次無特殊事件記錄</p>
+                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success-500" />
+                  <p className="text-sm">本團次無特殊事件記錄</p>
                 </div>
               )}
             </div>
@@ -649,7 +652,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
           className="space-y-6"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-gray-900">NPS 回饋概覽</h4>
@@ -657,7 +660,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
                 </div>
                 <button
                   onClick={handleSendSurvey}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 focus:ring-2 focus:ring-primary-300 active:bg-brand-200"
                 >
                   <Mail className="w-4 h-4" />
                   發送問卷
@@ -666,49 +669,49 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-3xl font-bold text-gray-900">{insight.nps_score}</p>
-                  <p className="text-xs text-gray-500">NPS Score</p>
+                  <p className="text-sm text-gray-500">NPS Score</p>
                 </div>
-                <div className="text-right text-xs text-gray-500">
+                <div className="text-right text-sm text-gray-500">
                   回覆數 {insight.response_count}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
-                <div className="rounded-lg bg-green-50 p-3">
+              <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                <div className="rounded-lg bg-success-50 p-3 hover:bg-success-100 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-success-200">
                   推薦者比例
-                  <div className="text-lg font-semibold text-green-600">{insight.promoter_ratio}%</div>
+                  <div className="text-lg font-semibold text-success-600">{insight.promoter_ratio}%</div>
                 </div>
-                <div className="rounded-lg bg-red-50 p-3">
+                <div className="rounded-lg bg-danger-50 p-3 hover:bg-danger-100 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-danger-200">
                   負面者比例
-                  <div className="text-lg font-semibold text-red-500">{insight.detractor_ratio}%</div>
+                  <div className="text-lg font-semibold text-danger-500">{insight.detractor_ratio}%</div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Sparkles className="w-4 h-4 text-warning-500" />
                   <h4 className="font-bold text-gray-900">AI 結案摘要</h4>
                 </div>
                 <button
                   onClick={handleGenerateInsight}
                   disabled={isGeneratingInsight}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60 focus:ring-2 focus:ring-primary-300 active:bg-gray-700"
                 >
                   {isGeneratingInsight ? <Loader2 className="w-4 h-4 animate-spin" /> : '生成摘要'}
                 </button>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-2">關鍵亮點</p>
-                <ul className="space-y-1 text-xs text-gray-700">
+                <p className="text-sm text-gray-500 mb-2">關鍵亮點</p>
+                <ul className="space-y-1 text-sm text-gray-700">
                   {insight.key_themes.map((theme, idx) => (
                     <li key={`${theme}-${idx}`}>• {theme}</li>
                   ))}
                 </ul>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-2">改進建議</p>
-                <ul className="space-y-1 text-xs text-gray-700">
+                <p className="text-sm text-gray-500 mb-2">改進建議</p>
+                <ul className="space-y-1 text-sm text-gray-700">
                   {insight.improvement_actions.map((item, idx) => (
                     <li key={`${item}-${idx}`}>• {item}</li>
                   ))}
@@ -718,7 +721,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
           </div>
 
           {/* Rating Overview */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h4 className="font-bold text-gray-900">整體滿意度</h4>
@@ -735,7 +738,7 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
                       className={cn(
                         'w-5 h-5',
                         star <= Math.round(feedback.averageRating)
-                          ? 'text-yellow-400 fill-yellow-400'
+                          ? 'text-warning-400 fill-warning-400'
                           : 'text-gray-200'
                       )}
                     />
@@ -753,35 +756,35 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
 
           {/* Highlights & Improvements */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-green-50 rounded-2xl border border-green-100 p-6">
-              <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
+            <div className="bg-success-50 rounded-2xl border border-success-100 p-6 hover:shadow-md transition-shadow">
+              <h4 className="font-bold text-success-900 mb-4 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
                 好評項目
               </h4>
               <div className="space-y-3">
                 {feedback.highlights.map((highlight, idx) => (
                   <div key={idx} className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-green-200 rounded-full flex items-center justify-center text-green-700 text-sm font-bold shrink-0">
+                    <div className="w-6 h-6 bg-success-200 rounded-full flex items-center justify-center text-success-700 text-sm font-bold shrink-0 hover:scale-105 transition-transform focus:ring-2 focus:ring-primary-300 active:bg-success-300">
                       {idx + 1}
                     </div>
-                    <p className="text-green-800">{highlight}</p>
+                    <p className="text-success-800 text-sm">{highlight}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-amber-50 rounded-2xl border border-amber-100 p-6">
-              <h4 className="font-bold text-amber-900 mb-4 flex items-center gap-2">
+            <div className="bg-warning-50 rounded-2xl border border-warning-100 p-6 hover:shadow-md transition-shadow">
+              <h4 className="font-bold text-warning-900 mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
                 待改進項目
               </h4>
               <div className="space-y-3">
                 {feedback.improvements.map((improvement, idx) => (
                   <div key={idx} className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-amber-200 rounded-full flex items-center justify-center text-amber-700 text-sm font-bold shrink-0">
+                    <div className="w-6 h-6 bg-warning-200 rounded-full flex items-center justify-center text-warning-700 text-sm font-bold shrink-0 hover:scale-105 transition-transform focus:ring-2 focus:ring-primary-300 active:bg-warning-300">
                       {idx + 1}
                     </div>
-                    <p className="text-amber-800">{improvement}</p>
+                    <p className="text-warning-800 text-sm">{improvement}</p>
                   </div>
                 ))}
               </div>
@@ -801,10 +804,10 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
               <IncidentCard key={incident.id} incident={incident} />
             ))
           ) : (
-            <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
+            <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
+              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-success-500" />
               <h4 className="text-lg font-bold text-gray-900 mb-2">無事件記錄</h4>
-              <p className="text-gray-500">本團次順利完成，無特殊事件需要記錄</p>
+              <p className="text-sm text-gray-500">本團次順利完成，無特殊事件需要記錄</p>
             </div>
           )}
         </motion.div>
@@ -820,9 +823,9 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleExportPDF}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all"
+            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-brand-100"
           >
-            <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-brand-200">
               <FileText className="w-6 h-6 text-brand-600" />
             </div>
             <div className="text-left">
@@ -835,10 +838,10 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleExportExcel}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-green-200 hover:bg-green-50 transition-all"
+            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-success-200 hover:bg-success-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-success-100"
           >
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <Download className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-success-200">
+              <Download className="w-6 h-6 text-success-600" />
             </div>
             <div className="text-left">
               <h4 className="font-bold text-gray-900">匯出 Excel 數據</h4>
@@ -850,9 +853,9 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSendEmail}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-accent-200 hover:bg-accent-50 transition-all"
+            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-accent-200 hover:bg-accent-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-accent-100"
           >
-            <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-accent-200">
               <Mail className="w-6 h-6 text-accent-600" />
             </div>
             <div className="text-left">

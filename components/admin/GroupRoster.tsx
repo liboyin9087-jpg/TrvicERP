@@ -83,7 +83,7 @@ export default function GroupRoster({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-brand-600" />
             </div>
             <div>
@@ -97,12 +97,12 @@ export default function GroupRoster({
               style={{ width: `${registrationProgress}%` }}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-2">進度 {registrationProgress}% ({session.current_pax}/{session.max_pax})</p>
+          <p className="text-sm text-gray-500 mt-2">進度 {registrationProgress}% ({session.current_pax}/{session.max_pax})</p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
               <UserCheck className="w-5 h-5 text-green-600" />
             </div>
             <div>
@@ -114,7 +114,7 @@ export default function GroupRoster({
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
               <UserX className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
@@ -126,7 +126,7 @@ export default function GroupRoster({
 
         <div className="bg-white p-6 rounded-2xl border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-accent-100 rounded-lg flex items-center justify-center">
               <Bed className="w-5 h-5 text-accent-600" />
             </div>
             <div>
@@ -146,7 +146,7 @@ export default function GroupRoster({
             placeholder="搜尋旅客姓名..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-400"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
           />
         </div>
         <div className="flex gap-2">
@@ -192,12 +192,12 @@ export default function GroupRoster({
                   <td className="px-6 py-4">
                     <p className="font-medium text-gray-900">{booking.customer_name}</p>
                     {booking.email && (
-                      <p className="text-xs text-gray-500">{booking.email}</p>
+                      <p className="text-sm text-gray-500">{booking.email}</p>
                     )}
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
-                      'px-2 py-1 rounded-full text-xs font-medium',
+                      'px-2 py-1 rounded-full text-sm font-medium',
                       booking.status === 'confirmed' || booking.status === 'paid'
                         ? 'bg-green-100 text-green-700'
                         : booking.status === 'pending' || booking.status === 'pending_payment'
@@ -246,12 +246,12 @@ export default function GroupRoster({
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {specialNeedsSummary.map((item) => (
-                <div key={item.category} className="p-4 bg-orange-50 rounded-xl border border-orange-200">
+                <div key={item.category} className="p-4 bg-orange-50 rounded-lg border border-orange-200">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold text-orange-900">{item.category}</span>
                     <span className="text-lg font-bold text-orange-600">{item.count}</span>
                   </div>
-                  <div className="text-xs text-orange-700">
+                  <div className="text-sm text-orange-700">
                     {item.passengers.slice(0, 3).map(p => p.name).join('、')}
                     {item.passengers.length > 3 && ` 等${item.passengers.length}位`}
                   </div>
@@ -280,7 +280,7 @@ export default function GroupRoster({
                   <div key={room.roomNumber} className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-semibold text-gray-900">房號 {room.roomNumber}</span>
-                      <span className="text-xs text-gray-500">{room.roomType}</span>
+                      <span className="text-sm text-gray-500">{room.roomType}</span>
                     </div>
                     <div className="text-sm text-gray-600">
                       {room.occupants.map(o => o.name).join('、')}
@@ -288,7 +288,7 @@ export default function GroupRoster({
                   </div>
                 ))}
                 {roomAssignments.length > 5 && (
-                  <p className="text-xs text-gray-500 text-center">還有 {roomAssignments.length - 5} 間...</p>
+                  <p className="text-sm text-gray-500 text-center">還有 {roomAssignments.length - 5} 間...</p>
                 )}
               </div>
             ) : (
@@ -315,7 +315,7 @@ export default function GroupRoster({
                   <div
                     key={seat.id}
                     className={cn(
-                      'aspect-square rounded border-2 flex items-center justify-center text-xs font-medium',
+                      'aspect-square rounded border-2 flex items-center justify-center text-sm font-medium',
                       seat.is_assigned
                         ? 'bg-brand-100 border-brand-300 text-brand-700'
                         : 'bg-gray-50 border-gray-200 text-gray-400'
@@ -325,7 +325,7 @@ export default function GroupRoster({
                   </div>
                 ))}
                 {seatAssignments.length > 20 && (
-                  <div className="col-span-10 text-xs text-gray-500 text-center py-2">
+                  <div className="col-span-10 text-sm text-gray-500 text-center py-2">
                     還有 {seatAssignments.length - 20} 個座位...
                   </div>
                 )}

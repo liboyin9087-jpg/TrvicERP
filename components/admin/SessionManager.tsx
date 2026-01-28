@@ -102,7 +102,7 @@ function TabButton({ active, icon, label, onClick, badge }: {
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all relative',
+        'flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all relative',
         active
           ? 'bg-slate-900 text-white shadow-lg'
           : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
@@ -111,7 +111,7 @@ function TabButton({ active, icon, label, onClick, badge }: {
       {icon}
       <span>{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">
+        <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-sm flex items-center justify-center font-bold">
           {badge}
         </span>
       )}
@@ -128,12 +128,12 @@ function StatCard({ icon, label, value, trend, trendUp }: {
       className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
     >
       <div className="flex items-start justify-between">
-        <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center text-slate-600">
+        <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg flex items-center justify-center text-slate-600">
           {icon}
         </div>
         {trend && (
           <span className={cn(
-            'text-xs font-medium px-2 py-1 rounded-full',
+            'text-sm font-medium px-2 py-1 rounded-full',
             trendUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
           )}>
             {trend}
@@ -176,7 +176,7 @@ function DashboardTab({ groups, onNavigate }: {
           onClick={() => onNavigate('create')}
           className="flex items-center gap-4 p-6 bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl text-white shadow-lg"
         >
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
             <Plus className="w-6 h-6" />
           </div>
           <div className="text-left">
@@ -191,7 +191,7 @@ function DashboardTab({ groups, onNavigate }: {
           onClick={() => onNavigate('groups')}
           className="flex items-center gap-4 p-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl text-white shadow-lg"
         >
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
             <Calendar className="w-6 h-6" />
           </div>
           <div className="text-left">
@@ -207,7 +207,7 @@ function DashboardTab({ groups, onNavigate }: {
             onClick={() => onNavigate('groups')}
             className="flex items-center gap-4 p-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl text-white shadow-lg"
           >
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
               <UserCheck className="w-6 h-6" />
             </div>
             <div className="text-left">
@@ -240,7 +240,7 @@ function DashboardTab({ groups, onNavigate }: {
       {totalPendingWelfare > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-amber-600" />
             </div>
             <div className="flex-1">
@@ -282,16 +282,16 @@ function GroupRow({ group }: { group: GroupListItem }) {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h4 className="font-semibold text-gray-900">{group.series_name || '未命名行程'}</h4>
-            <span className={cn('px-2 py-1 rounded-full text-xs font-semibold', status.bg, status.text)}>
+            <span className={cn('px-2 py-1 rounded-full text-sm font-semibold', status.bg, status.text)}>
               {status.label}
             </span>
             {group.group_type === 'welfare' && (
-              <span className="px-2 py-1 bg-accent-100 text-accent-700 rounded-full text-xs font-semibold">
+              <span className="px-2 py-1 bg-accent-100 text-accent-700 rounded-full text-sm font-semibold">
                 福委團
               </span>
             )}
             {group.group_number && (
-              <span className="text-xs text-gray-500 font-mono">{group.group_number}</span>
+              <span className="text-sm text-gray-500 font-mono">{group.group_number}</span>
             )}
           </div>
           <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
@@ -310,7 +310,7 @@ function GroupRow({ group }: { group: GroupListItem }) {
                 {group.current_pax}/{group.max_pax}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">報名進度 {group.registration_progress}%</p>
+            <p className="text-sm text-gray-500 mt-1">報名進度 {group.registration_progress}%</p>
           </div>
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ChevronRight className="w-5 h-5 text-gray-400" />
@@ -354,7 +354,7 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
             placeholder="搜尋團體名稱或團號..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-gray-400"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
           />
         </div>
         <div className="flex gap-2">
@@ -417,13 +417,13 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                     <div>
                       <p className="font-medium text-gray-900">{group.series_name || '未命名行程'}</p>
                       {group.group_number && (
-                        <p className="text-xs text-gray-500 font-mono">{group.group_number}</p>
+                        <p className="text-sm text-gray-500 font-mono">{group.group_number}</p>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
-                      'px-2 py-1 rounded-full text-xs font-medium',
+                      'px-2 py-1 rounded-full text-sm font-medium',
                       group.group_type === 'welfare' ? 'bg-accent-100 text-accent-700' : 'bg-gray-100 text-gray-600'
                     )}>
                       {group.group_type === 'welfare' ? '福委團' : '一般團'}
@@ -447,7 +447,7 @@ function GroupsListTab({ groups, onEdit, onDelete, onView }: {
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
-                      'px-2 py-1 rounded-full text-xs font-medium',
+                      'px-2 py-1 rounded-full text-sm font-medium',
                       group.status === 'soliciting' && 'bg-green-100 text-green-700',
                       group.status === 'guaranteed' && 'bg-brand-100 text-brand-700',
                       group.status === 'closed' && 'bg-gray-100 text-gray-600',
@@ -516,7 +516,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -525,7 +525,7 @@ function CreateGroupModal({ isOpen, onClose, onSubmit }: {
       >
         <div className="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-bold text-gray-900">建立新團體</h2>

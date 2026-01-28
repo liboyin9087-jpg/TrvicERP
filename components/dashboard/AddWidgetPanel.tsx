@@ -15,10 +15,10 @@ export default function AddWidgetPanel({ isOpen, onClose, onAdd }: AddWidgetPane
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-6 top-20 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+    <div className="fixed right-6 top-20 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+      <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <h3 className="font-semibold text-gray-800">Widget library</h3>
-        <button onClick={onClose} className="p-1 rounded hover:bg-gray-200 transition-colors">
+        <button onClick={onClose} className="p-1 rounded hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <X size={18} className="text-gray-500" />
         </button>
       </div>
@@ -28,14 +28,14 @@ export default function AddWidgetPanel({ isOpen, onClose, onAdd }: AddWidgetPane
             <button
               key={widget.type}
               onClick={() => onAdd(widget.type)}
-              className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-200 hover:bg-brand-50 transition-all text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-200 hover:bg-brand-50 transition-all text-left focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             >
-              <div className="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-brand-100 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <Plus size={20} className="text-brand-600" />
               </div>
               <div>
                 <div className="font-medium text-gray-800 text-sm">{widget.title}</div>
-                <div className="text-xs text-gray-500">{widget.description}</div>
+                <div className="text-sm text-gray-500">{widget.description}</div>
               </div>
             </button>
           ))}

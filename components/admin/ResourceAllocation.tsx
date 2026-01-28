@@ -88,7 +88,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm"
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium text-sm focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         >
           <Plus className="w-4 h-4" />
           新增飯店
@@ -100,21 +100,21 @@ function HotelAllocationTab({ rooms, onUpdate }: {
           <motion.div
             key={room.id}
             whileHover={{ y: -2 }}
-            className="bg-white p-6 rounded-2xl border border-gray-100"
+            className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                   <Building2 className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{room.hotel_name}</h4>
-                  <p className="text-xs text-gray-500">{room.room_type_label}</p>
+                  <p className="text-sm text-gray-500">{room.room_type_label}</p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingRoom(editingRoom === room.id ? null : room.id)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 <Edit className="w-4 h-4 text-gray-500" />
               </button>
@@ -185,7 +185,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
       </div>
 
       {rooms.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500">尚未新增飯店</p>
         </div>
@@ -226,7 +226,7 @@ function AddHotelModal({ onClose, onSubmit }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -234,7 +234,7 @@ function AddHotelModal({ onClose, onSubmit }: {
       >
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">新增飯店</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -359,7 +359,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
       </div>
 
       {/* Vehicle Setup */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <h4 className="font-semibold text-gray-900 mb-4">交通工具設定</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -413,17 +413,17 @@ function TransportAllocationTab({ seats, onUpdate }: {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-100 border border-green-300 rounded" />
+                <div className="w-4 h-4 bg-green-100 border border-green-300 rounded focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
                 <span className="text-sm text-gray-600">可用 ({availableSeats})</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-brand-100 border border-brand-300 rounded" />
+                <div className="w-4 h-4 bg-brand-100 border border-brand-300 rounded focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
                 <span className="text-sm text-gray-600">已分配 ({assignedSeats})</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-gray-100">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             <div className="grid grid-cols-10 gap-2">
               {seats.map((seat) => (
                 <motion.button
@@ -431,7 +431,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className={cn(
-                    'aspect-square rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all',
+                    'aspect-square rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all',
                     seat.is_assigned
                       ? 'bg-brand-100 border-brand-300 text-brand-700'
                       : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
@@ -452,7 +452,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
       )}
 
       {seats.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <Bus className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500">請先設定交通工具並產生座位表</p>
         </div>
@@ -494,18 +494,18 @@ function TourLeaderTab({ leaderId, onUpdate }: {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={cn(
-                  'w-12 h-12 rounded-xl flex items-center justify-center',
+                  'w-12 h-12 rounded-lg flex items-center justify-center',
                   leaderId === leader.id ? 'bg-brand-100' : 'bg-gray-100'
                 )}>
                   <User className={cn('w-6 h-6', leaderId === leader.id ? 'text-brand-600' : 'text-gray-600')} />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{leader.name}</h4>
-                  <p className="text-xs text-gray-500">執照：{leader.license_number}</p>
+                  <p className="text-sm text-gray-500">執照：{leader.license_number}</p>
                 </div>
               </div>
               {leaderId === leader.id && (
-                <div className="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
               )}
@@ -531,7 +531,7 @@ function TourLeaderTab({ leaderId, onUpdate }: {
       </div>
 
       {selectedLeader && (
-        <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6">
+        <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <div className="flex items-center gap-3">
             <CheckCircle className="w-6 h-6 text-brand-600" />
             <div>

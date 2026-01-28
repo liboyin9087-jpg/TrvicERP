@@ -18,12 +18,12 @@ export default function QuickActionsWidget(_: { widget: Widget }) {
         return (
           <button
             key={action.id}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           >
-            <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center`}>
+            <div className={`w-10 h-10 rounded-lg ${action.color} flex items-center justify-center`}>
               <Icon size={18} className="text-white" />
             </div>
-            <span className="text-xs font-medium text-gray-700">{action.label}</span>
+            <span className="text-sm font-medium text-gray-700">{action.label}</span>
           </button>
         );
       })}

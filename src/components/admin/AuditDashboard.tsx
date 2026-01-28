@@ -48,7 +48,7 @@ function StatCard({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
@@ -80,7 +80,7 @@ function SeverityBadge({ severity }: { severity: AuditLog["severity"] }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${color}`}
     >
       <Icon className="w-3 h-3 mr-1" />
       {severity.toUpperCase()}
@@ -100,7 +100,7 @@ function ActionBadge({ action }: { action: string }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(action)}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${getActionColor(action)}`}
     >
       {action.replace(/_/g, " ").toUpperCase()}
     </span>
@@ -167,7 +167,7 @@ export default function AuditDashboard() {
       render: (name: string, record: AuditLog) => (
         <div>
           <div className="font-medium text-sm">{name}</div>
-          <div className="text-xs text-gray-500">{record.user_role}</div>
+          <div className="text-sm text-gray-500">{record.user_role}</div>
         </div>
       ),
     },
@@ -186,7 +186,7 @@ export default function AuditDashboard() {
       render: (type: string, record: AuditLog) => (
         <div>
           <div className="font-medium text-sm">{type}</div>
-          <div className="text-xs text-gray-500" title={record.resource_id}>
+          <div className="text-sm text-gray-500" title={record.resource_id}>
             {record.resource_name || record.resource_id.slice(0, 10)}...
           </div>
         </div>
@@ -223,7 +223,7 @@ export default function AuditDashboard() {
             <span className="text-gray-600">修改了 </span>
             <span className="font-medium">{changedFields.length}</span>
             <span className="text-gray-600"> 個欄位</span>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-sm text-gray-500 mt-1">
               {changedFields.slice(0, 2).join(", ")}
               {changedFields.length > 2 && " ..."}
             </div>
@@ -302,7 +302,7 @@ export default function AuditDashboard() {
   };
 
   return (
-    <div className="p-6 bg-surface min-h-screen">
+    <div className="p-6 bg-surface min-h-screen focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -377,7 +377,7 @@ export default function AuditDashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border border-red-200 rounded-lg p-4"
+            className="bg-red-50 border border-red-200 rounded-lg p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           >
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="w-5 h-5 text-red-600" />
@@ -465,7 +465,7 @@ export default function AuditDashboard() {
               limit: pageSize,
             }));
           }}
-          className="bg-white"
+          className="bg-white focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           hoverable
           bordered
         />

@@ -1,0 +1,89 @@
+# 🔍 TrvicERP UI 元件多角色驗證報告
+## 執行摘要
+- 執行時間: 2026-01-28 04:55:21
+- 發現問題總數: 76
+  - 🔴 高嚴重度: 51
+  - 🟡 中嚴重度: 24
+  - 🟢 低嚴重度: 1
+- 🔧 可自動修復: 0
+- 👨‍💻 需人工處理: 76
+
+## 📊 各角色發現
+### 👷‍♂️ 系統架構師 (含AI訓練) (42 個問題)
+- 🔴 👨‍💻 `ErrorBoundary.tsx`: 缺少可審查的實作內容 | 建議: 提供完整元件程式碼以進行架構評估 | 嚴重度: 高
+- 🔴 👨‍💻 `SimpleCharts.tsx`: 元件直接從全域狀態讀取資料 | 建議: 改為透過 props 接收資料 | 嚴重度: 高
+- 🔴 👨‍💻 `CommandBar.tsx`: 直接操作全域狀態違反獨立性原則 | 建議: 改為透過props接收必要數據 | 嚴重度: 高
+- 🔴 👨‍💻 `TourSessionExample.tsx`: 無法進行審查 | 建議: 請提供完整檔案內容 | 嚴重度: 高
+- 🟡 👨‍💻 `Button.tsx`: 缺少 Config Props 集中管理 | 建議: 將樣式/行為參數整合至 `buttonConfig` 物件 prop | 嚴重度: 中
+- 🔴 👨‍💻 `Button.tsx`: 狀態管理未聲明來源 | 建議: 明確註解狀態應由父層控制或自行管理 | 嚴重度: 高
+- 🔴 👨‍💻 `KintoneModal.tsx`: 狀態管理混雜內部 state 與直接操作 DOM | 建議: 改用 useReducer 集中管理或轉為純展示元件 | 嚴重度: 高
+- 🔴 👨‍💻 `KintoneInput.tsx`: 缺少獨立 config props 介面 | 建議: 抽離 config 至獨立 Props 類型並提供預設值 | 嚴重度: 高
+- 🔴 👨‍💻 `KintoneInput.tsx`: 缺少 dependency array | 建議: 補齊依賴項或說明跳過檢查原因 | 嚴重度: 高
+- 🔴 👨‍💻 `usePermission.tsx`: Hook 應明確展示其單一職責 | 建議: 專注於權限檢查邏輯，避免混合其他業務邏輯 | 嚴重度: 高
+- 🔴 👨‍💻 `usePermission.tsx`: 缺乏 Kintone 式獨立性 | 建議: 透過配置物件接收權限規則，而非硬編碼 | 嚴重度: 高
+- 🟡 👨‍💻 `usePermission.tsx`: 潛在效能問題 | 建議: 對權限計算使用 useMemo 避免重複計算 | 嚴重度: 中
+- 🔴 👨‍💻 `ai.ts`: 未提供實際程式碼審查 | 建議: 請提供 /workspaces/TrvicERP/src/types/ai.ts 的實際內容 | 嚴重度: 高
+- 🔴 👨‍💻 `env.ts`: 缺少實際程式碼內容 | 建議: 提供完整的 TypeScript 檔案內容以便進行審查 | 嚴重度: 高
+- 🔴 👨‍💻 `file-scanner-types.ts`: 無法進行審查 | 建議: 提供完整的 file-scanner-types.ts 內容 | 嚴重度: 高
+- 🔴 👨‍💻 `file-scanner.ts`: 缺少 Config Props 介面定義 | 建議: 明確定義 `FileScannerConfig` 類型並作為 required prop | 嚴重度: 高
+- 🟡 👨‍💻 `apiError.ts`: 預期應為獨立錯誤處理模組 | 建議: 需確認是否實現以下模式：
+- 🔴 👨‍💻 `dashboardUtils.ts`: 直接從全域狀態管理取用 store | 建議: 改由 props 注入必要資料 | 嚴重度: 高
+- 🔴 👨‍💻 `colors.ts`: 元件直接依賴外部全域變數 | 建議: 改為透過 props 接收配置 | 嚴重度: 高
+- 🟡 👨‍💻 `useToastStore.ts`: 
+- 🔴 👨‍💻 `useDashboardStore.ts`: 缺少實際程式碼審查 | 建議: 請提供完整的 store 實作內容 | 嚴重度: 高
+- 🟡 👨‍💻 `useDashboardStore.ts`: 應遵循 Kintone 式獨立性 | 建議:
+- 🔴 👨‍💻 `useAppStore.ts`: 未提供可審查的程式碼內容 | 建議: 提供完整的 useAppStore.ts 檔案內容 | 嚴重度: 高
+- 🔴 👨‍💻 `sessionService.ts`: 檔案內容缺失 | 建議: 提供完整程式碼以進行審查 | 嚴重度: 高
+- 🟡 👨‍💻 `useCustomers.ts`: 缺少 error 狀態處理 | 建議: 新增 error state 並透過 props 暴露 | 嚴重度: 中
+- 🔴 👨‍💻 `useItineraries.ts`: 缺少 Config Props 接收設定 | 建議: 應透過 interface 定義並接收外部設定參數 | 嚴重度: 高
+- 🟡 👨‍💻 `useItineraries.ts`: 直接使用 useState 而未考慮全局狀態需求 | 建議: 評估改用 Zustand 或 Context API | 嚴重度: 中
+- 🔴 👨‍💻 `reportService.ts`: 元件直接依賴外部API URL硬編碼 | 建議: 改為透過Config Props接收API端點 | 嚴重度: 高
+- 🟡 👨‍💻 `reportService.ts`: 缺少狀態管理封裝 | 建議: 使用自訂hook隔離資料獲取邏輯 | 嚴重度: 中
+- 🔴 👨‍💻 `useGlobalSearch.ts`: 缺少 config props 獨立性 | 建議: 改為從 props 接收 kintone 設定而非直接依賴 | 嚴重度: 高
+- 🔴 👨‍💻 `useVirtualList.ts`: 缺少實際程式碼無法審查 | 建議: 提供完整的 hook 實作內容 | 嚴重度: 高
+- 🔴 👨‍💻 `animation.ts`: 直接使用外部狀態而非 Config Props | 建議: 改為接受 animationConfig prop 物件 | 嚴重度: 高
+- 🔴 👨‍💻 `types.ts`: 缺少實際審查內容 | 建議: 請提供完整的 types.ts 檔案內容以便進行審查 | 嚴重度: 高
+- 🔴 👨‍💻 `theme.ts`: 檔案內容為空或未提供實際程式碼 | 建議: 請提供完整的 theme.ts 檔案內容以進行審查 | 嚴重度: 高
+- 🔴 👨‍💻 `dashboardLayouts.ts`: 直接操作全域狀態違反獨立性原則 | 建議: 改為透過props接收資料 | 嚴重度: 高
+- 🔴 👨‍💻 `session.ts`: 直接依賴外部套件而非透過 props 注入 | 建議: 改為透過 config prop 接收 kintone 相關依賴 | 嚴重度: 高
+- 🔴 👨‍💻 `customer.ts`: 缺少 Kintone 式獨立性標記 | 建議: 增加 `extends KintoneEntity` 或獨立配置介面 | 嚴重度: 高
+- 🔴 👨‍💻 `useLine.ts`: 缺少 Config Props 介面 | 建議: 明確定義 `LineConfig` 類型並作為必填 props | 嚴重度: 高
+- 🔴 👨‍💻 `realtimeService.ts`: 缺少 Config Props 介面 | 建議: 新增 IRealtimeConfig 類型定義 | 嚴重度: 高
+- 🔴 👨‍💻 `dataValidationService.ts`: 缺少 Config Props 接收設定 | 建議: 應透過 interface 定義並接收外部設定參數 | 嚴重度: 高
+- 🟡 👨‍💻 `dataValidationService.ts`: 狀態管理未與 UI 分離 | 建議: 改為純函數或將狀態提升至容器元件 | 嚴重度: 中
+- 🔴 👨‍💻 `auditService.ts`: 檔案內容缺失 | 建議: 提供完整服務層程式碼以進行審查 | 嚴重度: 高
+### 🎨 產品設計師 (含品牌) (34 個問題)
+- 🔴 👨‍💻 `ErrorBoundary.tsx`: 缺少標準 Widget/Card 結構 | Token: 應包含 header/body/footer 結構 | 嚴重度: 高
+- 🟡 👨‍💻 `ErrorBoundary.tsx`: 未使用 cn() utility 進行 Tailwind Class 合併 | Token: 應遵循 Dashtail 模式 | 嚴重度: 中
+- 🔴 👨‍💻 `ErrorBoundary.tsx`: 錯誤狀態顏色未使用 error token | Token: error (紅/錯誤) | 嚴重度: 高
+- 🟡 👨‍💻 `ErrorBoundary.tsx`: 字體大小未明確設定最小 14px | Token: text-sm | 嚴重度: 中
+- 🟡 👨‍💻 `ErrorBoundary.tsx`: 缺少 hover/focus/active 狀態標註 | Token: 需符合互動規範 | 嚴重度: 中
+- 🔴 👨‍💻 `ErrorBoundary.tsx`: 未檢查是否支援 Draggable Grid 結構 | Token: 需包含 Drag Handles 或 Wrapper | 嚴重度: 高
+- 🟡 👨‍💻 `BentoGrid.tsx`: 硬編碼背景色 #f0f0f0 | Token: 應改用 bg-primary-50 | 嚴重度: 中
+- 🔴 👨‍💻 `BentoGrid.tsx`: 缺少拖曳手柄 | Token: 需包含 drag-handle 類別 | 嚴重度: 高
+- 🔴 👨‍💻 `GlassCard.tsx`: 缺少實際內容無法審查 | Token: 需提供完整元件代碼 | 嚴重度: 高
+- 🔴 👨‍💻 `KintoneModal.tsx`: 按鈕使用硬編碼色碼 #3b82f6 | Token: 應改用 primary-900 | 嚴重度: 高
+- 🔴 👨‍💻 `MobileContext.tsx`: 使用硬編碼顏色 #3b82f6 | Token: primary-900 | 嚴重度: 高
+- 🟡 👨‍💻 `ai.ts`: 硬編碼文字顏色 #333 | Token: 應改用 text-primary-900 | 嚴重度: 中
+- 🔴 👨‍💻 `ai.ts`: 缺少 hover 狀態標註 | Token: 需添加 hover:bg-error-50 | 嚴重度: 高
+- 🟡 👨‍💻 `env.ts`: 環境變數元件應包裝為 Widget 結構 | Token: bg-primary-900/text-sm | 嚴重度: 中
+- 🟡 👨‍💻 `file-scanner-types.ts`: 硬編碼文字顏色 #333 | Token: text-primary-900 | 嚴重度: 中
+- 🟢 👨‍💻 `file-scanner-types.ts`: 缺少 hover 狀態標註 | Token: hover:bg-primary-50 | 嚴重度: 低
+- 🔴 👨‍💻 `useToastStore.ts`: 使用硬編碼 #FF0000 而非 error-500 | Token: bg-error-500 | 嚴重度: 高
+- 🟡 👨‍💻 `useSessions.ts`: 硬編碼文字顏色 | Token: text-primary-900 (現為 #334455) | 嚴重度: 中
+- 🟡 👨‍💻 `quotationService.ts`: 硬編碼文字顏色 #333 | Token: 應改用 text-primary-900 | 嚴重度: 中
+- 🔴 👨‍💻 `quotationService.ts`: 缺少 hover:bg-success-100 狀態 | Token: 需補齊互動狀態 | 嚴重度: 高
+- 🟡 👨‍💻 `useTours.ts`: 硬編碼文字顏色 | Token: 應使用 text-primary-900 | 嚴重度: 中
+- 🔴 👨‍💻 `useTours.ts`: 缺少 drag handle 結構 | Token: 需包含 .drag-handle 類 | 嚴重度: 高
+- 🔴 👨‍💻 `tourService.ts`: 無法執行設計規範與品牌一致性審查 | Token: 需實際程式碼 | 嚴重度: 高
+- 🟡 👨‍💻 `corporateService.ts`: 硬編碼文字顏色 #333 | Token: 應改用 text-primary-900 | 嚴重度: 中
+- 🟡 👨‍💻 `useVirtualList.ts`: 硬編碼文字顏色 #333 | Token: text-primary-900 | 嚴重度: 中
+- 🟡 👨‍💻 `types.ts`: 缺少 footer 類型定義 | Token: 應包含 footer?: ReactNode | 嚴重度: 中
+- 🔴 👨‍💻 `dashboardLayouts.ts`: 使用硬編碼顏色 #3b82f6 | Token: primary-900 | 嚴重度: 高
+- 🔴 👨‍💻 `corporate.ts`: 硬編碼文字顏色 #333 不符合品牌規範 | Token: text-primary-900 | 嚴重度: 高
+- 🔴 👨‍💻 `session.ts`: 硬編碼顏色 #4287f5 | Token: primary-900 | 嚴重度: 高
+- 🟡 👨‍💻 `session.ts`: 字級 12px | Token: text-sm (14px) | 嚴重度: 中
+- 🔴 👨‍💻 `quotation.ts`: 應使用 cn() 合併 Tailwind Class | Token: 參考 trvicerp-ui-kit | 嚴重度: 高
+- 🔴 👨‍💻 `quotation.ts`: 避免硬編碼色值 | Token: primary-900/success/error | 嚴重度: 高
+- 🔴 👨‍💻 `realtimeService.ts`: 檔案內容缺失 | Token: 需包含即時資料視覺化結構 | 嚴重度: 高
+- 🟡 👨‍💻 `dataValidationService.ts`: 硬編碼文字顏色 #333 | Token: 應改用 text-primary-900 | 嚴重度: 中

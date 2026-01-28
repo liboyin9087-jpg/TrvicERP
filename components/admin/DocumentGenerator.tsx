@@ -390,15 +390,15 @@ export default function DocumentGenerator({
           <motion.div
             key={doc.type}
             whileHover={{ y: -2 }}
-            className="bg-white p-6 rounded-2xl border border-gray-100"
+            className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center text-brand-600">
+              <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 {doc.icon}
               </div>
               <div>
                 <h4 className="font-bold text-gray-900">{doc.label}</h4>
-                <p className="text-xs text-gray-500">{doc.description}</p>
+                <p className="text-sm text-gray-500">{doc.description}</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -406,7 +406,7 @@ export default function DocumentGenerator({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleGenerate(doc.type)}
-                className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
+                className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 <FileText className="w-4 h-4" />
                 預覽
@@ -415,7 +415,7 @@ export default function DocumentGenerator({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleExportPDF(doc.type)}
-                className="flex-1 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1"
+                className="flex-1 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 <Download className="w-4 h-4" />
                 PDF
@@ -426,7 +426,7 @@ export default function DocumentGenerator({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleExportExcel(doc.type)}
-                className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1"
+                className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 <FileDown className="w-4 h-4" />
                 Excel
@@ -435,7 +435,7 @@ export default function DocumentGenerator({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => handleSendLine(doc.type)}
-                className="flex-1 py-2 bg-[#00B900] text-white rounded-lg text-sm font-medium hover:bg-[#009900] transition-colors flex items-center justify-center gap-1"
+                className="flex-1 py-2 bg-[#00B900] text-white rounded-lg text-sm font-medium hover:bg-[#009900] transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 <Send className="w-4 h-4" />
                 Line
@@ -447,11 +447,11 @@ export default function DocumentGenerator({
 
       {/* Preview Modal */}
       {showPreview && selectedDoc && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col"
+            className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           >
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">
@@ -460,13 +460,13 @@ export default function DocumentGenerator({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleExportPDF(selectedDoc)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                 >
                   <Printer className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setShowPreview(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                 >
                   <X className="w-5 h-5" />
                 </button>

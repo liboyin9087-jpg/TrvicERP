@@ -27,7 +27,7 @@ export default function PendingTasksWidget(_: { widget: Widget }) {
             <div className={`text-sm ${task.done ? 'line-through text-gray-400' : 'text-gray-800'}`}>
               {task.title}
             </div>
-            <div className="text-xs text-gray-500">Due {task.due}</div>
+            <div className="text-sm text-gray-500">Due {task.due}</div>
           </div>
         </label>
       ))}

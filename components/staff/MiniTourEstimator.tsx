@@ -40,7 +40,7 @@ export default function MiniTourEstimator() {
               <select
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-black"
               >
                 <option value="日本東京">日本東京</option>
                 <option value="日本大阪">日本大阪</option>
@@ -60,7 +60,7 @@ export default function MiniTourEstimator() {
                 max={14}
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value) || 1)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               />
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function MiniTourEstimator() {
                 max={100}
                 value={pax}
                 onChange={(e) => setPax(parseInt(e.target.value) || 1)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               />
             </div>
           </div>
@@ -87,9 +87,9 @@ export default function MiniTourEstimator() {
                 <button
                   key={level}
                   onClick={() => setHotelLevel(level)}
-                  className={`py-3 rounded-xl text-sm font-semibold transition-all ${
+                  className={`py-3 rounded-lg text-sm font-semibold transition-all ${
                     hotelLevel === level
-                      ? 'bg-black text-white'
+                      ? 'bg-primary-900 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -101,7 +101,7 @@ export default function MiniTourEstimator() {
         </div>
 
         {/* Result */}
-        <div className="bg-black text-white p-6 rounded-2xl">
+        <div className="bg-primary-900 text-white p-6 rounded-2xl">
           <div className="flex items-center gap-2 mb-6">
             <Calculator className="w-5 h-5" />
             <h3 className="font-bold">估價結果</h3>
@@ -132,7 +132,7 @@ export default function MiniTourEstimator() {
             </div>
           </div>
 
-          <div className="bg-white/10 rounded-xl p-4 mb-4">
+          <div className="bg-white/10 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400">每人費用</span>
               <span className="text-xl font-bold text-brand-400">
@@ -147,7 +147,7 @@ export default function MiniTourEstimator() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-sm text-gray-500 text-center">
             * 此為預估價格，實際報價以業務確認為準
           </p>
         </div>

@@ -96,22 +96,22 @@ function PassportCard({ item, isDragging }: PassportCardProps) {
   return (
     <div
       className={cn(
-        'bg-white p-4 rounded-xl border border-slate-100 group transition-all',
+        'bg-white p-4 rounded-lg border border-slate-100 group transition-all',
         isDragging && 'shadow-2xl rotate-2 scale-105 border-brand-300 opacity-50'
       )}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white font-bold focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             {item.name.charAt(0)}
           </div>
           <div>
             <p className="font-semibold text-slate-900">{item.name}</p>
-            <p className="text-xs text-slate-400 font-mono">{item.passportNo}</p>
+            <p className="text-sm text-slate-400 font-mono">{item.passportNo}</p>
           </div>
         </div>
         {isExpiringSoon(item.expiry) && (
-          <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center" title="護照即將到期">
+          <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800" title="護照即將到期">
             <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
           </div>
         )}
@@ -119,12 +119,12 @@ function PassportCard({ item, isDragging }: PassportCardProps) {
 
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs bg-slate-100 px-2.5 py-1 rounded-lg text-slate-600 font-medium">
+          <span className="text-sm bg-slate-100 px-2.5 py-1 rounded-lg text-slate-600 font-medium focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
             {item.tripName}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
+        <div className="grid grid-cols-2 gap-2 text-sm text-slate-400">
           <div className="flex items-center gap-1.5">
             <Calendar className="w-3 h-3" />
             <span>效期 {item.expiry}</span>
@@ -136,7 +136,7 @@ function PassportCard({ item, isDragging }: PassportCardProps) {
         </div>
 
         {item.submittedAt && (
-          <div className="flex items-center gap-1.5 text-xs text-emerald-600">
+          <div className="flex items-center gap-1.5 text-sm text-emerald-600">
             <CheckCircle className="w-3 h-3" />
             <span>繳交於 {item.submittedAt}</span>
           </div>
@@ -147,7 +147,7 @@ function PassportCard({ item, isDragging }: PassportCardProps) {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         >
           <MoreHorizontal className="w-4 h-4 text-slate-400" />
         </motion.button>
@@ -282,10 +282,10 @@ export default function PassportKanban() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <FileText className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+            <span className="text-sm font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               Passport Kanban
             </span>
           </div>
@@ -361,7 +361,7 @@ export default function PassportKanban() {
                   {/* Droppable Area */}
                   <div
                     id={column.id}
-                    className="flex-1 space-y-3 rounded-xl p-2 transition-colors min-h-[400px]"
+                    className="flex-1 space-y-3 rounded-lg p-2 transition-colors min-h-[400px]"
                   >
                     {filteredItems.map((item) => (
                       <SortablePassportCard key={item.id} item={item} />
@@ -369,11 +369,11 @@ export default function PassportKanban() {
 
                     {filteredItems.length === 0 && (
                       <div className="text-center py-12">
-                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                           <FileText className="w-6 h-6 text-slate-300" />
                         </div>
                         <p className="text-slate-400 text-sm">{search ? '沒有符合的結果' : '目前沒有項目'}</p>
-                        <p className="text-slate-300 text-xs mt-1">拖曳卡片到這裡</p>
+                        <p className="text-slate-300 text-sm mt-1">拖曳卡片到這裡</p>
                       </div>
                     )}
                   </div>
@@ -411,14 +411,14 @@ function StatCard({ icon: Icon, label, value, color, warning }: StatCardProps) {
       <div className="flex items-center gap-3">
         <div
           className={cn(
-            'w-10 h-10 rounded-xl flex items-center justify-center',
+            'w-10 h-10 rounded-lg flex items-center justify-center',
             color ? `bg-gradient-to-br ${colorStyles[color]}` : 'bg-slate-100'
           )}
         >
           <Icon className={cn('w-5 h-5', color ? 'text-white' : 'text-slate-600')} />
         </div>
         <div>
-          <p className="text-xs text-slate-500">{label}</p>
+          <p className="text-sm text-slate-500">{label}</p>
           <p className="text-xl font-bold text-slate-900">{value}</p>
         </div>
       </div>

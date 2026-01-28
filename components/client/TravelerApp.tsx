@@ -265,21 +265,21 @@ function TabBar({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
       <div className="flex justify-around items-center max-w-lg mx-auto">
         {tabs.map(({ key, icon: Icon, label, badge }) => (
           <button
             key={key}
             onClick={() => onTabChange(key)}
             className={cn(
-              "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all relative",
+              "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all relative",
               activeTab === key ? "text-brand-600" : "text-gray-500",
             )}
           >
             <Icon className="w-5 h-5" />
-            <span className="text-xs font-medium">{label}</span>
+            <span className="text-sm font-medium">{label}</span>
             {badge !== undefined && badge > 0 && (
-              <span className="absolute top-1 right-2 w-4 h-4 bg-error text-white text-[10px] rounded-full flex items-center justify-center">
+              <span className="absolute top-1 right-2 w-4 h-4 bg-error text-white text-[10px] rounded-full flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 {badge}
               </span>
             )}
@@ -292,7 +292,7 @@ function TabBar({
 
 function EligibilityCard({ user }: { user: UserProfile }) {
   return (
-    <div className="bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl p-5 text-white">
+    <div className="bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl p-5 text-white focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -347,7 +347,7 @@ function TripCard({
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
+      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
     >
       <div className="relative h-40">
         <img
@@ -355,11 +355,11 @@ function TripCard({
           alt={trip.name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
         <div className="absolute top-3 right-3">
           <span
             className={cn(
-              "px-2 py-1 rounded-full text-xs font-semibold",
+              "px-2 py-1 rounded-full text-sm font-semibold",
               trip.status === "open" && "bg-success text-white",
               trip.status === "closing" && "bg-warning text-white",
               trip.status === "full" && "bg-gray-500 text-white",
@@ -399,19 +399,19 @@ function TripCard({
           {trip.highlights.slice(0, 3).map((h, i) => (
             <span
               key={i}
-              className="text-xs bg-brand-50 text-brand-600 px-2 py-1 rounded-full"
+              className="text-sm bg-brand-50 text-brand-600 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             >
               {h}
             </span>
           ))}
           {trip.highlights.length > 3 && (
-            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
+            <span className="text-sm bg-gray-100 text-gray-500 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               +{trip.highlights.length - 3}
             </span>
           )}
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+        <div className="bg-gray-50 rounded-lg p-3 space-y-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">行程費用</span>
             <span className="font-semibold text-gray-900">
@@ -438,7 +438,7 @@ function TripCard({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
@@ -452,7 +452,7 @@ function TripCard({
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-sm text-gray-500">
               剩餘 {trip.spotsLeft}/{trip.totalSpots} 名額
             </p>
           </div>
@@ -462,7 +462,7 @@ function TripCard({
             onClick={onRegister}
             disabled={trip.status === "full"}
             className={cn(
-              "px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors",
+              "px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors",
               trip.status === "full"
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-brand-600 text-white hover:bg-brand-700",
@@ -514,7 +514,7 @@ function HomeTab({
             {user.department} · {user.employeeId}
           </p>
         </div>
-        <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
+        <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white text-xl font-bold focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           {user.name[0]}
         </div>
       </div>
@@ -524,16 +524,16 @@ function HomeTab({
 
       {/* Upcoming Trip */}
       {upcomingTrip && (
-        <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
+        <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <div className="relative h-32">
             <img
               src={upcomingTrip.image}
               alt={upcomingTrip.tripName}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
             <div className="absolute bottom-3 left-3 right-3 text-white">
-              <span className="badge-success text-xs px-2 py-0.5 rounded-full font-semibold">
+              <span className="badge-success text-sm px-2 py-0.5 rounded-full font-semibold">
                 即將出發
               </span>
               <h3 className="font-bold mt-1">{upcomingTrip.tripName}</h3>
@@ -546,9 +546,9 @@ function HomeTab({
                   <p className="text-3xl font-bold text-brand-600">
                     {daysUntilTrip}
                   </p>
-                  <p className="text-xs text-gray-500">天後出發</p>
+                  <p className="text-sm text-gray-500">天後出發</p>
                 </div>
-                <div className="h-10 w-px bg-gray-200" />
+                <div className="h-10 w-px bg-gray-200 focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
                 <div>
                   <p className="text-sm text-gray-500">出發日期</p>
                   <p className="font-semibold">{upcomingTrip.startDate}</p>
@@ -557,7 +557,7 @@ function HomeTab({
               <Button
                 onClick={() => onNavigate("mytrips")}
                 variant="ghost"
-                className="!p-0 !text-brand-600 text-sm font-medium hover:!bg-transparent hover:opacity-80"
+                className="!p-0 !text-brand-600 text-sm font-medium hover:!bg-transparent hover:opacity-80 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 查看詳情 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -570,20 +570,20 @@ function HomeTab({
       <div className="grid grid-cols-2 gap-3">
         <Button
           onClick={() => onNavigate("explore")}
-          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-emerald-500 to-green-600 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full"
+          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-emerald-500 to-green-600 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         >
           <MapPin className="w-6 h-6 mb-2" />
           <p className="font-bold">探索行程</p>
-          <p className="text-xs text-white/80 font-normal">查看可報名的團體</p>
+          <p className="text-sm text-white/80 font-normal">查看可報名的團體</p>
         </Button>
 
         <Button
           onClick={() => onNavigate("mytrips")}
-          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-brand-500 to-brand-700 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full"
+          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-brand-500 to-brand-700 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         >
           <Calendar className="w-6 h-6 mb-2" />
           <p className="font-bold">我的行程</p>
-          <p className="text-xs text-white/80 font-normal">
+          <p className="text-sm text-white/80 font-normal">
             {registrations.length} 筆報名記錄
           </p>
         </Button>
@@ -591,10 +591,10 @@ function HomeTab({
 
       {/* Notifications Preview */}
       {unreadNotifications > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <Bell className="w-5 h-5 text-amber-600" />
               </div>
               <div>
@@ -615,7 +615,7 @@ function HomeTab({
       )}
 
       {/* To-Do List */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <div className="p-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">待辦事項</h3>
         </div>
@@ -680,7 +680,7 @@ function TodoItem({
         >
           {title}
         </p>
-        <p className="text-xs text-gray-500">{subtitle}</p>
+        <p className="text-sm text-gray-500">{subtitle}</p>
       </div>
       {action}
     </div>
@@ -704,7 +704,7 @@ function ExploreTab({
       </div>
 
       {/* Eligibility reminder */}
-      <div className="bg-brand-50 border border-brand-200 rounded-xl p-4 flex items-center gap-3">
+      <div className="bg-brand-50 border border-brand-200 rounded-lg p-4 flex items-center gap-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <Shield className="w-5 h-5 text-brand-600 flex-shrink-0" />
         <div>
           <p className="text-sm text-brand-900">
@@ -786,7 +786,7 @@ function RegistrationForm({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 bg-primary-900/50 z-50 flex items-end sm:items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
       onClick={onClose}
     >
       <motion.div
@@ -794,7 +794,7 @@ function RegistrationForm({
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
       >
         {/* Header */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -804,7 +804,7 @@ function RegistrationForm({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-xl"
+            className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
           >
             <X className="w-5 h-5" />
           </button>
@@ -829,7 +829,7 @@ function RegistrationForm({
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {step === 1 && (
             <>
-              <div className="bg-gray-50 rounded-xl p-4">
+              <div className="bg-gray-50 rounded-lg p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <h3 className="font-semibold text-gray-900">{trip.name}</h3>
                 <p className="text-sm text-gray-500 mt-1">
                   {trip.destination} · {trip.startDate} ~ {trip.endDate}
@@ -850,7 +850,7 @@ function RegistrationForm({
                       key={value}
                       onClick={() => setRoomType(value)}
                       className={cn(
-                        "p-3 rounded-xl border-2 flex flex-col items-center gap-1 transition-all",
+                        "p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all",
                         roomType === value
                           ? "border-brand-600 bg-brand-50"
                           : "border-gray-200 hover:border-gray-300",
@@ -894,7 +894,7 @@ function RegistrationForm({
                       key={value}
                       onClick={() => setMealPreference(value)}
                       className={cn(
-                        "p-3 rounded-xl border-2 text-sm font-medium transition-all",
+                        "p-3 rounded-lg border-2 text-sm font-medium transition-all",
                         mealPreference === value
                           ? "border-brand-600 bg-brand-50 text-brand-600"
                           : "border-gray-200 text-gray-700 hover:border-gray-300",
@@ -923,7 +923,7 @@ function RegistrationForm({
                       type="button"
                       onClick={() => setSeatPreference(value)}
                       className={cn(
-                        "p-3 rounded-xl border-2 text-sm font-medium transition-all flex items-center justify-center gap-2",
+                        "p-3 rounded-lg border-2 text-sm font-medium transition-all flex items-center justify-center gap-2",
                         seatPreference === value
                           ? "border-brand-600 bg-brand-50 text-brand-600"
                           : "border-gray-200 text-gray-700 hover:border-gray-300",
@@ -934,7 +934,7 @@ function RegistrationForm({
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-sm text-gray-500 mt-2">
                   系統將盡量依您的偏好安排座位
                 </p>
               </div>
@@ -956,7 +956,7 @@ function RegistrationForm({
                   </button>
                 </div>
                 {companions.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-6 bg-gray-50 rounded-xl">
+                  <p className="text-sm text-gray-500 text-center py-6 bg-gray-50 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                     尚未新增同行者
                   </p>
                 ) : (
@@ -964,7 +964,7 @@ function RegistrationForm({
                     {companions.map((c, i) => (
                       <div
                         key={i}
-                        className="bg-gray-50 rounded-xl p-3 space-y-2"
+                        className="bg-gray-50 rounded-lg p-3 space-y-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-gray-700">
@@ -1017,7 +1017,7 @@ function RegistrationForm({
                   onChange={(e) => setSpecialNeeds(e.target.value)}
                   placeholder="如：輪椅協助、過敏食物、其他需求..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm resize-none"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
                 />
               </div>
             </>
@@ -1025,7 +1025,7 @@ function RegistrationForm({
 
           {step === 3 && (
             <>
-              <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
+              <div className="bg-brand-50 border border-brand-200 rounded-lg p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <h4 className="font-semibold text-brand-900 mb-3">報名確認</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -1073,7 +1073,7 @@ function RegistrationForm({
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">行程費用</span>
                   <span className="font-medium">
@@ -1094,7 +1094,7 @@ function RegistrationForm({
                 </div>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800">
                   報名後需待福委會審核，審核通過後將收到確認通知。自付金額將於出發前統一收取。
@@ -1109,7 +1109,7 @@ function RegistrationForm({
           {step > 1 && (
             <button
               onClick={() => setStep(step - 1)}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold"
+              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             >
               上一步
             </button>
@@ -1117,14 +1117,14 @@ function RegistrationForm({
           {step < 3 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="flex-1 py-3 bg-brand-600 text-white rounded-xl font-semibold"
+              className="flex-1 py-3 bg-brand-600 text-white rounded-lg font-semibold focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             >
               下一步
             </button>
           ) : (
             <button
               onClick={handleSubmit}
-              className="flex-1 py-3 bg-brand-600 text-white rounded-xl font-semibold"
+              className="flex-1 py-3 bg-brand-600 text-white rounded-lg font-semibold focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
             >
               確認報名
             </button>
@@ -1170,7 +1170,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
             return (
               <div
                 key={reg.id}
-                className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
+                className="bg-white rounded-2xl border border-gray-100 overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 <div className="relative h-32">
                   <img
@@ -1178,11 +1178,11 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                     alt={reg.tripName}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
                   <div className="absolute top-3 right-3">
                     <span
                       className={cn(
-                        "px-2 py-1 rounded-full text-xs font-semibold",
+                        "px-2 py-1 rounded-full text-sm font-semibold",
                         status.color,
                       )}
                     >
@@ -1226,7 +1226,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                   </div>
 
                   {reg.specialNeeds && (
-                    <div className="bg-orange-50 rounded-lg p-2 flex items-center gap-2">
+                    <div className="bg-orange-50 rounded-lg p-2 flex items-center gap-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                       <AlertCircle className="w-4 h-4 text-orange-500" />
                       <span className="text-sm text-orange-700">
                         特殊需求：{reg.specialNeeds}
@@ -1237,14 +1237,14 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                   <div className="flex gap-2 pt-2">
                     <Button
                       variant="secondary"
-                      className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium"
+                      className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                     >
                       <Download className="w-4 h-4" />
                       下載行程表
                     </Button>
                     <Button
                       variant="secondary"
-                      className="flex-1 py-2 bg-brand-100 text-brand-700 rounded-lg text-sm font-medium"
+                      className="flex-1 py-2 bg-brand-100 text-brand-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                     >
                       <ExternalLink className="w-4 h-4" />
                       查看詳情
@@ -1303,7 +1303,7 @@ function NotificationsTab({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "bg-white rounded-xl border p-4",
+                  "bg-white rounded-lg border p-4",
                   notif.read
                     ? "border-gray-100"
                     : "border-brand-200 bg-brand-50/30",
@@ -1313,7 +1313,7 @@ function NotificationsTab({
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center",
+                      "w-10 h-10 rounded-lg flex items-center justify-center",
                       config.color,
                     )}
                   >
@@ -1325,13 +1325,13 @@ function NotificationsTab({
                         {notif.title}
                       </h4>
                       {!notif.read && (
-                        <span className="w-2 h-2 bg-brand-600 rounded-full" />
+                        <span className="w-2 h-2 bg-brand-600 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
                       )}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
                       {notif.message}
                     </p>
-                    <p className="text-xs text-gray-400 mt-2">{notif.date}</p>
+                    <p className="text-sm text-gray-400 mt-2">{notif.date}</p>
                   </div>
                 </div>
               </motion.div>
@@ -1355,7 +1355,7 @@ function FeedbackTab() {
   if (submitted) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <CheckCircle className="w-8 h-8 text-green-600" />
         </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">感謝您的回饋！</h2>
@@ -1371,7 +1371,7 @@ function FeedbackTab() {
         <p className="text-gray-500 mt-1">填寫滿意度調查</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <div>
           <h3 className="font-semibold text-gray-900 mb-2">北海道冬季雪祭</h3>
           <p className="text-sm text-gray-500">2024-02-01 ~ 2024-02-06</p>
@@ -1414,7 +1414,7 @@ function FeedbackTab() {
             onChange={(e) => setComment(e.target.value)}
             placeholder="請分享您的旅遊體驗與改善建議..."
             rows={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none"
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm resize-none"
           />
         </div>
 
@@ -1422,7 +1422,7 @@ function FeedbackTab() {
           onClick={handleSubmit}
           disabled={rating === 0}
           className={cn(
-            "w-full py-3 rounded-xl font-semibold transition-colors",
+            "w-full py-3 rounded-lg font-semibold transition-colors",
             rating > 0
               ? "bg-brand-600 text-white hover:bg-brand-700"
               : "bg-gray-200 text-gray-500 cursor-not-allowed",
@@ -1505,7 +1505,7 @@ export default function TravelerApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
       {/* Main Content */}
       <main className="p-4 max-w-lg mx-auto">
         <AnimatePresence mode="wait">

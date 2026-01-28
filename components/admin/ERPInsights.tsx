@@ -43,10 +43,10 @@ export default function ERPInsights() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <BarChart3 className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xs font-semibold text-brand-600 bg-brand-50 px-2 py-1 rounded-full">
+            <span className="text-sm font-semibold text-brand-600 bg-brand-50 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               Dashboard
             </span>
           </div>
@@ -58,10 +58,10 @@ export default function ERPInsights() {
           className="glass-card px-4 py-2.5 flex items-center gap-3"
         >
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-500 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"></span>
           </span>
-          <span className="text-xs font-semibold text-gray-600">即時數據同步中</span>
+          <span className="text-sm font-semibold text-gray-600">即時數據同步中</span>
         </motion.div>
       </motion.div>
 
@@ -108,12 +108,12 @@ export default function ERPInsights() {
           <div className="glass-card p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                   <ArrowDownCircle className="text-brand-500 w-4 h-4" />
                 </div>
                 銷售轉化漏斗
               </h3>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 本週數據
               </span>
             </div>
@@ -132,22 +132,22 @@ export default function ERPInsights() {
                     <div className="w-28 text-right">
                       <div className="flex items-center justify-end gap-2 mb-1">
                         <Icon className="w-4 h-4 text-gray-400" />
-                        <span className="text-xs font-medium text-gray-500">{stage.label}</span>
+                        <span className="text-sm font-medium text-gray-500">{stage.label}</span>
                       </div>
                       <div className="text-xl font-bold text-gray-900 font-mono">{stage.count.toLocaleString()}</div>
                     </div>
-                    <div className="flex-1 h-12 relative overflow-hidden rounded-xl bg-gray-100/50">
+                    <div className="flex-1 h-12 relative overflow-hidden rounded-lg bg-gray-100/50 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${percentage}%` }}
                         transition={{ delay: i * 0.15 + 0.3, duration: 0.8, ease: 'easeOut' }}
                         className={cn(
-                          'h-full rounded-xl bg-gradient-to-r shadow-sm',
+                          'h-full rounded-lg bg-gradient-to-r shadow-sm',
                           stage.color
                         )}
                       />
                       <div className="absolute inset-0 flex items-center px-4">
-                        <span className="text-xs font-bold text-white drop-shadow-md">
+                        <span className="text-sm font-bold text-white drop-shadow-md">
                           {percentage.toFixed(0)}%
                         </span>
                       </div>
@@ -177,7 +177,7 @@ export default function ERPInsights() {
                 <TrendingUp className="w-4 h-4 text-brand-400" />
                 購物通路排行
               </h3>
-              <span className="text-xs text-gray-400 bg-white/10 px-2 py-1 rounded-full">
+              <span className="text-sm text-gray-400 bg-white/10 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 TOP 3
               </span>
             </div>
@@ -195,10 +195,10 @@ export default function ERPInsights() {
               className="mt-6 pt-5 border-t border-white/10"
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-gradient-brand flex items-center justify-center">
+                <div className="w-6 h-6 rounded-lg bg-gradient-brand flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                   <Sparkles className="w-3 h-3 text-white" />
                 </div>
-                <p className="text-xs text-gray-400 uppercase font-semibold tracking-wider">AI 策略建議</p>
+                <p className="text-sm text-gray-400 uppercase font-semibold tracking-wider">AI 策略建議</p>
               </div>
               <p className="text-sm text-gray-300 leading-relaxed">
                 "目前「高山茶」類別轉化率最高，建議在 Day 2 加強行程導覽，預估可提升 <span className="text-brand-400 font-bold">5%</span> 淨利。"
@@ -267,18 +267,18 @@ function KPICard({ title, value, trend, icon, color, delay }: KPICardProps) {
         <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
           className={cn(
-            'w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg',
+            'w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-lg',
             styles.iconBg
           )}
         >
           {icon}
         </motion.div>
-        <div className={cn('flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full', styles.trendBg)}>
+        <div className={cn('flex items-center gap-1 text-sm font-bold px-2.5 py-1 rounded-full', styles.trendBg)}>
           <ArrowUpRight className="w-3 h-3" />
           {trend}
         </div>
       </div>
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{title}</p>
+      <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">{title}</p>
       <h4 className="text-2xl font-bold mt-1 text-gray-900 font-mono tracking-tight">{value}</h4>
     </motion.div>
   );
@@ -301,7 +301,7 @@ function RankingItem({ rank, label, value, percent }: RankingItemProps) {
       <div className="flex items-center justify-between text-sm mb-2">
         <div className="flex items-center gap-2">
           <span className={cn(
-            'w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold',
+            'w-5 h-5 rounded-md flex items-center justify-center text-sm font-bold',
             rank === 1 ? 'bg-yellow-500 text-white' : 'bg-white/10 text-gray-400'
           )}>
             {rank}
@@ -310,12 +310,12 @@ function RankingItem({ rank, label, value, percent }: RankingItemProps) {
         </div>
         <span className="font-bold font-mono text-white">{value}</span>
       </div>
-      <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
           transition={{ delay: rank * 0.15 + 0.5, duration: 0.6 }}
-          className="h-full bg-gradient-to-r from-brand-400 to-brand-500 rounded-full"
+          className="h-full bg-gradient-to-r from-brand-400 to-brand-500 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         />
       </div>
     </motion.div>
@@ -340,13 +340,13 @@ function QuickStat({ label, value, change, suffix, isNegativeGood }: QuickStatPr
       whileHover={{ scale: 1.02 }}
       className="glass-card p-4"
     >
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className="text-sm text-gray-500 mb-1">{label}</p>
       <div className="flex items-baseline gap-2">
         <span className="text-xl font-bold text-gray-900 font-mono">{value}</span>
         {suffix && <span className="text-sm text-gray-400">{suffix}</span>}
         {!isNeutral && (
           <span className={cn(
-            'text-xs font-bold',
+            'text-sm font-bold',
             isGood ? 'text-green-600' : 'text-red-500'
           )}>
             {change}

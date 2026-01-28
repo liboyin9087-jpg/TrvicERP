@@ -45,7 +45,7 @@ function TypingIndicator() {
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          className="w-2 h-2 bg-gray-400 rounded-full"
+          className="w-2 h-2 bg-neutral-400 rounded-full"
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
         />
@@ -132,7 +132,8 @@ export default function LegalAssistant() {
             onClick={() => setIsOpen(true)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center"
+            className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center
+                       focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2"
           >
             <Scale className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
@@ -157,15 +158,15 @@ export default function LegalAssistant() {
               <div className="flex items-center gap-3">
                 <motion.div
                   whileHover={{ rotate: 10 }}
-                  className="w-11 h-11 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center"
+                  className="w-11 h-11 bg-neutral-0/20 backdrop-blur rounded-lg flex items-center justify-center"
                 >
                   <Scale className="w-5 h-5" />
                 </motion.div>
                 <div>
                   <h3 className="font-semibold text-lg">法規小助理</h3>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                    <p className="text-xs text-white/80">AI 線上服務中</p>
+                    <span className="w-2 h-2 bg-success-400 rounded-full animate-pulse" />
+                    <p className="text-sm text-white/80">AI 線上服務中</p>
                   </div>
                 </div>
               </div>
@@ -173,14 +174,14 @@ export default function LegalAssistant() {
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                className="p-2 hover:bg-neutral-0/20 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-0/40"
               >
                 <X className="w-5 h-5" />
               </motion.button>
             </div>
 
             {/* Messages - iMessage Style */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-slate-50/50 to-white/30 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-neutral-50/50 to-neutral-0/30 scrollbar-thin scrollbar-thumb-brand-200 scrollbar-track-brand-50">
               {messages.map((message, index) => (
                 <motion.div
                   key={message.id}
@@ -195,15 +196,15 @@ export default function LegalAssistant() {
                       'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm',
                       message.role === 'user'
                         ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-br-md'
-                        : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
+                        : 'bg-neutral-0 text-neutral-800 rounded-bl-md border border-neutral-100'
                     )}
                   >
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
 
                     {/* Document References */}
                     {message.documents && message.documents.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-200/50">
-                        <p className="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
+                      <div className="mt-3 pt-3 border-t border-neutral-200/50">
+                        <p className="text-sm text-neutral-500 mb-2 flex items-center gap-1.5">
                           <BookOpen className="w-3 h-3" />
                           參考法規：
                         </p>
@@ -212,10 +213,11 @@ export default function LegalAssistant() {
                             <motion.div
                               key={doc.id}
                               whileHover={{ scale: 1.02 }}
-                              className="text-xs bg-brand-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-brand-100 transition-colors"
+                              className="text-sm bg-brand-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-brand-100 transition-colors
+                                         focus:outline-none focus:ring-2 focus:ring-brand-200"
                             >
                               <span className="font-medium text-brand-700">{doc.title}</span>
-                              <span className="text-brand-400 ml-1.5 text-[10px]">({doc.category})</span>
+                              <span className="text-brand-400 ml-1.5 text-sm">({doc.category})</span> {/* Changed to text-sm */}
                             </motion.div>
                           ))}
                         </div>
@@ -223,8 +225,8 @@ export default function LegalAssistant() {
                     )}
 
                     <p className={cn(
-                      'text-[10px] mt-2',
-                      message.role === 'user' ? 'text-white/60' : 'text-gray-400'
+                      'text-sm mt-2', // Changed to text-sm
+                      message.role === 'user' ? 'text-white/60' : 'text-neutral-400'
                     )}>
                       {message.timestamp.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -239,7 +241,7 @@ export default function LegalAssistant() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex justify-start"
                 >
-                  <div className="bg-white rounded-2xl rounded-bl-md shadow-sm border border-gray-100">
+                  <div className="bg-neutral-0 rounded-2xl rounded-bl-md shadow-sm border border-neutral-100">
                     <TypingIndicator />
                   </div>
                 </motion.div>
@@ -255,9 +257,9 @@ export default function LegalAssistant() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="px-4 pb-2 bg-white/50"
+                  className="px-4 pb-2 bg-neutral-0/50"
                 >
-                  <p className="text-xs text-gray-500 mb-2 font-medium">快速提問</p>
+                  <p className="text-sm text-neutral-500 mb-2 font-medium">快速提問</p>
                   <div className="flex flex-wrap gap-1.5">
                     {QUICK_QUESTIONS.slice(0, 3).map((q, idx) => (
                       <motion.button
@@ -265,7 +267,8 @@ export default function LegalAssistant() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleQuickQuestion(q)}
-                        className="text-xs bg-white text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 hover:bg-brand-50 hover:border-brand-200 transition-all shadow-sm"
+                        className="text-sm bg-neutral-0 text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 hover:bg-brand-50 hover:border-brand-200 transition-all shadow-sm
+                                   focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-1"
                       >
                         {q}
                       </motion.button>
@@ -276,7 +279,7 @@ export default function LegalAssistant() {
             </AnimatePresence>
 
             {/* Input - iOS Style */}
-            <div className="p-4 bg-white/80 backdrop-blur border-t border-gray-200/50">
+            <div className="p-4 bg-neutral-0/80 backdrop-blur border-t border-neutral-200/50">
               <div className="flex items-center gap-2">
                 <div className="flex-1 relative">
                   <input
@@ -285,7 +288,7 @@ export default function LegalAssistant() {
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="輸入您的法規問題..."
-                    className="w-full px-4 py-3 bg-gray-100/80 rounded-2xl focus:ring-2 focus:ring-brand-500/30 focus:bg-white border-0 text-sm transition-all outline-none"
+                    className="w-full px-4 py-3 bg-neutral-100/80 rounded-2xl focus:ring-2 focus:ring-brand-500/30 focus:bg-neutral-0 border-0 text-sm transition-all outline-none"
                     disabled={isLoading}
                   />
                 </div>
@@ -295,16 +298,16 @@ export default function LegalAssistant() {
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
                   className={cn(
-                    'w-11 h-11 rounded-xl flex items-center justify-center transition-all',
+                    'w-11 h-11 rounded-lg flex items-center justify-center transition-all',
                     input.trim() && !isLoading
-                      ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30'
-                      : 'bg-gray-200 text-gray-400'
+                      ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2'
+                      : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
                   )}
                 >
                   <Send className="w-4 h-4" />
                 </motion.button>
               </div>
-              <p className="text-[10px] text-gray-400 text-center mt-2">
+              <p className="text-sm text-neutral-400 text-center mt-2"> {/* Changed to text-sm */}
                 AI 回答僅供參考，實際情況請以主管機關公告為準
               </p>
             </div>

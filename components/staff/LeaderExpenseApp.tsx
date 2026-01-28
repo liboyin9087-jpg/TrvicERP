@@ -39,47 +39,47 @@ export default function LeaderExpenseApp() {
           <h2 className="text-2xl font-bold text-gray-900">領隊報帳</h2>
           <p className="text-gray-500 mt-1">管理出團費用申報</p>
         </div>
-        <button className="bg-black text-white px-5 py-3 rounded-xl font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors">
+        <button className="bg-primary-900 text-white px-5 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <Plus className="w-5 h-5" /> 新增支出
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <p className="text-sm text-gray-500">總支出</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">NT$ {totalAmount.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <p className="text-sm text-gray-500">已核准</p>
           <p className="text-2xl font-bold text-brand-600 mt-1">NT$ {approvedAmount.toLocaleString()}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <p className="text-sm text-gray-500">待審核</p>
           <p className="text-2xl font-bold text-yellow-600 mt-1">{expenses.filter(e => e.status === 'pending').length} 筆</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100">
+      <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
         {expenses.map((expense) => {
           const status = getStatusStyle(expense.status);
           return (
-            <div key={expense.id} className="p-4 hover:bg-gray-50 transition-colors">
+            <div key={expense.id} className="p-4 hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                     <Receipt className="w-6 h-6 text-gray-500" />
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">{expense.description}</p>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{expense.category}</span>
-                      <span className="text-xs text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3" /> {expense.date}</span>
+                      <span className="text-sm bg-gray-100 px-2 py-0.5 rounded focus:ring-2 focus:ring-primary-300 active:bg-primary-800">{expense.category}</span>
+                      <span className="text-sm text-gray-500 flex items-center gap-1"><Calendar className="w-3 h-3" /> {expense.date}</span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-gray-900">NT$ {expense.amount.toLocaleString()}</p>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status.bg} ${status.text}`}>{status.label}</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-sm font-semibold ${status.bg} ${status.text}`}>{status.label}</span>
                 </div>
               </div>
             </div>

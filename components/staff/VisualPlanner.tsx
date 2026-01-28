@@ -51,12 +51,12 @@ export default function VisualPlanner() {
           <p className="text-sm text-gray-500">拖曳景點至每日行程</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button onClick={() => setDayCount(Math.max(1, dayCount - 1))} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors"><Minus className="w-4 h-4" /></button>
             <span className="px-4 py-1 font-semibold">{dayCount} 天</span>
             <button onClick={() => setDayCount(Math.min(14, dayCount + 1))} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors"><Plus className="w-4 h-4" /></button>
           </div>
-          <button className="bg-black text-white px-5 py-2 rounded-xl font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors"><Save className="w-4 h-4" /> 儲存</button>
+          <button className="bg-primary-900 text-white px-5 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-gray-800 transition-colors"><Save className="w-4 h-4" /> 儲存</button>
         </div>
       </header>
 
@@ -65,12 +65,12 @@ export default function VisualPlanner() {
           <div className="p-4 border-b border-gray-100">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="搜尋景點..." className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black" />
+              <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="搜尋景點..." className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {filteredAttractions.map((attraction) => (
-              <div key={attraction.id} className="bg-white border border-gray-100 rounded-xl p-3 hover:shadow-md transition-all cursor-pointer group">
+              <div key={attraction.id} className="bg-white border border-gray-100 rounded-lg p-3 hover:shadow-md transition-all cursor-pointer group">
                 <div className="flex gap-3">
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                     {attraction.image_url && <img src={attraction.image_url} alt={attraction.name} className="w-full h-full object-cover" />}
@@ -78,21 +78,21 @@ export default function VisualPlanner() {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-gray-900 text-sm truncate">{attraction.name}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded font-medium">{attraction.type}</span>
-                      <span className="text-xs text-gray-400">{attraction.duration_minutes}分鐘</span>
+                      <span className="text-sm bg-brand-50 text-brand-700 px-2 py-0.5 rounded font-medium">{attraction.type}</span>
+                      <span className="text-sm text-gray-400">{attraction.duration_minutes}分鐘</span>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {Array.from({ length: Math.min(dayCount, 5) }).map((_, idx) => (
-                    <button key={idx} onClick={() => addToDay(idx + 1, attraction)} className="flex-1 py-1.5 bg-gray-100 hover:bg-black hover:text-white rounded-lg text-xs font-semibold transition-colors">D{idx + 1}</button>
+                    <button key={idx} onClick={() => addToDay(idx + 1, attraction)} className="flex-1 py-1.5 bg-gray-100 hover:bg-primary-900 hover:text-white rounded-lg text-sm font-semibold transition-colors">D{idx + 1}</button>
                   ))}
                 </div>
               </div>
             ))}
           </div>
           <div className="p-4 bg-brand-50 border-t border-brand-100 text-center">
-            <p className="text-xs text-brand-700 font-semibold">💡 點擊 D1-D5 快速加入行程</p>
+            <p className="text-sm text-brand-700 font-semibold">💡 點擊 D1-D5 快速加入行程</p>
           </div>
         </aside>
 
@@ -103,13 +103,13 @@ export default function VisualPlanner() {
               const dayItems = itinerary[dayKey] || [];
               return (
                 <div key={dayKey} className="w-72 flex-shrink-0 bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
-                  <div className="bg-black text-white p-4">
+                  <div className="bg-primary-900 text-white p-4">
                     <h3 className="font-bold">Day {idx + 1}</h3>
                     <p className="text-sm text-gray-400">{dayItems.length} 個景點</p>
                   </div>
                   <div className="flex-1 p-4 space-y-3 overflow-y-auto">
                     {dayItems.map((item) => (
-                      <div key={item.instanceId} className="bg-gray-50 rounded-xl p-3 group">
+                      <div key={item.instanceId} className="bg-gray-50 rounded-lg p-3 group">
                         <div className="flex items-start gap-3">
                           <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                             {item.attraction.image_url && <img src={item.attraction.image_url} alt="" className="w-full h-full object-cover" />}
@@ -120,15 +120,15 @@ export default function VisualPlanner() {
                               <button onClick={() => removeFromDay(dayKey, item.instanceId)} className="p-1 hover:bg-red-100 rounded text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-3 h-3" /></button>
                             </div>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded">{item.attraction.type}</span>
-                              <span className="text-xs text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {item.time}</span>
+                              <span className="text-sm bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded">{item.attraction.type}</span>
+                              <span className="text-sm text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {item.time}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     ))}
                     {dayItems.length === 0 && (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl py-12">
+                      <div className="h-full flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg py-12">
                         <Plus className="w-8 h-8 mb-2" />
                         <p className="text-sm">從左側加入景點</p>
                       </div>

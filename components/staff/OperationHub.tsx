@@ -36,29 +36,29 @@ export default function OperationHub() {
           <h2 className="text-2xl font-bold text-gray-900">營運中心</h2>
           <p className="text-gray-500 mt-1">即時監控出團狀態</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-brand-100 rounded-xl">
-          <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
+        <div className="flex items-center gap-2 px-4 py-2 bg-brand-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+          <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
           <span className="text-sm font-semibold text-brand-700">即時監控中</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <Activity className="w-10 h-10 text-brand-600 mb-4" />
           <p className="text-sm text-gray-500">進行中團次</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{ACTIVE_TRIPS.length}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <Users className="w-10 h-10 text-gray-600 mb-4" />
           <p className="text-sm text-gray-500">出團旅客</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{ACTIVE_TRIPS.reduce((sum, t) => sum + t.paxCount, 0)}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <CheckCircle className="w-10 h-10 text-brand-600 mb-4" />
           <p className="text-sm text-gray-500">正常進行</p>
           <p className="text-2xl font-bold text-brand-600 mt-1">{ACTIVE_TRIPS.filter(t => t.status === 'on_track').length}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
           <AlertTriangle className="w-10 h-10 text-yellow-600 mb-4" />
           <p className="text-sm text-gray-500">需注意</p>
           <p className="text-2xl font-bold text-yellow-600 mt-1">{ACTIVE_TRIPS.filter(t => t.status !== 'on_track').length}</p>
@@ -69,12 +69,12 @@ export default function OperationHub() {
         {ACTIVE_TRIPS.map((trip) => {
           const status = getStatusStyle(trip.status);
           return (
-            <div key={trip.id} className="bg-white p-6 rounded-2xl border border-gray-100">
+            <div key={trip.id} className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <div className="flex items-center gap-3">
                     <h3 className="text-lg font-bold text-gray-900">{trip.name}</h3>
-                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${status.bg} ${status.text}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-semibold ${status.bg} ${status.text}`}>
                       {status.icon} {status.label}
                     </span>
                   </div>
@@ -89,19 +89,19 @@ export default function OperationHub() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">目前位置</p>
+                  <p className="text-sm text-gray-500 mb-1">目前位置</p>
                   <p className="text-sm font-semibold text-gray-900 flex items-center gap-1"><MapPin className="w-4 h-4 text-brand-500" /> {trip.currentLocation}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">團員人數</p>
+                  <p className="text-sm text-gray-500 mb-1">團員人數</p>
                   <p className="text-sm font-semibold text-gray-900 flex items-center gap-1"><Users className="w-4 h-4 text-gray-400" /> {trip.paxCount} 人</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">下一行程</p>
+                  <p className="text-sm text-gray-500 mb-1">下一行程</p>
                   <p className="text-sm font-semibold text-gray-900">{trip.nextActivity}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">預計時間</p>
+                  <p className="text-sm text-gray-500 mb-1">預計時間</p>
                   <p className="text-sm font-semibold text-gray-900 flex items-center gap-1"><Clock className="w-4 h-4 text-gray-400" /> {trip.nextTime}</p>
                 </div>
               </div>

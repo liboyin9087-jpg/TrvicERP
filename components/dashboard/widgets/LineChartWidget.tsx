@@ -21,7 +21,7 @@ export default function LineChartWidget({ widget }: { widget: Widget }) {
 
   return (
     <div className="h-full flex flex-col gap-3">
-      <div className="text-xs text-gray-400">
+      <div className="text-sm text-gray-400">
         Source: {widget.config.chartDataSource || 'revenue'}
       </div>
       <svg className="w-full h-28" viewBox="0 0 120 60" preserveAspectRatio="none">
@@ -34,7 +34,7 @@ export default function LineChartWidget({ widget }: { widget: Widget }) {
         <path d={`${path} L120,60 L0,60 Z`} fill="url(#line-gradient)" />
         <path d={path} fill="none" stroke="#3B82F6" strokeWidth="2" />
       </svg>
-      <div className="flex items-center justify-between text-xs text-gray-400">
+      <div className="flex items-center justify-between text-sm text-gray-400">
         <span>Jan</span>
         <span>Apr</span>
         <span>Jul</span>

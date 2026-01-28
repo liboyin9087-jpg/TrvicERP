@@ -6,8 +6,6 @@ import {
   Send,
   X,
   Sparkles,
-  Minimize2,
-  Maximize2,
   Copy,
   Check,
   Code,
@@ -94,7 +92,6 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const resizeRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -204,7 +201,7 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
       // 添加代碼塊之前的文字
       if (match.index > lastIndex) {
         parts.push(
-          <span key={lastIndex} className="whitespace-pre-wrap">
+          <span key={lastIndex} className="whitespace-pre-wrap text-sm">
             {content.slice(lastIndex, match.index)}
           </span>
         );
@@ -214,17 +211,17 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
       const language = match[1] || 'code';
       const code = match[2];
       parts.push(
-        <div key={match.index} className="my-2 rounded-lg overflow-hidden bg-[#1e1e1e] border border-white/10">
-          <div className="flex items-center justify-between px-3 py-1.5 bg-white/5 border-b border-white/10">
-            <span className="text-xs text-gray-400 font-mono">{language}</span>
+        <div key={match.index} className="my-2 rounded-lg overflow-hidden bg-card border border-border">
+          <div className="flex items-center justify-between px-3 py-1.5 bg-muted border-b border-border">
+            <span className="text-sm text-muted-foreground font-mono">{language}</span>
             <button
               onClick={() => handleCopy(code, `${message.id}-${match!.index}`)}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               {copiedId === `${message.id}-${match!.index}` ? (
                 <>
-                  <Check size={12} className="text-green-400" />
-                  <span className="text-green-400">已複製</span>
+                  <Check size={12} className="text-success" />
+                  <span className="text-success">已複製</span>
                 </>
               ) : (
                 <>
@@ -235,7 +232,7 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
             </button>
           </div>
           <pre className="p-3 text-sm overflow-x-auto">
-            <code className="text-gray-300 font-mono">{code}</code>
+            <code className="text-card-foreground font-mono">{code}</code>
           </pre>
         </div>
       );
@@ -246,17 +243,17 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
     // 添加剩餘的文字
     if (lastIndex < content.length) {
       parts.push(
-        <span key={lastIndex} className="whitespace-pre-wrap">
+        <span key={lastIndex} className="whitespace-pre-wrap text-sm">
           {content.slice(lastIndex)}
         </span>
       );
     }
 
-    return parts.length > 0 ? parts : <span className="whitespace-pre-wrap">{content}</span>;
+    return parts.length > 0 ? parts : <span className="whitespace-pre-wrap text-sm">{content}</span>;
   };
 
   const panelClasses = cn(
-    "flex flex-col overflow-hidden shadow-2xl border border-white/[0.08] backdrop-blur-3xl bg-[#0a0a0a]/95",
+    "flex flex-col overflow-hidden shadow-2xl border border-border backdrop-blur-3xl bg-background/95",
     isDocked
       ? "fixed right-0 top-0 h-full rounded-none border-r-0 border-t-0 border-b-0"
       : "rounded-[24px]",
@@ -289,12 +286,12 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
               <>
                 {/* Top resize */}
                 <div
-                  className="absolute top-0 left-4 right-4 h-1 cursor-ns-resize hover:bg-blue-500/30 transition-colors"
+                  className="absolute top-0 left-4 right-4 h-1 cursor-ns-resize hover:bg-primary/30 transition-colors"
                   onMouseDown={(e) => handleMouseDown(e, 'height')}
                 />
                 {/* Left resize */}
                 <div
-                  className="absolute left-0 top-4 bottom-4 w-1 cursor-ew-resize hover:bg-blue-500/30 transition-colors"
+                  className="absolute left-0 top-4 bottom-4 w-1 cursor-ew-resize hover:bg-primary/30 transition-colors"
                   onMouseDown={(e) => handleMouseDown(e, 'width')}
                 />
                 {/* Corner resize */}
@@ -302,24 +299,24 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                   className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize"
                   onMouseDown={(e) => handleMouseDown(e, 'both')}
                 >
-                  <GripVertical size={12} className="absolute top-1 left-1 text-gray-600 rotate-45" />
+                  <GripVertical size={12} className="absolute top-1 left-1 text-muted-foreground rotate-45" />
                 </div>
               </>
             )}
 
             {/* Header */}
-            <div className="flex-shrink-0 p-3 border-b border-white/[0.05] bg-white/[0.02] flex items-center justify-between">
+            <div className="flex-shrink-0 p-3 border-b border-border bg-background/20 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-blue-500 blur-lg opacity-40 animate-pulse" />
-                  <div className="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg">
-                    <Sparkles size={16} className="text-white" />
+                  <div className="absolute inset-0 bg-primary/40 blur-lg opacity-40 animate-pulse" />
+                  <div className="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-primary-dark flex items-center justify-center shadow-lg">
+                    <Sparkles size={16} className="text-primary-foreground" />
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-white font-medium text-sm">Trip Copilot</h4>
-                  <p className="text-[10px] text-blue-400/80 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <h4 className="text-foreground font-medium text-sm">Trip Copilot</h4>
+                  <p className="text-sm text-primary/80 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
                     AI 助手
                   </p>
                 </div>
@@ -328,20 +325,20 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setIsDocked(!isDocked)}
-                  className="p-1.5 rounded-md hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+                  className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                   title={isDocked ? '浮動模式' : '停靠側邊'}
                 >
                   {isDocked ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
                 </button>
                 <button
                   onClick={() => setIsMinimized(!isMinimized)}
-                  className="p-1.5 rounded-md hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+                  className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 >
                   {isMinimized ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-md hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+                  className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 >
                   <X size={14} />
                 </button>
@@ -353,14 +350,14 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
               <>
                 {/* Quick Actions */}
                 {showQuickActions && messages.length <= 1 && (
-                  <div className="flex-shrink-0 p-3 border-b border-white/[0.05] bg-white/[0.01]">
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-2">快速操作</p>
+                  <div className="flex-shrink-0 p-3 border-b border-border bg-background/10">
+                    <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2">快速操作</p>
                     <div className="flex flex-wrap gap-1.5">
                       {QUICK_ACTIONS.map((action) => (
                         <button
                           key={action.id}
                           onClick={() => handleQuickAction(action)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs text-gray-300 hover:bg-white/[0.06] hover:border-white/[0.1] transition-all"
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-secondary border border-border text-sm text-secondary-foreground hover:bg-accent hover:border-primary/50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         >
                           {action.icon}
                           {action.label}
@@ -386,8 +383,8 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                         className={cn(
                           "relative max-w-[90%] rounded-2xl text-sm leading-relaxed",
                           msg.role === 'user'
-                            ? "bg-blue-600 text-white px-4 py-3 rounded-br-md"
-                            : "bg-white/[0.04] border border-white/[0.06] text-gray-200 px-4 py-3 rounded-bl-md"
+                            ? "bg-primary text-primary-foreground px-4 py-3 rounded-br-md"
+                            : "bg-card border border-border text-card-foreground px-4 py-3 rounded-bl-md"
                         )}
                       >
                         {renderMessageContent(msg)}
@@ -396,10 +393,10 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                         {msg.role === 'assistant' && (
                           <button
                             onClick={() => handleCopy(msg.content, msg.id)}
-                            className="absolute -right-2 top-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-white/10 text-gray-400 hover:text-white transition-all"
+                            className="absolute -right-2 top-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-secondary text-muted-foreground hover:text-foreground transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                           >
                             {copiedId === msg.id ? (
-                              <Check size={12} className="text-green-400" />
+                              <Check size={12} className="text-success" />
                             ) : (
                               <Copy size={12} />
                             )}
@@ -411,11 +408,11 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
 
                   {isLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-white/[0.04] border border-white/[0.06] px-4 py-3 rounded-2xl rounded-bl-md">
+                      <div className="bg-card border border-border px-4 py-3 rounded-2xl rounded-bl-md">
                         <div className="flex gap-1.5">
-                          <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                       </div>
                     </div>
@@ -424,7 +421,7 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                 </div>
 
                 {/* Input */}
-                <div className="flex-shrink-0 p-3 border-t border-white/[0.05] bg-black/20">
+                <div className="flex-shrink-0 p-3 border-t border-border bg-primary/20">
                   <div className="relative flex items-center">
                     <input
                       ref={inputRef}
@@ -433,27 +430,27 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="輸入訊息或問題..."
-                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl py-2.5 px-4 pr-20 text-sm text-white placeholder-gray-500 outline-none focus:border-blue-500/50 focus:bg-white/[0.06] transition-all"
+                      className="w-full bg-secondary border border-border rounded-lg py-2.5 px-4 pr-20 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary/50 focus:bg-secondary/70 transition-all"
                     />
                     <div className="absolute right-2 flex items-center gap-1">
-                      <button className="p-1.5 text-gray-500 hover:text-white transition-colors rounded-md hover:bg-white/5">
+                      <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
                         <Mic size={16} />
                       </button>
                       <button
                         onClick={handleSend}
                         disabled={!inputValue.trim()}
                         className={cn(
-                          "p-1.5 rounded-md transition-all",
+                          "p-1.5 rounded-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                           inputValue.trim()
-                            ? "bg-blue-600 text-white hover:bg-blue-500"
-                            : "text-gray-600"
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                            : "text-muted-foreground"
                         )}
                       >
                         <Send size={16} />
                       </button>
                     </div>
                   </div>
-                  <p className="text-[10px] text-gray-600 mt-1.5 text-center">
+                  <p className="text-sm text-muted-foreground mt-1.5 text-center">
                     按 Enter 發送 · 支援 Markdown 格式
                   </p>
                 </div>
@@ -469,17 +466,17 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className={cn(
-          "relative w-14 h-14 rounded-full text-white shadow-lg flex items-center justify-center transition-all",
-          "bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800",
-          isOpen && "ring-2 ring-blue-400/50"
+          "relative w-14 h-14 rounded-full text-primary-foreground shadow-lg flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70",
+          "bg-gradient-to-br from-primary to-primary-dark",
+          isOpen && "ring-2 ring-primary/50"
         )}
       >
-        <div className="absolute inset-0 rounded-full bg-blue-500/30 blur-xl animate-pulse" />
+        <div className="absolute inset-0 rounded-full bg-primary/30 blur-xl animate-pulse" />
         <div className="relative z-10">
           {isOpen ? <X size={24} /> : <Bot size={24} />}
         </div>
         {!isOpen && (
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0a0a0a]" />
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background" />
         )}
       </motion.button>
     </div>
