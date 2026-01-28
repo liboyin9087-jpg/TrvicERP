@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════════════
+# TrvicERP Goose 配置 - SiliconFlow + DeepSeek V3
+# 複製至: ~/.config/goose/config.yaml
+# ═══════════════════════════════════════════════════════════════
+
+# LLM 提供者設定
+GOOSE_PROVIDER: "openai"
+OPENAI_API_KEY: "${SILICONFLOW_API_KEY}"  # 從環境變數讀取
+OPENAI_API_BASE: "https://api.siliconflow.cn/v1"  # 中國區域
+# OPENAI_API_BASE: "https://api.siliconflow.com/v1"  # 國際區域
+GOOSE_MODEL: "deepseek-ai/DeepSeek-V3"
+
+# DeepSeek V3 程式碼任務最佳參數
+GOOSE_TEMPERATURE: 0.0           # 官方建議：程式碼任務使用 0
+GOOSE_MAX_TOKENS: 4096           # 元件修正足夠使用
+
+# 8GB RAM 記憶體優化設定
+GOOSE_AUTO_COMPACT_THRESHOLD: 0.5  # 50% 時開始壓縮（比預設 80% 更早）
+GOOSE_CONTEXT_STRATEGY: "summarize"
+GOOSE_CONTEXT_LIMIT: 32000         # 保守限制以節省記憶體
+GOOSE_MAX_TURNS: 25                # 防止過長執行
+
+# 執行模式
+GOOSE_MODE: "auto"                # 自動批准安全操作
+GOOSE_CLI_SHOW_COST: true         # 追蹤 API 成本
+
+# 工具超時設定
+GOOSE_TOOL_TIMEOUT: 120           # 工具執行超時（秒）
+
+# 擴充功能
+extensions:
+  developer:
+    bundled: true
+    enabled: true
+    timeout: 300
