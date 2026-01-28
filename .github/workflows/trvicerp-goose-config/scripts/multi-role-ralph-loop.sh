@@ -1,14 +1,44 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
-# 多角色 Ralph Loop v3 - Sequential Review & Fix
-# 模式: 1. SF/Groq 審查 -> 2. Gemini 修復 -> 3. 下一個檔案
+# 多角色 Ralph Loop v5 - 持續自動修復迴圈
+# ═══════════════════════════════════════════════════════════════
+# 工作流程:
+#   1. 👷 架構師 (SiliconFlow/DeepSeek V3) 審查架構問題
+#   2. 🎨 設計師 (Groq/Llama 3.3) 審查 UI/UX 問題
+#   3. 🔧 Gemini 2.5 Flash 修復發現的問題
+#   4. 🔄 重複直到所有檔案處理完成
+#
+# 用法: ./multi-role-ralph-loop.sh [max_loops] [target_dir]
+#       max_loops: 最大迴圈次數 (預設: 0 = 無限)
+#       target_dir: 目標目錄 (預設: 自動偵測 src/)
+#
+# 環境變數:
+#   SILICONFLOW_API_KEY - SiliconFlow API 金鑰
+#   GROQ_API_KEY - Groq API 金鑰
+#   GEMINI_API_KEY - Google Gemini API 金鑰
 # ═══════════════════════════════════════════════════════════════
 
-set -e
+# 不使用 set -e，改用手動錯誤處理以確保迴圈持續
+# set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_DIR=${2:-"/workspaces/TrvicERP/src"}
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+
+# 自動偵測目標目錄
+if [ -n "$2" ]; then
+    TARGET_DIR="$2"
+elif [ -d "$PROJECT_ROOT/src" ]; then
+    TARGET_DIR="$PROJECT_ROOT/src"
+else
+    TARGET_DIR="$PROJECT_ROOT"
+fi
+
+# 迴圈設定
+MAX_LOOPS=${1:-0}  # 0 = 無限迴圈
+CURRENT_LOOP=0
+LOOP_DELAY=5  # 每次迴圈間隔秒數
 PROGRESS_FILE="$SCRIPT_DIR/../.validation-progress.log"
+COMPONENTS_DIR="$PROJECT_ROOT/components"
 
 # API 設定
 API_KEY="${SILICONFLOW_API_KEY}"
@@ -37,8 +67,11 @@ PROGRESS_FAILED="$PROGRESS_DIR/failed.txt"
 PROGRESS_CURRENT="$PROGRESS_DIR/current.txt"
 
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}  TrvicERP Intelligent Sequential Fixer (v3)${NC}"
-echo -e "${BLUE}  目標目錄: ${YELLOW}$TARGET_DIR${NC}"
+echo -e "${BLUE}  TrvicERP 多角色自動修復系統 (v5)${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}  👷 架構師: SiliconFlow (DeepSeek V3)${NC}"
+echo -e "${CYAN}  🎨 設計師: Groq (Llama 3.3 70B)${NC}"
+echo -e "${CYAN}  🔧 修復者: Gemini 2.5 Flash${NC}"
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 
 # 創建 Python 腳本
@@ -215,35 +248,47 @@ class MultiRoleValidator:
         self.fixer = GeminiFixer(gemini_key)
         self.progress_tracker = progress_tracker
         
+        # 輪流使用不同 API 進行審查
         self.roles = {
             "architect": {
                 "name": "架構師",
                 "emoji": "👷",
-                "prompt_func": self._get_architect_prompt
+                "prompt_func": self._get_architect_prompt,
+                "api": "siliconflow"  # 架構師使用 SiliconFlow (DeepSeek V3)
             },
             "designer": {
                 "name": "設計師",
                 "emoji": "🎨",
-                "prompt_func": self._get_designer_prompt
+                "prompt_func": self._get_designer_prompt,
+                "api": "groq"  # 設計師使用 Groq (Llama 3.3)
             }
         }
 
-    def _api_call(self, prompt):
-        # 簡單的 Failover 機制
-        apis = [
-            ('siliconflow', self.sf_client, self.sf_model),
-            ('groq', self.groq_client, self.groq_model)
-        ]
-        
+    def _api_call(self, prompt, api_preference="siliconflow"):
+        """根據角色選擇 API，實現輪流檢查"""
+        if api_preference == "groq":
+            # 設計師優先使用 Groq
+            apis = [
+                ('groq', self.groq_client, self.groq_model),
+                ('siliconflow', self.sf_client, self.sf_model)  # fallback
+            ]
+        else:
+            # 架構師優先使用 SiliconFlow
+            apis = [
+                ('siliconflow', self.sf_client, self.sf_model),
+                ('groq', self.groq_client, self.groq_model)  # fallback
+            ]
+
         for name, client, model in apis:
             try:
+                print(f"      🔗 使用 {name} ({model})...")
                 response = client.chat.completions.create(
                     model=model, messages=[{"role": "user", "content": prompt}],
                     max_tokens=1000, temperature=0.0
                 )
                 return response.choices[0].message.content
             except Exception as e:
-                print(f"      ⚠️  {name} API Error, trying next...")
+                print(f"      ⚠️  {name} API 錯誤: {str(e)[:50]}，嘗試備用...")
                 continue
         return ""
 
@@ -294,12 +339,15 @@ class MultiRoleValidator:
             return False
 
         all_issues = []
-        print("  🕵️  審查中 (SF/Groq)...")
-        
+        print("  🕵️  輪流審查中...")
+
         for role_key, role in self.roles.items():
+            print(f"    {role['emoji']} {role['name']} 審查中...")
             prompt = role['prompt_func'](file_path, content)
-            result = self._api_call(prompt)
-            
+            # 根據角色選擇不同的 API（輪流檢查）
+            api_preference = role.get('api', 'siliconflow')
+            result = self._api_call(prompt, api_preference)
+
             # 簡易解析
             for line in result.split('\n'):
                 if "[" in line and "|" in line:
@@ -315,7 +363,7 @@ class MultiRoleValidator:
                 self.progress_tracker.mark_completed(file_path, success=True)
             return True
 
-        print(f"  ⚠️  發現 {len(all_issues)} 個問題，Gemini 介入修復...")
+        print(f"  ⚠️  發現 {len(all_issues)} 個問題，🔧 Gemini 2.5 Flash 介入修復...")
         fixed_content = self.fixer.fix_file(file_path, content, all_issues)
         
         if fixed_content and len(fixed_content) > 50:
@@ -339,20 +387,25 @@ class MultiRoleValidator:
 
 def main():
     target_dir = sys.argv[1]
-    
+    progress_dir = sys.argv[9] if len(sys.argv) > 9 else os.path.join(os.path.dirname(os.path.dirname(__file__)), 'progress')
+    components_dir = sys.argv[10] if len(sys.argv) > 10 else None
+
     # 初始化進度追蹤
-    progress_dir = "/workspaces/TrvicERP/.github/workflows/trvicerp-goose-config/progress"
     progress_tracker = ProgressTracker(progress_dir)
-    
+
     validator = MultiRoleValidator(
-        sys.argv[2], sys.argv[3], sys.argv[4], 
-        sys.argv[5], sys.argv[6], sys.argv[7], 
+        sys.argv[2], sys.argv[3], sys.argv[4],
+        sys.argv[5], sys.argv[6], sys.argv[7],
         sys.argv[8], progress_tracker
     )
-    
+
     # 收集 src 和 components 目錄的檔案
     all_files = []
-    for directory in [target_dir, "/workspaces/TrvicERP/components"]:
+    directories_to_scan = [target_dir]
+    if components_dir and os.path.exists(components_dir):
+        directories_to_scan.append(components_dir)
+
+    for directory in directories_to_scan:
         if os.path.exists(directory):
             tsx_files = glob.glob(f"{directory}/**/*.tsx", recursive=True)
             ts_files = glob.glob(f"{directory}/**/*.ts", recursive=True)
@@ -405,9 +458,76 @@ if __name__ == "__main__":
     main()
 PYEOF
 
-# 執行 Python
-/workspaces/TrvicERP/.venv/bin/python /tmp/multi_role_validator.py \
-    "$TARGET_DIR" \
-    "$API_KEY" "$API_BASE" "$API_MODEL" \
-    "$GROQ_API_KEY" "$GROQ_API_BASE" "$GROQ_MODEL" \
-    "$GEMINI_API_KEY"
+# 找到可用的 Python
+find_python() {
+    # 優先順序: venv -> python3 -> python
+    if [ -f "$PROJECT_ROOT/.venv/bin/python" ]; then
+        echo "$PROJECT_ROOT/.venv/bin/python"
+    elif command -v python3 &> /dev/null; then
+        echo "python3"
+    elif command -v python &> /dev/null; then
+        echo "python"
+    else
+        echo ""
+    fi
+}
+
+PYTHON_CMD=$(find_python)
+if [ -z "$PYTHON_CMD" ]; then
+    echo -e "${RED}❌ 找不到 Python，請先安裝 Python 3${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✓ 使用 Python: $PYTHON_CMD${NC}"
+echo -e "${CYAN}📁 專案根目錄: $PROJECT_ROOT${NC}"
+echo -e "${CYAN}📂 目標目錄: $TARGET_DIR${NC}"
+echo -e "${CYAN}📂 元件目錄: $COMPONENTS_DIR${NC}"
+
+# 持續迴圈執行
+run_validation_loop() {
+    echo -e "\n${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${BLUE}  開始第 $((CURRENT_LOOP + 1)) 次驗證迴圈${NC}"
+    echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
+
+    $PYTHON_CMD /tmp/multi_role_validator.py \
+        "$TARGET_DIR" \
+        "$API_KEY" "$API_BASE" "$API_MODEL" \
+        "$GROQ_API_KEY" "$GROQ_API_BASE" "$GROQ_MODEL" \
+        "$GEMINI_API_KEY" \
+        "$SCRIPT_DIR/../progress" \
+        "$COMPONENTS_DIR"
+
+    return $?
+}
+
+# 主迴圈
+echo -e "${YELLOW}🔄 啟動持續自動修復迴圈...${NC}"
+echo -e "${YELLOW}   按 Ctrl+C 停止${NC}"
+
+while true; do
+    CURRENT_LOOP=$((CURRENT_LOOP + 1))
+
+    run_validation_loop
+    EXIT_CODE=$?
+
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo -e "${YELLOW}⚠️  迴圈 $CURRENT_LOOP 遇到錯誤 (代碼: $EXIT_CODE)，${LOOP_DELAY} 秒後重試...${NC}"
+    else
+        echo -e "${GREEN}✅ 迴圈 $CURRENT_LOOP 完成${NC}"
+    fi
+
+    # 檢查是否達到最大迴圈次數
+    if [ $MAX_LOOPS -gt 0 ] && [ $CURRENT_LOOP -ge $MAX_LOOPS ]; then
+        echo -e "${GREEN}🎉 已達到最大迴圈次數 ($MAX_LOOPS)，結束執行${NC}"
+        break
+    fi
+
+    # 等待後繼續下一次迴圈
+    echo -e "${CYAN}⏳ ${LOOP_DELAY} 秒後開始下一次迴圈... (按 Ctrl+C 停止)${NC}"
+    sleep $LOOP_DELAY
+done
+
+echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}  自動修復迴圈結束${NC}"
+echo -e "${GREEN}  總共執行 $CURRENT_LOOP 次迴圈${NC}"
+echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
