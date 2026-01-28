@@ -6,8 +6,6 @@ import type { KintoneModalProps } from "../kintone/types";
 
 /**
  * useBodyScrollLock - Custom hook to prevent body scrolling when a component is active.
- * Addresses [architect] 1. [架構] 元件依賴全域 document 物件直接操作 DOM (中)
- * by encapsulating the direct DOM manipulation.
  */
 const useBodyScrollLock = (isActive: boolean) => {
   React.useEffect(() => {
@@ -24,8 +22,6 @@ const useBodyScrollLock = (isActive: boolean) => {
 };
 
 // Framer Motion Variants for Animation Logic Separation
-// Addresses [architect] 2. [架構] 動畫邏輯與元件結構耦合 (中)
-// and [designer] [設計] 動畫效果使用 framer-motion (中)
 const backdropVariants: Variants = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
@@ -39,9 +35,6 @@ const modalVariants: Variants = {
 };
 
 // Dashtail UI Design System Tokens (Conceptual Mapping)
-// Addresses [designer] [設計] 硬編碼顏色值 (text-gray-900, text-gray-500) (中)
-// These should ideally come from a shared Dashtail theme configuration.
-// For now, we map them to standard Tailwind gray classes and existing primary/secondary tokens.
 const dashtailTokens = {
   textColor: {
     default: "text-gray-900", // Main text color
@@ -149,7 +142,7 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
                     "cursor-grab" // Indicate draggable area
                   )}
                 >
-                  {/* Drag Handle - Addresses [designer] [設計] 缺少 drag-handle 結構 (高) */}
+                  {/* Drag Handle */}
                   <div
                     className="flex items-center gap-2 flex-1 min-w-0 pr-4 drag-handle"
                     tabIndex={0} // Make drag handle focusable for keyboard users

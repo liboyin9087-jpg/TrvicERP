@@ -40,6 +40,13 @@ LOOP_DELAY=5  # 每次迴圈間隔秒數
 PROGRESS_FILE="$SCRIPT_DIR/../.validation-progress.log"
 COMPONENTS_DIR="$PROJECT_ROOT/components"
 
+# 載入 .env 檔案（如果存在）
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    echo "載入環境變數從: $PROJECT_ROOT/.env"
+    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+fi
+
 # API 設定
 API_KEY="${SILICONFLOW_API_KEY}"
 API_BASE="https://api.siliconflow.com/v1"
@@ -50,6 +57,16 @@ GROQ_API_BASE="https://api.groq.com/openai/v1"
 GROQ_MODEL="llama-3.3-70b-versatile"
 
 GEMINI_API_KEY="${GEMINI_API_KEY}"
+
+# 檢查必要的 API 金鑰
+if [ -z "$API_KEY" ] || [ -z "$GROQ_API_KEY" ] || [ -z "$GEMINI_API_KEY" ]; then
+    echo "錯誤: 缺少必要的 API 金鑰"
+    echo "請確保在 .env 檔案中設置了以下變數:"
+    echo "  - SILICONFLOW_API_KEY"
+    echo "  - GROQ_API_KEY"
+    echo "  - GEMINI_API_KEY"
+    exit 1
+fi
 
 # 顏色定義
 RED='\033[0;31m'

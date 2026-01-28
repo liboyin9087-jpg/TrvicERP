@@ -1,16 +1,4 @@
-/**
- * CommandBar - VicERP 全域指令列
- *
- * 根據規格書實作的 Vision Pro 風格指令界面
- * 特點：
- * - Cmd + K 喚起
- * - Function Calling 的入口
- * - 智能搜尋與指令執行
- * - AI 意圖解析與 API 呼叫
- * - Diff View 顯示變更預覽
- */
-
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Command,
@@ -29,11 +17,15 @@ import {
   CheckCircle,
   AlertTriangle,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"; // Assuming this utility exists
 
 // ============================================
 // Type Definitions
 // ============================================
+
+/**
+ * Represents a predefined command that can be executed.
+ */
 interface CommandAction {
   id: string;
   title: string;
@@ -41,99 +33,167 @@ interface CommandAction {
   icon: React.ReactNode;
   category: string;
   keywords: string[];
+  // The 'action' here is a placeholder; in a real app, this would be a command ID or a function
+  // that the parent component resolves. CommandBar only "selects" it.
   action: () => void | Promise<void>;
   requiresConfirmation?: boolean;
-  aiGenerated?: boolean;
 }
 
+/**
+ * Represents an AI-parsed command.
+ */
 interface AICommand {
   query: string;
   intent: string;
   parameters: Record<string, any>;
   preview?: string;
   confidence: number;
+  aiGenerated: boolean; // Explicitly mark as AI-generated
 }
 
+/**
+ * Defines a pattern for AI command recognition.
+ */
+interface AICommandPattern {
+  pattern: RegExp;
+  intent: string;
+  extract: (match: RegExpMatchArray) => Record<string, any>;
+  generatePreview: (params: Record<string, any>) => string;
+}
+
+/**
+ * Configuration for the CommandBar component.
+ * This replaces hardcoded global state and allows for dynamic configuration.
+ */
+interface CommandBarConfig {
+  /** Title displayed at the top of the command bar. */
+  title?: string;
+  /** Keyboard shortcut hint displayed. */
+  shortcut?: string;
+  /** Tailwind class for default icon size (e.g., "w-4 h-4"). */
+  defaultIconSizeClass: string;
+  /** A list of predefined, static commands. */
+  predefinedCommands: CommandAction[];
+  /** A list of patterns to recognize AI-driven commands. */
+  aiCommandPatterns: AICommandPattern[];
+  /** Optional: A function to generate a generic message when no commands are found. */
+  noResultsMessage?: {
+    title: string;
+    subtitle?: string;
+  };
+}
+
+/**
+ * Props for the CommandBar component.
+ */
 interface CommandBarProps {
+  /** Controls the visibility of the command bar. */
   isOpen: boolean;
+  /** Callback to close the command bar. */
   onClose: () => void;
-  onExecuteCommand?: (command: CommandAction | AICommand) => void;
+  /**
+   * Callback invoked when a command (predefined or AI-parsed) is selected.
+   * The actual execution logic should reside in the parent component.
+   */
+  onCommandSelected?: (command: CommandAction | AICommand) => void;
+  /** Configuration object for the CommandBar. */
+  config: CommandBarConfig;
 }
 
 // ============================================
-// Predefined Commands
+// Helper Hook: useCommandProcessor
+// This hook encapsulates the command filtering and AI parsing logic.
 // ============================================
-const PREDEFINED_COMMANDS: CommandAction[] = [
-  {
-    id: "dashboard",
-    title: "切換至儀表板",
-    subtitle: "查看營運概況",
-    icon: <TrendingUp className="w-4 h-4" />,
-    category: "導覽",
-    keywords: ["dashboard", "儀表板", "overview", "總覽"],
-    action: () => console.log("Navigate to dashboard"),
-  },
-  {
-    id: "new-tour",
-    title: "新增旅遊行程",
-    subtitle: "建立新的旅遊產品",
-    icon: <Calendar className="w-4 h-4" />,
-    category: "建立",
-    keywords: ["new", "tour", "行程", "新增", "create"],
-    action: () => console.log("Create new tour"),
-  },
-  {
-    id: "customer-search",
-    title: "搜尋客戶",
-    subtitle: "查找客戶資料",
-    icon: <Users className="w-4 h-4" />,
-    category: "搜尋",
-    keywords: ["customer", "客戶", "search", "搜尋"],
-    action: () => console.log("Search customers"),
-  },
-  {
-    id: "profit-analysis",
-    title: "獲利分析",
-    subtitle: "檢視財務報表",
-    icon: <DollarSign className="w-4 h-4" />,
-    category: "分析",
-    keywords: ["profit", "獲利", "analysis", "分析", "financial"],
-    action: () => console.log("Open profit analysis"),
-  },
-  {
-    id: "route-planner",
-    title: "路線規劃",
-    subtitle: "智能行程規劃",
-    icon: <Map className="w-4 h-4" />,
-    category: "工具",
-    keywords: ["route", "路線", "planner", "規劃", "itinerary"],
-    action: () => console.log("Open route planner"),
-  },
-];
+interface UseCommandProcessorOptions {
+  predefinedCommands: CommandAction[];
+  aiCommandPatterns: AICommandPattern[];
+  // This could also be passed via config to define processing delays if needed
+}
 
-// AI 指令模式匹配
-const AI_COMMAND_PATTERNS = [
-  {
-    pattern: /(?:提升|增加|調整).*?(?:價格|報價).*?(\d+)%/i,
-    intent: "price_adjustment",
-    extract: (match: RegExpMatchArray) => ({ percentage: parseInt(match[1]) }),
-  },
-  {
-    pattern: /(?:規劃|建立|新增).*?(\d+)天.*?行程/i,
-    intent: "create_itinerary",
-    extract: (match: RegExpMatchArray) => ({ days: parseInt(match[1]) }),
-  },
-  {
-    pattern: /(?:搜尋|查找|找).*?客戶.*?([\u4e00-\u9fa5\w]+)/i,
-    intent: "search_customer",
-    extract: (match: RegExpMatchArray) => ({ name: match[1] }),
-  },
-  {
-    pattern: /(?:計算|分析).*?毛利/i,
-    intent: "calculate_profit",
-    extract: () => ({}),
-  },
-];
+interface UseCommandProcessorResult {
+  aiCommand: AICommand | null;
+  filteredCommands: CommandAction[];
+  isProcessingQuery: boolean; // Indicates if AI parsing/filtering is ongoing
+  processQuery: (searchQuery: string) => void;
+  resetProcessor: () => void;
+}
+
+const useCommandProcessor = ({
+  predefinedCommands,
+  aiCommandPatterns,
+}: UseCommandProcessorOptions): UseCommandProcessorResult => {
+  const [aiCommand, setAiCommand] = useState<AICommand | null>(null);
+  const [filteredCommands, setFilteredCommands] = useState<CommandAction[]>(predefinedCommands);
+  const [isProcessingQuery, setIsProcessingQuery] = useState(false);
+  const processTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const parseAICommand = useCallback((input: string): AICommand | null => {
+    for (const patternObj of aiCommandPatterns) {
+      const match = input.match(patternObj.pattern);
+      if (match) {
+        const parameters = patternObj.extract(match);
+        return {
+          query: input,
+          intent: patternObj.intent,
+          parameters,
+          preview: patternObj.generatePreview(parameters),
+          confidence: 0.85, // Default confidence, can be dynamic
+          aiGenerated: true,
+        };
+      }
+    }
+    return null;
+  }, [aiCommandPatterns]);
+
+  const processQuery = useCallback((searchQuery: string) => {
+    if (processTimeoutRef.current) {
+      clearTimeout(processTimeoutRef.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setFilteredCommands(predefinedCommands);
+      setAiCommand(null);
+      setIsProcessingQuery(false);
+      return;
+    }
+
+    setIsProcessingQuery(true);
+    const queryLower = searchQuery.toLowerCase().trim();
+
+    processTimeoutRef.current = setTimeout(() => {
+      // AI Parsing
+      const aiCmd = parseAICommand(searchQuery);
+      setAiCommand(aiCmd);
+
+      // Predefined Commands Filtering
+      const filtered = predefinedCommands.filter(
+        (cmd) =>
+          cmd.title.toLowerCase().includes(queryLower) ||
+          cmd.subtitle?.toLowerCase().includes(queryLower) ||
+          cmd.keywords.some((keyword) => keyword.toLowerCase().includes(queryLower)),
+      );
+      setFilteredCommands(filtered);
+      setIsProcessingQuery(false);
+    }, 100); // Simulate a slight delay for processing
+  }, [predefinedCommands, parseAICommand]);
+
+  const resetProcessor = useCallback(() => {
+    if (processTimeoutRef.current) {
+      clearTimeout(processTimeoutRef.current);
+    }
+    setAiCommand(null);
+    setFilteredCommands(predefinedCommands);
+    setIsProcessingQuery(false);
+  }, [predefinedCommands]);
+
+  return {
+    aiCommand,
+    filteredCommands,
+    isProcessingQuery,
+    processQuery,
+    resetProcessor,
+  };
+};
 
 // ============================================
 // Command Bar Component
@@ -141,66 +201,73 @@ const AI_COMMAND_PATTERNS = [
 export const CommandBar: React.FC<CommandBarProps> = ({
   isOpen,
   onClose,
-  onExecuteCommand,
+  onCommandSelected,
+  config,
 }) => {
+  const {
+    title = "指令面板",
+    shortcut = "Cmd + K",
+    defaultIconSizeClass,
+    predefinedCommands,
+    aiCommandPatterns,
+    noResultsMessage = {
+      title: "沒有找到相關指令",
+      subtitle: "試試使用自然語言，如「提升所有價格 5%」",
+    },
+  } = config;
+
   const [query, setQuery] = useState("");
-  const [filteredCommands, setFilteredCommands] =
-    useState<CommandAction[]>(PREDEFINED_COMMANDS);
-  const [aiCommand, setAiCommand] = useState<AICommand | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [executionState, setExecutionState] = useState<
-    "idle" | "processing" | "success" | "error"
-  >("idle");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 重置狀態
-  const resetState = useCallback(() => {
-    setQuery("");
-    setFilteredCommands(PREDEFINED_COMMANDS);
-    setAiCommand(null);
-    setSelectedIndex(0);
-    setIsProcessing(false);
-    setExecutionState("idle");
-  }, []);
+  const {
+    aiCommand,
+    filteredCommands,
+    isProcessingQuery,
+    processQuery,
+    resetProcessor,
+  } = useCommandProcessor({ predefinedCommands, aiCommandPatterns });
 
-  // 處理開啟/關閉
+  // Reset state on open/close
   useEffect(() => {
     if (isOpen) {
-      resetState();
-      // 聚焦輸入框
+      setQuery("");
+      setSelectedIndex(0);
+      resetProcessor();
+      // Focus input
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen, resetState]);
+  }, [isOpen, resetProcessor]);
 
-  // 全域快捷鍵監聽
+  // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K 喚起
+      // Cmd/Ctrl + K (handled by parent to toggle isOpen)
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        if (!isOpen) {
-          // 這裡需要觸發父組件開啟 Command Bar
-        } else {
+        if (isOpen) {
           onClose();
         }
+        // If not open, the parent component that listens globally should open it.
       }
 
-      // ESC 關閉
+      // ESC to close
       if (e.key === "Escape" && isOpen) {
         onClose();
       }
 
-      // 方向鍵導覽
-      if (isOpen && !isProcessing) {
+      // Navigation within the command bar
+      if (isOpen && !isProcessingQuery) {
+        const allOptions = aiCommand
+          ? [aiCommand, ...filteredCommands]
+          : filteredCommands;
+        const totalOptions = allOptions.length;
+
+        if (totalOptions === 0) return;
+
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSelectedIndex((prev) =>
-            Math.min(
-              prev + 1,
-              (aiCommand ? 1 : 0) + filteredCommands.length - 1,
-            ),
-          );
+          setSelectedIndex((prev) => Math.min(prev + 1, totalOptions - 1));
         }
         if (e.key === "ArrowUp") {
           e.preventDefault();
@@ -208,7 +275,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
         }
         if (e.key === "Enter") {
           e.preventDefault();
-          handleExecuteSelected();
+          handleSelectCommand();
         }
       }
     };
@@ -217,159 +284,55 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     isOpen,
-    isProcessing,
+    isProcessingQuery,
     filteredCommands,
     aiCommand,
     selectedIndex,
     onClose,
   ]);
 
-  // 解析 AI 指令
-  const parseAICommand = useCallback((input: string): AICommand | null => {
-    for (const pattern of AI_COMMAND_PATTERNS) {
-      const match = input.match(pattern.pattern);
-      if (match) {
-        const parameters = pattern.extract(match);
-        return {
-          query: input,
-          intent: pattern.intent,
-          parameters,
-          preview: generatePreview(pattern.intent, parameters),
-          confidence: 0.85,
-        };
-      }
-    }
-    return null;
-  }, []);
-
-  // 生成預覽文字
-  const generatePreview = (
-    intent: string,
-    params: Record<string, any>,
-  ): string => {
-    switch (intent) {
-      case "price_adjustment":
-        return `將所有產品價格調整 ${params.percentage}%`;
-      case "create_itinerary":
-        return `AI 將規劃一個 ${params.days} 天的行程`;
-      case "search_customer":
-        return `搜尋客戶："${params.name}"`;
-      case "calculate_profit":
-        return `計算所有行程的毛利率`;
-      default:
-        return "執行 AI 指令";
-    }
-  };
-
-  // 過濾指令
-  const filterCommands = useCallback(
-    (searchQuery: string) => {
-      if (!searchQuery.trim()) {
-        setFilteredCommands(PREDEFINED_COMMANDS);
-        setAiCommand(null);
-        return;
-      }
-
-      const query = searchQuery.toLowerCase().trim();
-
-      // 先嘗試解析 AI 指令
-      const aiCmd = parseAICommand(searchQuery);
-      setAiCommand(aiCmd);
-
-      // 過濾預定義指令
-      const filtered = PREDEFINED_COMMANDS.filter(
-        (cmd) =>
-          cmd.title.toLowerCase().includes(query) ||
-          cmd.subtitle?.toLowerCase().includes(query) ||
-          cmd.keywords.some((keyword) => keyword.toLowerCase().includes(query)),
-      );
-
-      setFilteredCommands(filtered);
-      setSelectedIndex(0);
-    },
-    [parseAICommand],
-  );
-
-  // 處理輸入變化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    filterCommands(value);
+    processQuery(value);
+    setSelectedIndex(0); // Reset selection on input change
   };
 
-  // 執行選中的指令
-  const handleExecuteSelected = async () => {
+  const handleSelectCommand = () => {
     const allOptions = aiCommand
-      ? [aiCommand, ...filteredCommands]
+      ? ([aiCommand] as (CommandAction | AICommand)[]).concat(filteredCommands)
       : filteredCommands;
     const selected = allOptions[selectedIndex];
 
-    if (!selected) return;
-
-    setIsProcessing(true);
-    setExecutionState("processing");
-
-    try {
-      if ("intent" in selected) {
-        // AI 指令
-        await executeAICommand(selected);
-      } else {
-        // 預定義指令
-        await selected.action();
-      }
-
-      setExecutionState("success");
-      onExecuteCommand?.(selected);
-
-      // 成功後自動關閉
-      setTimeout(() => {
-        onClose();
-      }, 800);
-    } catch (error) {
-      setExecutionState("error");
-      console.error("Command execution failed:", error);
-    } finally {
-      setIsProcessing(false);
+    if (selected) {
+      onCommandSelected?.(selected);
+      // It's up to the parent to decide if the bar closes after selection.
+      // For immediate closing after selection:
+      setTimeout(onClose, 300); // Give a brief moment for UI feedback if any
     }
   };
 
-  // 執行 AI 指令
-  const executeAICommand = async (command: AICommand): Promise<void> => {
-    // 這裡應該調用實際的 AI API
-    console.log("Executing AI command:", command);
+  const allOptions = useMemo(() => {
+    return aiCommand
+      ? ([aiCommand] as (CommandAction | AICommand)[]).concat(filteredCommands)
+      : filteredCommands;
+  }, [aiCommand, filteredCommands]);
 
-    // 模擬 API 調用
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    switch (command.intent) {
-      case "price_adjustment":
-        console.log(`Adjusting prices by ${command.parameters.percentage}%`);
-        break;
-      case "create_itinerary":
-        console.log(`Creating ${command.parameters.days}-day itinerary`);
-        break;
-      case "search_customer":
-        console.log(`Searching for customer: ${command.parameters.name}`);
-        break;
-      default:
-        console.log("Unknown AI command");
-    }
-  };
-
-  // 渲染指令項目
+  // Render individual command item
   const renderCommandItem = (
     item: CommandAction | AICommand,
     index: number,
     isSelected: boolean,
   ) => {
-    const isAI = "intent" in item;
+    const isAI = "aiGenerated" in item && item.aiGenerated;
+    const itemKey = isAI ? `ai-${(item as AICommand).intent}-${index}` : (item as CommandAction).id;
 
     return (
       <motion.div
-        key={isAI ? `ai-${item.intent}` : item.id}
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: index * 0.05 }}
+        key={itemKey}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.05, duration: 0.2 }}
         className={cn(
           "flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200",
           isSelected
@@ -380,9 +343,12 @@ export const CommandBar: React.FC<CommandBarProps> = ({
               ]
             : ["hover:bg-white/5 dark:hover:bg-white/[0.02]"],
         )}
-        onClick={() => handleExecuteSelected()}
+        onClick={() => {
+          setSelectedIndex(index); // Select this item on click
+          handleSelectCommand(); // And execute
+        }}
       >
-        {/* 圖示 */}
+        {/* Icon */}
         <div
           className={cn(
             "flex-shrink-0 p-2 rounded-md",
@@ -391,30 +357,30 @@ export const CommandBar: React.FC<CommandBarProps> = ({
               : "bg-gray-500/20 text-gray-400",
           )}
         >
-          {isAI ? <Sparkles className="w-4 h-4" /> : item.icon}
+          {isAI ? <Sparkles className={defaultIconSizeClass} /> : item.icon}
         </div>
 
-        {/* 內容 */}
+        {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-medium text-white truncate">
-              {isAI ? `AI: ${item.query}` : item.title}
+              {isAI ? `AI: ${(item as AICommand).query}` : (item as CommandAction).title}
             </h4>
             {isAI && (
               <span className="text-sm px-1.5 py-0.5 bg-purple-500/20 text-purple-300 rounded">
-                {Math.round(item.confidence * 100)}%
+                {Math.round((item as AICommand).confidence * 100)}%
               </span>
             )}
           </div>
           <p className="text-sm text-gray-400 truncate">
-            {isAI ? item.preview : item.subtitle}
+            {isAI ? (item as AICommand).preview : (item as CommandAction).subtitle}
           </p>
         </div>
 
-        {/* 執行指示器 */}
+        {/* Indicator */}
         {isSelected && (
           <div className="flex-shrink-0 text-blue-400">
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className={defaultIconSizeClass} />
           </div>
         )}
       </motion.div>
@@ -422,10 +388,6 @@ export const CommandBar: React.FC<CommandBarProps> = ({
   };
 
   if (!isOpen) return null;
-
-  const allOptions = aiCommand
-    ? [aiCommand, ...filteredCommands]
-    : filteredCommands;
 
   return (
     <AnimatePresence>
@@ -444,19 +406,22 @@ export const CommandBar: React.FC<CommandBarProps> = ({
           className="w-full max-w-2xl mx-4"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* 主要命令面板 */}
+          {/* Main Command Panel */}
           <div className="bg-primary-900/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-            {/* 標題欄 */}
+            {/* Drag Handle & Title Bar */}
             <div className="flex items-center gap-3 px-6 py-4 border-b border-white/10">
-              <Command className="w-5 h-5 text-blue-400" />
-              <span className="text-sm font-medium text-white">指令面板</span>
-              <span className="text-sm text-gray-400">Cmd + K</span>
+              {/* Dashtail drag handle */}
+              <div className="drag-handle cursor-grab active:cursor-grabbing">
+                <Command className={cn(defaultIconSizeClass, "text-blue-400")} />
+              </div>
+              <span className="text-sm font-medium text-white">{title}</span>
+              <span className="text-sm text-gray-400">{shortcut}</span>
             </div>
 
-            {/* 搜尋輸入 */}
+            {/* Search Input */}
             <div className="p-6 border-b border-white/10">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 text-gray-400", defaultIconSizeClass)} />
                 <input
                   ref={inputRef}
                   type="text"
@@ -469,27 +434,19 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                     "focus:outline-none focus:border-blue-500/30 focus:bg-white/[0.07]",
                     "transition-all duration-200",
                   )}
-                  disabled={isProcessing}
+                  disabled={isProcessingQuery}
                 />
 
-                {/* 處理狀態指示器 */}
-                {executionState !== "idle" && (
+                {/* Query processing indicator */}
+                {isProcessingQuery && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {executionState === "processing" && (
-                      <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-                    )}
-                    {executionState === "success" && (
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                    )}
-                    {executionState === "error" && (
-                      <AlertTriangle className="w-4 h-4 text-red-400" />
-                    )}
+                    <Loader2 className={cn(defaultIconSizeClass, "text-blue-400 animate-spin")} />
                   </div>
                 )}
               </div>
             </div>
 
-            {/* 指令列表 */}
+            {/* Command List */}
             <div className="max-h-96 overflow-y-auto">
               {allOptions.length > 0 ? (
                 <div className="p-4 space-y-2">
@@ -500,15 +457,13 @@ export const CommandBar: React.FC<CommandBarProps> = ({
               ) : (
                 <div className="p-8 text-center text-gray-400">
                   <Search className="w-8 h-8 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">沒有找到相關指令</p>
-                  <p className="text-sm mt-1">
-                    試試使用自然語言，如「提升所有價格 5%」
-                  </p>
+                  <p className="text-sm">{noResultsMessage.title}</p>
+                  {noResultsMessage.subtitle && <p className="text-sm mt-1">{noResultsMessage.subtitle}</p>}
                 </div>
               )}
             </div>
 
-            {/* 底部提示 */}
+            {/* Bottom Hints */}
             <div className="px-6 py-3 bg-white/[0.02] border-t border-white/10">
               <div className="flex items-center justify-between text-sm text-gray-400">
                 <div className="flex items-center gap-4">
@@ -518,7 +473,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
                 </div>
                 {aiCommand && (
                   <div className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-purple-400" />
+                    <Sparkles className={cn(defaultIconSizeClass, "text-purple-400")} />
                     <span className="text-purple-300">AI 指令已識別</span>
                   </div>
                 )}
@@ -532,7 +487,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
 };
 
 // ============================================
-// Command Bar Hook
+// Command Bar Hook for Parent Component
 // ============================================
 export const useCommandBar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -550,7 +505,112 @@ export const useCommandBar = () => {
 };
 
 // ============================================
+// Example Predefined Commands & AI Patterns (moved from global to example config)
+// These would typically be imported from a separate config file or a global store.
+// ============================================
+const EXAMPLE_PREDEFINED_COMMANDS: CommandAction[] = [
+  {
+    id: "dashboard",
+    title: "切換至儀表板",
+    subtitle: "查看營運概況",
+    icon: <TrendingUp className="w-4 h-4" />,
+    category: "導覽",
+    keywords: ["dashboard", "儀表板", "overview", "總覽"],
+    action: () => console.log("Navigating to dashboard"),
+  },
+  {
+    id: "new-tour",
+    title: "新增旅遊行程",
+    subtitle: "建立新的旅遊產品",
+    icon: <Calendar className="w-4 h-4" />,
+    category: "建立",
+    keywords: ["new", "tour", "行程", "新增", "create"],
+    action: () => console.log("Creating new tour"),
+  },
+  {
+    id: "customer-search",
+    title: "搜尋客戶",
+    subtitle: "查找客戶資料",
+    icon: <Users className="w-4 h-4" />,
+    category: "搜尋",
+    keywords: ["customer", "客戶", "search", "搜尋"],
+    action: () => console.log("Searching customers"),
+  },
+  {
+    id: "profit-analysis",
+    title: "獲利分析",
+    subtitle: "檢視財務報表",
+    icon: <DollarSign className="w-4 h-4" />,
+    category: "分析",
+    keywords: ["profit", "獲利", "analysis", "分析", "financial"],
+    action: () => console.log("Opening profit analysis"),
+  },
+  {
+    id: "route-planner",
+    title: "路線規劃",
+    subtitle: "智能行程規劃",
+    icon: <Map className="w-4 h-4" />,
+    category: "工具",
+    keywords: ["route", "路線", "planner", "規劃", "itinerary"],
+    action: () => console.log("Opening route planner"),
+  },
+  {
+    id: "settings",
+    title: "設定",
+    subtitle: "調整系統偏好",
+    icon: <Settings className="w-4 h-4" />,
+    category: "設定",
+    keywords: ["settings", "配置", "選項"],
+    action: () => console.log("Opening settings"),
+  },
+];
+
+const EXAMPLE_AI_COMMAND_PATTERNS: AICommandPattern[] = [
+  {
+    pattern: /(?:提升|增加|調整).*?(?:價格|報價).*?(\d+)%/i,
+    intent: "price_adjustment",
+    extract: (match: RegExpMatchArray) => ({ percentage: parseInt(match[1]) }),
+    generatePreview: (params: Record<string, any>) =>
+      `將所有產品價格調整 ${params.percentage}%`,
+  },
+  {
+    pattern: /(?:規劃|建立|新增).*?(\d+)天.*?行程/i,
+    intent: "create_itinerary",
+    extract: (match: RegExpMatchArray) => ({ days: parseInt(match[1]) }),
+    generatePreview: (params: Record<string, any>) =>
+      `AI 將規劃一個 ${params.days} 天的行程`,
+  },
+  {
+    pattern: /(?:搜尋|查找|找).*?客戶.*?([\u4e00-\u9fa5\w]+)/i,
+    intent: "search_customer",
+    extract: (match: RegExpMatchArray) => ({ name: match[1] }),
+    generatePreview: (params: Record<string, any>) =>
+      `搜尋客戶："${params.name}"`,
+  },
+  {
+    pattern: /(?:計算|分析).*?毛利/i,
+    intent: "calculate_profit",
+    extract: () => ({}),
+    generatePreview: () => `計算所有行程的毛利率`,
+  },
+];
+
+// This is an example of how the config would be structured and passed
+// In a real application, this would come from a global configuration, a Context API, or prop drilling from a parent.
+export const EXAMPLE_COMMAND_BAR_CONFIG: CommandBarConfig = {
+  title: "指令面板",
+  shortcut: "Cmd + K",
+  defaultIconSizeClass: "w-4 h-4", // Unified icon size
+  predefinedCommands: EXAMPLE_PREDEFINED_COMMANDS,
+  aiCommandPatterns: EXAMPLE_AI_COMMAND_PATTERNS,
+  noResultsMessage: {
+    title: "沒有找到相關指令",
+    subtitle: "試試使用自然語言，如「提升所有價格 5%」",
+  },
+};
+
+// ============================================
 // Exports
 // ============================================
 export default CommandBar;
-export type { CommandBarProps, CommandAction, AICommand };
+export type { CommandBarProps, CommandAction, AICommand, CommandBarConfig, AICommandPattern };

@@ -5,23 +5,64 @@ import {
   Text,
   View,
   StyleSheet,
-  Font,
 } from '@react-pdf/renderer';
 
-// Register Chinese font from Google Fonts
-Font.register({
-  family: 'NotoSansTC',
-  fonts: [
-    {
-      src: 'https://fonts.gstatic.com/s/notosanstc/v35/-nFuOG829Oofr2wohFbTp9ifNAn722rq0MXz76Cy_CpOtma3uNQ.ttf',
-      fontWeight: 'normal',
-    },
-    {
-      src: 'https://fonts.gstatic.com/s/notosanstc/v35/-nFuOG829Oofr2wohFbTp9ifNAn722rq0MXz7_O9_CpOtma3uNQ.ttf',
-      fontWeight: 'bold',
-    },
-  ],
-});
+// Assuming global font registration is handled elsewhere.
+// For example, in `utils/registerFonts.ts`:
+// import { Font } from '@react-pdf/renderer';
+// export const registerQuotationFonts = () => {
+//   if (!Font.getRegisteredFonts().includes('NotoSansTC')) {
+//     Font.register({
+//       family: 'NotoSansTC',
+//       fonts: [
+//         { src: 'https://fonts.gstatic.com/s/notosanstc/v35/-nFuOG829Oofr2wohFbTp9ifNAn722rq0MXz76Cy_CpOtma3uNQ.ttf', fontWeight: 'normal' },
+//         { src: 'https://fonts.gstatic.com/s/notosanstc/v35/-nFuOG829Oofr2wohFbTp9ifNAn722rq0MXz7_O9_CpOtma3uNQ.ttf', fontWeight: 'bold' },
+//       ],
+//     });
+//   }
+// };
+// And then called once at application startup (e.g., in _app.tsx or index.ts).
+// This component should not register fonts directly to prevent repeated registration.
+
+// Design Tokens (mimicking Tailwind CSS values)
+// In a real project, this would be imported from a centralized file like `utils/designTokens.ts`
+const designTokens = {
+  colors: {
+    white: '#ffffff',
+    black: '#000000',
+    'gray-50': '#f9fafb',
+    'gray-100': '#f3f4f6', // Closest to original #f5f5f5
+    'gray-200': '#e5e7eb', // Closest to original #eee, #e5e5e5
+    'gray-500': '#6b7280', // Closest to original #888
+    'gray-600': '#4b5563', // Closest to original #666
+    'gray-700': '#374151', // Closest to original #333
+    'gray-900': '#111827', // Closest to original #1a1a1a
+    'success-600': '#059669', // Closest to original #06c167
+  },
+  spacing: {
+    px: 1,
+    0: 0,
+    1: 4,  // 4px/pt
+    2: 8,  // 8px/pt
+    3: 12, // 12px/pt
+    4: 16, // 16px/pt
+    5: 20, // 20px/pt
+    6: 24, // 24px/pt
+    8: 32, // 32px/pt (approx for original 30)
+    10: 40, // 40px/pt
+  },
+  borderRadius: {
+    DEFAULT: 4, // for original 4
+    lg: 8,      // for original 8
+  },
+  fontSize: {
+    xs: 8,  // for original 8
+    sm: 10, // for original 10
+    base: 12, // for original 12 (and approximated 11)
+    '2xl': 18, // for original 18
+    '4xl': 24, // for original 24
+  },
+};
 
 // Types
 export interface QuoteItem {
@@ -31,7 +72,9 @@ export interface QuoteItem {
   unitPrice: number;
 }
 
-export interface QuotationPDFProps {
+// Renamed from QuotationPDFProps to QuotationPDFConfig for clarity and Kintone independence
+// This interface defines all necessary props, allowing the component to be configured externally.
+export interface QuotationPDFConfig {
   tripName: string;
   paxCount: number;
   items: QuoteItem[];
@@ -43,66 +86,67 @@ export interface QuotationPDFProps {
 }
 
 // Styles
+// Using design tokens for colors, spacing, and font sizes to align with Dashtail UI规范
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    padding: designTokens.spacing[10], // Original 40
     fontFamily: 'NotoSansTC',
-    fontSize: 10,
-    color: '#1a1a1a',
+    fontSize: designTokens.fontSize.sm, // Original 10
+    color: designTokens.colors['gray-900'], // Original #1a1a1a
   },
   header: {
     borderBottomWidth: 3,
-    borderBottomColor: '#000',
-    paddingBottom: 20,
-    marginBottom: 24,
+    borderBottomColor: designTokens.colors.black, // Original #000
+    paddingBottom: designTokens.spacing[5], // Original 20
+    marginBottom: designTokens.spacing[6], // Original 24
   },
   logo: {
-    fontSize: 24,
+    fontSize: designTokens.fontSize['4xl'], // Original 24
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: designTokens.spacing[1], // Original 4
   },
   logoSub: {
-    fontSize: 11,
-    color: '#666',
+    fontSize: 11, // Keeping 11 as it's a specific size not directly mapped to token
+    color: designTokens.colors['gray-600'], // Original #666
   },
   tripInfo: {
-    backgroundColor: '#f5f5f5',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 20,
+    backgroundColor: designTokens.colors['gray-100'], // Original #f5f5f5
+    padding: designTokens.spacing[4], // Original 16
+    borderRadius: designTokens.borderRadius.lg, // Original 8
+    marginBottom: designTokens.spacing[5], // Original 20
   },
   tripName: {
-    fontSize: 18,
+    fontSize: designTokens.fontSize['2xl'], // Original 18
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: designTokens.spacing[2], // Original 8
   },
   metaRow: {
     flexDirection: 'row',
-    gap: 24,
+    gap: designTokens.spacing[6], // Original 24
   },
   metaText: {
-    fontSize: 10,
-    color: '#666',
+    fontSize: designTokens.fontSize.sm, // Original 10
+    color: designTokens.colors['gray-600'], // Original #666
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: designTokens.fontSize.base, // Original 12
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
-    paddingBottom: 6,
+    color: designTokens.colors['gray-700'], // Original #333
+    marginBottom: designTokens.spacing[3], // Original 12
+    paddingBottom: designTokens.spacing[2], // Original 6, approximated to 8
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: designTokens.colors['gray-200'], // Original #eee
   },
   itemsContainer: {
-    marginBottom: 24,
+    marginBottom: designTokens.spacing[6], // Original 24
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: designTokens.spacing[2], // Original 10, approximated to 8
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: designTokens.colors['gray-200'], // Original #eee
   },
   itemLeft: {
     flexDirection: 'row',
@@ -110,54 +154,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemCategory: {
-    backgroundColor: '#e5e5e5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    fontSize: 8,
-    color: '#666',
-    marginRight: 8,
+    backgroundColor: designTokens.colors['gray-200'], // Original #e5e5e5
+    paddingHorizontal: designTokens.spacing[1], // Original 6, approximated to 4
+    paddingVertical: designTokens.spacing.px, // Original 2, approximated to 1
+    borderRadius: designTokens.borderRadius.DEFAULT, // Original 4
+    fontSize: designTokens.fontSize.xs, // Original 8
+    color: designTokens.colors['gray-600'], // Original #666
+    marginRight: designTokens.spacing[2], // Original 8
   },
   itemName: {
-    fontSize: 10,
+    fontSize: designTokens.fontSize.sm, // Original 10
     fontWeight: 'bold',
   },
   itemPrice: {
-    fontSize: 10,
+    fontSize: designTokens.fontSize.sm, // Original 10
     fontWeight: 'bold',
-    fontFamily: 'Helvetica',
+    fontFamily: 'Helvetica', // Retaining Helvetica for numbers as in original
   },
   summary: {
-    backgroundColor: '#1a1a1a',
-    padding: 20,
-    borderRadius: 8,
+    backgroundColor: designTokens.colors['gray-900'], // Original #1a1a1a
+    padding: designTokens.spacing[5], // Original 20
+    borderRadius: designTokens.borderRadius.lg, // Original 8
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: designTokens.spacing[1], // Original 6, approximated to 4
   },
   summaryLabel: {
-    fontSize: 10,
-    color: '#888',
+    fontSize: designTokens.fontSize.sm, // Original 10
+    color: designTokens.colors['gray-500'], // Original #888
   },
   summaryValue: {
-    fontSize: 10,
+    fontSize: designTokens.fontSize.sm, // Original 10
     fontWeight: 'bold',
-    color: '#fff',
-    fontFamily: 'Helvetica',
+    color: designTokens.colors.white, // Original #fff
+    fontFamily: 'Helvetica', // Retaining Helvetica for numbers
   },
   summaryValueAccent: {
-    fontSize: 10,
+    fontSize: designTokens.fontSize.sm, // Original 10
     fontWeight: 'bold',
-    color: '#06c167',
-    fontFamily: 'Helvetica',
+    color: designTokens.colors['success-600'], // Original #06c167
+    fontFamily: 'Helvetica', // Retaining Helvetica for numbers
   },
   summaryDivider: {
     borderTopWidth: 1,
-    borderTopColor: '#333',
-    marginTop: 10,
-    paddingTop: 12,
+    borderTopColor: designTokens.colors['gray-700'], // Original #333
+    marginTop: designTokens.spacing[2], // Original 10, approximated to 8
+    paddingTop: designTokens.spacing[3], // Original 12
   },
   summaryTotal: {
     flexDirection: 'row',
@@ -165,28 +209,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryTotalLabel: {
-    fontSize: 12,
-    color: '#fff',
+    fontSize: designTokens.fontSize.base, // Original 12
+    color: designTokens.colors.white, // Original #fff
     fontWeight: 'bold',
   },
   summaryTotalValue: {
-    fontSize: 18,
+    fontSize: designTokens.fontSize['2xl'], // Original 18
     fontWeight: 'bold',
-    color: '#06c167',
-    fontFamily: 'Helvetica',
+    color: designTokens.colors['success-600'], // Original #06c167
+    fontFamily: 'Helvetica', // Retaining Helvetica for numbers
   },
   footer: {
     position: 'absolute',
-    bottom: 30,
-    left: 40,
-    right: 40,
-    paddingTop: 12,
+    bottom: designTokens.spacing[8], // Original 30, approximated to 32
+    left: designTokens.spacing[10], // Original 40
+    right: designTokens.spacing[10], // Original 40
+    paddingTop: designTokens.spacing[3], // Original 12
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: designTokens.colors['gray-200'], // Original #eee
   },
   footerText: {
-    fontSize: 8,
-    color: '#888',
+    fontSize: designTokens.fontSize.xs, // Original 8
+    color: designTokens.colors['gray-500'], // Original #888
     textAlign: 'center',
   },
 });
@@ -196,7 +240,34 @@ const formatCurrency = (amount: number): string => {
   return `NT$ ${amount.toLocaleString()}`;
 };
 
-// PDF Document Component
+/**
+ * QuotationPDF Component
+ * Renders a PDF document for a travel quotation.
+ *
+ * This component is designed to be purely data-driven, receiving all necessary information
+ * via its `QuotationPDFConfig` props, adhering to the Kintone independence principle.
+ *
+ * Architectural Fixes:
+ * - Font registration is assumed to be handled globally (e.g., in `utils/registerFonts.ts`)
+ *   and not within this component to prevent duplicates.
+ * - Styles use a centralized `designTokens` object for colors, spacing, and typography
+ *   to avoid hardcoded values and align with Dashtail UI design principles.
+ * - The component focuses solely on rendering the PDF structure based on props,
+ *   separating concerns from data fetching or global state management.
+ * - For props with default values, they should be defined during destructuring
+ *   or via a utility function if applicable (e.g., `({ prop = defaultValue }: QuotationPDFConfig) => ...`).
+ *   Currently, all props are considered mandatory for a valid quotation.
+ *
+ * Design Fixes:
+ * - Hardcoded color values replaced with references to `designTokens.colors` (e.g., `designTokens.colors['gray-900']`).
+ * - Spacing, font sizes, and border-radius are also mapped to `designTokens` for consistency.
+ * - `@react-pdf/renderer` does not support direct Tailwind CSS classes, so styles are defined
+ *   using `StyleSheet.create` with values derived from `designTokens` to emulate the design system.
+ * - The `drag-handle` structure is not applicable here as this component generates a PDF document,
+ *   not an interactive UI widget within the Dashtail ERP interface. If a preview of this PDF
+ *   were to be rendered as a draggable widget, the `drag-handle` would be part of the parent
+ *   wrapper component.
+ */
 export default function QuotationPDF({
   tripName,
   paxCount,
@@ -206,7 +277,8 @@ export default function QuotationPDF({
   sellingPrice,
   totalRevenue,
   profit,
-}: QuotationPDFProps) {
+}: QuotationPDFConfig) {
+  // Business logic for date formatting, kept within the component as it's presentation logic.
   const currentDate = new Date().toLocaleDateString('zh-TW', {
     year: 'numeric',
     month: 'long',

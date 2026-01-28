@@ -17,8 +17,11 @@ import {
   GripVertical,
   PanelRightClose,
   PanelRight,
+  Move, // Added for drag handle icon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// --- Interfaces and Constants ---
 
 interface Message {
   id: string;
@@ -36,11 +39,30 @@ interface QuickAction {
   prompt: string;
 }
 
-interface FloatingCopilotProps {
+// New Config interface for external control and defaults
+interface FloatingCopilotConfig {
+  // External control for visibility and state (controlled/uncontrolled pattern)
+  open?: boolean; // Controlled open state
+  onOpenChange?: (isOpen: boolean) => void;
+  minimized?: boolean; // Controlled minimized state
+  onMinimizedChange?: (isMinimized: boolean) => void;
+  docked?: boolean; // Controlled docked state
+  onDockedChange?: (isDocked: boolean) => void;
+
+  // Initial dimensions and constraints (can be overridden by user resizing)
+  defaultHeight?: number;
+  defaultWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  minWidth?: number;
+  maxWidth?: number;
+
+  // Chat specific props
   initialMessages?: Message[];
   onSendMessage?: (message: string) => void;
   isLoading?: boolean;
-  className?: string;
+  className?: string; // Additional class for the wrapper div (FAB button + panel container)
+  panelClassName?: string; // Additional class for the main panel itself
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
@@ -49,6 +71,18 @@ const QUICK_ACTIONS: QuickAction[] = [
   { id: 'code', label: '寫程式碼', icon: <Code size={14} />, prompt: '幫我寫一個計算利潤的函數' },
   { id: 'optimize', label: '優化建議', icon: <RefreshCw size={14} />, prompt: '有什麼可以優化的地方？' },
 ];
+
+const DEFAULT_INITIAL_MESSAGE: Message[] = [
+  {
+    id: '1',
+    role: 'assistant',
+    content: '嗨！我是 Trip Copilot，你的 AI 旅遊助手。\n\n我可以幫你：\n• 分析團體利潤\n• 生成報表\n• 回答業務問題\n• 提供優化建議\n\n有什麼需要幫忙的嗎？',
+    timestamp: new Date(),
+    type: 'text',
+  },
+];
+
+// --- Component ---
 
 /**
  * GitHub Copilot 風格的 AI 助手面板
@@ -59,39 +93,86 @@ const QUICK_ACTIONS: QuickAction[] = [
  * - 支援代碼格式化顯示
  * - 快速操作按鈕
  * - 複製功能
+ * - Kintone Widget 兼容性：所有關鍵狀態皆可透過 Props 傳入控制，或使用內部狀態。
+ * - Dashtail UI 規範：使用標準 Card 結構、Tailwind 顏色 token、drag-handle。
  */
-const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
-  initialMessages = [],
+const FloatingCopilot: React.FC<FloatingCopilotConfig> = ({
+  // Control props (controlled/uncontrolled pattern)
+  open,
+  onOpenChange,
+  minimized,
+  onMinimizedChange,
+  docked,
+  onDockedChange,
+
+  // Dimension props
+  defaultHeight = 500,
+  defaultWidth = 400,
+  minHeight = 300,
+  maxHeight = 800,
+  minWidth = 320,
+  maxWidth = 600,
+
+  // Chat specific props
+  initialMessages,
   onSendMessage,
   isLoading = false,
   className,
+  panelClassName,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [isDocked, setIsDocked] = useState(false);
+  // Internal state for uncontrolled behavior or when props are not provided
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [internalIsMinimized, setInternalIsMinimized] = useState(false);
+  const [internalIsDocked, setInternalIsDocked] = useState(false);
+  const [internalPanelHeight, setInternalPanelHeight] = useState(defaultHeight);
+  const [internalPanelWidth, setInternalPanelWidth] = useState(defaultWidth);
+
+  // Determine actual state based on props or internal state (controlled vs. uncontrolled)
+  const isComponentOpen = open !== undefined ? open : internalIsOpen;
+  const isComponentMinimized = minimized !== undefined ? minimized : internalIsMinimized;
+  const isComponentDocked = docked !== undefined ? docked : internalIsDocked;
+  const currentPanelHeight = internalPanelHeight;
+  const currentPanelWidth = internalPanelWidth;
+
+  // State setters that also call onChange callbacks
+  const setIsOpen = useCallback((value: boolean) => {
+    setInternalIsOpen(value);
+    onOpenChange?.(value);
+  }, [onOpenChange]);
+
+  const setIsMinimized = useCallback((value: boolean) => {
+    setInternalIsMinimized(value);
+    onMinimizedChange?.(value);
+  }, [onMinimizedChange]);
+
+  const setIsDocked = useCallback((value: boolean) => {
+    setInternalIsDocked(value);
+    onDockedChange?.(value);
+  }, [onDockedChange]);
+
+  const setPanelHeight = useCallback((value: number) => {
+    setInternalPanelHeight(Math.min(Math.max(value, minHeight), maxHeight));
+  }, [minHeight, maxHeight]);
+
+  const setPanelWidth = useCallback((value: number) => {
+    setInternalPanelWidth(Math.min(Math.max(value, minWidth), maxWidth));
+  }, [minWidth, maxWidth]);
+
   const [inputValue, setInputValue] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showQuickActions, setShowQuickActions] = useState(true);
-  const [panelHeight, setPanelHeight] = useState(500);
-  const [panelWidth, setPanelWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>(
-    initialMessages.length > 0
+    initialMessages && initialMessages.length > 0
       ? initialMessages
-      : [
-          {
-            id: '1',
-            role: 'assistant',
-            content: '嗨！我是 Trip Copilot，你的 AI 旅遊助手。\n\n我可以幫你：\n• 分析團體利潤\n• 生成報表\n• 回答業務問題\n• 提供優化建議\n\n有什麼需要幫忙的嗎？',
-            timestamp: new Date(),
-            type: 'text',
-          },
-        ]
+      : DEFAULT_INITIAL_MESSAGE
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null); // Ref for the draggable panel
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,29 +183,66 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
   }, [messages]);
 
   useEffect(() => {
-    if (isOpen && !isMinimized) {
+    if (isComponentOpen && !isComponentMinimized) {
       inputRef.current?.focus();
     }
-  }, [isOpen, isMinimized]);
+  }, [isComponentOpen, isComponentMinimized]);
 
-  // Handle resize
-  const handleMouseDown = useCallback((e: React.MouseEvent, direction: 'height' | 'width' | 'both') => {
+  // Handle panel drag (for moving the widget when floating)
+  // Initial position is bottom-right-8, so panelPosition adjusts transform for floating.
+  const [panelPosition, setPanelPosition] = useState({ x: 0, y: 0 });
+
+  const handleDragMouseDown = useCallback((e: React.MouseEvent) => {
+    if (isComponentDocked || isComponentMinimized) return; // Cannot drag if docked or minimized
     e.preventDefault();
+    setIsDragging(true);
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initialPanelX = panelPosition.x;
+    const initialPanelY = panelPosition.y;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      const deltaX = ev.clientX - startX;
+      const deltaY = ev.clientY - startY;
+      setPanelPosition({
+        x: initialPanelX + deltaX,
+        y: initialPanelY + deltaY,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [panelPosition, isComponentDocked, isComponentMinimized]);
+
+  // Handle resize logic
+  const handleResizeMouseDown = useCallback((e: React.MouseEvent, direction: 'height' | 'width' | 'both') => {
+    if (isComponentMinimized || isComponentDocked) return; // Cannot resize if minimized or docked
+    e.preventDefault();
+    e.stopPropagation(); // Prevent drag handle or other mouse events from interfering
     setIsResizing(true);
 
     const startX = e.clientX;
     const startY = e.clientY;
-    const startHeight = panelHeight;
-    const startWidth = panelWidth;
+    const startHeight = currentPanelHeight;
+    const startWidth = currentPanelWidth;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (ev: MouseEvent) => {
+      // For a bottom-right anchored panel, resizing from top-left effectively increases height upwards and width leftwards.
+      // The delta calculations remain correct for this behavior.
       if (direction === 'height' || direction === 'both') {
-        const deltaY = startY - e.clientY;
-        setPanelHeight(Math.min(Math.max(startHeight + deltaY, 300), 800));
+        const deltaY = startY - ev.clientY; // Moving cursor up increases height
+        setPanelHeight(startHeight + deltaY);
       }
       if (direction === 'width' || direction === 'both') {
-        const deltaX = startX - e.clientX;
-        setPanelWidth(Math.min(Math.max(startWidth + deltaX, 320), 600));
+        const deltaX = startX - ev.clientX; // Moving cursor left increases width
+        setPanelWidth(startWidth + deltaX);
       }
     };
 
@@ -136,7 +254,8 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [panelHeight, panelWidth]);
+  }, [currentPanelHeight, currentPanelWidth, isComponentMinimized, isComponentDocked, setPanelHeight, setPanelWidth]);
+
 
   const handleSend = () => {
     if (!inputValue.trim()) return;
@@ -150,11 +269,13 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    onSendMessage?.(inputValue);
+    onSendMessage?.(inputValue); // Notify parent component
     setInputValue('');
     setShowQuickActions(false);
 
-    // 模擬 AI 回覆
+    // Simulated AI response for demonstration.
+    // In a real application, this would come from the parent component
+    // after `onSendMessage` triggers an API call.
     setTimeout(() => {
       const isCodeRequest = inputValue.includes('程式') || inputValue.includes('函數') || inputValue.includes('code');
 
@@ -189,7 +310,7 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // 解析消息內容，處理代碼塊
+  // Parses message content to render code blocks and plain text
   const renderMessageContent = (message: Message) => {
     const content = message.content;
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
@@ -198,25 +319,26 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
     let match;
 
     while ((match = codeBlockRegex.exec(content)) !== null) {
-      // 添加代碼塊之前的文字
+      // Add text before the code block
       if (match.index > lastIndex) {
         parts.push(
-          <span key={lastIndex} className="whitespace-pre-wrap text-sm">
+          <span key={`text-pre-${lastIndex}`} className="whitespace-pre-wrap text-sm">
             {content.slice(lastIndex, match.index)}
           </span>
         );
       }
 
-      // 添加代碼塊
+      // Add the code block
       const language = match[1] || 'code';
       const code = match[2];
       parts.push(
-        <div key={match.index} className="my-2 rounded-lg overflow-hidden bg-card border border-border">
+        <div key={`code-block-${match.index}`} className="my-2 rounded-lg overflow-hidden bg-card border border-border">
           <div className="flex items-center justify-between px-3 py-1.5 bg-muted border-b border-border">
             <span className="text-sm text-muted-foreground font-mono">{language}</span>
             <button
               onClick={() => handleCopy(code, `${message.id}-${match!.index}`)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              title="複製代碼"
             >
               {copiedId === `${message.id}-${match!.index}` ? (
                 <>
@@ -240,10 +362,10 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
       lastIndex = match.index + match[0].length;
     }
 
-    // 添加剩餘的文字
+    // Add remaining text after the last code block
     if (lastIndex < content.length) {
       parts.push(
-        <span key={lastIndex} className="whitespace-pre-wrap text-sm">
+        <span key={`text-post-${lastIndex}`} className="whitespace-pre-wrap text-sm">
           {content.slice(lastIndex)}
         </span>
       );
@@ -252,70 +374,77 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
     return parts.length > 0 ? parts : <span className="whitespace-pre-wrap text-sm">{content}</span>;
   };
 
+  // Main panel styling
   const panelClasses = cn(
-    "flex flex-col overflow-hidden shadow-2xl border border-border backdrop-blur-3xl bg-background/95",
-    isDocked
+    "flex flex-col overflow-hidden shadow-xl border border-border backdrop-blur-3xl bg-card/95", // Standard card structure
+    isComponentDocked
       ? "fixed right-0 top-0 h-full rounded-none border-r-0 border-t-0 border-b-0"
-      : "rounded-[24px]",
-    isResizing && "select-none"
+      : "rounded-xl", // Use rounded-xl for standard card look
+    (isResizing || isDragging) && "select-none", // Prevent text selection during drag/resize
+    panelClassName // Allow custom panel class overrides
   );
 
   return (
-    <div className={cn("fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4", className)}>
+    <div
+      className={cn("fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4", className)}
+      style={!isComponentDocked ? { transform: `translate(${panelPosition.x}px, ${panelPosition.y}px)` } : {}}
+    >
       <AnimatePresence mode="wait">
-        {isOpen && (
+        {isComponentOpen && (
           <motion.div
+            ref={panelRef}
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{
               opacity: 1,
               y: 0,
               scale: 1,
-              height: isMinimized ? 56 : panelHeight,
-              width: isDocked ? 380 : panelWidth,
+              height: isComponentMinimized ? 56 : currentPanelHeight,
+              width: isComponentDocked ? maxWidth : currentPanelWidth, // Use maxWidth as fixed docked width
             }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={panelClasses}
             style={{
-              height: isMinimized ? 56 : panelHeight,
-              width: isDocked ? 380 : panelWidth,
+              height: isComponentMinimized ? 56 : currentPanelHeight,
+              width: isComponentDocked ? maxWidth : currentPanelWidth,
             }}
           >
-            {/* Resize handles */}
-            {!isMinimized && !isDocked && (
+            {/* Resize handles - only active when floating and not minimized */}
+            {!isComponentMinimized && !isComponentDocked && (
               <>
-                {/* Top resize */}
+                {/* Top resize handle */}
                 <div
-                  className="absolute top-0 left-4 right-4 h-1 cursor-ns-resize hover:bg-primary/30 transition-colors"
-                  onMouseDown={(e) => handleMouseDown(e, 'height')}
+                  className="absolute top-0 left-4 right-4 h-1.5 cursor-ns-resize hover:bg-primary/50 transition-colors rounded-b-sm z-10"
+                  onMouseDown={(e) => handleResizeMouseDown(e, 'height')}
                 />
-                {/* Left resize */}
+                {/* Left resize handle */}
                 <div
-                  className="absolute left-0 top-4 bottom-4 w-1 cursor-ew-resize hover:bg-primary/30 transition-colors"
-                  onMouseDown={(e) => handleMouseDown(e, 'width')}
+                  className="absolute left-0 top-4 bottom-4 w-1.5 cursor-ew-resize hover:bg-primary/50 transition-colors rounded-r-sm z-10"
+                  onMouseDown={(e) => handleResizeMouseDown(e, 'width')}
                 />
-                {/* Corner resize */}
+                {/* Top-left corner resize handle */}
                 <div
-                  className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize"
-                  onMouseDown={(e) => handleMouseDown(e, 'both')}
+                  className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize z-20"
+                  onMouseDown={(e) => handleResizeMouseDown(e, 'both')}
                 >
+                  {/* Grip icon for visual cue of corner resize */}
                   <GripVertical size={12} className="absolute top-1 left-1 text-muted-foreground rotate-45" />
                 </div>
               </>
             )}
 
             {/* Header */}
-            <div className="flex-shrink-0 p-3 border-b border-border bg-background/20 flex items-center justify-between">
+            <div className="flex-shrink-0 p-3 border-b border-border bg-card/20 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/40 blur-lg opacity-40 animate-pulse" />
-                  <div className="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-primary-dark flex items-center justify-center shadow-lg">
+                  <div className="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-primary-600 flex items-center justify-center shadow-lg">
                     <Sparkles size={16} className="text-primary-foreground" />
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-foreground font-medium text-sm">Trip Copilot</h4>
-                  <p className="text-sm text-primary/80 flex items-center gap-1">
+                  <h4 className="text-foreground font-semibold text-base">Trip Copilot</h4> {/* Adjusted font styles */}
+                  <p className="text-xs text-primary/80 flex items-center gap-1 mt-0.5"> {/* Adjusted font styles and spacing */}
                     <span className="w-1.5 h-1.5 rounded-full bg-success" />
                     AI 助手
                   </p>
@@ -323,41 +452,54 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
               </div>
 
               <div className="flex items-center gap-1">
+                {/* Drag handle for moving the entire widget (only when floating) */}
+                {!isComponentDocked && (
+                  <button
+                    className="drag-handle p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-grab active:cursor-grabbing"
+                    onMouseDown={handleDragMouseDown}
+                    title="移動面板"
+                  >
+                    <Move size={14} />
+                  </button>
+                )}
+
                 <button
-                  onClick={() => setIsDocked(!isDocked)}
+                  onClick={() => setIsDocked(!isComponentDocked)}
                   className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                  title={isDocked ? '浮動模式' : '停靠側邊'}
+                  title={isComponentDocked ? '浮動模式' : '停靠側邊'}
                 >
-                  {isDocked ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
+                  {isComponentDocked ? <PanelRightClose size={14} /> : <PanelRight size={14} />}
                 </button>
                 <button
-                  onClick={() => setIsMinimized(!isMinimized)}
+                  onClick={() => setIsMinimized(!isComponentMinimized)}
                   className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  title={isComponentMinimized ? '展開面板' : '最小化面板'}
                 >
-                  {isMinimized ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {isComponentMinimized ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                  title="關閉面板"
                 >
                   <X size={14} />
                 </button>
               </div>
             </div>
 
-            {/* Content */}
-            {!isMinimized && (
+            {/* Content - Hidden when minimized */}
+            {!isComponentMinimized && (
               <>
                 {/* Quick Actions */}
                 {showQuickActions && messages.length <= 1 && (
-                  <div className="flex-shrink-0 p-3 border-b border-border bg-background/10">
-                    <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2">快速操作</p>
-                    <div className="flex flex-wrap gap-1.5">
+                  <div className="flex-shrink-0 p-4 border-b border-border bg-card/10"> {/* Adjusted padding */}
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2 font-medium">快速操作</p> {/* Adjusted font styles */}
+                    <div className="flex flex-wrap gap-2"> {/* Adjusted gap */}
                       {QUICK_ACTIONS.map((action) => (
                         <button
                           key={action.id}
                           onClick={() => handleQuickAction(action)}
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-secondary border border-border text-sm text-secondary-foreground hover:bg-accent hover:border-primary/50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary border border-border text-sm text-secondary-foreground hover:bg-accent hover:border-primary/50 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                         >
                           {action.icon}
                           {action.label}
@@ -368,12 +510,13 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                 )}
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent"> {/* Added custom scrollbar styles */}
                   {messages.map((msg) => (
                     <motion.div
                       key={msg.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }} // Added framer-motion transition duration
                       className={cn(
                         "group",
                         msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'
@@ -381,10 +524,10 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                     >
                       <div
                         className={cn(
-                          "relative max-w-[90%] rounded-2xl text-sm leading-relaxed",
+                          "relative max-w-[90%] rounded-xl text-sm leading-relaxed", // Changed to rounded-xl for consistency
                           msg.role === 'user'
-                            ? "bg-primary text-primary-foreground px-4 py-3 rounded-br-md"
-                            : "bg-card border border-border text-card-foreground px-4 py-3 rounded-bl-md"
+                            ? "bg-primary text-primary-foreground px-4 py-3 rounded-br-none" // Adjusted specific corner rounding
+                            : "bg-secondary border border-border text-secondary-foreground px-4 py-3 rounded-bl-none" // Adjusted bg, specific corner rounding
                         )}
                       >
                         {renderMessageContent(msg)}
@@ -393,7 +536,8 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                         {msg.role === 'assistant' && (
                           <button
                             onClick={() => handleCopy(msg.content, msg.id)}
-                            className="absolute -right-2 top-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-secondary text-muted-foreground hover:text-foreground transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                            className="absolute -right-2 top-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-md bg-background text-muted-foreground hover:text-foreground transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 shadow-sm" // Changed bg, added shadow
+                            title="複製訊息"
                           >
                             {copiedId === msg.id ? (
                               <Check size={12} className="text-success" />
@@ -408,7 +552,7 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
 
                   {isLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-card border border-border px-4 py-3 rounded-2xl rounded-bl-md">
+                      <div className="bg-secondary border border-border px-4 py-3 rounded-xl rounded-bl-none"> {/* Changed bg, rounded-xl */}
                         <div className="flex gap-1.5">
                           <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                           <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -420,8 +564,8 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input */}
-                <div className="flex-shrink-0 p-3 border-t border-border bg-primary/20">
+                {/* Input Area */}
+                <div className="flex-shrink-0 p-3 border-t border-border bg-card/20"> {/* Changed bg for consistency */}
                   <div className="relative flex items-center">
                     <input
                       ref={inputRef}
@@ -430,10 +574,10 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder="輸入訊息或問題..."
-                      className="w-full bg-secondary border border-border rounded-lg py-2.5 px-4 pr-20 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary/50 focus:bg-secondary/70 transition-all"
+                      className="w-full bg-muted border border-border rounded-lg py-2.5 px-4 pr-20 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary focus:bg-muted/70 transition-all" // Changed bg, focus border
                     />
                     <div className="absolute right-2 flex items-center gap-1">
-                      <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50">
+                      <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50" title="語音輸入">
                         <Mic size={16} />
                       </button>
                       <button
@@ -443,14 +587,15 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
                           "p-1.5 rounded-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                           inputValue.trim()
                             ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                            : "text-muted-foreground"
+                            : "text-muted-foreground cursor-not-allowed opacity-70" // Added disabled styles
                         )}
+                        title="發送訊息"
                       >
                         <Send size={16} />
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1.5 text-center">
+                  <p className="text-xs text-muted-foreground mt-1.5 text-center"> {/* Adjusted font size */}
                     按 Enter 發送 · 支援 Markdown 格式
                   </p>
                 </div>
@@ -462,20 +607,21 @@ const FloatingCopilot: React.FC<FloatingCopilotProps> = ({
 
       {/* FAB Button */}
       <motion.button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(!isComponentOpen)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className={cn(
           "relative w-14 h-14 rounded-full text-primary-foreground shadow-lg flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70",
-          "bg-gradient-to-br from-primary to-primary-dark",
-          isOpen && "ring-2 ring-primary/50"
+          "bg-gradient-to-br from-primary to-primary-600", // Using a Tailwind color token (assuming primary-600 is defined)
+          isComponentOpen && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background" // Added ring-offset for better visibility
         )}
+        title={isComponentOpen ? '關閉 Copilot' : '開啟 Copilot'}
       >
         <div className="absolute inset-0 rounded-full bg-primary/30 blur-xl animate-pulse" />
         <div className="relative z-10">
-          {isOpen ? <X size={24} /> : <Bot size={24} />}
+          {isComponentOpen ? <X size={24} /> : <Bot size={24} />}
         </div>
-        {!isOpen && (
+        {!isComponentOpen && (
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-background" />
         )}
       </motion.button>

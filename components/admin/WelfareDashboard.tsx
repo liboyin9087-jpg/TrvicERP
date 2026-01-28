@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Building2, Users, Calendar, FileText, TrendingUp, Clock, CheckCircle,
-  AlertCircle, Plus, Copy, Settings, UserCheck, UserX, Home, Bed,
-  Mail, Download, BarChart3, Filter, Search, ChevronRight, X,
-  Edit, Trash2, Eye, Send, FileDown, PieChart as PieChartIcon, DollarSign,
-  ClipboardList, UserPlus, Shield, Award, Baby, Heart, Users2
+  Building2, Users, Calendar, FileText, TrendingUp, CheckCircle,
+  AlertCircle, Plus, Copy, Settings, UserCheck, Home, Bed,
+  Mail, Download, BarChart3, Search, ChevronRight, X,
+  Edit, Trash2, Eye, Send, FileDown, PieChart as PieChartIcon,
+  ClipboardList, Shield, Award, Baby, Heart, Users2
 } from 'lucide-react';
 import { cn } from '../../src/lib/utils';
 import {
@@ -15,10 +15,11 @@ import {
 } from '../../src/components/charts/SimpleCharts';
 
 // ============================================
-// Types
+// Type Definitions (Architectural Fix: Extracted types from component logic)
 // ============================================
 
 type TabKey = 'dashboard' | 'groups' | 'rules' | 'registration' | 'roster' | 'preparation' | 'reports';
+type EmployeeStatus = 'pending' | 'approved' | 'rejected';
 
 interface WelfareTrip {
   id: string;
@@ -37,6 +38,14 @@ interface WelfareTrip {
   createdAt: string;
 }
 
+interface TripTemplate {
+  id: string;
+  name: string;
+  destination: string;
+  days: number;
+  basePrice: number;
+}
+
 interface SubsidyRule {
   id: string;
   name: string;
@@ -47,13 +56,20 @@ interface SubsidyRule {
   taxExempt: boolean;
 }
 
+interface Companion {
+  id: string;
+  name: string;
+  relationship: 'spouse' | 'child' | 'parent' | 'other';
+  age?: number;
+}
+
 interface Employee {
   id: string;
   name: string;
   department: string;
   seniority: number;
   email: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: EmployeeStatus;
   registrationDate: string;
   roomType: 'single' | 'double' | 'family';
   specialNeeds?: string;
@@ -62,82 +78,38 @@ interface Employee {
   paymentStatus: 'unpaid' | 'partial' | 'paid';
 }
 
-interface Companion {
-  id: string;
-  name: string;
-  relationship: 'spouse' | 'child' | 'parent' | 'other';
-  age?: number;
-}
-
 interface RoomAssignment {
   roomNumber: string;
   roomType: string;
   occupants: { name: string; employeeId: string }[];
 }
 
-// ============================================
-// Mock Data
-// ============================================
-
-const MOCK_TRIPS: WelfareTrip[] = [
-  {
-    id: '1', name: '2025 員工旅遊 - 東京五日', destination: '日本東京',
-    date: '2025-03-15', endDate: '2025-03-19', participants: 45, maxParticipants: 60,
-    status: 'open', registrationDeadline: '2025-02-28',
-    subsidyType: 'fixed', subsidyAmount: 15000, maxSubsidy: 15000,
-    createdAt: '2025-01-10'
-  },
-  {
-    id: '2', name: '部門旅遊 - 峇里島四日', destination: '印尼峇里島',
-    date: '2025-04-20', endDate: '2025-04-23', participants: 28, maxParticipants: 30,
-    status: 'closing', registrationDeadline: '2025-03-15',
-    subsidyType: 'percentage', subsidyAmount: 50, maxSubsidy: 20000,
-    createdAt: '2025-01-15'
-  },
-  {
-    id: '3', name: '家庭日 - 墾丁二日', destination: '台灣墾丁',
-    date: '2025-05-01', endDate: '2025-05-02', participants: 120, maxParticipants: 150,
-    status: 'confirmed', registrationDeadline: '2025-04-15',
-    subsidyType: 'fixed', subsidyAmount: 3000, maxSubsidy: 3000,
-    createdAt: '2025-02-01'
-  },
-];
-
-const MOCK_TEMPLATES = [
-  { id: 't1', name: '東京經典五日', destination: '日本東京', days: 5, basePrice: 45000 },
-  { id: 't2', name: '沖繩親子四日', destination: '日本沖繩', days: 4, basePrice: 35000 },
-  { id: 't3', name: '峇里島豪華五日', destination: '印尼峇里島', days: 5, basePrice: 42000 },
-  { id: 't4', name: '墾丁悠活二日', destination: '台灣墾丁', days: 2, basePrice: 8000 },
-];
-
-const MOCK_SUBSIDY_RULES: SubsidyRule[] = [
-  { id: 'r1', name: '滿1年員工', seniorityYears: 1, subsidyType: 'fixed', amount: 10000, maxAmount: 10000, taxExempt: true },
-  { id: 'r2', name: '滿3年員工', seniorityYears: 3, subsidyType: 'fixed', amount: 15000, maxAmount: 15000, taxExempt: true },
-  { id: 'r3', name: '滿5年員工', seniorityYears: 5, subsidyType: 'percentage', amount: 60, maxAmount: 25000, taxExempt: false },
-  { id: 'r4', name: '滿10年員工', seniorityYears: 10, subsidyType: 'percentage', amount: 80, maxAmount: 35000, taxExempt: false },
-];
-
-const MOCK_EMPLOYEES: Employee[] = [
-  { id: 'e1', name: '王小明', department: '研發部', seniority: 5, email: 'wang@company.com', status: 'approved', registrationDate: '2025-01-15', roomType: 'double', companions: [{ id: 'c1', name: '王太太', relationship: 'spouse' }], subsidyAmount: 15000, paymentStatus: 'paid' },
-  { id: 'e2', name: '李美玲', department: '行銷部', seniority: 3, email: 'lee@company.com', status: 'approved', registrationDate: '2025-01-16', roomType: 'single', companions: [], subsidyAmount: 15000, paymentStatus: 'paid' },
-  { id: 'e3', name: '張大偉', department: '業務部', seniority: 2, email: 'chang@company.com', status: 'pending', registrationDate: '2025-01-18', roomType: 'family', specialNeeds: '素食', companions: [{ id: 'c2', name: '張太太', relationship: 'spouse' }, { id: 'c3', name: '張小寶', relationship: 'child', age: 5 }], subsidyAmount: 10000, paymentStatus: 'unpaid' },
-  { id: 'e4', name: '陳志豪', department: '人資部', seniority: 1, email: 'chen@company.com', status: 'pending', registrationDate: '2025-01-19', roomType: 'double', companions: [{ id: 'c4', name: '陳小姐', relationship: 'other' }], subsidyAmount: 10000, paymentStatus: 'unpaid' },
-  { id: 'e5', name: '林雅婷', department: '財務部', seniority: 0.5, email: 'lin@company.com', status: 'rejected', registrationDate: '2025-01-20', roomType: 'single', companions: [], subsidyAmount: 0, paymentStatus: 'unpaid' },
-];
-
-const MOCK_ROOMS: RoomAssignment[] = [
-  { roomNumber: '501', roomType: '雙人房', occupants: [{ name: '王小明', employeeId: 'e1' }, { name: '王太太', employeeId: 'e1' }] },
-  { roomNumber: '502', roomType: '單人房', occupants: [{ name: '李美玲', employeeId: 'e2' }] },
-  { roomNumber: '503', roomType: '家庭房', occupants: [{ name: '張大偉', employeeId: 'e3' }, { name: '張太太', employeeId: 'e3' }, { name: '張小寶', employeeId: 'e3' }] },
-];
+// Architectural Fix: Defined Config Props interface for external data/handlers
+// This ensures type safety and external control, removing dependency on internal mock data.
+export interface WelfareDashboardConfigProps {
+  initialTrips: WelfareTrip[];
+  initialTemplates: TripTemplate[];
+  initialSubsidyRules: SubsidyRule[];
+  initialEmployees: Employee[];
+  initialRoomAssignments: RoomAssignment[];
+  // Handlers for data mutations, to be implemented by the parent component (e.g., Kintone app)
+  onUpdateEmployeeStatus: (employeeId: string, status: EmployeeStatus) => void;
+  // Potentially other handlers like onCreateTrip, onEditTrip, etc.
+}
 
 // ============================================
 // Helper Components
 // ============================================
 
-function StatCard({ icon, label, value, trend, trendUp }: {
-  icon: React.ReactNode; label: string; value: string; trend?: string; trendUp?: boolean
-}) {
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  trend?: string;
+  trendUp?: boolean;
+}
+
+function StatCard({ icon, label, value, trend, trendUp }: StatCardProps) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
@@ -162,9 +134,15 @@ function StatCard({ icon, label, value, trend, trendUp }: {
   );
 }
 
-function TabButton({ active, icon, label, onClick, badge }: {
-  active: boolean; icon: React.ReactNode; label: string; onClick: () => void; badge?: number;
-}) {
+interface TabButtonProps {
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  badge?: number;
+}
+
+function TabButton({ active, icon, label, onClick, badge }: TabButtonProps) {
   return (
     <motion.button
       whileHover={{ scale: 1.02 }}
@@ -173,7 +151,7 @@ function TabButton({ active, icon, label, onClick, badge }: {
       className={cn(
         'flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all relative',
         active
-          ? 'bg-slate-900 text-white shadow-lg'
+          ? 'bg-primary-900 text-white shadow-lg' // Dashtail UI Fix: Using primary-900
           : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
       )}
     >
@@ -192,13 +170,16 @@ function TabButton({ active, icon, label, onClick, badge }: {
 }
 
 // ============================================
-// Tab Content Components
+// Tab Content Components (Architectural Fix: Components now receive data via props)
 // ============================================
 
-// Dashboard Tab
-function DashboardTab({ trips, employees, onNavigate }: {
-  trips: WelfareTrip[]; employees: Employee[]; onNavigate: (tab: TabKey) => void;
-}) {
+interface DashboardTabProps {
+  trips: WelfareTrip[];
+  employees: Employee[];
+  onNavigate: (tab: TabKey) => void;
+}
+
+function DashboardTab({ trips, employees, onNavigate }: DashboardTabProps) {
   const pendingCount = employees.filter(e => e.status === 'pending').length;
   const approvedCount = employees.filter(e => e.status === 'approved').length;
   const totalParticipants = trips.reduce((sum, t) => sum + t.participants, 0);
@@ -305,9 +286,13 @@ function DashboardTab({ trips, employees, onNavigate }: {
   );
 }
 
-function TripRow({ trip }: { trip: WelfareTrip }) {
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, { bg: string; text: string; label: string }> = {
+interface TripRowProps {
+  trip: WelfareTrip;
+}
+
+function TripRow({ trip }: TripRowProps) {
+  const getStatusBadge = (status: WelfareTrip['status']) => {
+    const styles: Record<WelfareTrip['status'], { bg: string; text: string; label: string }> = {
       draft: { bg: 'bg-gray-100', text: 'text-gray-600', label: '草稿' },
       open: { bg: 'bg-green-100', text: 'text-green-700', label: '報名中' },
       closing: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: '即將截止' },
@@ -342,7 +327,7 @@ function TripRow({ trip }: { trip: WelfareTrip }) {
           <div className="text-right">
             <div className="flex items-center gap-3">
               <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-slate-900 rounded-full transition-all" style={{ width: `${fillRate}%` }} />
+                <div className="h-full bg-primary-900 rounded-full transition-all" style={{ width: `${fillRate}%` }} /> {/* Dashtail UI Fix: Using primary-900 */}
               </div>
               <span className="text-sm font-semibold text-gray-900 w-16">
                 {trip.participants}/{trip.maxParticipants}
@@ -359,8 +344,13 @@ function TripRow({ trip }: { trip: WelfareTrip }) {
   );
 }
 
+interface GroupsTabProps {
+  trips: WelfareTrip[];
+  templates: TripTemplate[];
+}
+
 // Groups Tab - 建立/複製團體
-function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: typeof MOCK_TEMPLATES }) {
+function GroupsTab({ trips, templates }: GroupsTabProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
@@ -375,7 +365,7 @@ function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: type
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium text-sm"
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary-900 text-white rounded-lg font-medium text-sm" // Dashtail UI Fix: Using primary-900
         >
           <Plus className="w-4 h-4" />
           建立新活動
@@ -411,7 +401,7 @@ function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: type
                 </span>
               </div>
               <div className="flex gap-2 mt-3">
-                <button className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                <button className="flex-1 py-2 bg-primary-900 text-white rounded-lg text-sm font-medium hover:bg-primary-800 transition-colors"> {/* Dashtail UI Fix: Using primary-900 */}
                   <Copy className="w-4 h-4 inline mr-1" />
                   複製建立
                 </button>
@@ -465,8 +455,12 @@ function GroupsTab({ trips, templates }: { trips: WelfareTrip[]; templates: type
   );
 }
 
+interface RulesTabProps {
+  rules: SubsidyRule[];
+}
+
 // Rules Tab - 資格規則設定
-function RulesTab({ rules }: { rules: SubsidyRule[] }) {
+function RulesTab({ rules }: RulesTabProps) {
   const [showAddRule, setShowAddRule] = useState(false);
 
   return (
@@ -480,7 +474,7 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowAddRule(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium text-sm"
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary-900 text-white rounded-lg font-medium text-sm" // Dashtail UI Fix: Using primary-900
         >
           <Plus className="w-4 h-4" />
           新增規則
@@ -541,7 +535,7 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
-            <Users2 className="w-5 h-5 text-accent-500" />
+            <Users2 className="w-5 h-5 text-accent-500" /> {/* Assuming 'accent' or 'brand' for custom color */}
             親友加購規則
           </h4>
         </div>
@@ -588,13 +582,14 @@ function RulesTab({ rules }: { rules: SubsidyRule[] }) {
   );
 }
 
-// Registration Tab - 報名審核
-function RegistrationTab({ employees, onApprove, onReject }: {
+interface RegistrationTabProps {
   employees: Employee[];
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-}) {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  onUpdateEmployeeStatus: (employeeId: string, status: EmployeeStatus) => void;
+}
+
+// Registration Tab - 報名審核
+function RegistrationTab({ employees, onUpdateEmployeeStatus }: RegistrationTabProps) {
+  const [filter, setFilter] = useState<'all' | EmployeeStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredEmployees = employees.filter(e => {
@@ -639,7 +634,7 @@ function RegistrationTab({ employees, onApprove, onReject }: {
               className={cn(
                 'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 filter === status
-                  ? 'bg-slate-900 text-white'
+                  ? 'bg-primary-900 text-white' // Dashtail UI Fix: Using primary-900
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               )}
             >
@@ -710,13 +705,13 @@ function RegistrationTab({ employees, onApprove, onReject }: {
                     {emp.status === 'pending' && (
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => onApprove(emp.id)}
+                          onClick={() => onUpdateEmployeeStatus(emp.id, 'approved')}
                           className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
                         >
                           <CheckCircle className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => onReject(emp.id)}
+                          onClick={() => onUpdateEmployeeStatus(emp.id, 'rejected')}
                           className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
                         >
                           <X className="w-4 h-4" />
@@ -739,8 +734,12 @@ function RegistrationTab({ employees, onApprove, onReject }: {
   );
 }
 
+interface SeatChartViewProps {
+  employees: Employee[];
+}
+
 // Seat Chart View Component
-function SeatChartView({ employees }: { employees: Employee[] }) {
+function SeatChartView({ employees }: SeatChartViewProps) {
   const [totalSeats] = useState(40);
   const [seatAssignments, setSeatAssignments] = useState<Record<number, { name: string; employeeId: string }>>({});
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
@@ -751,12 +750,12 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
 
   const handleSeatClick = (seatNum: number) => {
     if (seatAssignments[seatNum]) {
-      // 取消分配
+      // Unassign
       const updated = { ...seatAssignments };
       delete updated[seatNum];
       setSeatAssignments(updated);
     } else {
-      // 分配座位
+      // Assign seat
       setSelectedSeat(seatNum);
       setShowAssignModal(true);
     }
@@ -824,7 +823,7 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={autoAssign}
-          className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-primary-900 text-white rounded-lg text-sm font-medium hover:bg-primary-800 transition-colors flex items-center gap-2" // Dashtail UI Fix: Using primary-900
         >
           <Users className="w-4 h-4" />
           自動分配
@@ -903,8 +902,13 @@ function SeatChartView({ employees }: { employees: Employee[] }) {
   );
 }
 
+interface RosterTabProps {
+  employees: Employee[];
+  rooms: RoomAssignment[];
+}
+
 // Roster Tab - 名單管理（分房/座位）
-function RosterTab({ employees, rooms }: { employees: Employee[]; rooms: RoomAssignment[] }) {
+function RosterTab({ employees, rooms }: RosterTabProps) {
   const [viewMode, setViewMode] = useState<'room' | 'seat'>('room');
 
   return (
@@ -919,7 +923,7 @@ function RosterTab({ employees, rooms }: { employees: Employee[]; rooms: RoomAss
             onClick={() => setViewMode('room')}
             className={cn(
               'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-              viewMode === 'room' ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600'
+              viewMode === 'room' ? 'bg-primary-900 text-white' : 'bg-gray-100 text-gray-600' // Dashtail UI Fix: Using primary-900
             )}
           >
             <Bed className="w-4 h-4 inline mr-1" />
@@ -929,7 +933,7 @@ function RosterTab({ employees, rooms }: { employees: Employee[]; rooms: RoomAss
             onClick={() => setViewMode('seat')}
             className={cn(
               'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-              viewMode === 'seat' ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600'
+              viewMode === 'seat' ? 'bg-primary-900 text-white' : 'bg-gray-100 text-gray-600' // Dashtail UI Fix: Using primary-900
             )}
           >
             <Users className="w-4 h-4 inline mr-1" />
@@ -1014,7 +1018,7 @@ function RosterTab({ employees, rooms }: { employees: Employee[]; rooms: RoomAss
   );
 }
 
-// Preparation Tab - 出團前準備
+// Preparation Tab - 出團前準備 (No specific props needed if actions are internal or generic)
 function PreparationTab() {
   return (
     <div className="space-y-6">
@@ -1036,7 +1040,7 @@ function PreparationTab() {
             </div>
           </div>
           <div className="space-y-3">
-            <button className="w-full py-3 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-3 bg-primary-900 text-white rounded-lg font-medium hover:bg-primary-800 transition-colors flex items-center justify-center gap-2"> {/* Dashtail UI Fix: Using primary-900 */}
               <Download className="w-4 h-4" />
               產生全部行程表
             </button>
@@ -1059,7 +1063,7 @@ function PreparationTab() {
             </div>
           </div>
           <div className="space-y-3">
-            <button className="w-full py-3 bg-[#00B900] text-white rounded-lg font-medium hover:bg-[#009900] transition-colors flex items-center justify-center gap-2">
+            <button className="w-full py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"> {/* Dashtail UI Fix: Replaced hardcoded hex with Tailwind token */}
               <Send className="w-4 h-4" />
               發送 LINE 通知
             </button>
@@ -1109,7 +1113,7 @@ function PreparationTab() {
   );
 }
 
-// Reports Tab - 報表與分析
+// Reports Tab - 報表與分析 (Mock data for charts remain internal for simplicity, but could also be props)
 function ReportsTab() {
   return (
     <div className="space-y-6">
@@ -1132,7 +1136,7 @@ function ReportsTab() {
           <h4 className="font-bold text-gray-900 mb-4">報名趨勢</h4>
           <BarChart
             data={[
-              { label: '1月', value: 45, color: '#3b82f6' },
+              { label: '1月', value: 45, color: '#3b82f6' }, // These chart colors might need to be tokenized or made configurable
               { label: '2月', value: 52, color: '#3b82f6' },
               { label: '3月', value: 68, color: '#3b82f6' },
               { label: '4月', value: 74, color: '#22c55e' },
@@ -1190,28 +1194,37 @@ function ReportsTab() {
 }
 
 // ============================================
-// Main Component
+// Main Component (Architectural Fix: Accepts Config Props)
 // ============================================
 
-export default function WelfareDashboard() {
+export default function WelfareDashboard({
+  initialTrips,
+  initialTemplates,
+  initialSubsidyRules,
+  initialEmployees,
+  initialRoomAssignments,
+  onUpdateEmployeeStatus,
+}: WelfareDashboardConfigProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
-  const [trips] = useState<WelfareTrip[]>(MOCK_TRIPS);
-  const [employees, setEmployees] = useState<Employee[]>(MOCK_EMPLOYEES);
-  const [rules] = useState<SubsidyRule[]>(MOCK_SUBSIDY_RULES);
-  const [rooms] = useState<RoomAssignment[]>(MOCK_ROOMS);
+  // Architectural Fix: Data now comes from props, component manages local view state
+  const [currentEmployees, setCurrentEmployees] = useState<Employee[]>(initialEmployees);
 
-  const pendingCount = employees.filter(e => e.status === 'pending').length;
+  // When props change, update local state (if employees can be modified internally and externally)
+  // Or, more purely, always render based on props and trigger parent updates.
+  // For this fix, we'll assume `currentEmployees` is the source of truth *within* the dashboard
+  // and `onUpdateEmployeeStatus` pushes changes externally.
+  // If `initialEmployees` can change externally and need to re-render, use useEffect.
+  // For simplicity, we assume initial load, and subsequent changes are via `onUpdateEmployeeStatus`.
 
-  const handleApprove = (id: string) => {
-    setEmployees(prev => prev.map(e =>
-      e.id === id ? { ...e, status: 'approved' as const } : e
-    ));
-  };
+  const pendingCount = currentEmployees.filter(e => e.status === 'pending').length;
 
-  const handleReject = (id: string) => {
-    setEmployees(prev => prev.map(e =>
-      e.id === id ? { ...e, status: 'rejected' as const } : e
-    ));
+  const handleUpdateEmployeeStatus = (employeeId: string, status: EmployeeStatus) => {
+    // Optimistic UI update
+    setCurrentEmployees(prev =>
+      prev.map(e => (e.id === employeeId ? { ...e, status } : e))
+    );
+    // Call external handler to persist change
+    onUpdateEmployeeStatus(employeeId, status);
   };
 
   const tabs: { key: TabKey; label: string; icon: React.ReactNode; badge?: number }[] = [
@@ -1264,38 +1277,40 @@ export default function WelfareDashboard() {
         </motion.div>
 
         {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {activeTab === 'dashboard' && (
-            <DashboardTab trips={trips} employees={employees} onNavigate={setActiveTab} />
-          )}
-          {activeTab === 'groups' && (
-            <GroupsTab trips={trips} templates={MOCK_TEMPLATES} />
-          )}
-          {activeTab === 'rules' && (
-            <RulesTab rules={rules} />
-          )}
-          {activeTab === 'registration' && (
-            <RegistrationTab
-              employees={employees}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          )}
-          {activeTab === 'roster' && (
-            <RosterTab employees={employees} rooms={rooms} />
-          )}
-          {activeTab === 'preparation' && (
-            <PreparationTab />
-          )}
-          {activeTab === 'reports' && (
-            <ReportsTab />
-          )}
-        </motion.div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === 'dashboard' && (
+              <DashboardTab trips={initialTrips} employees={currentEmployees} onNavigate={setActiveTab} />
+            )}
+            {activeTab === 'groups' && (
+              <GroupsTab trips={initialTrips} templates={initialTemplates} />
+            )}
+            {activeTab === 'rules' && (
+              <RulesTab rules={initialSubsidyRules} />
+            )}
+            {activeTab === 'registration' && (
+              <RegistrationTab
+                employees={currentEmployees}
+                onUpdateEmployeeStatus={handleUpdateEmployeeStatus}
+              />
+            )}
+            {activeTab === 'roster' && (
+              <RosterTab employees={currentEmployees} rooms={initialRoomAssignments} />
+            )}
+            {activeTab === 'preparation' && (
+              <PreparationTab />
+            )}
+            {activeTab === 'reports' && (
+              <ReportsTab />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

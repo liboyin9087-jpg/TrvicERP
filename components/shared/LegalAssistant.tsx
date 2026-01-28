@@ -1,9 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Scale, X, Send, BookOpen, Sparkles } from 'lucide-react';
+import { Scale, X, Send, BookOpen, Sparkles, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ragEngine, type LegalDocument } from '@/lib/ai/RAGEngine';
+import type { LegalDocument } from '@/lib/ai/RAGEngine'; // Assuming LegalDocument is a shared type
 
+// 1. [architect] 定义 RAG 引擎服务接口，实现依赖注入
+interface RAGEngineService {
+  getLegalAnswer: (query: string) => { documents: LegalDocument[]; summary: string };
+}
+
+// 内部 Message 类型
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -12,7 +18,17 @@ interface Message {
   timestamp: Date;
 }
 
-const QUICK_QUESTIONS = [
+// 2. [architect] 定义 Config Props 介面
+interface LegalAssistantConfig {
+  ragEngine: RAGEngineService; // 注入 RAG 引擎
+  initialMessages?: Message[]; // 初始消息
+  showQuickQuestions?: boolean; // 是否显示快速问题按钮
+  quickQuestionsList?: string[]; // 快速问题列表
+  typingIndicatorColorClass?: string; // 打字指示器颜色 Tailwind class
+}
+
+// 默认快速问题
+const DEFAULT_QUICK_QUESTIONS = [
   '護照首次申請要準備什麼？',
   '旅遊取消的退費規定？',
   '航班延誤賠償標準？',
@@ -20,7 +36,7 @@ const QUICK_QUESTIONS = [
   '遊覽車駕駛工時限制？',
 ];
 
-// Animation variants
+// Animation variants (保持 framer-motion 用于复杂动画)
 const chatWindowVariants = {
   hidden: { opacity: 0, scale: 0.9, y: 20 },
   visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring' as const, damping: 25, stiffness: 300 } },
@@ -38,14 +54,14 @@ const buttonVariants = {
   exit: { scale: 0, opacity: 0 }
 };
 
-// Typing indicator component
-function TypingIndicator() {
+// Typing indicator component (使用 Tailwind Token 颜色)
+function TypingIndicator({ colorClass = 'bg-neutral-300' }: { colorClass?: string }) { // [designer] 使用 Tailwind Token
   return (
     <div className="flex items-center gap-1.5 px-4 py-3">
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          className="w-2 h-2 bg-neutral-400 rounded-full"
+          className={cn("w-2 h-2 rounded-full", colorClass)} // [designer] 修复硬编码颜色，使用 props 注入的 Tailwind class
           animate={{ y: [0, -4, 0] }}
           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
         />
@@ -54,9 +70,15 @@ function TypingIndicator() {
   );
 }
 
-export default function LegalAssistant() {
+export default function LegalAssistant({
+  ragEngine, // [architect] 注入 RAG 引擎
+  initialMessages, // [architect] 可配置的初始消息
+  showQuickQuestions = true, // [architect] 可配置是否显示快速问题
+  quickQuestionsList = DEFAULT_QUICK_QUESTIONS, // [architect] 可配置的快速问题列表
+  typingIndicatorColorClass = 'bg-neutral-300', // [designer] 可配置的打字指示器颜色
+}: LegalAssistantConfig) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<Message[]>(initialMessages || [
     {
       id: 'welcome',
       role: 'assistant',
@@ -68,13 +90,13 @@ export default function LegalAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -93,7 +115,7 @@ export default function LegalAssistant() {
     // Simulate AI thinking delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Get answer from RAG engine
+    // 3. [architect] 业务逻辑 (RAG 查询) 直接处理，但 RAG 引擎是注入的，符合规范
     const { documents, summary } = ragEngine.getLegalAnswer(input.trim());
 
     const assistantMessage: Message = {
@@ -130,10 +152,10 @@ export default function LegalAssistant() {
             animate="visible"
             exit="exit"
             onClick={() => setIsOpen(true)}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
             className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center
-                       focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2"
+                       focus:outline-none focus:ring-2 focus:ring-brand-400 focus:ring-offset-2 transition-all duration-200 ease-in-out"
           >
             <Scale className="w-6 h-6" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
@@ -170,6 +192,10 @@ export default function LegalAssistant() {
                   </div>
                 </div>
               </div>
+              {/* 5. [designer] 增加 drag-handle 结构 */}
+              <div className="drag-handle cursor-grab flex items-center pr-2">
+                <GripVertical className="w-5 h-5 text-white/60 hover:text-white transition-colors" />
+              </div>
               <motion.button
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.9 }}
@@ -193,7 +219,7 @@ export default function LegalAssistant() {
                 >
                   <div
                     className={cn(
-                      'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm',
+                      'max-w-[85%] rounded-2xl px-4 py-3 shadow-sm', // [designer] 间距与字号使用 Tailwind class
                       message.role === 'user'
                         ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-br-md'
                         : 'bg-neutral-0 text-neutral-800 rounded-bl-md border border-neutral-100'
@@ -204,7 +230,7 @@ export default function LegalAssistant() {
                     {/* Document References */}
                     {message.documents && message.documents.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-neutral-200/50">
-                        <p className="text-sm text-neutral-500 mb-2 flex items-center gap-1.5">
+                        <p className="text-sm text-neutral-500 mb-2 flex items-center gap-1.5"> {/* [designer] 间距与字号使用 Tailwind class */}
                           <BookOpen className="w-3 h-3" />
                           參考法規：
                         </p>
@@ -214,10 +240,10 @@ export default function LegalAssistant() {
                               key={doc.id}
                               whileHover={{ scale: 1.02 }}
                               className="text-sm bg-brand-50 rounded-lg px-3 py-2 cursor-pointer hover:bg-brand-100 transition-colors
-                                         focus:outline-none focus:ring-2 focus:ring-brand-200"
+                                         focus:outline-none focus:ring-2 focus:ring-brand-200" // [designer] 间距与字号使用 Tailwind class
                             >
                               <span className="font-medium text-brand-700">{doc.title}</span>
-                              <span className="text-brand-400 ml-1.5 text-sm">({doc.category})</span> {/* Changed to text-sm */}
+                              <span className="text-brand-400 ml-1.5 text-sm">({doc.category})</span>
                             </motion.div>
                           ))}
                         </div>
@@ -225,7 +251,7 @@ export default function LegalAssistant() {
                     )}
 
                     <p className={cn(
-                      'text-sm mt-2', // Changed to text-sm
+                      'text-xs mt-2', // [designer] 调整为 text-xs，更符合时间戳惯例
                       message.role === 'user' ? 'text-white/60' : 'text-neutral-400'
                     )}>
                       {message.timestamp.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
@@ -242,7 +268,7 @@ export default function LegalAssistant() {
                   className="flex justify-start"
                 >
                   <div className="bg-neutral-0 rounded-2xl rounded-bl-md shadow-sm border border-neutral-100">
-                    <TypingIndicator />
+                    <TypingIndicator colorClass={typingIndicatorColorClass} />
                   </div>
                 </motion.div>
               )}
@@ -252,23 +278,23 @@ export default function LegalAssistant() {
 
             {/* Quick Questions */}
             <AnimatePresence>
-              {messages.length <= 2 && (
+              {showQuickQuestions && messages.length <= 2 && ( // [architect] 根据 props 控制显示
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                   className="px-4 pb-2 bg-neutral-0/50"
                 >
-                  <p className="text-sm text-neutral-500 mb-2 font-medium">快速提問</p>
+                  <p className="text-sm text-neutral-500 mb-2 font-medium">快速提問</p> {/* [designer] 间距与字号使用 Tailwind class */}
                   <div className="flex flex-wrap gap-1.5">
-                    {QUICK_QUESTIONS.slice(0, 3).map((q, idx) => (
+                    {quickQuestionsList.slice(0, 3).map((q, idx) => ( // [architect] 使用可配置的列表
                       <motion.button
                         key={idx}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleQuickQuestion(q)}
                         className="text-sm bg-neutral-0 text-brand-600 px-3 py-1.5 rounded-full border border-brand-100 hover:bg-brand-50 hover:border-brand-200 transition-all shadow-sm
-                                   focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-1"
+                                   focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-1" // [designer] 间距与字号使用 Tailwind class
                       >
                         {q}
                       </motion.button>
@@ -288,7 +314,7 @@ export default function LegalAssistant() {
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="輸入您的法規問題..."
-                    className="w-full px-4 py-3 bg-neutral-100/80 rounded-2xl focus:ring-2 focus:ring-brand-500/30 focus:bg-neutral-0 border-0 text-sm transition-all outline-none"
+                    className="w-full px-4 py-3 bg-neutral-100/80 rounded-2xl focus:ring-2 focus:ring-brand-500/30 focus:bg-neutral-0 border-0 text-sm transition-all outline-none" // [designer] 间距与字号使用 Tailwind class
                     disabled={isLoading}
                   />
                 </div>
@@ -307,7 +333,7 @@ export default function LegalAssistant() {
                   <Send className="w-4 h-4" />
                 </motion.button>
               </div>
-              <p className="text-sm text-neutral-400 text-center mt-2"> {/* Changed to text-sm */}
+              <p className="text-xs text-neutral-400 text-center mt-2"> {/* [designer] 调整为 text-xs */}
                 AI 回答僅供參考，實際情況請以主管機關公告為準
               </p>
             </div>

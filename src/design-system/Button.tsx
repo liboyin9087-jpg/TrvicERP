@@ -111,12 +111,14 @@ const sizeClasses: Record<"sm" | "md" | "lg", string> = {
 function getButtonClassNames(
   variant: Variant,
   size: "sm" | "md" | "lg",
-  additionalClassName: string = ""
+  additionalClassName: string = "",
+  isDragHandle: boolean = false // Added for Kintone drag-handle support
 ): string {
   const classes = [
     baseClasses,
     variantClasses[variant],
     sizeClasses[size],
+    isDragHandle ? "drag-handle" : "", // Conditionally add drag-handle class
     additionalClassName,
   ];
 
@@ -162,22 +164,26 @@ const Spinner = () => (
 interface ButtonConfig {
   variant?: Variant;
   size?: "sm" | "md" | "lg";
-  loading?: boolean; // New: indicates a loading state
+  loading?: boolean; // Indicates a loading state
+  isDragHandle?: boolean; // If true, applies 'drag-handle' class for widget dragging support
 }
 
 /**
  * ButtonProps combines standard HTML button attributes with our custom ButtonConfig.
+ * This provides clear and explicit type definitions for all expected props.
  */
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, ButtonConfig {}
 
 /**
  * A versatile Button component for TrvicERP design system.
- * It supports various visual variants, sizes, and includes a loading state.
+ * It supports various visual variants, sizes, a loading state, and optional
+ * support for Kintone's .drag-handle class for widget dragging.
  */
 export default function Button({
   variant = "primary",
   size = "md",
   loading = false, // Default to false
+  isDragHandle = false, // Default to false
   className = "",
   children, // Destructure children to control rendering during loading
   disabled, // Destructure disabled to allow external control, overridden by loading
@@ -186,8 +192,8 @@ export default function Button({
   // Determine if the button should be disabled, prioritizing the loading state
   const isDisabled = disabled || loading;
 
-  // Get combined class names using the helper function
-  const combinedClassName = getButtonClassNames(variant, size, className);
+  // Get combined class names using the helper function, passing isDragHandle
+  const combinedClassName = getButtonClassNames(variant, size, className, isDragHandle);
 
   return (
     <button

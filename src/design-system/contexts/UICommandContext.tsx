@@ -1,21 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  UICommandRegistry,
-  uiCommandRegistry,
-  UICommandParams,
-  UICommandResult
-} from '../kintone/ui-commands';
-
-/**
- * Configuration interface for the UICommandProvider.
- * This adheres to the Kintone independence rule for configurable properties.
- */
-interface UICommandContextConfig extends React.PropsWithChildren {
+interface UICommandContextConfig<C = any, M = any> extends React.PropsWithChildren {
   /**
    * Optional callback for centralized error handling.
    * If provided, this will be called when a command execution fails.
-   * This addresses the designer issue where `console.error` alone might be insufficient.
    */
   onError?: (error: Error, commandId: string, params?: UICommandParams) => void;
   // Future potential configuration options could be added here,
@@ -28,18 +14,21 @@ interface UICommandContextConfig extends React.PropsWithChildren {
  * - `componentStates` is now `ReadonlyMap` to prevent accidental direct mutation.
  * - `modalStack` is now exposed and `ReadonlyArray`.
  * - `showModal` and `hideModal` are added as public APIs for modal management.
+ * @template C The type of state objects stored for components.
+ * @template M The type of props objects passed to modals.
  */
-interface UICommandContextValue {
+interface UICommandContextValue<C = any, M = any> {
   executeCommand: (commandId: string, params?: UICommandParams) => Promise<UICommandResult>;
   registry: UICommandRegistry;
-  componentStates: ReadonlyMap<string, any>; // [designer] Make componentStates immutable in context
-  updateComponentState: (componentId: string, state: any) => void;
-  modalStack: ReadonlyArray<{ id: string; props?: any }>; // [designer] Expose modalStack
-  showModal: (id: string, props?: any) => void; // [architect] Provide explicit modal actions
-  hideModal: () => void; // [architect] Provide explicit modal actions
+  componentStates: ReadonlyMap<string, C>;
+  updateComponentState: (componentId: string, state: C) => void;
+  modalStack: ReadonlyArray<{ id: string; props?: M }>;
+  showModal: (id: string, props?: M) => void;
+  hideModal: () => void;
 }
 
-const UICommandContext = createContext<UICommandContextValue | null>(null);
+// Initialize context with generic types defaulting to 'any' for flexibility.
+const UICommandContext = createContext<UICommandContextValue<any, any> | null>(null);
 
 /**
  * UICommandProvider - Provides the UI command execution context.
@@ -49,25 +38,21 @@ const UICommandContext = createContext<UICommandContextValue | null>(null);
  * which are directly manipulated by UI commands. It offers a structured way
  * to execute commands and handle their results and errors.
  *
- * [architect] UICommandProvider's responsibilities are now more focused on providing
- * the command execution environment and the states that these commands operate on.
- * Modal and component state management are integral to "UI manipulation" commands.
+ * @template C The type of state objects stored for components.
+ * @template M The type of props objects passed to modals.
  */
-export const UICommandProvider: React.FC<UICommandContextConfig> = (props) => {
+export const UICommandProvider = <C = any, M = any>(
+  props: UICommandContextConfig<C, M>
+): React.FC<UICommandContextConfig<C, M>> => {
   const { children, onError } = props;
   const navigate = useNavigate();
 
-  // [architect] componentStates and modalStack are internal operational states
-  // managed by this context. Using useState for them here is appropriate for their role.
-  const [componentStates, setComponentStates] = useState<Map<string, any>>(new Map());
-  const [modalStack, setModalStack] = useState<Array<{ id: string; props?: any }>>([]);
+  const [componentStates, setComponentStates] = useState<Map<string, C>>(new Map());
+  const [modalStack, setModalStack] = useState<Array<{ id: string; props?: M }>>([]);
 
-  // [architect] Use Refs to store mutable latest state values.
-  // This allows `executeCommand` to have a stable identity while still accessing the latest state.
   const componentStatesRef = useRef(componentStates);
   const modalStackRef = useRef(modalStack);
 
-  // Update refs whenever the actual state changes.
   useEffect(() => {
     componentStatesRef.current = componentStates;
   }, [componentStates]);
@@ -78,55 +63,47 @@ export const UICommandProvider: React.FC<UICommandContextConfig> = (props) => {
 
   /**
    * Updates the state of a specific component identified by its ID.
-   * [designer] Ensures immutability by creating a new Map instance on update.
+   * Ensures immutability by creating a new Map instance on update.
    */
-  const updateComponentState = useCallback((componentId: string, state: any) => {
+  const updateComponentState = useCallback((componentId: string, state: C) => {
     setComponentStates(prev => {
-      const next = new Map(prev); // Always create a new Map for immutable updates
+      const next = new Map(prev);
       next.set(componentId, state);
       return next;
     });
-  }, []); // Dependencies are empty as `setComponentStates` is stable
+  }, []);
 
   /**
    * Adds a new modal to the top of the modal stack.
-   * [architect] Encapsulated modal logic.
    */
-  const showModal = useCallback((id: string, modalProps?: any) => {
+  const showModal = useCallback((id: string, modalProps?: M) => {
     setModalStack(prev => [...prev, { id, props: modalProps }]);
-  }, []); // Dependencies are empty as `setModalStack` is stable
+  }, []);
 
   /**
    * Removes the top-most modal from the modal stack.
-   * [architect] Encapsulated modal logic.
    */
   const hideModal = useCallback(() => {
     setModalStack(prev => prev.slice(0, -1));
-  }, []); // Dependencies are empty as `setModalStack` is stable
+  }, []);
 
   /**
    * Executes a registered UI command.
-   * [architect] Refactored to have a stable identity by using `useRef` and `useCallback`
-   * for its dependencies, reducing potential unnecessary re-renders.
-   * [architect] Centralized error handling.
+   * Injects runtime dependencies and handles errors centrally.
    */
   const executeCommand = useCallback(async (
     commandId: string,
     params?: UICommandParams
   ): Promise<UICommandResult> => {
-    // Inject runtime dependencies into commands.
-    // Commands access latest states via getter functions from refs,
-    // and manipulate states via public API functions (`showModal`, `hideModal`, `updateComponentState`).
     const enhancedParams = {
       ...params,
       __runtime: {
-        navigate, // stable
-        getComponentStates: () => componentStatesRef.current, // Getter for latest state
-        updateComponentState, // stable function
-        getModalStack: () => modalStackRef.current, // Getter for latest state
-        showModal, // stable function, part of public API
-        hideModal, // stable function, part of public API
-        // Removed direct setModalStack to encourage use of showModal/hideModal for better abstraction.
+        navigate,
+        getComponentStates: () => componentStatesRef.current,
+        updateComponentState,
+        getModalStack: () => modalStackRef.current,
+        showModal,
+        hideModal,
       },
     };
 
@@ -141,8 +118,6 @@ export const UICommandProvider: React.FC<UICommandContextConfig> = (props) => {
         message: `Failed to execute command: ${err.message}`,
       };
 
-      // [designer] Centralized error handling using the `onError` prop.
-      // If `onError` is provided, it handles the error. Otherwise, it falls back to `console.error`.
       if (onError) {
         onError(err, commandId, params);
       } else {
@@ -150,15 +125,15 @@ export const UICommandProvider: React.FC<UICommandContextConfig> = (props) => {
       }
       return result;
     }
-  }, [navigate, updateComponentState, showModal, hideModal, onError]); // Stable dependencies for useCallback
+  }, [navigate, updateComponentState, showModal, hideModal, onError]);
 
   // The context value, providing access to command execution and UI states/actions.
-  const value: UICommandContextValue = {
+  const value: UICommandContextValue<C, M> = {
     executeCommand,
     registry: uiCommandRegistry,
-    componentStates: componentStates, // Provided as ReadonlyMap per interface
+    componentStates: componentStates,
     updateComponentState,
-    modalStack: modalStack, // Provided as ReadonlyArray per interface
+    modalStack: modalStack,
     showModal,
     hideModal,
   };
@@ -173,9 +148,11 @@ export const UICommandProvider: React.FC<UICommandContextConfig> = (props) => {
 /**
  * Hook to access the UI command execution context.
  * Throws an error if used outside of `UICommandProvider`.
+ * @template C The type of state objects stored for components.
+ * @template M The type of props objects passed to modals.
  */
-export const useUICommands = () => {
-  const context = useContext(UICommandContext);
+export const useUICommands = <C = any, M = any>() => {
+  const context = useContext(UICommandContext) as UICommandContextValue<C, M> | null;
   if (!context) {
     throw new Error('useUICommands must be used within UICommandProvider');
   }
@@ -184,15 +161,12 @@ export const useUICommands = () => {
 
 /**
  * Hook for easy command execution.
- * [architect] Error handling is now delegated to `executeCommand` and the `UICommandProvider`'s `onError` prop,
- * preventing duplication of error logic.
+ * Error handling is delegated to `executeCommand` and the `UICommandProvider`'s `onError` prop.
  */
 export const useCommand = () => {
   const { executeCommand } = useUICommands();
 
-  // This hook now simply calls executeCommand and returns its result,
-  // without duplicating error handling logic.
   return useCallback(async (commandId: string, params?: UICommandParams) => {
     return await executeCommand(commandId, params);
-  }, [executeCommand]); // `executeCommand` is now stable, so this `useCallback` is also stable.
+  }, [executeCommand]);
 };

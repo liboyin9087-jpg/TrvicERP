@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -51,20 +51,247 @@ import {
   Building2,
   History,
   Eye,
+  GanttChartSquare, // Default icon for categories if specific not available
 } from "lucide-react";
-import {
-  useItineraryBuilderStore,
-  CATEGORY_CONFIG,
-  type Spot,
-  type ScheduledSpot,
-  type SpotCategory,
-  type DayPlan,
-  type SeasonType,
-} from "../../src/store/useItineraryBuilderStore";
-import SeasonFilter from "../shared/SeasonFilter";
-import AudienceSelector from "../shared/AudienceSelector";
-import { ragEngine, type SpotRecord } from "../../src/lib/ai/RAGEngine";
-import { cn } from "../../src/lib/utils";
+
+import { cn } from "../../src/lib/utils"; // Assuming this utility remains available
+
+// --- Type Definitions (previously from useItineraryBuilderStore) ---
+// These types are now defined locally for component self-containment and clarity.
+
+export type SpotCategory =
+  | "綠色永續景點"
+  | "山林秘境"
+  | "海岸離島"
+  | "文化深度體驗"
+  | "農村慢旅"
+  | "都市邊緣秘境"
+  | "美食"
+  | "住宿"
+  | "購物"
+  | "交通"
+  | "體驗"
+  | "其他"; // Fallback category
+
+export type SeasonType = "春" | "夏" | "秋" | "冬";
+export type AudienceType =
+  | "家庭"
+  | "情侶"
+  | "獨行旅客"
+  | "朋友"
+  | "商務"
+  | "文青"
+  | "銀髮族"
+  | "學生";
+
+export interface Spot {
+  id: string;
+  name: string;
+  category: SpotCategory[];
+  county: string;
+  duration: number; // in minutes
+  description: string;
+  image: string;
+  price: number;
+  tags: string[];
+  season: SeasonType[];
+  sustainability_index: string;
+  target_audience: AudienceType[];
+}
+
+export interface ScheduledSpot extends Spot {
+  instanceId: string; // Unique ID for this specific instance in the itinerary
+}
+
+export interface DayPlan {
+  id: string;
+  dayNumber: number;
+  title: string;
+  spots: ScheduledSpot[];
+}
+
+export interface PlanVersion {
+  version: number;
+  created_at: string; // ISO string
+  created_by: string;
+  changes?: string; // e.g., "新增了第3天行程", "調整了第二天景點順序"
+  plan_data: { // Data for this specific version
+    name: string;
+    destination: string;
+    days: DayPlan[];
+  };
+}
+
+export interface ItineraryPlan {
+  id: string;
+  name: string;
+  destination: string;
+  days: DayPlan[];
+  current_version: number;
+  versions: PlanVersion[];
+}
+
+// Category Configuration definition.
+// 'color' must be a Tailwind CSS class string. 'icon' is a React component.
+export interface CategoryConfigItem {
+  label: string;
+  color: string; // e.g., "bg-blue-500", must be a valid Tailwind class
+  icon: React.ElementType; // Lucide icon component, e.g., Leaf, Mountain
+}
+
+export type CategoryConfigMap = {
+  [key in SpotCategory]: CategoryConfigItem;
+};
+
+// Summary for saved plans list (lighter version of ItineraryPlan)
+export interface ItineraryPlanSummary {
+  id: string;
+  name: string;
+  destination: string;
+  daysCount: number;
+}
+
+// SpotRecord type from RAGEngine, defined here for ItineraryBuilderProps
+export interface SpotRecord {
+  id: string;
+  name: string;
+  region: string;
+  tags: string[];
+  note?: string;
+  image?: string; // Added image for conversion to Spot
+}
+
+// RAG Engine type definition, used for passing the instance as a prop
+export interface RAGEngineInstance {
+  getRecommendations: (
+    options: { currentRegion?: string; excludeIds?: string[]; tags?: string[] },
+    count: number,
+  ) => SpotRecord[];
+}
+
+
+// ItineraryBuilderProps - Defines the contract for the parent component.
+// All external data and state manipulation callbacks are passed via these props.
+interface ItineraryBuilderProps {
+  /**
+   * The full list of all available spots to be displayed in the left panel.
+   */
+  allAvailableSpots: Spot[];
+  /**
+   * The currently active itinerary plan being edited. Null if no plan is active.
+   */
+  currentPlan: ItineraryPlan | null;
+  /**
+   * A summary list of all saved plans, used for the "Load Plan" functionality.
+   */
+  savedPlans: ItineraryPlanSummary[];
+  /**
+   * Configuration map for different spot categories, including their labels and Tailwind color classes.
+   */
+  categoryConfig: CategoryConfigMap;
+  /**
+   * An instance of the RAG engine for generating AI recommendations.
+   */
+  ragEngine: RAGEngineInstance;
+
+  // --- Callbacks for interacting with parent state ---
+
+  /**
+   * Callback to create a new itinerary plan.
+   * @param name The name of the new plan.
+   * @param destination The destination of the new plan.
+   * @param days The number of days for the new plan.
+   */
+  onCreateNewPlan: (name: string, destination: string, days: number) => void;
+  /**
+   * Callback to load an existing itinerary plan by its ID.
+   * @param planId The ID of the plan to load.
+   */
+  onLoadPlan: (planId: string) => void;
+  /**
+   * Callback to save the current itinerary plan.
+   * @param plan The full ItineraryPlan object to save.
+   * @param changesNote Optional note describing the changes for version history.
+   */
+  onSavePlan: (plan: ItineraryPlan, changesNote?: string) => void;
+  /**
+   * Callback to load a specific version of the current plan.
+   * @param plan The current ItineraryPlan (or its ID)
+   * @param versionNumber The version number to load.
+   */
+  onLoadVersion: (plan: ItineraryPlan, versionNumber: number) => void;
+  /**
+   * Callback to clear the currently active itinerary plan.
+   */
+  onClearCurrentPlan: () => void;
+
+  /**
+   * Callback to add a new day to the current plan.
+   * @param plan The current ItineraryPlan object.
+   */
+  onAddDay: (plan: ItineraryPlan) => void;
+  /**
+   * Callback to remove a day from the current plan.
+   * @param plan The current ItineraryPlan object.
+   * @param dayId The ID of the day to remove.
+   */
+  onRemoveDay: (plan: ItineraryPlan, dayId: string) => void;
+
+  /**
+   * Callback to add a spot to a specific day in the plan.
+   * @param plan The current ItineraryPlan object.
+   * @param dayId The ID of the day to add the spot to.
+   * @param spot The Spot object to add.
+   * @param index Optional index at which to add the spot.
+   */
+  onAddSpotToDay: (
+    plan: ItineraryPlan,
+    dayId: string,
+    spot: Spot,
+    index?: number,
+  ) => void;
+  /**
+   * Callback to remove a spot from a specific day in the plan.
+   * @param plan The current ItineraryPlan object.
+   * @param dayId The ID of the day from which to remove the spot.
+   * @param instanceId The instance ID of the ScheduledSpot to remove.
+   */
+  onRemoveSpotFromDay: (
+    plan: ItineraryPlan,
+    dayId: string,
+    instanceId: string,
+  ) => void;
+  /**
+   * Callback to reorder spots within a single day.
+   * @param plan The current ItineraryPlan object.
+   * @param dayId The ID of the day.
+   * @param oldIndex The original index of the spot.
+   * @param newIndex The new index for the spot.
+   */
+  onReorderSpots: (
+    plan: ItineraryPlan,
+    dayId: string,
+    oldIndex: number,
+    newIndex: number,
+  ) => void;
+  /**
+   * Callback to move a spot from one day to another, or within the same day but across lists.
+   * @param plan The current ItineraryPlan object.
+   * @param fromDayId The ID of the source day.
+   * @param toDayId The ID of the target day.
+   * @param spotInstanceId The instance ID of the ScheduledSpot to move.
+   * @param toIndex The target index in the destination day.
+   */
+  onMoveSpot: (
+    plan: ItineraryPlan,
+    fromDayId: string,
+    toDayId: string,
+    spotInstanceId: string,
+    toIndex: number,
+  ) => void;
+}
+// --- End Type Definitions ---
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -83,32 +310,14 @@ const formatDuration = (minutes: number): string => {
   return mins > 0 ? `${hours}時${mins}分` : `${hours}時`;
 };
 
-const getCategoryIcon = (category: SpotCategory) => {
-  switch (category) {
-    case "綠色永續景點":
-      return <Leaf className="w-4 h-4" />;
-    case "山林秘境":
-      return <Mountain className="w-4 h-4" />;
-    case "海岸離島":
-      return <Waves className="w-4 h-4" />;
-    case "文化深度體驗":
-      return <Palette className="w-4 h-4" />;
-    case "農村慢旅":
-      return <Wheat className="w-4 h-4" />;
-    case "都市邊緣秘境":
-      return <Building2 className="w-4 h-4" />;
-    default:
-      return <MapPin className="w-4 h-4" />;
-  }
-};
-
 // Resource Card (Left Panel)
 interface ResourceCardProps {
   spot: Spot;
   isDragOverlay?: boolean;
+  categoryConfig: CategoryConfigMap;
 }
 
-function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
+function ResourceCard({ spot, isDragOverlay, categoryConfig }: ResourceCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: `resource-${spot.id}`,
@@ -120,9 +329,9 @@ function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Get the first category for display (category is now an array)
-  const primaryCategory = spot.category[0];
-  const config = CATEGORY_CONFIG[primaryCategory];
+  const primaryCategory = spot.category[0] || "其他";
+  const config = categoryConfig[primaryCategory] || { label: primaryCategory, color: "bg-slate-500", icon: MapPin };
+  const CategoryIcon = config.icon;
 
   return (
     <motion.div
@@ -146,15 +355,15 @@ function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
         <div
           className={cn(
             "absolute top-2 left-2 text-white px-2 py-0.5 rounded-full text-sm font-medium flex items-center gap-1",
-            config?.color || "bg-slate-500",
+            config.color,
           )}
         >
-          {getCategoryIcon(primaryCategory)}
-          {config?.label || primaryCategory}
+          <CategoryIcon className="w-4 h-4" />
+          {config.label}
         </div>
         {/* Sustainability Index Badge */}
         {spot.sustainability_index && (
-          <div className="absolute top-2 right-2 bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 max-w-[120px] focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+          <div className="absolute top-2 right-2 bg-emerald-500/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 max-w-[120px] focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
             <Leaf className="w-3 h-3 flex-shrink-0" />
             <span className="truncate">
               {spot.sustainability_index.split("、")[0]}
@@ -186,7 +395,7 @@ function ResourceCard({ spot, isDragOverlay }: ResourceCardProps) {
           {spot.target_audience.slice(0, 3).map((audience, idx) => (
             <span
               key={idx}
-              className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+              className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
             >
               {audience}
             </span>
@@ -203,6 +412,7 @@ interface ScheduledSpotCardProps {
   dayId: string;
   index: number;
   onRemove: () => void;
+  categoryConfig: CategoryConfigMap;
 }
 
 function ScheduledSpotCard({
@@ -210,6 +420,7 @@ function ScheduledSpotCard({
   dayId,
   index,
   onRemove,
+  categoryConfig,
 }: ScheduledSpotCardProps) {
   const {
     attributes,
@@ -229,9 +440,8 @@ function ScheduledSpotCard({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Get the first category (category is now an array)
-  const primaryCategory = spot.category[0];
-  const config = CATEGORY_CONFIG[primaryCategory];
+  const primaryCategory = spot.category[0] || "其他";
+  const config = categoryConfig[primaryCategory] || { label: primaryCategory, color: "bg-slate-500", icon: MapPin };
 
   return (
     <motion.div
@@ -246,7 +456,7 @@ function ScheduledSpotCard({
       <div
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
+        className="drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 transition-colors"
       >
         <GripVertical className="w-5 h-5" />
       </div>
@@ -254,7 +464,7 @@ function ScheduledSpotCard({
       <div
         className={cn(
           "w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0",
-          config?.color || "bg-slate-500",
+          config.color,
         )}
       >
         {index + 1}
@@ -274,10 +484,10 @@ function ScheduledSpotCard({
           <span
             className={cn(
               "text-white px-1.5 py-0.5 rounded text-[10px]",
-              config?.color || "bg-slate-500",
+              config.color,
             )}
           >
-            {config?.label || primaryCategory}
+            {config.label}
           </span>
         </div>
         <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
@@ -296,7 +506,7 @@ function ScheduledSpotCard({
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={onRemove}
-        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
       >
         <Trash2 className="w-4 h-4" />
       </motion.button>
@@ -310,6 +520,7 @@ interface DayContainerProps {
   onRemoveSpot: (instanceId: string) => void;
   onRemoveDay: () => void;
   canRemove: boolean;
+  categoryConfig: CategoryConfigMap;
 }
 
 function DayContainer({
@@ -317,6 +528,7 @@ function DayContainer({
   onRemoveSpot,
   onRemoveDay,
   canRemove,
+  categoryConfig,
 }: DayContainerProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `day-${day.id}`,
@@ -337,14 +549,14 @@ function DayContainer({
     >
       <div className="flex items-center justify-between p-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/25 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+          <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-brand-500/25 focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
             {day.dayNumber}
           </div>
           <div>
             <h3 className="font-semibold text-slate-900">{day.title}</h3>
             <div className="flex items-center gap-2 text-sm text-slate-500 mt-0.5">
               <span>{day.spots.length} 個行程</span>
-              <span className="w-1 h-1 bg-slate-300 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+              <span className="w-1 h-1 bg-slate-300 rounded-full focus:ring-2 focus:ring-brand-300 active:bg-brand-800" />
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {formatDuration(totalDuration)}
@@ -357,7 +569,7 @@ function DayContainer({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onRemoveDay}
-            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
           >
             <Trash2 className="w-4 h-4" />
           </motion.button>
@@ -378,7 +590,7 @@ function DayContainer({
                   : "border-slate-200",
               )}
             >
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3 focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
                 <MapPin className="w-6 h-6 text-slate-400" />
               </div>
               <div className="text-slate-400 text-sm">
@@ -393,6 +605,7 @@ function DayContainer({
                 dayId={day.id}
                 index={index}
                 onRemove={() => onRemoveSpot(spot.instanceId)}
+                categoryConfig={categoryConfig}
               />
             ))
           )}
@@ -427,7 +640,7 @@ function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 overlay backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -436,7 +649,7 @@ function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
               <Navigation className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">建立新行程</h2>
@@ -445,7 +658,7 @@ function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+            className="p-2 hover:bg-slate-100 rounded-lg focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
           >
             <X className="w-5 h-5" />
           </motion.button>
@@ -519,36 +732,37 @@ function NewPlanModal({ isOpen, onClose, onCreate }: NewPlanModalProps) {
 }
 
 // Main Component
-export default function ItineraryBuilder() {
-  const {
-    currentPlan,
-    searchQuery,
-    categoryFilter,
-    seasonFilter,
-    audienceFilter,
-    savedPlans,
-    createNewPlan,
-    loadPlan,
-    savePlan,
-    loadVersion,
-    addDay,
-    removeDay,
-    addSpotToDay,
-    removeSpotFromDay,
-    reorderSpots,
-    moveSpot,
-    setSearchQuery,
-    setCategoryFilter,
-    setSeasonFilter,
-    setAudienceFilter,
-    getFilteredSpots,
-    setDragging,
-    clearCurrentPlan,
-  } = useItineraryBuilderStore();
+export default function ItineraryBuilder({
+  allAvailableSpots,
+  currentPlan,
+  savedPlans,
+  categoryConfig,
+  ragEngine,
+  onCreateNewPlan,
+  onLoadPlan,
+  onSavePlan,
+  onLoadVersion,
+  onClearCurrentPlan,
+  onAddDay,
+  onRemoveDay,
+  onAddSpotToDay,
+  onRemoveSpotFromDay,
+  onReorderSpots,
+  onMoveSpot,
+}: ItineraryBuilderProps) {
+  // Internal UI states for filtering, modals, etc.
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<SpotCategory | "all">(
+    "all",
+  );
+  const [seasonFilter, setSeasonFilter] = useState<SeasonType | "all">("all");
+  const [audienceFilter, setAudienceFilter] = useState<AudienceType | "all">(
+    "all",
+  );
 
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
   const [showSavedPlans, setShowSavedPlans] = useState(false);
-  const [activeSpot, setActiveSpot] = useState<Spot | null>(null);
+  const [activeSpot, setActiveSpot] = useState<Spot | null>(null); // For DragOverlay
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<SpotRecord[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
@@ -556,11 +770,11 @@ export default function ItineraryBuilder() {
   const [saveChangesNote, setSaveChangesNote] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
 
-  const handleGetAiRecommendations = async () => {
+  const handleGetAiRecommendations = useCallback(async () => {
     if (!currentPlan) return;
     setAiLoading(true);
     setShowAiPanel(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 600)); // Simulate AI processing time
 
     const allScheduledSpots = currentPlan.days.flatMap((d) => d.spots);
     const scheduledIds = allScheduledSpots.map((s) => s.id);
@@ -580,24 +794,46 @@ export default function ItineraryBuilder() {
 
     setAiRecommendations(recommendations);
     setAiLoading(false);
-  };
+  }, [currentPlan, ragEngine]);
 
-  const convertToSpot = (record: SpotRecord): Spot => ({
-    id: record.id,
-    name: record.name,
-    category: ["文化深度體驗"] as SpotCategory[],
-    county: record.region,
-    duration: 90,
-    description: record.note || `${record.region}的${record.tags[0] || "景點"}`,
-    image: `https://picsum.photos/seed/${record.id}/400/300`,
-    price: 0,
-    tags: record.tags,
-    season: ["春", "夏", "秋", "冬"],
-    sustainability_index: "",
-    target_audience: ["文青", "情侶"],
-  });
+  const convertToSpot = useCallback(
+    (record: SpotRecord): Spot => ({
+      id: record.id,
+      name: record.name,
+      category: (record.tags.includes("美食") ? ["美食"] : ["文化深度體驗"]) as SpotCategory[], // Example dynamic category
+      county: record.region,
+      duration: 90, // Default duration
+      description: record.note || `${record.region}的${record.tags[0] || "景點"}`,
+      image: record.image || `https://picsum.photos/seed/${record.id}/400/300`,
+      price: 0,
+      tags: record.tags,
+      season: ["春", "夏", "秋", "冬"], // Default seasons
+      sustainability_index: "",
+      target_audience: ["文青", "情侶"], // Default audience
+    }),
+    [],
+  );
 
-  const filteredSpots = getFilteredSpots();
+  // Filter available spots based on internal UI states
+  const filteredSpots = useMemo(() => {
+    return allAvailableSpots.filter((spot) => {
+      const matchesSearch = searchQuery
+        ? spot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          spot.description.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+
+      const matchesCategory =
+        categoryFilter === "all" || spot.category.includes(categoryFilter);
+
+      const matchesSeason =
+        seasonFilter === "all" || spot.season.includes(seasonFilter);
+
+      const matchesAudience =
+        audienceFilter === "all" || spot.target_audience.includes(audienceFilter);
+
+      return matchesSearch && matchesCategory && matchesSeason && matchesAudience;
+    });
+  }, [allAvailableSpots, searchQuery, categoryFilter, seasonFilter, audienceFilter]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -606,77 +842,76 @@ export default function ItineraryBuilder() {
     }),
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
-    setDragging(true, active.id as string);
     if (active.data.current?.type === "resource") {
       setActiveSpot(active.data.current.spot);
     } else if (active.data.current?.type === "scheduled") {
       setActiveSpot(active.data.current.spot);
     }
-  };
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setDragging(false);
-    setActiveSpot(null);
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveSpot(null); // Clear active spot for drag overlay
 
-    if (!over || !currentPlan) return;
+      if (!over || !currentPlan) return;
 
-    const activeData = active.data.current;
-    const overId = over.id as string;
+      const activeData = active.data.current;
+      const overId = over.id as string;
 
-    if (activeData?.type === "resource") {
-      if (overId.startsWith("day-")) {
-        const dayId = overId.replace("day-", "");
-        addSpotToDay(dayId, activeData.spot);
-      } else if (over.data.current?.type === "scheduled") {
-        const dayId = over.data.current.dayId;
-        const index = over.data.current.index;
-        addSpotToDay(dayId, activeData.spot, index);
-      }
-    } else if (activeData?.type === "scheduled") {
-      const fromDayId = activeData.dayId;
-      const fromIndex = activeData.index;
-
-      if (overId.startsWith("day-")) {
-        const toDayId = overId.replace("day-", "");
-        if (fromDayId !== toDayId) {
-          const toDay = currentPlan.days.find((d) => d.id === toDayId);
-          const toIndex = toDay?.spots.length ?? 0;
-          moveSpot(fromDayId, toDayId, activeData.spot.instanceId, toIndex);
+      if (activeData?.type === "resource") {
+        const spotToAdd: Spot = activeData.spot;
+        if (overId.startsWith("day-")) {
+          const dayId = overId.replace("day-", "");
+          onAddSpotToDay(currentPlan, dayId, spotToAdd);
+        } else if (over.data.current?.type === "scheduled") {
+          const dayId = over.data.current.dayId;
+          const index = over.data.current.index;
+          onAddSpotToDay(currentPlan, dayId, spotToAdd, index);
         }
-      } else if (over.data.current?.type === "scheduled") {
-        const toDayId = over.data.current.dayId;
-        const toIndex = over.data.current.index;
+      } else if (activeData?.type === "scheduled") {
+        const fromDayId = activeData.dayId;
+        const fromIndex = activeData.index;
 
-        if (fromDayId === toDayId) {
-          if (fromIndex !== toIndex) {
-            reorderSpots(fromDayId, fromIndex, toIndex);
+        if (overId.startsWith("day-")) {
+          const toDayId = overId.replace("day-", "");
+          if (fromDayId !== toDayId) {
+            const toDay = currentPlan.days.find((d) => d.id === toDayId);
+            const toIndex = toDay?.spots.length ?? 0;
+            onMoveSpot(currentPlan, fromDayId, toDayId, activeData.spot.instanceId, toIndex);
           }
-        } else {
-          moveSpot(fromDayId, toDayId, activeData.spot.instanceId, toIndex);
+        } else if (over.data.current?.type === "scheduled") {
+          const toDayId = over.data.current.dayId;
+          const toIndex = over.data.current.index;
+
+          if (fromDayId === toDayId) {
+            if (fromIndex !== toIndex) {
+              onReorderSpots(currentPlan, fromDayId, fromIndex, toIndex);
+            }
+          } else {
+            onMoveSpot(currentPlan, fromDayId, toDayId, activeData.spot.instanceId, toIndex);
+          }
         }
       }
-    }
-  };
+    },
+    [currentPlan, onAddSpotToDay, onMoveSpot, onReorderSpots],
+  );
 
-  const categories: (SpotCategory | "all")[] = [
-    "all",
-    "綠色永續景點",
-    "山林秘境",
-    "海岸離島",
-    "文化深度體驗",
-    "農村慢旅",
-    "都市邊緣秘境",
-  ];
+  // Derive categories from categoryConfig for filter buttons
+  const categories: (SpotCategory | "all")[] = useMemo(() => {
+    return ["all", ...Object.keys(categoryConfig).filter(k => k !== '其他') as SpotCategory[]].sort();
+  }, [categoryConfig]);
+
 
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+      // Added glass-card for root component as per Kintone widget design guidelines
+      className="glass-card h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
     >
       {/* Header */}
       <motion.div
@@ -685,7 +920,7 @@ export default function ItineraryBuilder() {
       >
         <div className="flex items-center justify-between max-w-full">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
               <Navigation className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -700,7 +935,7 @@ export default function ItineraryBuilder() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleGetAiRecommendations}
-                  className="btn-pill gap-2 bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/25 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                  className="btn-pill gap-2 bg-gradient-to-r from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/25 focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                 >
                   <Sparkles className="w-4 h-4" />
                   AI 推薦
@@ -728,7 +963,7 @@ export default function ItineraryBuilder() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={clearCurrentPlan}
+                  onClick={onClearCurrentPlan}
                   className="btn-pill btn-pill-secondary gap-2"
                 >
                   <X className="w-4 h-4" />
@@ -771,17 +1006,17 @@ export default function ItineraryBuilder() {
                             <button
                               key={plan.id}
                               onClick={() => {
-                                loadPlan(plan.id);
+                                onLoadPlan(plan.id);
                                 setShowSavedPlans(false);
                               }}
-                              className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center justify-between transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                              className="w-full px-4 py-2 text-left hover:bg-slate-50 flex items-center justify-between transition-colors focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                             >
                               <div>
                                 <div className="font-medium text-slate-900">
                                   {plan.name}
                                 </div>
                                 <div className="text-sm text-slate-500">
-                                  {plan.destination} · {plan.days.length} 天
+                                  {plan.destination} · {plan.daysCount} 天
                                 </div>
                               </div>
                               <ChevronRight className="w-4 h-4 text-slate-400" />
@@ -806,7 +1041,7 @@ export default function ItineraryBuilder() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+            <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
               <Calendar className="w-12 h-12 text-slate-400" />
             </div>
             <h2 className="text-xl font-semibold text-slate-900 mb-2">
@@ -857,7 +1092,7 @@ export default function ItineraryBuilder() {
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200",
                       )}
                     >
-                      {cat === "all" ? "全部" : CATEGORY_CONFIG[cat].label}
+                      {cat === "all" ? "全部" : categoryConfig[cat]?.label || cat}
                     </button>
                   ))}
                 </div>
@@ -881,7 +1116,7 @@ export default function ItineraryBuilder() {
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="grid gap-3">
                   {filteredSpots.map((spot) => (
-                    <ResourceCard key={spot.id} spot={spot} />
+                    <ResourceCard key={spot.id} spot={spot} categoryConfig={categoryConfig} />
                   ))}
                 </div>
                 {filteredSpots.length === 0 && (
@@ -911,7 +1146,7 @@ export default function ItineraryBuilder() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={addDay}
+                    onClick={() => onAddDay(currentPlan)}
                     className="btn-pill btn-pill-secondary gap-2"
                   >
                     <Plus className="w-4 h-4" />
@@ -926,10 +1161,11 @@ export default function ItineraryBuilder() {
                     key={day.id}
                     day={day}
                     onRemoveSpot={(instanceId) =>
-                      removeSpotFromDay(day.id, instanceId)
+                      onRemoveSpotFromDay(currentPlan, day.id, instanceId)
                     }
-                    onRemoveDay={() => removeDay(day.id)}
+                    onRemoveDay={() => onRemoveDay(currentPlan, day.id)}
                     canRemove={currentPlan.days.length > 1}
+                    categoryConfig={categoryConfig}
                   />
                 ))}
               </div>
@@ -937,7 +1173,7 @@ export default function ItineraryBuilder() {
           </div>
 
           <DragOverlay>
-            {activeSpot && <ResourceCard spot={activeSpot} isDragOverlay />}
+            {activeSpot && <ResourceCard spot={activeSpot} isDragOverlay categoryConfig={categoryConfig} />}
           </DragOverlay>
         </DndContext>
       )}
@@ -945,7 +1181,7 @@ export default function ItineraryBuilder() {
       {/* AI Panel */}
       <AnimatePresence>
         {showAiPanel && (
-          <div className="fixed inset-0 overlay backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -954,7 +1190,7 @@ export default function ItineraryBuilder() {
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-brand-500 to-brand-700 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                  <div className="w-10 h-10 bg-gradient-to-r from-brand-500 to-brand-700 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -970,7 +1206,7 @@ export default function ItineraryBuilder() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setShowAiPanel(false)}
-                  className="p-2 hover:bg-slate-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                  className="p-2 hover:bg-slate-100 rounded-lg focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                 >
                   <X className="w-5 h-5" />
                 </motion.button>
@@ -992,11 +1228,11 @@ export default function ItineraryBuilder() {
                       >
                         <div className="relative h-32">
                           <img
-                            src={`https://picsum.photos/seed/${rec.id}/400/300`}
+                            src={rec.image || `https://picsum.photos/seed/${rec.id}/400/300`}
                             alt={rec.name}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-2 left-2 bg-brand-500 text-white px-2 py-0.5 rounded-full text-sm font-medium flex items-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                          <div className="absolute top-2 left-2 bg-brand-500 text-white px-2 py-0.5 rounded-full text-sm font-medium flex items-center gap-1 focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
                             <Lightbulb className="w-3 h-3" />
                             推薦
                           </div>
@@ -1013,7 +1249,7 @@ export default function ItineraryBuilder() {
                             {rec.tags.slice(0, 3).map((tag, idx) => (
                               <span
                                 key={idx}
-                                className="text-sm bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                                className="text-sm bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                               >
                                 {tag}
                               </span>
@@ -1024,7 +1260,8 @@ export default function ItineraryBuilder() {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => {
                               if (currentPlan && currentPlan.days.length > 0) {
-                                addSpotToDay(
+                                onAddSpotToDay(
+                                  currentPlan,
                                   currentPlan.days[0].id,
                                   convertToSpot(rec),
                                 );
@@ -1033,7 +1270,7 @@ export default function ItineraryBuilder() {
                                 );
                               }
                             }}
-                            className="w-full py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors flex items-center justify-center gap-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                            className="w-full py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 transition-colors flex items-center justify-center gap-2 focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                           >
                             <Plus className="w-4 h-4" />
                             加入第一天
@@ -1044,7 +1281,7 @@ export default function ItineraryBuilder() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
                       <Lightbulb className="w-8 h-8 text-slate-400" />
                     </div>
                     <p className="text-slate-600 mb-2">
@@ -1079,13 +1316,13 @@ export default function ItineraryBuilder() {
       <NewPlanModal
         isOpen={showNewPlanModal}
         onClose={() => setShowNewPlanModal(false)}
-        onCreate={createNewPlan}
+        onCreate={onCreateNewPlan}
       />
 
       {/* Save Modal with Changes Note */}
       <AnimatePresence>
-        {showSaveModal && (
-          <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        {showSaveModal && currentPlan && (
+          <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1099,7 +1336,7 @@ export default function ItineraryBuilder() {
                     setShowSaveModal(false);
                     setSaveChangesNote("");
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1129,7 +1366,7 @@ export default function ItineraryBuilder() {
                   </button>
                   <button
                     onClick={() => {
-                      savePlan(saveChangesNote || undefined);
+                      onSavePlan(currentPlan, saveChangesNote || undefined);
                       setShowSaveModal(false);
                       setSaveChangesNote("");
                     }}
@@ -1148,7 +1385,7 @@ export default function ItineraryBuilder() {
       {/* Version History Modal */}
       <AnimatePresence>
         {showVersionHistory && currentPlan && (
-          <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+          <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1165,7 +1402,7 @@ export default function ItineraryBuilder() {
                 </div>
                 <button
                   onClick={() => setShowVersionHistory(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1192,13 +1429,13 @@ export default function ItineraryBuilder() {
                               </span>
                               {version.version ===
                                 currentPlan.current_version && (
-                                <span className="px-2 py-0.5 bg-brand-500 text-white text-sm rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                                <span className="px-2 py-0.5 bg-brand-500 text-white text-sm rounded-full focus:ring-2 focus:ring-brand-300 active:bg-brand-800">
                                   目前版本
                                 </span>
                               )}
                             </div>
                             <p className="text-sm text-gray-600 mb-1">
-                              {version.changes}
+                              {version.changes || "無說明"}
                             </p>
                             <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
                               <span>建立者：{version.created_by}</span>
@@ -1213,10 +1450,10 @@ export default function ItineraryBuilder() {
                           {version.version !== currentPlan.current_version && (
                             <button
                               onClick={() => {
-                                loadVersion(version.version);
+                                onLoadVersion(currentPlan, version.version);
                                 setShowVersionHistory(false);
                               }}
-                              className="px-3 py-1.5 bg-brand-100 text-brand-700 rounded-lg text-sm font-medium hover:bg-brand-200 transition-colors flex items-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                              className="px-3 py-1.5 bg-brand-100 text-brand-700 rounded-lg text-sm font-medium hover:bg-brand-200 transition-colors flex items-center gap-1 focus:ring-2 focus:ring-brand-300 active:bg-brand-800"
                             >
                               <Eye className="w-4 h-4" />
                               載入

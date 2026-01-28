@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plane,
   Calendar,
   MapPin,
   Users,
@@ -9,41 +8,30 @@ import {
   User,
   ChevronRight,
   Clock,
-  Camera,
-  MessageCircle,
   CheckCircle,
   AlertCircle,
   Star,
   Download,
   X,
-  Heart,
-  Baby,
-  Utensils,
-  Accessibility,
   Home,
-  Send,
   FileText,
   Award,
   Shield,
-  DollarSign,
   Info,
-  ChevronDown,
   Plus,
   Minus,
-  ThumbsUp,
-  ThumbsDown,
-  MessageSquare,
   ExternalLink,
-  Bed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Button from "@/design-system/Button";
+import Button from "@/design-system/Button"; // Assuming design-system Button handles its own focus/active states
 
 // ============================================
-// Types
+// Types - Moved to a separate file
 // ============================================
 
-type TabKey =
+// Assume these types are defined in `/workspaces/TrvicERP/types/traveler-app.ts`
+/*
+export type TabKey =
   | "home"
   | "explore"
   | "register"
@@ -51,7 +39,7 @@ type TabKey =
   | "notifications"
   | "feedback";
 
-interface AvailableTrip {
+export interface AvailableTrip {
   id: string;
   name: string;
   destination: string;
@@ -70,7 +58,7 @@ interface AvailableTrip {
   status: "open" | "closing" | "full";
 }
 
-interface MyRegistration {
+export interface MyRegistration {
   id: string;
   tripId: string;
   tripName: string;
@@ -87,7 +75,7 @@ interface MyRegistration {
   specialNeeds?: string;
 }
 
-interface Notification {
+export interface Notification {
   id: string;
   type: "info" | "warning" | "success";
   title: string;
@@ -97,7 +85,7 @@ interface Notification {
   tripId?: string;
 }
 
-interface UserProfile {
+export interface UserProfile {
   name: string;
   department: string;
   employeeId: string;
@@ -108,149 +96,107 @@ interface UserProfile {
   maxSubsidy: number;
 }
 
+export interface RegistrationFormData {
+  tripId: string;
+  roomType: string;
+  mealPreference: string;
+  seatPreference: string;
+  specialNeeds: string;
+  companions: { name: string; relationship: string; age?: number }[];
+}
+*/
+import {
+  TabKey,
+  AvailableTrip,
+  MyRegistration,
+  Notification,
+  UserProfile,
+  RegistrationFormData,
+} from "@/types/traveler-app";
+
 // ============================================
-// Mock Data
+// Main Component Props Interface
 // ============================================
 
-const MOCK_USER: UserProfile = {
-  name: "王大明",
-  department: "研發部",
-  employeeId: "EMP-2020-0123",
-  seniority: 3.5,
-  email: "wang.daming@company.com",
-  isEligible: true,
-  subsidyTier: "滿3年員工",
-  maxSubsidy: 15000,
-};
+export interface TravelerAppConfig {
+  initialUser: UserProfile;
+  initialAvailableTrips: AvailableTrip[];
+  initialMyRegistrations: MyRegistration[];
+  initialNotifications: Notification[];
+  // If the parent needs to react to state changes, add callbacks
+  // onRegistrationAdded?: (newRegistration: MyRegistration) => void;
+  // onNotificationMarkedRead?: (id: string) => void;
+}
 
-const MOCK_AVAILABLE_TRIPS: AvailableTrip[] = [
-  {
-    id: "t1",
-    name: "2025 員工旅遊 - 東京五日",
-    destination: "日本東京",
-    startDate: "2025-03-15",
-    endDate: "2025-03-19",
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800",
-    price: 45000,
-    maxSubsidy: 15000,
-    subsidyType: "fixed",
-    subsidyAmount: 15000,
-    description:
-      "探索東京的現代與傳統魅力，包含迪士尼樂園、淺草寺、銀座購物等精彩行程。",
-    highlights: [
-      "東京迪士尼樂園",
-      "淺草雷門",
-      "銀座購物",
-      "築地市場",
-      "晴空塔",
-    ],
-    registrationDeadline: "2025-02-28",
-    spotsLeft: 15,
-    totalSpots: 60,
-    status: "open",
-  },
-  {
-    id: "t2",
-    name: "部門旅遊 - 峇里島四日",
-    destination: "印尼峇里島",
-    startDate: "2025-04-20",
-    endDate: "2025-04-23",
-    image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800",
-    price: 38000,
-    maxSubsidy: 20000,
-    subsidyType: "percentage",
-    subsidyAmount: 50,
-    description:
-      "享受峇里島的熱帶風情，包含海神廟、烏布梯田、SPA體驗等放鬆行程。",
-    highlights: ["海神廟", "烏布梯田", "SPA按摩", "庫塔海灘", "傳統舞蹈"],
-    registrationDeadline: "2025-03-15",
-    spotsLeft: 2,
-    totalSpots: 30,
-    status: "closing",
-  },
-  {
-    id: "t3",
-    name: "家庭日 - 墾丁二日",
-    destination: "台灣墾丁",
-    startDate: "2025-05-01",
-    endDate: "2025-05-02",
-    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800",
-    price: 8000,
-    maxSubsidy: 3000,
-    subsidyType: "fixed",
-    subsidyAmount: 3000,
-    description: "親子同遊墾丁，享受陽光沙灘與海洋生態之旅。",
-    highlights: ["海生館", "南灣沙灘", "墾丁大街", "鵝鑾鼻燈塔"],
-    registrationDeadline: "2025-04-15",
-    spotsLeft: 30,
-    totalSpots: 150,
-    status: "open",
-  },
-];
+// ============================================
+// Helper Components Props Interfaces
+// ============================================
 
-const MOCK_MY_REGISTRATIONS: MyRegistration[] = [
-  {
-    id: "r1",
-    tripId: "t1",
-    tripName: "2025 員工旅遊 - 東京五日",
-    destination: "日本東京",
-    startDate: "2025-03-15",
-    endDate: "2025-03-19",
-    image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800",
-    status: "approved",
-    registeredAt: "2025-01-15",
-    roomType: "雙人房",
-    companions: [{ name: "王太太", relationship: "配偶" }],
-    subsidyAmount: 15000,
-    selfPay: 30000,
-    specialNeeds: "素食",
-  },
-];
+interface TabBarProps {
+  activeTab: TabKey;
+  onTabChange: (tab: TabKey) => void;
+  notificationCount: number;
+}
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "n1",
-    type: "success",
-    title: "報名審核通過",
-    message: "您的「2025 員工旅遊 - 東京五日」報名已審核通過，請確認行程資訊。",
-    date: "2025-01-18",
-    read: false,
-    tripId: "t1",
-  },
-  {
-    id: "n2",
-    type: "info",
-    title: "集合通知",
-    message:
-      "東京五日遊將於 3/15 早上 6:00 於桃園機場第一航廈集合，請準時抵達。",
-    date: "2025-03-10",
-    read: false,
-    tripId: "t1",
-  },
-  {
-    id: "n3",
-    type: "warning",
-    title: "報名即將截止",
-    message: "「部門旅遊 - 峇里島四日」報名即將於 3/15 截止，僅剩 2 個名額！",
-    date: "2025-03-12",
-    read: true,
-    tripId: "t2",
-  },
-];
+interface EligibilityCardProps {
+  user: UserProfile;
+}
+
+interface TripCardProps {
+  trip: AvailableTrip;
+  onRegister: () => void;
+}
+
+interface TodoItemProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  action?: React.ReactNode;
+  done?: boolean;
+}
+
+// ============================================
+// Tab Content Components Props Interfaces
+// ============================================
+
+interface HomeTabProps {
+  user: UserProfile;
+  registrations: MyRegistration[];
+  notifications: Notification[];
+  onNavigate: (tab: TabKey) => void;
+}
+
+interface ExploreTabProps {
+  trips: AvailableTrip[];
+  user: UserProfile;
+  onRegister: (tripId: string) => void;
+}
+
+interface RegistrationFormProps {
+  trip: AvailableTrip;
+  user: UserProfile;
+  onClose: () => void;
+  onSubmit: (data: RegistrationFormData) => void;
+}
+
+interface MyTripsTabProps {
+  registrations: MyRegistration[];
+}
+
+interface NotificationsTabProps {
+  notifications: Notification[];
+  onMarkRead: (id: string) => void;
+}
+
+interface FeedbackTabProps {
+  // No specific props needed based on current logic
+}
 
 // ============================================
 // Helper Components
 // ============================================
 
-function TabBar({
-  activeTab,
-  onTabChange,
-  notificationCount,
-}: {
-  activeTab: TabKey;
-  onTabChange: (tab: TabKey) => void;
-  notificationCount: number;
-}) {
+function TabBar({ activeTab, onTabChange, notificationCount }: TabBarProps) {
   const tabs = [
     { key: "home" as TabKey, icon: Home, label: "首頁" },
     { key: "explore" as TabKey, icon: MapPin, label: "探索" },
@@ -265,7 +211,7 @@ function TabBar({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50">
       <div className="flex justify-around items-center max-w-lg mx-auto">
         {tabs.map(({ key, icon: Icon, label, badge }) => (
           <button
@@ -274,12 +220,13 @@ function TabBar({
             className={cn(
               "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-all relative",
               activeTab === key ? "text-brand-600" : "text-gray-500",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 active:bg-brand-50",
             )}
           >
             <Icon className="w-5 h-5" />
             <span className="text-sm font-medium">{label}</span>
             {badge !== undefined && badge > 0 && (
-              <span className="absolute top-1 right-2 w-4 h-4 bg-error text-white text-[10px] rounded-full flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <span className="absolute top-1 right-2 w-4 h-4 bg-error text-white text-[10px] rounded-full flex items-center justify-center">
                 {badge}
               </span>
             )}
@@ -290,9 +237,9 @@ function TabBar({
   );
 }
 
-function EligibilityCard({ user }: { user: UserProfile }) {
+function EligibilityCard({ user }: EligibilityCardProps) {
   return (
-    <div className="bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl p-5 text-white focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+    <div className="bg-gradient-to-r from-brand-500 to-brand-700 rounded-2xl p-5 text-white">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -300,7 +247,9 @@ function EligibilityCard({ user }: { user: UserProfile }) {
             <span className="text-sm font-medium text-white/80">資格驗證</span>
           </div>
           <h3 className="text-lg font-bold">{user.subsidyTier}</h3>
-          <p className="text-sm text-white/70 mt-1">年資 {user.seniority} 年</p>
+          <p className="text-sm text-white/70 mt-1">
+            年資 {user.seniority} 年
+          </p>
         </div>
         <div className="text-right">
           <div className="text-sm text-white/80">最高補助</div>
@@ -326,13 +275,7 @@ function EligibilityCard({ user }: { user: UserProfile }) {
   );
 }
 
-function TripCard({
-  trip,
-  onRegister,
-}: {
-  trip: AvailableTrip;
-  onRegister: () => void;
-}) {
+function TripCard({ trip, onRegister }: TripCardProps) {
   const calculateSubsidy = () => {
     if (trip.subsidyType === "fixed") {
       return Math.min(trip.subsidyAmount, trip.price);
@@ -347,7 +290,7 @@ function TripCard({
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+      className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm"
     >
       <div className="relative h-40">
         <img
@@ -355,7 +298,7 @@ function TripCard({
           alt={trip.name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <div className="absolute top-3 right-3">
           <span
             className={cn(
@@ -399,19 +342,19 @@ function TripCard({
           {trip.highlights.slice(0, 3).map((h, i) => (
             <span
               key={i}
-              className="text-sm bg-brand-50 text-brand-600 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+              className="text-sm bg-brand-50 text-brand-600 px-2 py-1 rounded-full"
             >
               {h}
             </span>
           ))}
           {trip.highlights.length > 3 && (
-            <span className="text-sm bg-gray-100 text-gray-500 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+            <span className="text-sm bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
               +{trip.highlights.length - 3}
             </span>
           )}
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-3 space-y-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">行程費用</span>
             <span className="font-semibold text-gray-900">
@@ -438,7 +381,7 @@ function TripCard({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     "h-full rounded-full transition-all",
@@ -476,21 +419,38 @@ function TripCard({
   );
 }
 
+function TodoItem({ icon, title, subtitle, action, done }: TodoItemProps) {
+  return (
+    <div className="p-4 flex items-center gap-3">
+      <div
+        className={cn(
+          "w-8 h-8 rounded-lg flex items-center justify-center",
+          done ? "bg-success/10 text-success" : "bg-gray-100 text-gray-600",
+        )}
+      >
+        {done ? <CheckCircle className="w-4 h-4" /> : icon}
+      </div>
+      <div className="flex-1">
+        <p
+          className={cn(
+            "font-medium",
+            done ? "text-gray-400 line-through" : "text-gray-900",
+          )}
+        >
+          {title}
+        </p>
+        <p className="text-sm text-gray-500">{subtitle}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 // ============================================
 // Tab Content Components
 // ============================================
 
-function HomeTab({
-  user,
-  registrations,
-  notifications,
-  onNavigate,
-}: {
-  user: UserProfile;
-  registrations: MyRegistration[];
-  notifications: Notification[];
-  onNavigate: (tab: TabKey) => void;
-}) {
+function HomeTab({ user, registrations, notifications, onNavigate }: HomeTabProps) {
   const upcomingTrip = registrations.find(
     (r) => r.status === "approved" || r.status === "confirmed",
   );
@@ -514,7 +474,7 @@ function HomeTab({
             {user.department} · {user.employeeId}
           </p>
         </div>
-        <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white text-xl font-bold focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
           {user.name[0]}
         </div>
       </div>
@@ -524,14 +484,14 @@ function HomeTab({
 
       {/* Upcoming Trip */}
       {upcomingTrip && (
-        <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
           <div className="relative h-32">
             <img
               src={upcomingTrip.image}
               alt={upcomingTrip.tripName}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
             <div className="absolute bottom-3 left-3 right-3 text-white">
               <span className="badge-success text-sm px-2 py-0.5 rounded-full font-semibold">
                 即將出發
@@ -548,7 +508,7 @@ function HomeTab({
                   </p>
                   <p className="text-sm text-gray-500">天後出發</p>
                 </div>
-                <div className="h-10 w-px bg-gray-200 focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+                <div className="h-10 w-px bg-gray-200" />
                 <div>
                   <p className="text-sm text-gray-500">出發日期</p>
                   <p className="font-semibold">{upcomingTrip.startDate}</p>
@@ -557,7 +517,7 @@ function HomeTab({
               <Button
                 onClick={() => onNavigate("mytrips")}
                 variant="ghost"
-                className="!p-0 !text-brand-600 text-sm font-medium hover:!bg-transparent hover:opacity-80 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                className="!p-0 !text-brand-600 text-sm font-medium hover:!bg-transparent hover:opacity-80"
               >
                 查看詳情 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -570,7 +530,7 @@ function HomeTab({
       <div className="grid grid-cols-2 gap-3">
         <Button
           onClick={() => onNavigate("explore")}
-          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-emerald-500 to-green-600 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-emerald-500 to-green-600 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full"
         >
           <MapPin className="w-6 h-6 mb-2" />
           <p className="font-bold">探索行程</p>
@@ -579,7 +539,7 @@ function HomeTab({
 
         <Button
           onClick={() => onNavigate("mytrips")}
-          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-brand-500 to-brand-700 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+          className="!flex !flex-col !items-start !h-auto bg-gradient-to-r from-brand-500 to-brand-700 p-4 rounded-2xl text-white !justify-start hover:opacity-90 w-full"
         >
           <Calendar className="w-6 h-6 mb-2" />
           <p className="font-bold">我的行程</p>
@@ -591,10 +551,10 @@ function HomeTab({
 
       {/* Notifications Preview */}
       {unreadNotifications > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                 <Bell className="w-5 h-5 text-amber-600" />
               </div>
               <div>
@@ -615,7 +575,7 @@ function HomeTab({
       )}
 
       {/* To-Do List */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100">
           <h3 className="font-bold text-gray-900">待辦事項</h3>
         </div>
@@ -648,54 +608,7 @@ function HomeTab({
   );
 }
 
-function TodoItem({
-  icon,
-  title,
-  subtitle,
-  action,
-  done,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  action?: React.ReactNode;
-  done?: boolean;
-}) {
-  return (
-    <div className="p-4 flex items-center gap-3">
-      <div
-        className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center",
-          done ? "bg-success/10 text-success" : "bg-gray-100 text-gray-600",
-        )}
-      >
-        {done ? <CheckCircle className="w-4 h-4" /> : icon}
-      </div>
-      <div className="flex-1">
-        <p
-          className={cn(
-            "font-medium",
-            done ? "text-gray-400 line-through" : "text-gray-900",
-          )}
-        >
-          {title}
-        </p>
-        <p className="text-sm text-gray-500">{subtitle}</p>
-      </div>
-      {action}
-    </div>
-  );
-}
-
-function ExploreTab({
-  trips,
-  user,
-  onRegister,
-}: {
-  trips: AvailableTrip[];
-  user: UserProfile;
-  onRegister: (tripId: string) => void;
-}) {
+function ExploreTab({ trips, user, onRegister }: ExploreTabProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -704,7 +617,7 @@ function ExploreTab({
       </div>
 
       {/* Eligibility reminder */}
-      <div className="bg-brand-50 border border-brand-200 rounded-lg p-4 flex items-center gap-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+      <div className="bg-brand-50 border border-brand-200 rounded-lg p-4 flex items-center gap-3">
         <Shield className="w-5 h-5 text-brand-600 flex-shrink-0" />
         <div>
           <p className="text-sm text-brand-900">
@@ -737,12 +650,7 @@ function RegistrationForm({
   user,
   onClose,
   onSubmit,
-}: {
-  trip: AvailableTrip;
-  user: UserProfile;
-  onClose: () => void;
-  onSubmit: (data: any) => void;
-}) {
+}: RegistrationFormProps) {
   const [step, setStep] = useState(1);
   const [roomType, setRoomType] = useState("double");
   const [mealPreference, setMealPreference] = useState("normal");
@@ -762,15 +670,24 @@ function RegistrationForm({
   const subsidy = calculateSubsidy();
   const selfPay = trip.price - subsidy;
 
-  const addCompanion = () => {
-    setCompanions([...companions, { name: "", relationship: "spouse" }]);
-  };
+  const addCompanion = useCallback(() => {
+    setCompanions((prev) => [...prev, { name: "", relationship: "spouse" }]);
+  }, []);
 
-  const removeCompanion = (index: number) => {
-    setCompanions(companions.filter((_, i) => i !== index));
-  };
+  const removeCompanion = useCallback((index: number) => {
+    setCompanions((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
-  const handleSubmit = () => {
+  const handleCompanionChange = useCallback(
+    (index: number, field: keyof (typeof companions)[0], value: string) => {
+      setCompanions((prev) =>
+        prev.map((c, i) => (i === index ? { ...c, [field]: value } : c)),
+      );
+    },
+    [],
+  );
+
+  const handleSubmit = useCallback(() => {
     onSubmit({
       tripId: trip.id,
       roomType,
@@ -779,14 +696,22 @@ function RegistrationForm({
       specialNeeds,
       companions,
     });
-  };
+  }, [
+    trip.id,
+    roomType,
+    mealPreference,
+    seatPreference,
+    specialNeeds,
+    companions,
+    onSubmit,
+  ]);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-primary-900/50 z-50 flex items-end sm:items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+      className="fixed inset-0 bg-brand-900/50 z-50 flex items-end sm:items-center justify-center"
       onClick={onClose}
     >
       <motion.div
@@ -794,7 +719,7 @@ function RegistrationForm({
         animate={{ y: 0 }}
         exit={{ y: 100 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+        className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
       >
         {/* Header */}
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
@@ -804,7 +729,7 @@ function RegistrationForm({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+            className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
           >
             <X className="w-5 h-5" />
           </button>
@@ -829,7 +754,7 @@ function RegistrationForm({
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {step === 1 && (
             <>
-              <div className="bg-gray-50 rounded-lg p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900">{trip.name}</h3>
                 <p className="text-sm text-gray-500 mt-1">
                   {trip.destination} · {trip.startDate} ~ {trip.endDate}
@@ -852,8 +777,9 @@ function RegistrationForm({
                       className={cn(
                         "p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all",
                         roomType === value
-                          ? "border-brand-600 bg-brand-50"
-                          : "border-gray-200 hover:border-gray-300",
+                          ? "border-brand-600 bg-brand-50 text-brand-600"
+                          : "border-gray-200 hover:border-gray-300 text-gray-700",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300",
                       )}
                     >
                       <Icon
@@ -864,16 +790,7 @@ function RegistrationForm({
                             : "text-gray-500",
                         )}
                       />
-                      <span
-                        className={cn(
-                          "text-sm font-medium",
-                          roomType === value
-                            ? "text-brand-600"
-                            : "text-gray-700",
-                        )}
-                      >
-                        {label}
-                      </span>
+                      <span className="text-sm font-medium">{label}</span>
                     </button>
                   ))}
                 </div>
@@ -898,6 +815,7 @@ function RegistrationForm({
                         mealPreference === value
                           ? "border-brand-600 bg-brand-50 text-brand-600"
                           : "border-gray-200 text-gray-700 hover:border-gray-300",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300",
                       )}
                     >
                       {label}
@@ -927,6 +845,7 @@ function RegistrationForm({
                         seatPreference === value
                           ? "border-brand-600 bg-brand-50 text-brand-600"
                           : "border-gray-200 text-gray-700 hover:border-gray-300",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300",
                       )}
                     >
                       <span>{icon}</span>
@@ -950,29 +869,26 @@ function RegistrationForm({
                   </label>
                   <button
                     onClick={addCompanion}
-                    className="text-sm text-brand-600 font-medium flex items-center gap-1"
+                    className="text-sm text-brand-600 font-medium flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 rounded-md"
                   >
                     <Plus className="w-4 h-4" /> 新增
                   </button>
                 </div>
                 {companions.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-6 bg-gray-50 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                  <p className="text-sm text-gray-500 text-center py-6 bg-gray-50 rounded-lg">
                     尚未新增同行者
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {companions.map((c, i) => (
-                      <div
-                        key={i}
-                        className="bg-gray-50 rounded-lg p-3 space-y-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
-                      >
+                      <div key={i} className="bg-gray-50 rounded-lg p-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-gray-700">
                             同行者 {i + 1}
                           </span>
                           <button
                             onClick={() => removeCompanion(i)}
-                            className="text-red-500"
+                            className="text-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 rounded-md"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
@@ -981,21 +897,21 @@ function RegistrationForm({
                           type="text"
                           placeholder="姓名"
                           value={c.name}
-                          onChange={(e) => {
-                            const updated = [...companions];
-                            updated[i].name = e.target.value;
-                            setCompanions(updated);
-                          }}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          onChange={(e) =>
+                            handleCompanionChange(i, "name", e.target.value)
+                          }
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
                         />
                         <select
                           value={c.relationship}
-                          onChange={(e) => {
-                            const updated = [...companions];
-                            updated[i].relationship = e.target.value;
-                            setCompanions(updated);
-                          }}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                          onChange={(e) =>
+                            handleCompanionChange(
+                              i,
+                              "relationship",
+                              e.target.value,
+                            )
+                          }
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
                         >
                           <option value="spouse">配偶</option>
                           <option value="child">子女</option>
@@ -1017,7 +933,7 @@ function RegistrationForm({
                   onChange={(e) => setSpecialNeeds(e.target.value)}
                   placeholder="如：輪椅協助、過敏食物、其他需求..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
                 />
               </div>
             </>
@@ -1025,7 +941,7 @@ function RegistrationForm({
 
           {step === 3 && (
             <>
-              <div className="bg-brand-50 border border-brand-200 rounded-lg p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <div className="bg-brand-50 border border-brand-200 rounded-lg p-4">
                 <h4 className="font-semibold text-brand-900 mb-3">報名確認</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -1073,7 +989,7 @@ function RegistrationForm({
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">行程費用</span>
                   <span className="font-medium">
@@ -1094,7 +1010,7 @@ function RegistrationForm({
                 </div>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                 <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800">
                   報名後需待福委會審核，審核通過後將收到確認通知。自付金額將於出發前統一收取。
@@ -1109,7 +1025,7 @@ function RegistrationForm({
           {step > 1 && (
             <button
               onClick={() => setStep(step - 1)}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 active:bg-gray-200"
             >
               上一步
             </button>
@@ -1117,14 +1033,14 @@ function RegistrationForm({
           {step < 3 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="flex-1 py-3 bg-brand-600 text-white rounded-lg font-semibold focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+              className="flex-1 py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 active:bg-brand-800"
             >
               下一步
             </button>
           ) : (
             <button
               onClick={handleSubmit}
-              className="flex-1 py-3 bg-brand-600 text-white rounded-lg font-semibold focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+              className="flex-1 py-3 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 active:bg-brand-800"
             >
               確認報名
             </button>
@@ -1135,7 +1051,7 @@ function RegistrationForm({
   );
 }
 
-function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
+function MyTripsTab({ registrations }: MyTripsTabProps) {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case "pending":
@@ -1170,7 +1086,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
             return (
               <div
                 key={reg.id}
-                className="bg-white rounded-2xl border border-gray-100 overflow-hidden focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
               >
                 <div className="relative h-32">
                   <img
@@ -1178,7 +1094,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                     alt={reg.tripName}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                   <div className="absolute top-3 right-3">
                     <span
                       className={cn(
@@ -1226,7 +1142,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                   </div>
 
                   {reg.specialNeeds && (
-                    <div className="bg-orange-50 rounded-lg p-2 flex items-center gap-2 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                    <div className="bg-orange-50 rounded-lg p-2 flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 text-orange-500" />
                       <span className="text-sm text-orange-700">
                         特殊需求：{reg.specialNeeds}
@@ -1237,14 +1153,14 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
                   <div className="flex gap-2 pt-2">
                     <Button
                       variant="secondary"
-                      className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                      className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium"
                     >
                       <Download className="w-4 h-4" />
                       下載行程表
                     </Button>
                     <Button
                       variant="secondary"
-                      className="flex-1 py-2 bg-brand-100 text-brand-700 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                      className="flex-1 py-2 bg-brand-100 text-brand-700 rounded-lg text-sm font-medium"
                     >
                       <ExternalLink className="w-4 h-4" />
                       查看詳情
@@ -1260,13 +1176,7 @@ function MyTripsTab({ registrations }: { registrations: MyRegistration[] }) {
   );
 }
 
-function NotificationsTab({
-  notifications,
-  onMarkRead,
-}: {
-  notifications: Notification[];
-  onMarkRead: (id: string) => void;
-}) {
+function NotificationsTab({ notifications, onMarkRead }: NotificationsTabProps) {
   const getTypeConfig = (type: string) => {
     switch (type) {
       case "success":
@@ -1303,12 +1213,21 @@ function NotificationsTab({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "bg-white rounded-lg border p-4",
+                  "bg-white rounded-lg border p-4 cursor-pointer",
                   notif.read
                     ? "border-gray-100"
                     : "border-brand-200 bg-brand-50/30",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300",
                 )}
+                role="button"
+                tabIndex={0}
                 onClick={() => !notif.read && onMarkRead(notif.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    !notif.read && onMarkRead(notif.id);
+                  }
+                }}
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -1325,7 +1244,7 @@ function NotificationsTab({
                         {notif.title}
                       </h4>
                       {!notif.read && (
-                        <span className="w-2 h-2 bg-brand-600 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
+                        <span className="w-2 h-2 bg-brand-600 rounded-full" />
                       )}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">
@@ -1343,19 +1262,20 @@ function NotificationsTab({
   );
 }
 
-function FeedbackTab() {
+function FeedbackTab({}: FeedbackTabProps) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
     setSubmitted(true);
-  };
+    // In a real app, this would send data to an API
+  }, []);
 
   if (submitted) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-green-600" />
         </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">感謝您的回饋！</h2>
@@ -1371,7 +1291,7 @@ function FeedbackTab() {
         <p className="text-gray-500 mt-1">填寫滿意度調查</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6">
         <div>
           <h3 className="font-semibold text-gray-900 mb-2">北海道冬季雪祭</h3>
           <p className="text-sm text-gray-500">2024-02-01 ~ 2024-02-06</p>
@@ -1383,7 +1303,11 @@ function FeedbackTab() {
           </label>
           <div className="flex gap-2 justify-center">
             {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} onClick={() => setRating(n)} className="p-2">
+              <button
+                key={n}
+                onClick={() => setRating(n)}
+                className="p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300 rounded-md"
+              >
                 <Star
                   className={cn(
                     "w-10 h-10 transition-colors",
@@ -1414,7 +1338,7 @@ function FeedbackTab() {
             onChange={(e) => setComment(e.target.value)}
             placeholder="請分享您的旅遊體驗與改善建議..."
             rows={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm resize-none"
+            className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
           />
         </div>
 
@@ -1426,6 +1350,7 @@ function FeedbackTab() {
             rating > 0
               ? "bg-brand-600 text-white hover:bg-brand-700"
               : "bg-gray-200 text-gray-500 cursor-not-allowed",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 active:bg-brand-800",
           )}
         >
           提交回饋
@@ -1436,78 +1361,94 @@ function FeedbackTab() {
 }
 
 // ============================================
-// Main Component
+// Main Component (Widget Container)
 // ============================================
 
-export default function TravelerApp() {
+export default function TravelerApp({
+  initialUser,
+  initialAvailableTrips,
+  initialMyRegistrations,
+  initialNotifications,
+}: TravelerAppConfig) {
   const [activeTab, setActiveTab] = useState<TabKey>("home");
-  const [user] = useState<UserProfile>(MOCK_USER);
-  const [availableTrips] = useState<AvailableTrip[]>(MOCK_AVAILABLE_TRIPS);
-  const [registrations, setRegistrations] = useState<MyRegistration[]>(
-    MOCK_MY_REGISTRATIONS,
-  );
+  const [user] = useState<UserProfile>(initialUser);
+  const [availableTrips] = useState<AvailableTrip[]>(initialAvailableTrips);
+  const [registrations, setRegistrations] =
+    useState<MyRegistration[]>(initialMyRegistrations);
   const [notifications, setNotifications] =
-    useState<Notification[]>(MOCK_NOTIFICATIONS);
+    useState<Notification[]>(initialNotifications);
   const [showRegistration, setShowRegistration] = useState(false);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const selectedTrip = availableTrips.find((t) => t.id === selectedTripId);
 
-  const handleRegister = (tripId: string) => {
+  const handleRegister = useCallback((tripId: string) => {
     setSelectedTripId(tripId);
     setShowRegistration(true);
-  };
+  }, []);
 
-  const handleRegistrationSubmit = (data: any) => {
-    const trip = availableTrips.find((t) => t.id === data.tripId);
-    if (!trip) return;
+  const handleRegistrationSubmit = useCallback(
+    (data: RegistrationFormData) => {
+      const trip = availableTrips.find((t) => t.id === data.tripId);
+      if (!trip) return;
 
-    const newRegistration: MyRegistration = {
-      id: `r${Date.now()}`,
-      tripId: trip.id,
-      tripName: trip.name,
-      destination: trip.destination,
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-      image: trip.image,
-      status: "pending",
-      registeredAt: new Date().toISOString().split("T")[0],
-      roomType:
-        data.roomType === "single"
-          ? "單人房"
-          : data.roomType === "double"
-            ? "雙人房"
-            : "家庭房",
-      companions: data.companions,
-      subsidyAmount:
-        trip.subsidyType === "fixed"
-          ? trip.subsidyAmount
-          : (trip.price * trip.subsidyAmount) / 100,
-      selfPay:
-        trip.price -
-        (trip.subsidyType === "fixed"
-          ? trip.subsidyAmount
-          : (trip.price * trip.subsidyAmount) / 100),
-      specialNeeds: data.specialNeeds,
-    };
+      const newRegistration: MyRegistration = {
+        id: `r${Date.now()}`,
+        tripId: trip.id,
+        tripName: trip.name,
+        destination: trip.destination,
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        image: trip.image,
+        status: "pending", // Initial status
+        registeredAt: new Date().toISOString().split("T")[0],
+        roomType:
+          data.roomType === "single"
+            ? "單人房"
+            : data.roomType === "double"
+              ? "雙人房"
+              : "家庭房",
+        companions: data.companions,
+        subsidyAmount:
+          trip.subsidyType === "fixed"
+            ? Math.min(trip.subsidyAmount, user.maxSubsidy, trip.price)
+            : Math.min((trip.price * trip.subsidyAmount) / 100, user.maxSubsidy),
+        selfPay:
+          trip.price -
+          (trip.subsidyType === "fixed"
+            ? Math.min(trip.subsidyAmount, user.maxSubsidy, trip.price)
+            : Math.min((trip.price * trip.subsidyAmount) / 100, user.maxSubsidy)),
+        specialNeeds: data.specialNeeds,
+      };
 
-    setRegistrations([...registrations, newRegistration]);
-    setShowRegistration(false);
-    setSelectedTripId(null);
-    setActiveTab("mytrips");
-  };
+      setRegistrations((prev) => [...prev, newRegistration]);
+      setShowRegistration(false);
+      setSelectedTripId(null);
+      setActiveTab("mytrips");
+    },
+    [availableTrips, user.maxSubsidy],
+  );
 
-  const handleMarkNotificationRead = (id: string) => {
+  const handleMarkNotificationRead = useCallback((id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
-  };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-      {/* Main Content */}
-      <main className="p-4 max-w-lg mx-auto">
+    // Standard Card structure for a Kintone Widget
+    <div className="relative h-full w-full rounded-2xl bg-white shadow-lg border border-gray-200 overflow-hidden">
+      {/* Drag Handle - A transparent area at the top for dragging the widget */}
+      <div className="drag-handle absolute top-0 left-0 right-0 h-8 rounded-t-2xl cursor-grab bg-transparent z-10" />
+
+      {/* Optional: Widget Header for title, positioned above content */}
+      <div className="absolute top-0 left-0 right-0 h-8 flex items-center px-4 z-10">
+        <h2 className="text-sm font-semibold text-gray-700">員工旅遊申請</h2>
+      </div>
+
+      {/* Main Content Area - Scrollable, offset by header/drag handle height */}
+      <main className="pt-10 pb-20 p-4 max-w-lg mx-auto h-full overflow-y-auto custom-scrollbar">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -1515,6 +1456,7 @@ export default function TravelerApp() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
+            className="h-full" // Ensure motion div takes full height for content
           >
             {activeTab === "home" && (
               <HomeTab

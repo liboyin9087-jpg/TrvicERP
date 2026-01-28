@@ -11,6 +11,13 @@ MAX_ITERATIONS=${1:-5}
 COMPONENT_DIR=${2:-"/workspaces/TrvicERP/components/shared"}
 PROGRESS_FILE="$SCRIPT_DIR/../.validation-progress.log"
 
+# 載入 .env 檔案（如果存在）
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    echo "載入環境變數從: $PROJECT_ROOT/.env"
+    export $(grep -v '^#' "$PROJECT_ROOT/.env" | xargs)
+fi
+
 # SiliconFlow API (主要)
 SILICONFLOW_API_KEY="${SILICONFLOW_API_KEY}"
 SILICONFLOW_API_BASE="https://api.siliconflow.com/v1"
@@ -23,6 +30,16 @@ GROQ_MODEL="llama-3.3-70b-versatile"
 
 # Gemini API (備用2 - Groq也限流時使用)
 GEMINI_API_KEY="${GEMINI_API_KEY}"
+
+# 檢查必要的 API 金鑰
+if [ -z "$SILICONFLOW_API_KEY" ] || [ -z "$GROQ_API_KEY" ] || [ -z "$GEMINI_API_KEY" ]; then
+    echo "錯誤: 缺少必要的 API 金鑰"
+    echo "請確保在 .env 檔案中設置了以下變數:"
+    echo "  - SILICONFLOW_API_KEY"
+    echo "  - GROQ_API_KEY"
+    echo "  - GEMINI_API_KEY"
+    exit 1
+fi
 
 # 顏色定義
 RED='\033[0;31m'

@@ -1,182 +1,195 @@
-/**
- * Audit Service - 審計日誌系統
- *
- * 功能特點：
- * - 自動記錄所有關鍵操作
- * - 支援合規性要求（GDPR/SOX）
- * - 即時安全警報
- * - 資料變更追蹤
- */
-
 import type {
   AuditLog,
   AuditAction,
   ResourceType,
   AuditLogQuery,
   AuditLogStats,
-  AuditConfig,
 } from "@/types/audit";
 
 // ============================================
-// Service Implementation
+// 1. Configuration Interfaces and Validation
 // ============================================
 
-class AuditService {
-  private config: AuditConfig;
-  private buffer: AuditLog[] = [];
-  private flushTimer?: NodeJS.Timeout;
+/**
+ * AuditConfig defines the configuration structure for the Audit Service.
+ * This interface is also used as a prop for Kintone independence.
+ */
+export interface AuditConfig {
+  enabled: boolean;
+  retention_days: number;
+  log_levels: Array<AuditLog["severity"]>;
+  auto_archive: boolean;
+  real_time_alerts: {
+    enabled: boolean;
+    alert_on_severity: Array<AuditLog["severity"]>;
+    alert_on_actions: AuditAction[];
+    // Add alert channels configuration if necessary, e.g., webhook URL, email recipient
+  };
+  compliance_mode: boolean;
+  // Buffer specific settings
+  buffer_flush_interval_ms?: number; // How often to flush the buffer
+  buffer_max_size?: number; // Max logs in buffer before immediate flush
+  excluded_actions?: AuditAction[]; // Actions to explicitly exclude from logging
+}
 
-  constructor(config: AuditConfig) {
-    this.config = config;
-    this.startPeriodicFlush();
+/**
+ * Defines a validator for AuditConfig.
+ */
+interface IAuditConfigValidator {
+  validate(config: AuditConfig): void;
+}
+
+/**
+ * Concrete implementation for AuditConfig validation.
+ */
+class AuditConfigValidator implements IAuditConfigValidator {
+  validate(config: AuditConfig): void {
+    if (typeof config.enabled !== "boolean") {
+      throw new Error("AuditConfig: 'enabled' must be a boolean.");
+    }
+    if (typeof config.retention_days !== "number" || config.retention_days <= 0) {
+      throw new Error("AuditConfig: 'retention_days' must be a positive number.");
+    }
+    if (!Array.isArray(config.log_levels) || config.log_levels.length === 0) {
+      throw new Error("AuditConfig: 'log_levels' must be a non-empty array.");
+    }
+    if (typeof config.auto_archive !== "boolean") {
+      throw new Error("AuditConfig: 'auto_archive' must be a boolean.");
+    }
+    if (typeof config.real_time_alerts !== "object" || config.real_time_alerts === null) {
+      throw new Error("AuditConfig: 'real_time_alerts' must be an object.");
+    }
+    if (typeof config.real_time_alerts.enabled !== "boolean") {
+      throw new Error("AuditConfig: 'real_time_alerts.enabled' must be a boolean.");
+    }
+    if (!Array.isArray(config.real_time_alerts.alert_on_severity)) {
+      throw new Error("AuditConfig: 'real_time_alerts.alert_on_severity' must be an array.");
+    }
+    if (!Array.isArray(config.real_time_alerts.alert_on_actions)) {
+      throw new Error("AuditConfig: 'real_time_alerts.alert_on_actions' must be an array.");
+    }
+    if (typeof config.compliance_mode !== "boolean") {
+      throw new Error("AuditConfig: 'compliance_mode' must be a boolean.");
+    }
+    if (config.buffer_flush_interval_ms !== undefined && (typeof config.buffer_flush_interval_ms !== "number" || config.buffer_flush_interval_ms <= 0)) {
+      throw new Error("AuditConfig: 'buffer_flush_interval_ms' must be a positive number.");
+    }
+    if (config.buffer_max_size !== undefined && (typeof config.buffer_max_size !== "number" || config.buffer_max_size <= 0)) {
+      throw new Error("AuditConfig: 'buffer_max_size' must be a positive number.");
+    }
+    if (config.excluded_actions !== undefined && !Array.isArray(config.excluded_actions)) {
+      throw new Error("AuditConfig: 'excluded_actions' must be an array if provided.");
+    }
+  }
+}
+
+// ============================================
+// 2. Storage Layer
+// ============================================
+
+/**
+ * Interface for Audit Log storage operations.
+ * This separates the data persistence logic from the core audit service.
+ * In a real application, this would likely be an abstraction over a database or an API client.
+ */
+interface IAuditLogStorage {
+  saveLogs(logs: AuditLog[]): Promise<void>;
+  getLogs(): Promise<AuditLog[]>;
+  queryLogs(params: AuditLogQuery): Promise<{ logs: AuditLog[]; total: number; has_more: boolean }>;
+  getLogStats(dateRange?: { from: string; to: string }): Promise<AuditLogStats>;
+  deleteLogs(ids: string[]): Promise<{ deleted_count: number }>;
+}
+
+/**
+ * A mock implementation of IAuditLogStorage using localStorage.
+ * This is for demonstration/development purposes. In production, this would
+ * connect to a backend API or database.
+ */
+class LocalStorageAuditLogStorage implements IAuditLogStorage {
+  private readonly STORAGE_KEY = "trvic_audit_logs";
+
+  private getStoredLogs(): AuditLog[] {
+    if (typeof window === "undefined") {
+      return [];
+    }
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error("LocalStorageAuditLogStorage: Failed to parse stored logs. Returning empty array.", error);
+      return [];
+    }
   }
 
-  /**
-   * 記錄審計日誌
-   */
-  async log(params: {
-    action: AuditAction;
-    resource_type: ResourceType;
-    resource_id: string;
-    resource_name?: string;
-    old_values?: Record<string, any>;
-    new_values?: Record<string, any>;
-    user_id?: string;
-    user_name?: string;
-    user_role?: AuditLog["user_role"];
-    metadata?: Record<string, any>;
-    severity?: AuditLog["severity"];
-    tags?: string[];
-  }): Promise<AuditLog> {
-    if (!this.config.enabled) {
-      return Promise.resolve({} as AuditLog);
+  private saveStoredLogs(logs: AuditLog[]): void {
+    if (typeof window === "undefined") {
+      return;
     }
-
-    // Check if action should be logged
-    if (this.config.excluded_actions?.includes(params.action)) {
-      return Promise.resolve({} as AuditLog);
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(logs));
+    } catch (error) {
+      console.error("LocalStorageAuditLogStorage: Failed to save audit logs:", error);
+      // For localStorage, just logging might be sufficient as it's typically for dev.
     }
-
-    const auditLog: AuditLog = {
-      id: this.generateId(),
-      timestamp: new Date().toISOString(),
-      user_id: params.user_id || "system",
-      user_name: params.user_name || "System",
-      user_role: params.user_role || "system",
-      action: params.action,
-      resource_type: params.resource_type,
-      resource_id: params.resource_id,
-      resource_name: params.resource_name,
-      old_values: params.old_values,
-      new_values: params.new_values,
-      ip_address: this.getClientIP(),
-      user_agent: this.getUserAgent(),
-      session_id: this.getSessionId(),
-      metadata: params.metadata,
-      severity: params.severity || this.calculateSeverity(params.action),
-      tags: params.tags || [],
-    };
-
-    // Add to buffer for batch processing
-    this.buffer.push(auditLog);
-
-    // Check for immediate alerts
-    this.checkSecurityAlerts(auditLog);
-
-    // Flush if buffer is full or high severity
-    if (this.buffer.length >= 10 || auditLog.severity === "critical") {
-      await this.flush();
-    }
-
-    return auditLog;
   }
 
-  /**
-   * 批次記錄多個審計日誌
-   */
-  async logBatch(
-    logs: Parameters<AuditService["log"]>[0][],
-  ): Promise<AuditLog[]> {
-    const auditLogs = await Promise.all(
-      logs.map((logData) => this.log(logData)),
-    );
-    return auditLogs;
+  async saveLogs(logs: AuditLog[]): Promise<void> {
+    const existingLogs = this.getStoredLogs();
+    const updatedLogs = [...existingLogs, ...logs];
+    this.saveStoredLogs(updatedLogs);
+    console.debug(`LocalStorageAuditLogStorage: Saved ${logs.length} logs.`);
   }
 
-  /**
-   * 查詢審計日誌
-   */
-  async query(params: AuditLogQuery): Promise<{
+  async getLogs(): Promise<AuditLog[]> {
+    return this.getStoredLogs();
+  }
+
+  async queryLogs(params: AuditLogQuery): Promise<{
     logs: AuditLog[];
     total: number;
     has_more: boolean;
   }> {
-    // In real implementation, this would query the database
-    // Here we simulate with localStorage for demo
-    const storedLogs = this.getStoredLogs();
+    // This is a simulation. A real implementation would query a database.
+    let filteredLogs = this.getStoredLogs();
 
-    let filteredLogs = storedLogs;
-
-    // Apply filters
     if (params.user_id) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.user_id === params.user_id,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.user_id === params.user_id);
     }
-
     if (params.action) {
-      const actions = Array.isArray(params.action)
-        ? params.action
-        : [params.action];
+      const actions = Array.isArray(params.action) ? params.action : [params.action];
       filteredLogs = filteredLogs.filter((log) => actions.includes(log.action));
     }
-
     if (params.resource_type) {
-      const types = Array.isArray(params.resource_type)
-        ? params.resource_type
-        : [params.resource_type];
-      filteredLogs = filteredLogs.filter((log) =>
-        types.includes(log.resource_type),
-      );
+      const types = Array.isArray(params.resource_type) ? params.resource_type : [params.resource_type];
+      filteredLogs = filteredLogs.filter((log) => types.includes(log.resource_type));
     }
-
     if (params.date_from) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.timestamp >= params.date_from!,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.timestamp >= params.date_from!);
     }
-
     if (params.date_to) {
-      filteredLogs = filteredLogs.filter(
-        (log) => log.timestamp <= params.date_to!,
-      );
+      filteredLogs = filteredLogs.filter((log) => log.timestamp <= params.date_to!);
     }
-
     if (params.severity) {
-      const severities = Array.isArray(params.severity)
-        ? params.severity
-        : [params.severity];
-      filteredLogs = filteredLogs.filter((log) =>
-        severities.includes(log.severity),
-      );
+      const severities = Array.isArray(params.severity) ? params.severity : [params.severity];
+      filteredLogs = filteredLogs.filter((log) => severities.includes(log.severity));
     }
+    // TODO: Add support for metadata and tags search if needed for a more complete mock
 
-    // Sort
     const orderBy = params.order_by || "timestamp";
     const direction = params.order_direction || "desc";
 
     filteredLogs.sort((a, b) => {
-      const aVal = a[orderBy];
-      const bVal = b[orderBy];
+      const aVal = (a as any)[orderBy];
+      const bVal = (b as any)[orderBy];
 
-      if (direction === "asc") {
-        return aVal > bVal ? 1 : -1;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return direction === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       } else {
-        return aVal < bVal ? 1 : -1;
+        // Fallback for non-string comparable types or numerical comparison
+        return direction === "asc" ? (aVal > bVal ? 1 : -1) : (aVal < bVal ? 1 : -1);
       }
     });
 
-    // Pagination
     const offset = params.offset || 0;
     const limit = params.limit || 50;
     const paginatedLogs = filteredLogs.slice(offset, offset + limit);
@@ -188,24 +201,16 @@ class AuditService {
     };
   }
 
-  /**
-   * 獲取審計統計
-   */
-  async getStats(dateRange?: {
-    from: string;
-    to: string;
-  }): Promise<AuditLogStats> {
-    const storedLogs = this.getStoredLogs();
-
-    let filteredLogs = storedLogs;
+  async getLogStats(dateRange?: { from: string; to: string }): Promise<AuditLogStats> {
+    // This is a simulation. A real implementation would query a database for aggregated stats.
+    let filteredLogs = this.getStoredLogs();
     if (dateRange) {
-      filteredLogs = storedLogs.filter(
+      filteredLogs = filteredLogs.filter(
         (log) =>
           log.timestamp >= dateRange.from && log.timestamp <= dateRange.to,
       );
     }
 
-    // Calculate statistics
     const logs_by_action = {} as Record<AuditAction, number>;
     const logs_by_severity = {} as Record<AuditLog["severity"], number>;
     const logs_by_resource = {} as Record<ResourceType, number>;
@@ -215,18 +220,10 @@ class AuditService {
     >;
 
     filteredLogs.forEach((log) => {
-      // By action
       logs_by_action[log.action] = (logs_by_action[log.action] || 0) + 1;
+      logs_by_severity[log.severity] = (logs_by_severity[log.severity] || 0) + 1;
+      logs_by_resource[log.resource_type] = (logs_by_resource[log.resource_type] || 0) + 1;
 
-      // By severity
-      logs_by_severity[log.severity] =
-        (logs_by_severity[log.severity] || 0) + 1;
-
-      // By resource
-      logs_by_resource[log.resource_type] =
-        (logs_by_resource[log.resource_type] || 0) + 1;
-
-      // By user
       if (!user_counts[log.user_id]) {
         user_counts[log.user_id] = { user_name: log.user_name, count: 0 };
       }
@@ -236,7 +233,7 @@ class AuditService {
     const logs_by_user = Object.entries(user_counts)
       .map(([user_id, data]) => ({ user_id, ...data }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10); // Top 10 most active users
+      .slice(0, 10);
 
     const recent_activity = filteredLogs
       .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
@@ -263,6 +260,355 @@ class AuditService {
     };
   }
 
+  async deleteLogs(ids: string[]): Promise<{ deleted_count: number }> {
+    const existingLogs = this.getStoredLogs();
+    const initialLength = existingLogs.length;
+    const logsToKeep = existingLogs.filter((log) => !ids.includes(log.id));
+    this.saveStoredLogs(logsToKeep);
+    const deleted_count = initialLength - logsToKeep.length;
+    console.debug(`LocalStorageAuditLogStorage: Deleted ${deleted_count} logs.`);
+    return { deleted_count };
+  }
+}
+
+// ============================================
+// 3. Buffer Management Layer
+// ============================================
+
+/**
+ * Interface for Audit Log Buffer management.
+ * This decouples buffer logic from the core service.
+ */
+interface IAuditLogBuffer {
+  add(log: AuditLog): void;
+  flush(): Promise<void>;
+  startPeriodicFlush(): void;
+  stopPeriodicFlush(): void;
+  getBufferSize(): number;
+}
+
+/**
+ * Default implementation for IAuditLogBuffer.
+ */
+class DefaultAuditLogBuffer implements IAuditLogBuffer {
+  private buffer: AuditLog[] = [];
+  private flushTimer?: NodeJS.Timeout;
+  private isFlushing: boolean = false; // To prevent concurrent flushes
+  private readonly flushIntervalMs: number;
+  private readonly maxBufferSize: number;
+  private readonly storage: IAuditLogStorage; // Buffer needs to interact with storage
+
+  constructor(storage: IAuditLogStorage, flushIntervalMs: number, maxBufferSize: number) {
+    this.storage = storage;
+    this.flushIntervalMs = flushIntervalMs;
+    this.maxBufferSize = maxBufferSize;
+  }
+
+  add(log: AuditLog): void {
+    this.buffer.push(log);
+    // Immediate flush if buffer is full or for critical severity (as per original logic)
+    if (this.buffer.length >= this.maxBufferSize || log.severity === "critical") {
+      this.flush();
+    }
+  }
+
+  async flush(): Promise<void> {
+    if (this.buffer.length === 0 || this.isFlushing) {
+      return;
+    }
+
+    this.isFlushing = true;
+    const logsToFlush = [...this.buffer]; // Copy logs for atomic clear
+    this.buffer = []; // Clear buffer immediately
+
+    try {
+      await this.storage.saveLogs(logsToFlush);
+      console.debug(`DefaultAuditLogBuffer: Flushed ${logsToFlush.length} logs to storage.`);
+    } catch (error) {
+      console.error("DefaultAuditLogBuffer: Failed to flush logs. Attempting to re-add to buffer for next flush.", error);
+      // Re-add logs to buffer if saving fails to prevent data loss.
+      // This is a simple retry. A more robust solution might involve a dead-letter queue or back-off strategy.
+      this.buffer.unshift(...logsToFlush);
+    } finally {
+      this.isFlushing = false;
+    }
+  }
+
+  startPeriodicFlush(): void {
+    if (this.flushTimer) {
+      this.stopPeriodicFlush(); // Ensure no duplicate timers
+    }
+    this.flushTimer = setInterval(() => {
+      this.flush();
+    }, this.flushIntervalMs);
+    console.debug(`DefaultAuditLogBuffer: Started periodic flush every ${this.flushIntervalMs}ms.`);
+  }
+
+  stopPeriodicFlush(): void {
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+      this.flushTimer = undefined;
+      console.debug("DefaultAuditLogBuffer: Stopped periodic flush.");
+    }
+  }
+
+  getBufferSize(): number {
+    return this.buffer.length;
+  }
+}
+
+// ============================================
+// 4. Security Alert Layer
+// ============================================
+
+/**
+ * Interface for Security Alert Service.
+ * This separates alert notification logic from the core audit service.
+ */
+interface ISecurityAlertService {
+  checkAndSendAlert(config: AuditConfig["real_time_alerts"], auditLog: AuditLog): Promise<void>;
+}
+
+/**
+ * A mock implementation for ISecurityAlertService for development.
+ * In production, this would integrate with a dedicated alert system (e.g., PagerDuty, Slack, email).
+ */
+class ConsoleSecurityAlertService implements ISecurityAlertService {
+  async checkAndSendAlert(config: AuditConfig["real_time_alerts"], auditLog: AuditLog): Promise<void> {
+    if (!config.enabled) {
+      return;
+    }
+
+    const shouldAlert =
+      config.alert_on_severity.includes(auditLog.severity) ||
+      config.alert_on_actions.includes(auditLog.action);
+
+    if (shouldAlert) {
+      console.warn("🚨 Security Alert Triggered:", {
+        action: auditLog.action,
+        severity: auditLog.severity,
+        user: auditLog.user_name,
+        resource: `${auditLog.resource_type}:${auditLog.resource_id}`,
+        timestamp: auditLog.timestamp,
+        metadata: auditLog.metadata,
+      });
+
+      // Browser notification for client-side demo
+      // Note: This does not use Dashtail UI components and is a standard browser API.
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "granted") {
+          try {
+            new Notification("TrvicERP Security Alert", {
+              body: `Action: ${auditLog.action} by ${auditLog.user_name} on ${auditLog.resource_type}:${auditLog.resource_id}`,
+              icon: "/favicon.ico",
+              tag: `audit-alert-${auditLog.id}`,
+            });
+          } catch (notificationError) {
+            console.error("Failed to show browser notification:", notificationError);
+          }
+        } else if (Notification.permission === "default") {
+          // Optionally request permission if not already granted
+          Notification.requestPermission();
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// 5. Core Audit Service
+// ============================================
+
+// Params for the log method to avoid redundancy and allow client context
+type AuditLogParams = {
+  action: AuditAction;
+  resource_type: ResourceType;
+  resource_id: string;
+  resource_name?: string;
+  old_values?: Record<string, any>;
+  new_values?: Record<string, any>;
+  user_id?: string;
+  user_name?: string;
+  user_role?: AuditLog["user_role"];
+  metadata?: Record<string, any>;
+  severity?: AuditLog["severity"];
+  tags?: string[];
+  // New: add optional context about client for robust IP/UA retrieval from the caller (e.g., from request headers)
+  client_ip?: string;
+  user_agent_header?: string;
+  session_id?: string;
+};
+
+/**
+ * Interface for the Audit Service's public API.
+ * This allows for easier testing and mocking of the AuditService itself.
+ */
+interface IAuditService {
+  log(params: AuditLogParams): Promise<AuditLog | null>;
+  logBatch(logs: AuditLogParams[]): Promise<(AuditLog | null)[]>;
+  query(params: AuditLogQuery): Promise<{ logs: AuditLog[]; total: number; has_more: boolean }>;
+  getStats(dateRange?: { from: string; to: string }): Promise<AuditLogStats>;
+  trackChange<T extends Record<string, any>>(
+    resource_type: ResourceType,
+    resource_id: string,
+    oldData: T,
+    newData: T,
+    user_context: {
+      user_id: string;
+      user_name: string;
+      user_role: AuditLog["user_role"];
+    },
+  ): Promise<AuditLog | null>;
+  cleanup(): Promise<{ deleted_count: number }>;
+  stop(): void; // Added for graceful shutdown of periodic buffer flush
+}
+
+/**
+ * Audit Service - 審計日誌系統
+ *
+ * 功能特點：
+ * - 自動記錄所有關鍵操作
+ * - 支援合規性要求（GDPR/SOX）
+ * - 即時安全警報
+ * - 資料變更追蹤
+ *
+ * 重寫說明：
+ * - 儲存層分離：透過 IAuditLogStorage 介面與資料儲存解耦。
+ * - 緩衝區分離：透過 IAuditLogBuffer 介面管理日誌緩衝與批次寫入。
+ * - 安全警報分離：透過 ISecurityAlertService 介面處理即時警報。
+ * - 相依性注入：所有外部服務（儲存、緩衝、警報、配置驗證）均透過建構子注入。
+ * - 配置驗證：建構時對 AuditConfig 進行明確驗證。
+ * - 錯誤處理：增強了異步操作的錯誤處理機制，並統一了錯誤處理策略。
+ */
+class AuditService implements IAuditService {
+  private config: AuditConfig;
+  private readonly storage: IAuditLogStorage;
+  private readonly buffer: IAuditLogBuffer;
+  private readonly alertService: ISecurityAlertService;
+
+  constructor(
+    config: AuditConfig,
+    storage: IAuditLogStorage,
+    buffer: IAuditLogBuffer,
+    alertService: ISecurityAlertService,
+    configValidator: IAuditConfigValidator, // Dependency injection for validator
+  ) {
+    // Validate config at instantiation time. If invalid, constructor will throw.
+    configValidator.validate(config);
+
+    this.config = config;
+    this.storage = storage;
+    this.buffer = buffer;
+    this.alertService = alertService;
+
+    if (this.config.enabled) {
+      this.buffer.startPeriodicFlush();
+    }
+  }
+
+  /**
+   * 記錄審計日誌
+   */
+  async log(params: AuditLogParams): Promise<AuditLog | null> {
+    if (!this.config.enabled) {
+      return null;
+    }
+
+    // Check if action should be logged based on config's excluded actions
+    if (this.config.excluded_actions?.includes(params.action)) {
+      console.debug(`AuditService: Action '${params.action}' is explicitly excluded from logging.`);
+      return null;
+    }
+
+    try {
+      const auditLog: AuditLog = {
+        id: this.generateId(),
+        timestamp: new Date().toISOString(),
+        user_id: params.user_id || "system",
+        user_name: params.user_name || "System",
+        user_role: params.user_role || "system",
+        action: params.action,
+        resource_type: params.resource_type,
+        resource_id: params.resource_id,
+        resource_name: params.resource_name,
+        old_values: params.old_values,
+        new_values: params.new_values,
+        ip_address: params.client_ip || this.getClientIP(), // Allow caller to provide IP for accuracy
+        user_agent: params.user_agent_header || this.getUserAgent(), // Allow caller to provide User-Agent
+        session_id: params.session_id || this.getSessionId(), // Allow caller to provide Session ID
+        metadata: params.metadata,
+        severity: params.severity || this.calculateSeverity(params.action),
+        tags: params.tags || [],
+      };
+
+      // Check log_levels filtering
+      if (!this.config.log_levels.includes(auditLog.severity)) {
+        console.debug(`AuditService: Log with severity '${auditLog.severity}' is not enabled by config.`);
+        return null;
+      }
+
+      this.buffer.add(auditLog); // Add to buffer, which will handle flushing based on its rules
+
+      // Delegate security alert checking to the alert service
+      await this.alertService.checkAndSendAlert(this.config.real_time_alerts, auditLog);
+
+      return auditLog;
+    } catch (error) {
+      console.error("AuditService: Failed to log audit event due to an internal error.", error);
+      // Depending on the application's needs, could re-throw a custom error or return a specific error object.
+      return null;
+    }
+  }
+
+  /**
+   * 批次記錄多個審計日誌
+   */
+  async logBatch(logs: AuditLogParams[]): Promise<(AuditLog | null)[]> {
+    if (!this.config.enabled) {
+      return logs.map(() => null);
+    }
+    // Each log call will internally go through buffering and alerting
+    const auditLogs = await Promise.all(
+      logs.map((logData) => this.log(logData)),
+    );
+    return auditLogs;
+  }
+
+  /**
+   * 查詢審計日誌
+   */
+  async query(params: AuditLogQuery): Promise<{
+    logs: AuditLog[];
+    total: number;
+    has_more: boolean;
+  }> {
+    try {
+      // Ensure any buffered logs are saved before querying to include most recent data
+      await this.buffer.flush();
+      return await this.storage.queryLogs(params);
+    } catch (error) {
+      console.error("AuditService: Failed to query audit logs:", error);
+      throw new Error("Failed to retrieve audit logs."); // Propagate error for the caller to handle
+    }
+  }
+
+  /**
+   * 獲取審計統計
+   */
+  async getStats(dateRange?: {
+    from: string;
+    to: string;
+  }): Promise<AuditLogStats> {
+    try {
+      // Ensure any buffered logs are saved before getting stats
+      await this.buffer.flush();
+      return await this.storage.getLogStats(dateRange);
+    } catch (error) {
+      console.error("AuditService: Failed to get audit stats:", error);
+      throw new Error("Failed to retrieve audit statistics."); // Propagate error
+    }
+  }
+
   /**
    * 追蹤資料變更
    */
@@ -276,13 +622,12 @@ class AuditService {
       user_name: string;
       user_role: AuditLog["user_role"];
     },
-  ): Promise<AuditLog> {
-    // Calculate what changed
+  ): Promise<AuditLog | null> {
     const changes = this.calculateChanges(oldData, newData);
 
     if (Object.keys(changes.old_values).length === 0) {
-      // No changes detected
-      return {} as AuditLog;
+      console.debug("AuditService: No changes detected for tracking.");
+      return null; // No actual changes, no log needed
     }
 
     return this.log({
@@ -296,6 +641,8 @@ class AuditService {
         changed_fields: Object.keys(changes.old_values),
       },
       ...user_context,
+      severity: "medium", // Default severity for data updates
+      tags: ["data_change"],
     });
   }
 
@@ -304,33 +651,60 @@ class AuditService {
    */
   async cleanup(): Promise<{ deleted_count: number }> {
     if (!this.config.auto_archive) {
+      console.debug("AuditService: Auto-archiving is disabled. Skipping cleanup.");
       return { deleted_count: 0 };
     }
 
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - this.config.retention_days);
-    const cutoffIso = cutoffDate.toISOString();
+    try {
+      // Ensure any buffered logs are saved before cleanup
+      await this.buffer.flush();
 
-    const storedLogs = this.getStoredLogs();
-    const logsToKeep = storedLogs.filter((log) => log.timestamp >= cutoffIso);
-    const deletedCount = storedLogs.length - logsToKeep.length;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - this.config.retention_days);
+      const cutoffIso = cutoffDate.toISOString();
 
-    this.saveStoredLogs(logsToKeep);
+      const allLogs = await this.storage.getLogs(); // Get all logs from storage
+      const logsToDelete = allLogs.filter((log) => log.timestamp < cutoffIso);
+      const logIdsToDelete = logsToDelete.map(log => log.id);
 
-    return { deleted_count: deletedCount };
+      if (logIdsToDelete.length === 0) {
+        console.debug("AuditService: No logs found for cleanup.");
+        return { deleted_count: 0 };
+      }
+
+      const result = await this.storage.deleteLogs(logIdsToDelete);
+      console.info(`AuditService: Cleaned up ${result.deleted_count} logs older than ${cutoffIso}.`);
+      return result;
+    } catch (error) {
+      console.error("AuditService: Failed to perform cleanup:", error);
+      throw new Error("Failed to clean up audit logs."); // Propagate error
+    }
+  }
+
+  /**
+   * Gracefully stop the audit service, flushing any remaining logs.
+   * Should be called on application shutdown.
+   */
+  stop(): void {
+    this.buffer.stopPeriodicFlush();
+    this.buffer.flush(); // Perform a final flush asynchronously
+    console.info("AuditService: Shut down initiated. Remaining logs will be flushed.");
   }
 
   // ============================================
-  // Private Methods
+  // Private Utility Methods (internal to AuditService)
   // ============================================
 
   private generateId(): string {
-    return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Generate a unique ID for each log entry
+    return `audit_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   private getClientIP(): string {
-    // In browser environment, this would be handled by the backend
-    return "127.0.0.1";
+    // In a browser environment, this IP is often the client's public IP as seen by the browser,
+    // or localhost if running locally. For robust logging, client_ip should ideally be
+    // passed from a backend API or a proxy that can reliably extract the real IP from request headers.
+    return "127.0.0.1"; // Placeholder for client-side context
   }
 
   private getUserAgent(): string {
@@ -338,87 +712,33 @@ class AuditService {
   }
 
   private getSessionId(): string {
-    // Get from session storage or generate
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && window.sessionStorage) {
       let sessionId = sessionStorage.getItem("audit_session_id");
       if (!sessionId) {
-        sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         sessionStorage.setItem("audit_session_id", sessionId);
       }
       return sessionId;
     }
-    return "unknown_session";
+    return "unknown_session"; // For non-browser environments
   }
 
   private calculateSeverity(action: AuditAction): AuditLog["severity"] {
-    // Security and authentication events
-    if (
-      action.includes("failed") ||
-      action === "permission_denied" ||
-      action === "suspicious_activity"
-    ) {
+    // Determine severity based on common action patterns
+    if (action.includes("failed") || action === "permission_denied" || action === "suspicious_activity" || action === "unauthorized_access") {
       return "high";
     }
-
-    if (action === "data_breach_detected") {
+    if (action === "data_breach_detected" || action === "system_compromised" || action === "emergency_shutdown") {
       return "critical";
     }
-
-    // System operations
-    if (
-      action === "system_backup" ||
-      action === "system_restore" ||
-      action === "config_changed"
-    ) {
+    if (action === "system_backup" || action === "system_restore" || action === "config_changed" || action === "user_role_changed" || action.includes("payment") || action.includes("refund")) {
       return "medium";
     }
-
-    // Financial operations
-    if (action.includes("payment") || action === "refund_issued") {
-      return "medium";
-    }
-
-    // Regular CRUD operations
-    if (["create", "read", "update", "delete"].includes(action)) {
+    if (["create", "update", "delete", "login", "logout"].includes(action)) {
       return "low";
     }
-
-    return "low";
-  }
-
-  private checkSecurityAlerts(auditLog: AuditLog): void {
-    if (!this.config.real_time_alerts.enabled) {
-      return;
-    }
-
-    const shouldAlert =
-      this.config.real_time_alerts.alert_on_severity.includes(
-        auditLog.severity,
-      ) ||
-      this.config.real_time_alerts.alert_on_actions.includes(auditLog.action);
-
-    if (shouldAlert) {
-      this.sendSecurityAlert(auditLog);
-    }
-  }
-
-  private async sendSecurityAlert(auditLog: AuditLog): Promise<void> {
-    // In production, this would send to webhook or notification service
-    console.warn("🚨 Security Alert:", {
-      action: auditLog.action,
-      severity: auditLog.severity,
-      user: auditLog.user_name,
-      resource: `${auditLog.resource_type}:${auditLog.resource_id}`,
-      timestamp: auditLog.timestamp,
-    });
-
-    // Could also show browser notification
-    if (typeof window !== "undefined" && "Notification" in window) {
-      new Notification("TrvicERP Security Alert", {
-        body: `${auditLog.action} by ${auditLog.user_name}`,
-        icon: "/favicon.ico",
-      });
-    }
+    // Default severity for general informational actions
+    return "info";
   }
 
   private calculateChanges<T extends Record<string, any>>(
@@ -428,78 +748,32 @@ class AuditService {
     const old_values: Partial<T> = {};
     const new_values: Partial<T> = {};
 
-    // Check all keys from both objects
     const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
 
     for (const key of allKeys) {
       const oldValue = oldData[key];
       const newValue = newData[key];
 
-      // Skip if values are the same
+      // Perform a deep comparison for objects/arrays to accurately detect changes.
+      // JSON.stringify is a simple but effective way for serializable values.
       if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
         old_values[key as keyof T] = oldValue;
         new_values[key as keyof T] = newValue;
       }
     }
-
     return { old_values, new_values };
-  }
-
-  private async flush(): Promise<void> {
-    if (this.buffer.length === 0) {
-      return;
-    }
-
-    const logsToFlush = [...this.buffer];
-    this.buffer = [];
-
-    // In production, this would send to backend API
-    // For demo, we use localStorage
-    const existingLogs = this.getStoredLogs();
-    const updatedLogs = [...existingLogs, ...logsToFlush];
-    this.saveStoredLogs(updatedLogs);
-  }
-
-  private startPeriodicFlush(): void {
-    this.flushTimer = setInterval(() => {
-      this.flush();
-    }, 5000); // Flush every 5 seconds
-  }
-
-  private getStoredLogs(): AuditLog[] {
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-    try {
-      const stored = localStorage.getItem("trvic_audit_logs");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private saveStoredLogs(logs: AuditLog[]): void {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    try {
-      localStorage.setItem("trvic_audit_logs", JSON.stringify(logs));
-    } catch (error) {
-      console.error("Failed to save audit logs:", error);
-    }
   }
 }
 
 // ============================================
-// Singleton Instance
+// Singleton Instance Initialization
 // ============================================
 
-const DEFAULT_CONFIG: AuditConfig = {
+// Default configuration for the audit service.
+const DEFAULT_AUDIT_CONFIG: AuditConfig = {
   enabled: true,
-  retention_days: 90,
-  log_levels: ["low", "medium", "high", "critical"],
+  retention_days: 90, // Keep logs for 90 days
+  log_levels: ["info", "low", "medium", "high", "critical"], // All log levels enabled by default
   auto_archive: true,
   real_time_alerts: {
     enabled: true,
@@ -509,40 +783,73 @@ const DEFAULT_CONFIG: AuditConfig = {
       "permission_denied",
       "suspicious_activity",
       "data_breach_detected",
+      "unauthorized_access",
+      "system_compromised",
+      "emergency_shutdown",
     ],
   },
-  compliance_mode: true,
+  compliance_mode: true, // Enable features for compliance (e.g., more detailed logs)
+  buffer_flush_interval_ms: 5000, // Flush buffer every 5 seconds
+  buffer_max_size: 10, // Flush if buffer reaches 10 logs
+  excluded_actions: ["heartbeat", "health_check"], // Example of excluded actions
 };
 
-export const auditService = new AuditService(DEFAULT_CONFIG);
+// Instantiate all dependencies for the AuditService
+const auditStorage = new LocalStorageAuditLogStorage(); // Uses localStorage for demo
+const auditBuffer = new DefaultAuditLogBuffer(
+  auditStorage,
+  DEFAULT_AUDIT_CONFIG.buffer_flush_interval_ms || 5000,
+  DEFAULT_AUDIT_CONFIG.buffer_max_size || 10
+);
+const securityAlertService = new ConsoleSecurityAlertService(); // Logs alerts to console/browser notification
+const configValidator = new AuditConfigValidator(); // For validating the config object
+
+// Create the singleton instance of AuditService
+export const auditService = new AuditService(
+  DEFAULT_AUDIT_CONFIG,
+  auditStorage,
+  auditBuffer,
+  securityAlertService,
+  configValidator
+);
 
 // ============================================
-// Convenience Functions
+// Convenience Functions for common logging patterns
 // ============================================
 
 /**
- * 快速記錄用戶操作
+ * 快速記錄用戶操作。
+ * 在實際應用中，user_id, user_name, user_role 應從當前認證上下文獲取。
+ * 這裡將這些參數設為必填，以鼓勵顯式傳遞。
  */
 export const logUserAction = (
   action: AuditAction,
   resource_type: ResourceType,
   resource_id: string,
+  user_id: string,
+  user_name: string,
+  user_role: AuditLog["user_role"],
   metadata?: Record<string, any>,
+  severity?: AuditLog["severity"],
+  tags?: string[],
 ) => {
-  // In real app, get user from auth context
   return auditService.log({
     action,
     resource_type,
     resource_id,
-    user_id: "current_user_id",
-    user_name: "Current User",
-    user_role: "staff",
+    user_id,
+    user_name,
+    user_role,
     metadata,
+    severity,
+    tags,
+    // client_ip, user_agent_header, session_id could also be passed if available in context
   });
 };
 
 /**
- * 記錄 TourSession 狀態變更
+ * 記錄 TourSession 狀態變更。
+ * 這是針對特定業務流程的便捷日誌記錄器。
  */
 export const logTourSessionChange = (
   sessionId: string,
@@ -550,6 +857,7 @@ export const logTourSessionChange = (
   newStatus: string,
   userId: string,
   userName: string,
+  // user_role can be defaulted or passed if dynamic
 ) => {
   return auditService.log({
     action: "tour_session_updated",
@@ -559,7 +867,7 @@ export const logTourSessionChange = (
     new_values: { status: newStatus },
     user_id: userId,
     user_name: userName,
-    user_role: "staff",
+    user_role: "staff", // Assuming 'staff' is the common role for this action
     metadata: {
       status_transition: `${oldStatus} → ${newStatus}`,
     },
@@ -568,4 +876,5 @@ export const logTourSessionChange = (
   });
 };
 
+// Export the singleton instance as the default export
 export default auditService;

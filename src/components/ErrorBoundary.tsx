@@ -1,7 +1,3 @@
-/**
- * Error Boundary Component
- * 捕獲 React 元件樹中的錯誤並顯示友善的錯誤介面
- */
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -63,11 +59,11 @@ class ErrorBoundary extends Component<Props, State> {
 
       // 預設錯誤畫面
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-            <div className="text-red-500 dark:text-red-400 mb-4">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
+            <div className="mb-4">
               <svg
-                className="w-16 h-16 mx-auto"
+                className="w-16 h-16 mx-auto text-red-500 dark:text-red-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -91,8 +87,8 @@ class ErrorBoundary extends Component<Props, State> {
 
             {/* 開發環境顯示錯誤詳情 */}
             {import.meta.env.DEV && this.state.error && (
-              <details className="text-left mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-                <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
+              <details className="text-left mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-300">
                   錯誤詳情
                 </summary>
                 <div className="mt-2 text-sm font-mono text-red-600 dark:text-red-400 overflow-auto max-h-40">
@@ -110,7 +106,7 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={this.handleRetry}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
               >
                 重試
               </button>
@@ -165,7 +161,7 @@ export function SectionErrorBoundary({
   return (
     <ErrorBoundary
       fallback={
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
           <p className="text-red-600 dark:text-red-400 text-sm">
             {sectionName}載入失敗，請重新整理頁面
           </p>

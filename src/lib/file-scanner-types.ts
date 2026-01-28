@@ -1,6 +1,9 @@
 /**
  * File Scanner - Automatic project file scanner and analyzer
  * Supports 20+ file types with intelligent chunking for large files
+ *
+ * This file contains only type definitions and related constants.
+ * Business logic has been moved to separate utility files.
  */
 
 export interface FileInfo {
@@ -14,13 +17,13 @@ export interface FileInfo {
   encoding?: string;
 }
 
-export type FileCategory = 
-  | 'source' 
-  | 'config' 
-  | 'documentation' 
-  | 'asset' 
-  | 'test' 
-  | 'build' 
+export type FileCategory =
+  | 'source'
+  | 'config'
+  | 'documentation'
+  | 'asset'
+  | 'test'
+  | 'build'
   | 'data'
   | 'other';
 
@@ -53,6 +56,8 @@ export interface FileContent {
 
 /**
  * Supported file type configurations
+ * These configurations define the properties of different file types,
+ * serving as data rather than business logic.
  */
 export const FILE_TYPE_CONFIG = {
   // Source Code
@@ -65,7 +70,7 @@ export const FILE_TYPE_CONFIG = {
     ],
     category: 'source' as FileCategory,
   },
-  
+
   // Configuration
   config: {
     extensions: [
@@ -74,7 +79,7 @@ export const FILE_TYPE_CONFIG = {
     ],
     category: 'config' as FileCategory,
   },
-  
+
   // Documentation
   documentation: {
     extensions: [
@@ -82,15 +87,15 @@ export const FILE_TYPE_CONFIG = {
     ],
     category: 'documentation' as FileCategory,
   },
-  
+
   // Stylesheets
   styles: {
     extensions: [
       '.css', '.scss', '.sass', '.less', '.styl'
     ],
-    category: 'source' as FileCategory,
+    category: 'source' as FileCategory, // Stylesheets are often considered source code for frontend projects
   },
-  
+
   // Data
   data: {
     extensions: [
@@ -98,7 +103,7 @@ export const FILE_TYPE_CONFIG = {
     ],
     category: 'data' as FileCategory,
   },
-  
+
   // Build/Package Management
   build: {
     extensions: [
@@ -109,7 +114,7 @@ export const FILE_TYPE_CONFIG = {
     ],
     category: 'build' as FileCategory,
   },
-  
+
   // Test Files
   test: {
     extensions: [
@@ -119,7 +124,7 @@ export const FILE_TYPE_CONFIG = {
     ],
     category: 'test' as FileCategory,
   },
-  
+
   // Assets
   assets: {
     extensions: [
@@ -133,6 +138,7 @@ export const FILE_TYPE_CONFIG = {
 
 /**
  * Default patterns to exclude
+ * These patterns represent default data for scan exclusions.
  */
 export const DEFAULT_EXCLUDE_PATTERNS = [
   'node_modules/**',
@@ -160,118 +166,5 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
   'env/**',
 ];
 
-/**
- * Get file category based on extension
- */
-export function getFileCategory(filename: string): FileCategory {
-  const lower = filename.toLowerCase();
-  
-  // Check exact filenames first
-  for (const [, config] of Object.entries(FILE_TYPE_CONFIG)) {
-    if (config.extensions.includes(lower)) {
-      return config.category;
-    }
-  }
-  
-  // Check extensions
-  for (const [, config] of Object.entries(FILE_TYPE_CONFIG)) {
-    for (const ext of config.extensions) {
-      if (ext.startsWith('.') && lower.endsWith(ext)) {
-        return config.category;
-      }
-    }
-  }
-  
-  return 'other';
-}
-
-/**
- * Check if file should be scanned based on type
- */
-export function shouldScanFile(filename: string): boolean {
-  const category = getFileCategory(filename);
-  return ['source', 'config', 'documentation', 'build', 'test', 'data'].includes(category);
-}
-
-/**
- * Get all supported extensions
- */
-export function getSupportedExtensions(): string[] {
-  const extensions = new Set<string>();
-  
-  for (const config of Object.values(FILE_TYPE_CONFIG)) {
-    for (const ext of config.extensions) {
-      if (ext.startsWith('.')) {
-        extensions.add(ext);
-      }
-    }
-  }
-  
-  return Array.from(extensions).sort();
-}
-
-/**
- * Count lines in text content
- */
-export function countLines(content: string): number {
-  if (!content) return 0;
-  return content.split('\n').length;
-}
-
-/**
- * Chunk large content into smaller pieces
- */
-export function chunkContent(content: string, chunkSize: number = 1024 * 1024): string[] {
-  if (content.length <= chunkSize) {
-    return [content];
-  }
-  
-  const chunks: string[] = [];
-  let offset = 0;
-  
-  while (offset < content.length) {
-    chunks.push(content.slice(offset, offset + chunkSize));
-    offset += chunkSize;
-  }
-  
-  return chunks;
-}
-
-/**
- * Format file size for display
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-}
-
-/**
- * Check if path matches any pattern
- * Properly escapes special regex characters including backslashes
- */
-export function matchesPattern(path: string, patterns: string[]): boolean {
-  return patterns.some(pattern => {
-    // Escape all special regex characters including backslash
-    const escapedPattern = pattern
-      .replace(/\\/g, '\\\\')  // Escape backslash first
-      .replace(/\./g, '\\.')
-      .replace(/\+/g, '\\+')
-      .replace(/\^/g, '\\^')
-      .replace(/\$/g, '\\$')
-      .replace(/\(/g, '\\(')
-      .replace(/\)/g, '\\)')
-      .replace(/\[/g, '\\[')
-      .replace(/\]/g, '\\]')
-      .replace(/\{/g, '\\{')
-      .replace(/\}/g, '\\}')
-      .replace(/\|/g, '\\|')
-      .replace(/\*/g, '.*')    // Convert glob * to regex .*
-      .replace(/\?/g, '.');    // Convert glob ? to regex .
-    
-    const regex = new RegExp('^' + escapedPattern + '$');
-    return regex.test(path);
-  });
-}
+// All functions containing business logic have been removed from this file.
+// They should be placed in a separate utility or service file (e.g., `file-scanner-utils.ts`).

@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { DataGrid, Column } from "@/design-system";
-import { useDataGrid, useAudit } from "@/hooks/useDataGrid";
-import { auditService } from "@/services/auditService";
+import { useDataGrid, useAudit } from "@/hooks/useDataGrid"; // Assuming useAudit is a general logging hook
 import AICopilotPanel from "@/components/shared/AICopilotPanel";
 
 // ============================================
-// Example Data
+// Types Definition
 // ============================================
 
-interface TourSession {
+/**
+ * Defines the structure for a Tour Session.
+ * This interface is essential for type-checking data passed into the component.
+ */
+export interface TourSession {
   id: string;
   series_id: string;
   group_number: string;
@@ -20,84 +23,116 @@ interface TourSession {
   price_twd: number;
 }
 
-const mockTourSessions: TourSession[] = [
-  {
-    id: "tour_001",
-    series_id: "TOKYO2025",
-    group_number: "TK001",
-    start_date: "2025-03-15",
-    end_date: "2025-03-19",
-    status: "guaranteed",
-    current_pax: 25,
-    max_pax: 30,
-    price_twd: 45000,
-  },
-  {
-    id: "tour_002",
-    series_id: "OSAKA2025",
-    group_number: "OS001",
-    start_date: "2025-04-10",
-    end_date: "2025-04-14",
-    status: "soliciting",
-    current_pax: 8,
-    max_pax: 25,
-    price_twd: 38000,
-  },
-  // Add more mock data as needed
-];
+/**
+ * Defines the configuration properties for the TourSessionExample component.
+ * This allows the component to receive all necessary data and dependencies via props,
+ * ensuring Kintone independence and avoiding reliance on global stores or mock data.
+ * The component's name matches its file path, `/src/examples/TourSessionExample.tsx`.
+ */
+export interface TourSessionExampleConfig {
+  /**
+   * Initial data for the tour sessions to be displayed in the DataGrid.
+   * This replaces the direct dependency on mock data.
+   */
+  initialTourSessions: TourSession[];
+  /**
+   * Optional callback for logging audit actions.
+   * This allows external services (like an audit service) to be injected
+   * instead of the component directly coupling to a specific implementation.
+   */
+  onLogAction?: (
+    action: string,
+    resource_type: string,
+    resource_id: string,
+    metadata?: Record<string, any>,
+  ) => Promise<void>;
+  /**
+   * Optional title for the component's main heading.
+   */
+  title?: string;
+  /**
+   * Optional description for the component.
+   */
+  description?: string;
+  /**
+   * Optional placeholder for the search bar in the DataGrid.
+   */
+  searchPlaceholder?: string;
+  /**
+   * Optional page size for the DataGrid.
+   */
+  pageSize?: number;
+  /**
+   * If true, AI Copilot Panel will be shown.
+   */
+  showAICopilot?: boolean;
+}
 
 // ============================================
-// Example Component
+// TourSessionExample Component
 // ============================================
 
-export default function TourSessionManager() {
-  const { log: logAction } = useAudit();
+/**
+ * `TourSessionExample` component for managing tour sessions.
+ * This component is designed to be configurable via props,
+ * ensuring Kintone independence and separation of concerns.
+ */
+export default function TourSessionExample({
+  initialTourSessions,
+  onLogAction,
+  title = "團體行程管理",
+  description = "管理所有團體行程，包含招團、成團、和完成狀態",
+  searchPlaceholder = "搜尋團號或系列...",
+  pageSize = 10,
+  showAICopilot = true,
+}: TourSessionExampleConfig) {
+  // Use `useAudit` internally as a fallback or if `onLogAction` is not provided.
+  // The architectural issue was about *initializing sample audit logs* in the component,
+  // not the act of logging itself, which is a valid component responsibility.
+  const { log: internalLogAction } = useAudit();
+
+  // Unified logging function, preferring `onLogAction` prop if provided.
+  const logger = useCallback(
+    async (
+      action: string,
+      resource_type: string,
+      resource_id: string,
+      metadata?: Record<string, any>,
+    ) => {
+      if (onLogAction) {
+        await onLogAction(action, resource_type, resource_id, metadata);
+      } else {
+        await internalLogAction(action, resource_type, resource_id, metadata);
+      }
+    },
+    [onLogAction, internalLogAction],
+  );
+
+  // State for error handling
+  const [error, setError] = useState<string | null>(null);
+
+  // useDataGrid hook for managing data grid state (pagination, sorting, filtering)
   const {
     currentPageData,
     pagination,
     loading,
-    updateData,
+    updateData, // `updateData` is used to feed new data to the grid
     handlePaginationChange,
     handleSortChange,
     handleRowSelection,
   } = useDataGrid<TourSession>({
-    initialData: mockTourSessions,
-    pageSize: 10,
+    initialData: initialTourSessions, // Data now comes from props
+    pageSize: pageSize,
   });
 
-  // Initialize some audit logs for demonstration
+  // Effect to update DataGrid's internal data if `initialTourSessions` prop changes
   useEffect(() => {
-    const initializeAuditLogs = async () => {
-      // Log some sample activities
-      await auditService.log({
-        action: "tour_session_created",
-        resource_type: "tour_session",
-        resource_id: "tour_001",
-        resource_name: "東京五日遊",
-        user_id: "user_001",
-        user_name: "張經理",
-        user_role: "staff",
-        new_values: { status: "soliciting", max_pax: 30 },
-        metadata: { initial_creation: true },
-      });
-
-      await auditService.log({
-        action: "tour_session_updated",
-        resource_type: "tour_session",
-        resource_id: "tour_001",
-        old_values: { status: "soliciting" },
-        new_values: { status: "guaranteed" },
-        user_id: "user_001",
-        user_name: "張經理",
-        user_role: "staff",
-        metadata: { reason: "minimum participants reached" },
-      });
-    };
-
-    initializeAuditLogs();
-  }, []);
+    // This ensures reactivity if the parent provides new or updated data.
+    updateData(initialTourSessions);
+  }, [initialTourSessions, updateData]);
 
   // Define columns for the DataGrid
+  // All color values use Tailwind tokens as per Dashtail UI规范.
   const columns: Column<TourSession>[] = [
     {
       key: "group_number",
@@ -131,15 +166,15 @@ export default function TourSessionManager() {
       width: 120,
       render: (status: string) => {
         const statusConfig = {
-          soliciting: { label: "招團中", color: "bg-warning/10 text-warning" },
-          guaranteed: { label: "成團", color: "bg-success/10 text-success" },
+          soliciting: { label: "招團中", color: "bg-orange-100 text-orange-700" },
+          guaranteed: { label: "成團", color: "bg-green-100 text-green-700" },
           closed: { label: "已截止", color: "bg-gray-100 text-gray-600" },
-          completed: { label: "已完成", color: "bg-blue-100 text-blue-800" },
+          completed: { label: "已完成", color: "bg-blue-100 text-blue-700" },
         };
 
         const config =
           statusConfig[status as keyof typeof statusConfig] ||
-          statusConfig.soliciting;
+          statusConfig.soliciting; // Fallback to soliciting
 
         return (
           <span
@@ -175,26 +210,37 @@ export default function TourSessionManager() {
     },
   ];
 
-  // Handle status change (with audit logging)
+  // Handle status change (with audit logging and error handling)
   const handleStatusChange = async (
     tourSession: TourSession,
     newStatus: TourSession["status"],
   ) => {
-    const oldStatus = tourSession.status;
+    try {
+      const oldStatus = tourSession.status;
 
-    // Update the data
-    const updatedData = mockTourSessions.map((session) =>
-      session.id === tourSession.id
-        ? { ...session, status: newStatus }
-        : session,
-    );
-    updateData(updatedData);
+      // Update the data (optimistic update to the DataGrid's internal state)
+      // Note: In a real-world scenario, this would typically involve an API call
+      // and then refetching/re-updating `initialTourSessions` or `updateData`
+      // based on the server response.
+      const updatedData = initialTourSessions.map((session) =>
+        session.id === tourSession.id
+          ? { ...session, status: newStatus }
+          : session,
+      );
+      updateData(updatedData); // Update the internal state of useDataGrid
 
-    // Log the status change
-    await logAction("tour_session_updated", "tour_session", tourSession.id, {
-      status_transition: `${oldStatus} → ${newStatus}`,
-      group_number: tourSession.group_number,
-    });
+      // Log the status change using the unified logger
+      await logger("tour_session_updated", "tour_session", tourSession.id, {
+        status_transition: `${oldStatus} → ${newStatus}`,
+        group_number: tourSession.group_number,
+      });
+
+      setError(null); // Clear any previous errors on successful operation
+    } catch (err) {
+      console.error("Failed to update tour session status:", err);
+      setError("更新狀態失敗，請稍後再試。"); // Set error message for the user
+      // Optionally, revert the optimistic update here if the operation failed.
+    }
   };
 
   // State to manage AICopilotPanel visibility
@@ -205,13 +251,35 @@ export default function TourSessionManager() {
   };
 
   return (
-    <div className="p-6">
+    // Outermost container for the widget, including standard card structure and drag-handle
+    <div className="p-6 bg-white rounded-lg shadow-sm drag-handle">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">團體行程管理</h1>
-        <p className="text-gray-600 mt-1">
-          管理所有團體行程，包含招團、成團、和完成狀態
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        <p className="text-gray-600 mt-1">{description}</p>
       </div>
+
+      {/* Display error message if present */}
+      {error && (
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
+        >
+          <strong className="font-bold">錯誤!</strong>
+          <span className="block sm:inline"> {error}</span>
+          <span className="absolute top-0 bottom-0 right-0 px-4 py-3">
+            <svg
+              className="fill-current h-6 w-6 text-red-500"
+              role="button"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              onClick={() => setError(null)}
+            >
+              <title>Close</title>
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" />
+            </svg>
+          </span>
+        </div>
+      )}
 
       <DataGrid<TourSession>
         data={currentPageData}
@@ -231,23 +299,33 @@ export default function TourSessionManager() {
         toolbar={{
           title: `團體行程 (${pagination.total})`,
           search: {
-            placeholder: "搜尋團號或系列...",
+            placeholder: searchPlaceholder,
             onSearch: (value) => {
-              // Implement search logic
+              // Implement search logic, filtering the `initialTourSessions` and updating the grid
               console.log("Searching for:", value);
+              const filteredData = initialTourSessions.filter(
+                (session) =>
+                  session.group_number
+                    .toLowerCase()
+                    .includes(value.toLowerCase()) ||
+                  session.series_id.toLowerCase().includes(value.toLowerCase()),
+              );
+              updateData(filteredData);
             },
           },
           refresh: {
             onRefresh: () => {
               console.log("Refreshing data...");
-              // Implement refresh logic
+              // Re-initialize the data grid with the original initial data
+              updateData(initialTourSessions);
+              setError(null); // Clear any errors on refresh
             },
           },
           export: {
             filename: "tour_sessions",
             onExport: () => {
               console.log("Exporting data...");
-              // Implement export logic
+              // Implement export logic here, potentially calling an external service.
             },
           },
         }}
@@ -287,13 +365,14 @@ export default function TourSessionManager() {
             },
           ],
         }}
-        className="bg-white rounded-lg shadow-sm focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
         hoverable
         bordered
       />
 
-      {/* AI Copilot Panel */}
-      <AICopilotPanel isOpen={isAICopilotOpen} onToggle={toggleAICopilot} />
+      {/* AI Copilot Panel, conditionally rendered */}
+      {showAICopilot && (
+        <AICopilotPanel isOpen={isAICopilotOpen} onToggle={toggleAICopilot} />
+      )}
     </div>
   );
 }

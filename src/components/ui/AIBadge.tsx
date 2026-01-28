@@ -1,50 +1,42 @@
-/**
- * AIBadge - VicERP AI 互動標記組件
- *
- * 根據規格書設計的 AI 狀態展示組件
- * 特點：
- * - 非侵入式設計，解決 AI "喧賓奪主" 問題
- * - 視覺化 AI 建議和狀態
- * - 支援不同類型的 AI 互動（insight, warning, processing, success）
- * - 優雅的動畫效果
- * - 可點擊展開詳細資訊
- */
-
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Sparkles,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  Loader2,
-  TrendingUp,
-  Clock,
-  DollarSign,
-  MapPin,
-  Users,
-  X,
-} from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AIBadgeType,
+  AIBadgeSize,
+  AIContext,
+  AIBadgeComponentConfig,
+  defaultAIBadgeComponentConfig,
+  // 為了方便擴展或替換預設圖標庫，Lucide-react 的圖標組件現在通過 config 檔案匯出。
+  // 消費者可以從 config 檔案導入並在自定義配置中使用，而 AIBadge 本身不直接依賴它們。
+  // 例如: import { Sparkles, Clock, MapPin } from "@/config/aiBadgeConfig";
+  Clock, // 交通時間 AI 標記中會用到
+  TrendingUp, // 毛利分析 AI 標記中會用到
+} from "@/config/aiBadgeConfig";
+import {
+  badgeVariants,
+  badgeTransition,
+  detailVariants,
+  detailTransition,
+  processingIconRotateTransition,
+  processingPulseVariants,
+  processingPulseTransition,
+  expandableIndicatorTransition,
+  actionButtonVariants,
+  actionButtonTransition,
+} from "@/config/aiBadgeAnimations";
 
 // ============================================
 // Type Definitions
 // ============================================
-type AIBadgeType =
-  | "insight"
-  | "warning"
-  | "processing"
-  | "success"
-  | "error"
-  | "info";
-type AIBadgeSize = "sm" | "md" | "lg";
 
 interface AIBadgeProps {
   type: AIBadgeType;
   message: string;
   detail?: string;
   size?: AIBadgeSize;
-  icon?: ReactNode;
+  icon?: ReactNode; // 允許傳入任何 ReactNode 作為自定義圖標
   onClick?: () => void;
   onDismiss?: () => void;
   autoHide?: boolean;
@@ -55,103 +47,20 @@ interface AIBadgeProps {
     label: string;
     onClick: () => void;
   };
+  // Kintone 獨立性原則: 允許外部傳入配置，覆蓋預設配置，實現元件獨立性與主題支援。
+  // 若此元件作為 Widget 的一部分，Widget 可以透過此 prop 傳入其專屬配置。
+  config?: Partial<AIBadgeComponentConfig>;
 }
 
-interface AIContextualBadgeProps extends Omit<AIBadgeProps, "type"> {
-  context: "profit" | "route" | "booking" | "cost" | "customer";
+interface AIContextualBadgeProps extends Omit<AIBadgeProps, "type" | "icon"> {
+  context: AIContext;
   value?: string | number;
 }
 
 // ============================================
-// Configuration Objects
-// ============================================
-const typeConfig = {
-  insight: {
-    icon: Sparkles,
-    color: "blue",
-    bgClass: "bg-blue-500/10 dark:bg-blue-400/10",
-    borderClass: "border-blue-500/20 dark:border-blue-400/20",
-    textClass: "text-blue-600 dark:text-blue-400",
-    iconClass: "text-blue-500 dark:text-blue-400",
-    glowClass: "shadow-[0_0_20px_rgba(59,130,246,0.15)]",
-  },
-  warning: {
-    icon: AlertTriangle,
-    color: "amber",
-    bgClass: "bg-amber-500/10 dark:bg-amber-400/10",
-    borderClass: "border-amber-500/20 dark:border-amber-400/20",
-    textClass: "text-amber-600 dark:text-amber-400",
-    iconClass: "text-amber-500 dark:text-amber-400",
-    glowClass: "shadow-[0_0_20px_rgba(245,158,11,0.15)]",
-  },
-  processing: {
-    icon: Loader2,
-    color: "purple",
-    bgClass: "bg-purple-500/10 dark:bg-purple-400/10",
-    borderClass: "border-purple-500/20 dark:border-purple-400/20",
-    textClass: "text-purple-600 dark:text-purple-400",
-    iconClass: "text-purple-500 dark:text-purple-400",
-    glowClass: "shadow-[0_0_20px_rgba(147,51,234,0.15)]",
-  },
-  success: {
-    icon: CheckCircle,
-    color: "green",
-    bgClass: "bg-green-500/10 dark:bg-green-400/10",
-    borderClass: "border-green-500/20 dark:border-green-400/20",
-    textClass: "text-green-600 dark:text-green-400",
-    iconClass: "text-green-500 dark:text-green-400",
-    glowClass: "shadow-[0_0_20px_rgba(34,197,94,0.15)]",
-  },
-  error: {
-    icon: AlertTriangle,
-    color: "red",
-    bgClass: "bg-red-500/10 dark:bg-red-400/10",
-    borderClass: "border-red-500/20 dark:border-red-400/20",
-    textClass: "text-red-600 dark:text-red-400",
-    iconClass: "text-red-500 dark:text-red-400",
-    glowClass: "shadow-[0_0_20px_rgba(239,68,68,0.15)]",
-  },
-  info: {
-    icon: Info,
-    color: "slate",
-    bgClass: "bg-slate-500/10 dark:bg-slate-400/10",
-    borderClass: "border-slate-500/20 dark:border-slate-400/20",
-    textClass: "text-slate-600 dark:text-slate-400",
-    iconClass: "text-slate-500 dark:text-slate-400",
-    glowClass: "shadow-[0_0_20px_rgba(100,116,139,0.15)]",
-  },
-} as const;
-
-const sizeConfig = {
-  sm: {
-    container: "px-2 py-1 text-sm gap-1.5",
-    icon: "w-3 h-3",
-    text: "text-sm",
-  },
-  md: {
-    container: "px-3 py-2 text-sm gap-2",
-    icon: "w-4 h-4",
-    text: "text-sm",
-  },
-  lg: {
-    container: "px-4 py-3 text-base gap-3",
-    icon: "w-5 h-5",
-    text: "text-base",
-  },
-} as const;
-
-// 情境化圖示映射
-const contextIcons = {
-  profit: TrendingUp,
-  route: MapPin,
-  booking: Users,
-  cost: DollarSign,
-  customer: Users,
-} as const;
-
-// ============================================
 // Main AIBadge Component
 // ============================================
+
 export const AIBadge: React.FC<AIBadgeProps> = ({
   type,
   message,
@@ -165,24 +74,68 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
   className,
   expandable = !!detail,
   actionButton,
+  config: customConfig,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const autoHideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const config = typeConfig[type];
-  const sizeClasses = sizeConfig[size];
-  const IconComponent = icon ? () => icon : config.icon;
+  // 合併自定義配置與預設配置
+  const mergedConfig: AIBadgeComponentConfig = React.useMemo(
+    () => ({
+      typeAppearances: {
+        ...defaultAIBadgeComponentConfig.typeAppearances,
+        ...customConfig?.typeAppearances,
+      },
+      sizeClasses: {
+        ...defaultAIBadgeComponentConfig.sizeClasses,
+        ...customConfig?.sizeClasses,
+      },
+      contextIconsMap: {
+        ...defaultAIBadgeComponentConfig.contextIconsMap,
+        ...customConfig?.contextIconsMap,
+      },
+    }),
+    [customConfig],
+  );
 
-  // 自動隱藏邏輯
-  React.useEffect(() => {
-    if (autoHide && hideDelay > 0) {
-      const timer = setTimeout(() => setIsVisible(false), hideDelay);
-      return () => clearTimeout(timer);
+  const { typeAppearances, sizeClasses: sizeClassMap } = mergedConfig;
+  const config = typeAppearances[type];
+  const sizeClasses = sizeClassMap[size];
+
+  // Auto-hide 功能的實現檢查與記憶體洩漏修復
+  useEffect(() => {
+    // 清除任何現有的計時器，以避免重複設置或記憶體洩漏
+    if (autoHideTimerRef.current) {
+      clearTimeout(autoHideTimerRef.current);
     }
-  }, [autoHide, hideDelay]);
+
+    if (autoHide && isVisible) {
+      autoHideTimerRef.current = setTimeout(() => {
+        setIsVisible(false);
+        onDismiss?.(); // 在自動隱藏時觸發 onDismiss
+      }, hideDelay);
+    }
+
+    // 清理函數：在組件卸載或效果重新執行時清除計時器
+    return () => {
+      if (autoHideTimerRef.current) {
+        clearTimeout(autoHideTimerRef.current);
+      }
+    };
+  }, [autoHide, hideDelay, isVisible, onDismiss]); // 依賴項變更時重新執行效果
+
+  // 用於在用戶互動時清除自動隱藏計時器
+  const clearAutoHideTimer = () => {
+    if (autoHideTimerRef.current) {
+      clearTimeout(autoHideTimerRef.current);
+      autoHideTimerRef.current = null;
+    }
+  };
 
   // 處理點擊事件
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    clearAutoHideTimer(); // 互動時清除計時器，避免自動隱藏
     if (expandable && !onClick) {
       setIsExpanded(!isExpanded);
     } else if (onClick) {
@@ -192,7 +145,8 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
 
   // 處理關閉事件
   const handleDismiss = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // 阻止事件冒泡到徽章的點擊事件
+    clearAutoHideTimer(); // 關閉時清除計時器
     setIsVisible(false);
     onDismiss?.();
   };
@@ -202,16 +156,17 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: -10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.8, y: -10 }}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={badgeVariants}
+        transition={badgeTransition}
         className={cn(
           "relative inline-flex items-center rounded-full",
           "backdrop-blur-sm border transition-all duration-200",
           config.bgClass,
           config.borderClass,
-          config.glowClass,
+          config.glowClass, // Hardcoded 顏色值已替換為 Tailwind token
           sizeClasses.container,
           (onClick || expandable) && "cursor-pointer hover:scale-105",
           className,
@@ -223,14 +178,24 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
           animate={{
             rotate: type === "processing" ? 360 : 0,
           }}
-          transition={{
-            duration: type === "processing" ? 2 : 0,
-            repeat: type === "processing" ? Infinity : 0,
-            ease: "linear",
-          }}
+          transition={
+            type === "processing"
+              ? processingIconRotateTransition
+              : undefined
+          }
           className={cn(config.iconClass, sizeClasses.icon)}
         >
-          <IconComponent className="w-full h-full" />
+          {icon ? (
+            // 如果提供了 icon prop (ReactNode)，則直接渲染它
+            typeof icon === "string" ? (
+              <span className="w-full h-full flex items-center justify-center">{icon}</span>
+            ) : (
+              icon
+            )
+          ) : (
+            // 否則，使用從配置中獲取的圖標組件
+            <config.icon className="w-full h-full" />
+          )}
         </motion.div>
 
         {/* 訊息文字 */}
@@ -242,9 +207,10 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
         {expandable && (
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
+            transition={expandableIndicatorTransition}
             className={cn(config.iconClass, "w-3 h-3 ml-1")}
           >
+            {/* SVG for dropdown arrow */}
             <svg
               viewBox="0 0 24 24"
               fill="currentColor"
@@ -261,9 +227,10 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
             onClick={handleDismiss}
             className={cn(
               "ml-2 rounded-full p-0.5 transition-colors",
-              "hover:bg-primary-900/10 dark:hover:bg-white/10",
+              "hover:bg-gray-100/10 dark:hover:bg-gray-700/10", // 使用通用的 Tailwind 顏色
               config.iconClass,
             )}
+            aria-label="Dismiss AI badge"
           >
             <X className="w-3 h-3" />
           </button>
@@ -274,17 +241,10 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
           <motion.div
             className={cn(
               "absolute inset-0 rounded-full border-2",
-              config.borderClass.replace("/20", "/40"),
+              config.borderClass.replace("/20", "/40"), // 調整透明度以創建脈衝效果
             )}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+            variants={processingPulseVariants}
+            transition={processingPulseTransition}
           />
         )}
       </motion.div>
@@ -293,10 +253,11 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
       <AnimatePresence>
         {isExpanded && detail && (
           <motion.div
-            initial={{ opacity: 0, height: 0, marginTop: 0 }}
-            animate={{ opacity: 1, height: "auto", marginTop: 8 }}
-            exit={{ opacity: 0, height: 0, marginTop: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={detailVariants}
+            transition={detailTransition}
             className={cn(
               "rounded-lg border backdrop-blur-sm p-3 overflow-hidden",
               config.bgClass,
@@ -309,12 +270,14 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
             {/* 行動按鈕 */}
             {actionButton && (
               <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
+                initial="initial"
+                animate="animate"
+                variants={actionButtonVariants}
+                transition={actionButtonTransition}
                 onClick={(e) => {
                   e.stopPropagation();
                   actionButton.onClick();
+                  clearAutoHideTimer(); // 執行動作時清除計時器
                 }}
                 className={cn(
                   "mt-3 px-3 py-1.5 rounded-md text-sm font-medium",
@@ -335,17 +298,38 @@ export const AIBadge: React.FC<AIBadgeProps> = ({
 // ============================================
 // Contextual Badge (業務情境特化版本)
 // ============================================
+// 將業務邏輯與基礎展示元件分離，遵循 Single Responsibility 原則
 export const AIContextualBadge: React.FC<AIContextualBadgeProps> = ({
   context,
   message,
   value,
+  config: customConfig, // 傳遞 config prop
   ...props
 }) => {
-  const IconComponent = contextIcons[context];
+  // 合併自定義配置與預設配置以獲取圖標映射
+  const mergedConfig: AIBadgeComponentConfig = React.useMemo(
+    () => ({
+      typeAppearances: {
+        ...defaultAIBadgeComponentConfig.typeAppearances,
+        ...customConfig?.typeAppearances,
+      },
+      sizeClasses: {
+        ...defaultAIBadgeComponentConfig.sizeClasses,
+        ...customConfig?.sizeClasses,
+      },
+      contextIconsMap: {
+        ...defaultAIBadgeComponentConfig.contextIconsMap,
+        ...customConfig?.contextIconsMap,
+      },
+    }),
+    [customConfig],
+  );
+
+  const IconComponent = mergedConfig.contextIconsMap[context];
 
   // 根據情境自動判斷類型
   const getTypeFromContext = (
-    context: string,
+    context: AIContext,
     value?: string | number,
   ): AIBadgeType => {
     if (context === "profit" && typeof value === "number") {
@@ -361,7 +345,8 @@ export const AIContextualBadge: React.FC<AIContextualBadgeProps> = ({
     <AIBadge
       type={getTypeFromContext(context, value)}
       icon={<IconComponent />}
-      message={value ? `${message} ${value}` : message}
+      message={value !== undefined && value !== null ? `${message} ${value}` : message}
+      config={customConfig} // 將 config 傳遞給 AIBadge
       {...props}
     />
   );
@@ -370,19 +355,24 @@ export const AIContextualBadge: React.FC<AIContextualBadgeProps> = ({
 // ============================================
 // Specialized AI Badge Variants
 // ============================================
+// 這些特化變體進一步封裝了業務邏輯，並使用 AIBadge 進行展示
 
 /**
  * 毛利分析 AI 標記
  */
-export const ProfitAIBadge: React.FC<{ profit: number; target?: number }> = ({
+export const ProfitAIBadge: React.FC<{ profit: number; target?: number; config?: Partial<AIBadgeComponentConfig> }> = ({
   profit,
   target = 0.1,
+  config,
 }) => {
   const isOptimal = profit >= target;
+  // 獲取圖標，如果 config 中有定義則使用，否則使用預設
+  const IconComponent = config?.contextIconsMap?.profit || defaultAIBadgeComponentConfig.contextIconsMap.profit;
+
   return (
     <AIBadge
       type={isOptimal ? "success" : "warning"}
-      icon={<TrendingUp />}
+      icon={<IconComponent className="w-full h-full" />} // 確保圖標組件接收 className
       message={`毛利 ${(profit * 100).toFixed(1)}%`}
       detail={
         isOptimal
@@ -397,6 +387,7 @@ export const ProfitAIBadge: React.FC<{ profit: number; target?: number }> = ({
             }
           : undefined
       }
+      config={config} // 將 config 傳遞給 AIBadge
     />
   );
 };
@@ -407,11 +398,15 @@ export const ProfitAIBadge: React.FC<{ profit: number; target?: number }> = ({
 export const RouteAIBadge: React.FC<{
   duration: number;
   isOptimal: boolean;
-}> = ({ duration, isOptimal }) => {
+  config?: Partial<AIBadgeComponentConfig>;
+}> = ({ duration, isOptimal, config }) => {
+  // 從配置中獲取時鐘圖標，如果沒有則回退到 Clock
+  const IconComponent = config?.contextIconsMap?.route || Clock;
+
   return (
     <AIBadge
       type={isOptimal ? "success" : "warning"}
-      icon={<Clock />}
+      icon={<IconComponent className="w-full h-full" />} // 確保圖標組件接收 className
       message={`${duration} 分鐘`}
       detail={
         isOptimal
@@ -419,6 +414,7 @@ export const RouteAIBadge: React.FC<{
           : "交通時間較長，建議調整行程順序或交通方式"
       }
       expandable
+      config={config} // 將 config 傳遞給 AIBadge
     />
   );
 };
@@ -429,7 +425,8 @@ export const RouteAIBadge: React.FC<{
 export const AIProcessingBadge: React.FC<{
   taskName: string;
   progress?: number;
-}> = ({ taskName, progress }) => {
+  config?: Partial<AIBadgeComponentConfig>;
+}> = ({ taskName, progress, config }) => {
   return (
     <AIBadge
       type="processing"
@@ -439,6 +436,7 @@ export const AIProcessingBadge: React.FC<{
       }
       size="md"
       autoHide={false}
+      config={config} // 將 config 傳遞給 AIBadge
     />
   );
 };

@@ -1,6 +1,4 @@
-// /workspaces/TrvicERP/src/design-system/DataGrid.tsx
-
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import Button from "./Button";
 import {
@@ -11,6 +9,51 @@ import {
 import { defaultDataGridIcons } from "./DataGrid.icons"; // Import default Lucide icons for practical defaults
 
 // ============================================
+// Design System Tokens (Simplified for this example)
+// In a real project, these would come from a centralized theme or Tailwind config.
+// Here, we define common class names for consistency as per Dashtail UI规范.
+// ============================================
+const DASHTAIL_COLORS = {
+  primaryText: "text-primary-700", // Adjusted from 600 for stronger primary
+  primaryBg: "bg-primary-700",
+  primaryHoverBg: "hover:bg-primary-800",
+  primaryFocusRing: "focus:ring-primary-500",
+  primaryFocusBorder: "focus:border-primary-500",
+
+  neutralTextDark: "text-neutral-900",
+  neutralTextMedium: "text-neutral-700", // General text
+  neutralTextLight: "text-neutral-500", // Muted text, header text
+  neutralTextMuted: "text-neutral-400", // Placeholder, very light
+
+  neutralBgLightest: "bg-white",
+  neutralBgLight: "bg-neutral-50", // Table head, pagination bg
+  neutralBgHover: "hover:bg-neutral-100", // Cell hover
+  
+  neutralBorder: "border-neutral-200",
+  neutralBorderControl: "border-neutral-300",
+
+  shadow: "shadow-sm",
+  focusOutline: "focus-within:outline-none",
+};
+
+const DASHTAIL_TYPOGRAPHY = {
+  headerText: "text-xs font-medium uppercase tracking-wider",
+  cellText: "text-sm",
+  titleText: "text-lg font-semibold",
+  paginationText: "text-sm",
+  smallButtonText: "text-sm",
+};
+
+const DASHTAIL_SPACING = {
+  cellPadding: "px-4 py-3",
+  toolbarPadding: "p-4",
+  paginationPadding: "px-6 py-3",
+  gapSm: "gap-1",
+  gapMd: "gap-2",
+  gapLg: "gap-4",
+};
+
+// ============================================
 // Sub-Components
 // ============================================
 
@@ -19,6 +62,8 @@ interface DataGridSortIconProps {
   AscIcon: IconComponentType;
   DescIcon: IconComponentType;
   DefaultIcon: IconComponentType;
+  activeColorClass?: string;
+  inactiveColorClass?: string;
 }
 
 function DataGridSortIcon({
@@ -26,11 +71,101 @@ function DataGridSortIcon({
   AscIcon,
   DescIcon,
   DefaultIcon,
+  activeColorClass = DASHTAIL_COLORS.primaryText,
+  inactiveColorClass = DASHTAIL_COLORS.neutralTextLight,
 }: DataGridSortIconProps) {
-  if (order === "asc") return <AscIcon className="w-4 h-4 text-primary-600" />;
-  if (order === "desc")
-    return <DescIcon className="w-4 h-4 text-primary-600" />;
-  return <DefaultIcon className="w-4 h-4 text-neutral-400" />;
+  const iconClass = cn("w-4 h-4", order ? activeColorClass : inactiveColorClass);
+
+  if (order === "asc") return <AscIcon className={iconClass} />;
+  if (order === "desc") return <DescIcon className={iconClass} />;
+  return <DefaultIcon className={iconClass} />;
+}
+
+interface DataGridSelectAllCheckboxProps {
+  isChecked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}
+
+function DataGridSelectAllCheckbox({
+  isChecked,
+  onChange,
+  disabled,
+}: DataGridSelectAllCheckboxProps) {
+  return (
+    <input
+      type="checkbox"
+      checked={isChecked}
+      onChange={(e) => onChange(e.target.checked)}
+      className={cn(
+        "rounded",
+        DASHTAIL_COLORS.neutralBorderControl,
+        DASHTAIL_COLORS.primaryText,
+        DASHTAIL_COLORS.primaryFocusRing,
+      )}
+      disabled={disabled}
+    />
+  );
+}
+
+interface DataGridTableHeaderCellProps<T> {
+  column: Column<T>;
+  sortState: Record<string, "asc" | "desc" | null>;
+  onSort: (field: string) => void;
+  SortAscIcon: IconComponentType;
+  SortDescIcon: IconComponentType;
+  SortDefaultIcon: IconComponentType;
+  isLastHeader?: boolean; // To handle potential right-fixed header offset
+}
+
+function DataGridTableHeaderCell<T>({
+  column,
+  sortState,
+  onSort,
+  SortAscIcon,
+  SortDescIcon,
+  SortDefaultIcon,
+  isLastHeader, // Not used for now, but good for complex fixed scenarios
+}: DataGridTableHeaderCellProps<T>) {
+  const fixedStyles: React.CSSProperties = {};
+  let fixedClasses = "";
+  if (column.fixed === "left") {
+    fixedStyles.left = 0;
+    fixedClasses = "sticky z-10 " + DASHTAIL_COLORS.neutralBgLight; // Use neutralBgLight from thead
+  } else if (column.fixed === "right") {
+    fixedStyles.right = 0;
+    fixedClasses = "sticky z-10 " + DASHTAIL_COLORS.neutralBgLight;
+  }
+
+  return (
+    <th
+      key={column.key}
+      className={cn(
+        DASHTAIL_SPACING.cellPadding,
+        "text-left",
+        DASHTAIL_TYPOGRAPHY.headerText,
+        DASHTAIL_COLORS.neutralTextLight,
+        column.sortable && "cursor-pointer " + DASHTAIL_COLORS.neutralBgHover + " select-none",
+        column.align === "center" && "text-center",
+        column.align === "right" && "text-right",
+        fixedClasses,
+      )}
+      style={{ width: column.width, ...fixedStyles }}
+      onClick={() => column.sortable && onSort(column.key)}
+    >
+      <div className={cn("flex items-center", DASHTAIL_SPACING.gapMd)}>
+        <span>{column.title}</span>
+        {column.sortable && (
+          <DataGridSortIcon
+            order={sortState[column.key]}
+            AscIcon={SortAscIcon}
+            DescIcon={SortDescIcon}
+            DefaultIcon={SortDefaultIcon}
+          />
+        )}
+      </div>
+    </th>
+  );
 }
 
 interface DataGridTableHeadProps<T> {
@@ -39,9 +174,12 @@ interface DataGridTableHeadProps<T> {
   onSort: (field: string) => void;
   rowSelection?: DataGridProps<T>["rowSelection"];
   onSelectAll?: (checked: boolean) => void;
+  allRowsSelected?: boolean;
+  allRowsSelectable?: boolean;
   SortAscIcon: IconComponentType;
   SortDescIcon: IconComponentType;
   SortDefaultIcon: IconComponentType;
+  hasActionsColumn: boolean; // Indicate if actions column is present
 }
 
 function DataGridTableHead<T>({
@@ -50,50 +188,45 @@ function DataGridTableHead<T>({
   onSort,
   rowSelection,
   onSelectAll,
+  allRowsSelected,
+  allRowsSelectable,
   SortAscIcon,
   SortDescIcon,
   SortDefaultIcon,
+  hasActionsColumn,
 }: DataGridTableHeadProps<T>) {
   return (
-    <thead className="bg-neutral-50">
+    <thead className={DASHTAIL_COLORS.neutralBgLight}>
       <tr>
         {rowSelection && (
-          <th className="px-4 py-3 text-left w-12">
-            <input
-              type="checkbox"
-              onChange={(e) => onSelectAll?.(e.target.checked)}
-              className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+          <th className={cn(DASHTAIL_SPACING.cellPadding, "text-left w-12")}>
+            <DataGridSelectAllCheckbox
+              isChecked={allRowsSelected || false}
+              onChange={onSelectAll || (() => {})}
+              disabled={!allRowsSelectable}
             />
           </th>
         )}
         {columns.map((column) => (
-          <th
+          <DataGridTableHeaderCell
             key={column.key}
-            className={cn(
-              "px-4 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider",
-              column.sortable && "cursor-pointer hover:bg-neutral-100 select-none",
-              column.align === "center" && "text-center",
-              column.align === "right" && "text-right",
-            )}
-            style={{ width: column.width }}
-            onClick={() => column.sortable && onSort(column.key)}
-          >
-            <div className="flex items-center gap-2">
-              <span>{column.title}</span>
-              {column.sortable && (
-                <DataGridSortIcon
-                  order={sortState[column.key]}
-                  AscIcon={SortAscIcon}
-                  DescIcon={SortDescIcon}
-                  DefaultIcon={SortDefaultIcon}
-                />
-              )}
-            </div>
-          </th>
+            column={column}
+            sortState={sortState}
+            onSort={onSort}
+            SortAscIcon={SortAscIcon}
+            SortDescIcon={SortDescIcon}
+            SortDefaultIcon={SortDefaultIcon}
+          />
         ))}
-        {/* Actions column header, only if actions are enabled */}
-        {(columns.some(col => col.fixed === "right") || true) && (
-            <th className="px-4 py-3 text-center text-xs font-medium text-neutral-500 uppercase tracking-wider w-16 sticky right-0 bg-neutral-50">
+        {hasActionsColumn && (
+            <th className={cn(
+              DASHTAIL_SPACING.cellPadding,
+              "text-center",
+              DASHTAIL_TYPOGRAPHY.headerText,
+              DASHTAIL_COLORS.neutralTextLight,
+              "w-16 sticky right-0 z-10", // Ensure sticky, z-index and bg
+              DASHTAIL_COLORS.neutralBgLight,
+            )}>
                 操作
             </th>
         )}
@@ -104,7 +237,7 @@ function DataGridTableHead<T>({
 
 interface DataGridRowActionsProps<T> {
   record: T;
-  actions: DataGridProps<T>["actions"];
+  actions?: DataGridProps<T>["actions"];
   MoreVerticalIcon: IconComponentType;
 }
 
@@ -114,28 +247,54 @@ function DataGridRowActions<T>({
   MoreVerticalIcon,
 }: DataGridRowActionsProps<T>) {
   const [showActions, setShowActions] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setShowActions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   if (!actions?.show) return null;
 
   return (
     <div className="relative inline-block text-left">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setShowActions(!showActions)}
-        className="p-1 rounded hover:bg-neutral-100 transition-colors"
+        onClick={() => setShowActions((prev) => !prev)}
+        className={cn("p-1 rounded", DASHTAIL_COLORS.neutralBgHover, "transition-colors")}
+        aria-haspopup="true"
+        aria-expanded={showActions}
       >
-        <MoreVerticalIcon className="w-4 h-4 text-neutral-600" />
+        <MoreVerticalIcon className={cn("w-4 h-4", DASHTAIL_COLORS.neutralTextMedium)} />
       </button>
 
       {showActions && (
-        <div className="absolute right-0 top-8 bg-white border border-neutral-200 rounded-lg shadow-lg z-10 py-1 min-w-[120px] focus-within:outline-none"
-             onBlur={(e) => {
-                // Check if the related target is outside the dropdown
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  setShowActions(false);
-                }
-             }}
-             tabIndex={-1} // Make div focusable
+        <div
+          ref={dropdownRef}
+          className={cn(
+            "absolute right-0 top-8 bg-white border",
+            DASHTAIL_COLORS.neutralBorder,
+            "rounded-lg shadow-lg z-20 py-1 min-w-[120px]",
+            DASHTAIL_COLORS.focusOutline,
+          )}
+          role="menu"
+          aria-orientation="vertical"
+          aria-labelledby="options-menu"
+          tabIndex={-1} // Make div focusable
         >
           {actions.items?.map((action) => (
             <button
@@ -146,9 +305,16 @@ function DataGridRowActions<T>({
               }}
               disabled={action.disabled?.(record)}
               className={cn(
-                "w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2 transition-colors",
+                "w-full px-3 py-2 text-left",
+                DASHTAIL_TYPOGRAPHY.cellText,
+                DASHTAIL_COLORS.neutralTextMedium,
+                DASHTAIL_COLORS.neutralBgHover,
+                "flex items-center",
+                DASHTAIL_SPACING.gapMd,
+                "transition-colors",
                 action.disabled?.(record) && "opacity-50 cursor-not-allowed",
               )}
+              role="menuitem"
             >
               {action.icon}
               {action.label}
@@ -173,6 +339,7 @@ interface DataGridTableRowProps<T> {
   MoreVerticalIcon: IconComponentType;
   striped?: boolean;
   hoverable?: boolean;
+  hasActionsColumn: boolean;
 }
 
 function DataGridTableRow<T>({
@@ -188,6 +355,7 @@ function DataGridTableRow<T>({
   MoreVerticalIcon,
   striped,
   hoverable,
+  hasActionsColumn,
 }: DataGridTableRowProps<T>) {
   const key =
     typeof rowKey === "function" ? rowKey(record) : (record as any)[rowKey];
@@ -198,20 +366,26 @@ function DataGridTableRow<T>({
   return (
     <tr
       className={cn(
-        "border-b border-neutral-200",
-        striped && index % 2 === 1 && "bg-neutral-50",
-        hoverable && "hover:bg-primary-50/50 transition-colors",
-        isSelected && "bg-primary-50/50",
+        "border-b",
+        DASHTAIL_COLORS.neutralBorder,
+        striped && index % 2 === 1 && DASHTAIL_COLORS.neutralBgLight,
+        hoverable && "hover:bg-primary-50 transition-colors", // Use primary-50 for hover
+        isSelected && "bg-primary-50", // Use primary-50 for selected
       )}
       {...rowProps}
     >
       {rowSelection && (
-        <td className="px-4 py-3">
+        <td className={cn(DASHTAIL_SPACING.cellPadding)}>
           <input
             type="checkbox"
             checked={isSelected}
             onChange={(e) => onSelect?.(key, e.target.checked)}
-            className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+            className={cn(
+              "rounded",
+              DASHTAIL_COLORS.neutralBorderControl,
+              DASHTAIL_COLORS.primaryText,
+              DASHTAIL_COLORS.primaryFocusRing,
+            )}
             disabled={checkboxDisabled}
           />
         </td>
@@ -222,15 +396,23 @@ function DataGridTableRow<T>({
           ? column.render(value, record, index)
           : String(value ?? ""); // Ensure string for content
 
+        const fixedClasses = cn(
+          "relative", // Needed for shadow
+          column.fixed === "left" && "sticky left-0 z-[1] shadow-right", // Add z-index for fixed columns, adjust shadow as needed
+          column.fixed === "right" && "sticky right-0 z-[1] shadow-left", // Add z-index for fixed columns
+          (column.fixed === "left" || column.fixed === "right") && DASHTAIL_COLORS.neutralBgLightest, // Fixed cells need background
+        );
+
         return (
           <td
             key={column.key}
             className={cn(
-              "px-4 py-3 text-sm text-neutral-900",
+              DASHTAIL_SPACING.cellPadding,
+              DASHTAIL_TYPOGRAPHY.cellText,
+              DASHTAIL_COLORS.neutralTextDark,
               column.align === "center" && "text-center",
               column.align === "right" && "text-right",
-              column.fixed === "left" && "sticky left-0 bg-white shadow-right", // Add shadow-right for fixed columns
-              column.fixed === "right" && "sticky right-0 bg-white shadow-left", // Add shadow-left
+              fixedClasses,
             )}
             style={column.fixed ? { left: column.fixed === "left" ? 0 : 'auto', right: column.fixed === "right" ? 0 : 'auto' } : undefined}
           >
@@ -238,13 +420,19 @@ function DataGridTableRow<T>({
           </td>
         );
       })}
-      <td className="px-4 py-3 text-center w-16 sticky right-0 bg-white">
-        <DataGridRowActions
-          record={record}
-          actions={actions}
-          MoreVerticalIcon={MoreVerticalIcon}
-        />
-      </td>
+      {hasActionsColumn && (
+        <td className={cn(
+          DASHTAIL_SPACING.cellPadding,
+          "text-center w-16 sticky right-0 z-[1]", // Ensure sticky, z-index and bg
+          DASHTAIL_COLORS.neutralBgLightest, // Actions column needs background
+        )}>
+          <DataGridRowActions
+            record={record}
+            actions={actions}
+            MoreVerticalIcon={MoreVerticalIcon}
+          />
+        </td>
+      )}
     </tr>
   );
 }
@@ -300,7 +488,7 @@ function DataGridPagination({
       pages.push("..."); // Ellipsis for end
     }
 
-    if (totalPages > 1) { // Always show last page if more than 1 page
+    if (totalPages > 1 && !pages.includes(totalPages)) { // Always show last page if more than 1 page
       pages.push(totalPages);
     }
 
@@ -310,12 +498,19 @@ function DataGridPagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-between px-6 py-3 bg-neutral-50 border-t border-neutral-200 gap-y-3">
-      <div className="text-sm text-neutral-600">
+    <div className={cn(
+      "flex flex-col md:flex-row items-center justify-between",
+      DASHTAIL_SPACING.paginationPadding,
+      DASHTAIL_COLORS.neutralBgLight,
+      "border-t",
+      DASHTAIL_COLORS.neutralBorder,
+      DASHTAIL_SPACING.gapSm, // Adjusted gap for responsive
+    )}>
+      <div className={cn(DASHTAIL_TYPOGRAPHY.paginationText, DASHTAIL_COLORS.neutralTextMedium)}>
         顯示第 {startItem} - {endItem} 筆，共 {total} 筆資料
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap justify-center">
+      <div className={cn("flex items-center", DASHTAIL_SPACING.gapMd, "flex-wrap justify-center")}>
         <Button
           variant="ghost"
           size="sm"
@@ -326,10 +521,14 @@ function DataGridPagination({
           上一頁
         </Button>
 
-        <div className="flex items-center gap-1">
+        <div className={cn("flex items-center", DASHTAIL_SPACING.gapSm)}>
           {pageNumbers.map((pageNum, index) =>
             pageNum === "..." ? (
-              <span key={`ellipsis-${index}`} className="w-8 h-8 flex items-center justify-center text-sm text-neutral-600">
+              <span key={`ellipsis-${index}`} className={cn(
+                "w-8 h-8 flex items-center justify-center",
+                DASHTAIL_TYPOGRAPHY.paginationText,
+                DASHTAIL_COLORS.neutralTextMedium
+              )}>
                 ...
               </span>
             ) : (
@@ -337,10 +536,12 @@ function DataGridPagination({
                 key={pageNum}
                 onClick={() => onChange(pageNum as number, pageSize)}
                 className={cn(
-                  "w-8 h-8 text-sm rounded border transition-colors flex items-center justify-center",
+                  "w-8 h-8",
+                  DASHTAIL_TYPOGRAPHY.paginationText,
+                  "rounded border transition-colors flex items-center justify-center",
                   current === pageNum
-                    ? "bg-primary-600 text-white border-primary-600"
-                    : "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-50",
+                    ? cn(DASHTAIL_COLORS.primaryBg, "text-white", DASHTAIL_COLORS.primaryBg)
+                    : cn("bg-white", DASHTAIL_COLORS.neutralTextMedium, DASHTAIL_COLORS.neutralBorderControl, DASHTAIL_COLORS.neutralBgHover),
                 )}
               >
                 {pageNum}
@@ -361,7 +562,14 @@ function DataGridPagination({
 
         {showSizeChanger && (
           <select
-            className="ml-2 py-1 px-2 border border-neutral-300 rounded-md text-sm text-neutral-700 focus:ring-primary-500 focus:border-primary-500"
+            className={cn(
+              "ml-2 py-1 px-2 border rounded-md",
+              DASHTAIL_TYPOGRAPHY.paginationText,
+              DASHTAIL_COLORS.neutralTextMedium,
+              DASHTAIL_COLORS.neutralBorderControl,
+              DASHTAIL_COLORS.primaryFocusRing,
+              DASHTAIL_COLORS.primaryFocusBorder,
+            )}
             value={pageSize}
             onChange={(e) => onChange(1, Number(e.target.value))}
           >
@@ -374,22 +582,33 @@ function DataGridPagination({
         )}
 
         {showQuickJumper && (
-          <div className="ml-2 flex items-center gap-1">
+          <div className={cn("ml-2 flex items-center", DASHTAIL_SPACING.gapSm, DASHTAIL_COLORS.neutralTextMedium)}>
             跳至
             <input
               type="number"
               min={1}
               max={totalPages}
-              value={current} // Display current page as a hint
+              defaultValue={current} // Use defaultValue for uncontrolled input
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   const page = Number((e.target as HTMLInputElement).value);
-                  if (page >= 1 && page <= totalPages) {
+                  if (!isNaN(page) && page >= 1 && page <= totalPages) {
                     onChange(page, pageSize);
+                    (e.target as HTMLInputElement).value = page.toString(); // Update input value after valid jump
+                  } else {
+                    (e.target as HTMLInputElement).value = current.toString(); // Revert to current page on invalid input
                   }
                 }
               }}
-              className="w-12 py-1 px-2 border border-neutral-300 rounded-md text-sm text-neutral-700 text-center focus:ring-primary-500 focus:border-primary-500"
+              className={cn(
+                "w-12 py-1 px-2 border rounded-md text-center",
+                DASHTAIL_TYPOGRAPHY.paginationText,
+                DASHTAIL_COLORS.neutralTextMedium,
+                DASHTAIL_COLORS.neutralBorderControl,
+                DASHTAIL_COLORS.primaryFocusRing,
+                DASHTAIL_COLORS.primaryFocusBorder,
+              )}
+              aria-label="跳至頁碼"
             />
             頁
           </div>
@@ -410,7 +629,7 @@ function DataGridEmptyState({
 }: DataGridEmptyStateProps) {
   return (
     <tr>
-      <td colSpan={colSpan} className="px-4 py-8 text-center text-neutral-500">
+      <td colSpan={colSpan} className={cn(DASHTAIL_SPACING.cellPadding, "py-8 text-center", DASHTAIL_COLORS.neutralTextLight)}>
         {message}
       </td>
     </tr>
@@ -430,9 +649,9 @@ function DataGridLoadingState({
 }: DataGridLoadingStateProps) {
   return (
     <tr>
-      <td colSpan={colSpan} className="px-4 py-8 text-center text-neutral-500">
+      <td colSpan={colSpan} className={cn(DASHTAIL_SPACING.cellPadding, "py-8 text-center", DASHTAIL_COLORS.neutralTextLight)}>
         <div className="flex items-center justify-center">
-          <LoadingIcon className="w-5 h-5 animate-spin mr-2 text-primary-600" />
+          <LoadingIcon className={cn("w-5 h-5 animate-spin mr-2", DASHTAIL_COLORS.primaryText)} />
           {message}
         </div>
       </td>
@@ -460,17 +679,23 @@ function DataGridToolbar<T>({
   if (!toolbar) return null;
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b border-neutral-200 gap-y-3">
-      <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+    <div className={cn(
+      "flex flex-col md:flex-row items-center justify-between",
+      DASHTAIL_SPACING.toolbarPadding,
+      "border-b",
+      DASHTAIL_COLORS.neutralBorder,
+      DASHTAIL_SPACING.gapLg, // Adjusted gap for responsiveness
+    )}>
+      <div className={cn("flex flex-col md:flex-row items-center", DASHTAIL_SPACING.gapLg, "w-full md:w-auto")}>
         {toolbar.title && (
-          <h3 className="text-lg font-semibold text-neutral-900">
+          <h3 className={cn(DASHTAIL_TYPOGRAPHY.titleText, DASHTAIL_COLORS.neutralTextDark)}>
             {toolbar.title}
           </h3>
         )}
 
         {toolbar.search && (
           <div className="relative w-full md:w-auto">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <SearchIcon className={cn("absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4", DASHTAIL_COLORS.neutralTextMuted)} />
             <input
               type="text"
               placeholder={toolbar.search.placeholder || "搜尋..."}
@@ -479,18 +704,24 @@ function DataGridToolbar<T>({
                 onSearchChange(e.target.value);
                 toolbar.search?.onSearch?.(e.target.value);
               }}
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              className={cn(
+                "w-full pl-10 pr-4 py-2 border rounded-lg",
+                DASHTAIL_COLORS.neutralBorderControl,
+                DASHTAIL_COLORS.primaryFocusRing,
+                "focus:border-transparent", // Tailwind focuses usually replace border with ring
+                DASHTAIL_TYPOGRAPHY.cellText,
+              )}
             />
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap justify-end">
+      <div className={cn("flex items-center", DASHTAIL_SPACING.gapMd, "flex-wrap justify-end")}>
         {toolbar.refresh && (
           <Button
             variant="ghost"
             onClick={toolbar.refresh.onRefresh}
-            className="!p-2 text-neutral-600 hover:text-primary-600"
+            className={cn("!p-2", DASHTAIL_COLORS.neutralTextMedium, "hover:text-primary-700")}
           >
             <RefreshIcon className="w-4 h-4" />
           </Button>
@@ -500,7 +731,7 @@ function DataGridToolbar<T>({
           <Button
             variant="ghost"
             onClick={toolbar.export.onExport}
-            className="text-neutral-600 hover:text-primary-600"
+            className={cn(DASHTAIL_COLORS.neutralTextMedium, "hover:text-primary-700")}
           >
             <DownloadIcon className="w-4 h-4 mr-1" />
             匯出
@@ -580,6 +811,13 @@ export default function DataGrid<T = any>({
   );
   const [searchValue, setSearchValue] = useState("");
 
+  // Keep selectedRowKeys in sync if rowSelection.selectedRowKeys changes externally
+  useEffect(() => {
+    if (rowSelection?.selectedRowKeys) {
+      setSelectedRowKeys(rowSelection.selectedRowKeys);
+    }
+  }, [rowSelection?.selectedRowKeys]);
+
   // Handlers
   const handleSort = useCallback(
     (field: string) => {
@@ -597,22 +835,29 @@ export default function DataGrid<T = any>({
     [sortState, onSortChange],
   );
 
+  const getRowKey = useCallback((record: T) => {
+    return typeof rowKey === "function"
+      ? rowKey(record)
+      : (record as any)[rowKey];
+  }, [rowKey]);
+
   const handleSelectAll = useCallback(
     (checked: boolean) => {
+      let newSelectedKeys: React.Key[] = [];
+      let newSelectedRecords: T[] = [];
+
       if (checked) {
-        const allKeys = data.map((record) =>
-          typeof rowKey === "function"
-            ? rowKey(record)
-            : (record as any)[rowKey],
+        newSelectedKeys = processedData
+          .filter(record => !rowSelection?.getCheckboxProps?.(record)?.disabled)
+          .map(getRowKey);
+        newSelectedRecords = processedData.filter(record =>
+          newSelectedKeys.includes(getRowKey(record))
         );
-        setSelectedRowKeys(allKeys);
-        rowSelection?.onChange?.(allKeys, data);
-      } else {
-        setSelectedRowKeys([]);
-        rowSelection?.onChange?.([], []);
       }
+      setSelectedRowKeys(newSelectedKeys);
+      rowSelection?.onChange?.(newSelectedKeys, newSelectedRecords);
     },
-    [data, rowKey, rowSelection],
+    [processedData, getRowKey, rowSelection],
   );
 
   const handleSelect = useCallback(
@@ -626,15 +871,12 @@ export default function DataGrid<T = any>({
 
       setSelectedRowKeys(newSelectedKeys);
       const selectedRecords = data.filter((record) => {
-        const recordKey =
-          typeof rowKey === "function"
-            ? rowKey(record)
-            : (record as any)[rowKey];
+        const recordKey = getRowKey(record);
         return newSelectedKeys.includes(recordKey);
       });
       rowSelection?.onChange?.(newSelectedKeys, selectedRecords);
     },
-    [selectedRowKeys, data, rowKey, rowSelection],
+    [selectedRowKeys, data, getRowKey, rowSelection],
   );
 
   // Filtered and sorted data
@@ -662,6 +904,10 @@ export default function DataGrid<T = any>({
           const aValue = (a as any)[sortField];
           const bValue = (b as any)[sortField];
 
+          // Handle null/undefined values for sorting
+          if (aValue === null || aValue === undefined) return order === "asc" ? -1 : 1;
+          if (bValue === null || bValue === undefined) return order === "asc" ? 1 : -1;
+
           if (typeof aValue === "string" && typeof bValue === "string") {
             return order === "asc"
               ? aValue.localeCompare(bValue)
@@ -670,7 +916,10 @@ export default function DataGrid<T = any>({
           if (typeof aValue === "number" && typeof bValue === "number") {
             return order === "asc" ? aValue - bValue : bValue - aValue;
           }
-          return 0;
+          // Fallback for other types or mixed types: attempt string conversion
+          return order === "asc"
+            ? String(aValue).localeCompare(String(bValue))
+            : String(bValue).localeCompare(String(aValue));
         });
       }
     }
@@ -678,12 +927,25 @@ export default function DataGrid<T = any>({
     return result;
   }, [data, searchValue, toolbar?.search, sortState, onSortChange]);
 
-  const colCount = columns.length + (rowSelection ? 1 : 0) + (actions?.show ? 1 : 0);
+  const hasActionsColumn = actions?.show === true;
+  const colCount = columns.length + (rowSelection ? 1 : 0) + (hasActionsColumn ? 1 : 0);
+
+  const allRowsSelectableKeys = useMemo(() => 
+    processedData
+      .filter(record => !rowSelection?.getCheckboxProps?.(record)?.disabled)
+      .map(getRowKey),
+    [processedData, rowSelection, getRowKey]
+  );
+  const allRowsSelected = selectedRowKeys.length > 0 && 
+                          allRowsSelectableKeys.length > 0 && 
+                          allRowsSelectableKeys.every(key => selectedRowKeys.includes(key));
+  const allRowsSelectable = allRowsSelectableKeys.length > 0;
 
   return (
     <div
       className={cn(
-        "p-0 bg-white rounded-lg shadow-sm", // Standard Dashtail card structure
+        "p-0 bg-white rounded-lg",
+        DASHTAIL_COLORS.shadow, // Standard Dashtail card structure
         className,
       )}
     >
@@ -706,8 +968,9 @@ export default function DataGrid<T = any>({
         <div className="overflow-x-auto relative">
           <table
             className={cn(
-              "min-w-full divide-y divide-neutral-200",
-              bordered && "border border-neutral-200", // Apply border to table
+              "min-w-full divide-y",
+              DASHTAIL_COLORS.neutralBorder,
+              bordered && cn("border", DASHTAIL_COLORS.neutralBorder), // Apply border to table
             )}
           >
             <DataGridTableHead
@@ -716,22 +979,22 @@ export default function DataGrid<T = any>({
               onSort={handleSort}
               rowSelection={rowSelection}
               onSelectAll={handleSelectAll}
+              allRowsSelected={allRowsSelected}
+              allRowsSelectable={allRowsSelectable}
               SortAscIcon={SortAscIcon}
               SortDescIcon={SortDescIcon}
               SortDefaultIcon={SortDefaultIcon}
+              hasActionsColumn={hasActionsColumn}
             />
 
-            <tbody className="bg-white divide-y divide-neutral-200">
+            <tbody className={cn("divide-y", DASHTAIL_COLORS.neutralBorder, DASHTAIL_COLORS.neutralBgLightest)}>
               {loading ? (
                 <DataGridLoadingState colSpan={colCount} LoadingIcon={LoadingIcon} />
               ) : processedData.length === 0 ? (
                 <DataGridEmptyState colSpan={colCount} />
               ) : (
                 processedData.map((record, index) => {
-                  const key =
-                    typeof rowKey === "function"
-                      ? rowKey(record)
-                      : (record as any)[rowKey];
+                  const key = getRowKey(record);
                   return (
                     <DataGridTableRow
                       key={key}
@@ -747,6 +1010,7 @@ export default function DataGrid<T = any>({
                       MoreVerticalIcon={MoreVerticalIcon}
                       striped={striped}
                       hoverable={hoverable}
+                      hasActionsColumn={hasActionsColumn}
                     />
                   );
                 })
@@ -770,217 +1034,3 @@ export default function DataGrid<T = any>({
     </div>
   );
 }
-// /workspaces/TrvicERP/src/design-system/DataGrid.types.ts
-
-import React from "react";
-
-/**
- * Generic type for an icon component, e.g., from Lucide React or a custom SVG component.
- */
-export type IconComponentType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-
-/**
- * Defines the structure for a column in the DataGrid.
- * @template T - The type of data records in the grid.
- */
-export interface Column<T = any> {
-  /** A unique key for the column. */
-  key: string;
-  /** The title displayed in the column header. */
-  title: string;
-  /** The key of the data record property to display in this column. */
-  dataIndex: keyof T;
-  /** Optional width for the column (e.g., "100px", "10%", 150). */
-  width?: string | number;
-  /** Whether the column can be sorted. */
-  sortable?: boolean;
-  /** Whether the column can be filtered. (Not yet implemented in component logic) */
-  filterable?: boolean;
-  /** Custom render function for cell content. */
-  render?: (value: any, record: T, index: number) => React.ReactNode;
-  /** Text alignment within the column. */
-  align?: "left" | "center" | "right";
-  /** Fix the column to the left or right when scrolling horizontally. */
-  fixed?: "left" | "right";
-}
-
-/**
- * Defines the pagination properties for the DataGrid.
- */
-export interface DataGridPaginationConfig {
-  /** The current page number (1-based index). */
-  current: number;
-  /** The number of items per page. */
-  pageSize: number;
-  /** The total number of items across all pages. */
-  total: number;
-  /** Whether to show a page size changer. */
-  showSizeChanger?: boolean;
-  /** Whether to show a quick jumper to specific pages. */
-  showQuickJumper?: boolean;
-}
-
-/**
- * Defines properties for row selection in the DataGrid.
- * @template T - The type of data records.
- */
-export interface DataGridRowSelectionConfig<T = any> {
-  /** Array of currently selected row keys. */
-  selectedRowKeys?: React.Key[];
-  /** Callback triggered when row selection changes. */
-  onChange?: (selectedRowKeys: React.Key[], selectedRows: T[]) => void;
-  /** Function to get checkbox properties for a specific row (e.g., to disable it). */
-  getCheckboxProps?: (record: T) => { disabled?: boolean };
-}
-
-/**
- * Defines configuration for row actions (e.g., view, edit, delete buttons).
- * @template T - The type of data records.
- */
-export interface DataGridRowActionsConfig<T = any> {
-  /** Whether to show the actions column. */
-  show?: boolean;
-  /** Array of action items to display in the dropdown. */
-  items?: Array<{
-    key: string;
-    label: string;
-    icon?: React.ReactNode;
-    onClick: (record: T) => void;
-    disabled?: (record: T) => boolean;
-  }>;
-}
-
-/**
- * Defines configuration for the DataGrid toolbar.
- */
-export interface DataGridToolbarConfig {
-  /** Optional title displayed in the toolbar. */
-  title?: string;
-  /** Additional React nodes to render in the toolbar (e.g., custom buttons). */
-  extra?: React.ReactNode;
-  /** Search functionality configuration. */
-  search?: {
-    placeholder?: string;
-    onSearch?: (value: string) => void;
-  };
-  /** Export functionality configuration. */
-  export?: {
-    filename?: string;
-    onExport?: () => void;
-  };
-  /** Refresh functionality configuration. */
-  refresh?: {
-    onRefresh?: () => void;
-  };
-  /** Filter functionality configuration. (Not yet implemented in component logic) */
-  filter?: {
-    items?: Array<{
-      key: string;
-      label: string;
-      options: Array<{ label: string; value: any }>;
-    }>;
-  };
-}
-
-/**
- * Collection of icon components used throughout the DataGrid.
- * This allows consumers to provide their own icon library.
- */
-export interface DataGridIcons {
-  SortAsc: IconComponentType;
-  SortDesc: IconComponentType;
-  SortDefault: IconComponentType;
-  Search: IconComponentType;
-  Filter: IconComponentType; // Not directly used in existing toolbar, but good for future
-  Download: IconComponentType;
-  MoreVertical: IconComponentType;
-  Eye: IconComponentType;
-  Edit: IconComponentType;
-  Trash2: IconComponentType;
-  Refresh: IconComponentType;
-  Loading: IconComponentType; // For loading spinner
-}
-
-/**
- * Props for the main DataGrid component.
- * @template T - The type of data records in the grid.
- */
-export interface DataGridProps<T = any> {
-  /** The data source for the grid. */
-  data: T[];
-  /** Array of column definitions. */
-  columns: Column<T>[];
-  /** Whether the data is currently loading. */
-  loading?: boolean;
-  /** Pagination configuration. */
-  pagination?: DataGridPaginationConfig;
-  /** Key to uniquely identify each row, or a function to generate it. */
-  rowKey?: string | ((record: T) => string);
-  /** Callback for row events (e.g., click, double click). */
-  onRow?: (
-    record: T,
-    index: number,
-  ) => {
-    onClick?: (event: React.MouseEvent) => void;
-    onDoubleClick?: (event: React.MouseEvent) => void;
-  };
-  /** Callback triggered when pagination changes. */
-  onPaginationChange?: (page: number, pageSize: number) => void;
-  /** Callback triggered when sorting changes. If provided, assumes server-side sorting. */
-  onSortChange?: (field: string, order: "asc" | "desc" | null) => void;
-  /** Callback triggered when filters change. (Not yet implemented in component logic) */
-  onFilterChange?: (filters: Record<string, any>) => void;
-  /** Row selection configuration. */
-  rowSelection?: DataGridRowSelectionConfig<T>;
-  /** Actions configuration for each row. */
-  actions?: DataGridRowActionsConfig<T>;
-  /** Toolbar configuration for the grid header. */
-  toolbar?: DataGridToolbarConfig;
-  /** Additional CSS class names for the root element. */
-  className?: string;
-  /** Size variant for the grid (e.g., "small", "middle", "large"). (Not fully implemented in styling) */
-  size?: "small" | "middle" | "large";
-  /** Whether to display borders around the table. */
-  bordered?: boolean;
-  /** Whether to display striped rows. */
-  striped?: boolean;
-  /** Whether rows should show a hover effect. */
-  hoverable?: boolean;
-  /** Custom icon components to override defaults. */
-  icons?: DataGridIcons;
-}
-// /workspaces/TrvicERP/src/design-system/DataGrid.icons.ts
-
-import {
-  ChevronDown,
-  ChevronUp,
-  Search,
-  Filter,
-  Download,
-  MoreVertical,
-  Eye,
-  Edit,
-  Trash2,
-  RefreshCw,
-  ArrowUpDown,
-} from "lucide-react";
-import { IconComponentType, DataGridIcons } from "./DataGrid.types";
-
-/**
- * Default icon components for DataGrid, using Lucide React.
- * This file centralizes the dependency on `lucide-react`.
- */
-export const defaultDataGridIcons: DataGridIcons = {
-  SortAsc: ChevronUp,
-  SortDesc: ChevronDown,
-  SortDefault: ArrowUpDown,
-  Search: Search,
-  Filter: Filter,
-  Download: Download,
-  MoreVertical: MoreVertical,
-  Eye: Eye,
-  Edit: Edit,
-  Trash2: Trash2,
-  Refresh: RefreshCw,
-  Loading: RefreshCw, // Use RefreshCw for loading spinner
-} satisfies Record<keyof DataGridIcons, IconComponentType>;

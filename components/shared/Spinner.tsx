@@ -1,17 +1,17 @@
 import React from "react";
 
-type SpinnerProps = {
+interface SpinnerConfig {
   size?: "sm" | "md" | "lg";
   className?: string;
   ariaLabel?: string;
-};
+}
 
-export default function Spinner({ size = "md", className = "", ariaLabel = "載入中" }: SpinnerProps) {
+export default function Spinner({ size = "md", className = "", ariaLabel = "載入中" }: SpinnerConfig) {
   const dims = size === "sm" ? "w-4 h-4" : size === "lg" ? "w-12 h-12" : "w-8 h-8";
   return (
     <div role="status" className={`flex items-center justify-center ${className}`} aria-label={ariaLabel}>
       <svg
-        className={`${dims} animate-spin text-brand-600`}
+        className={`${dims} animate-spin text-primary-900`}
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"

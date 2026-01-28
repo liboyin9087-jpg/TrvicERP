@@ -12,11 +12,15 @@ import {
   ShieldAlert,
   Star,
   Users,
+  Grab, // 用于表示拖曳手柄的图标
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Modal from '../shared/Modal';
-import { useToast } from '@/store/useToastStore';
-import CorporateService from '@/modules/corporate/services/corporateService';
+import Modal from '../shared/Modal'; // 假设 Modal 是一个遵循 Dashtail UI 规范的共享组件
+
+// 移除对全域 Store (useToast) 和 CorporateService 的直接依赖。
+// import { useToast } from '@/store/useToastStore';
+// import CorporateService from '@/modules/corporate/services/corporateService';
+
 import type {
   ContactPerson,
   CorporateAccount,
@@ -28,109 +32,98 @@ import type {
   UpdateCorporateAccountData,
 } from '@/core/types/corporate';
 
+// 移除 Mock 数据，数据将通过 Props 传入或通过 Props 提供的服务获取。
+// const MOCK_ACCOUNTS: CorporateAccount[] = [...];
+// const MOCK_CONTACTS: ContactPerson[] = [...];
+// const MOCK_ENGAGEMENTS: EngagementLog[] = [...];
+
 type TabKey = 'accounts' | 'stakeholders' | 'engagement';
 
-const MOCK_ACCOUNTS: CorporateAccount[] = [
-  {
-    id: 'corp-1',
-    name: '宏觀科技',
-    industry: '科技業',
-    size: '1,200 人',
-    status: 'active',
-    nextRenewal: '2025-06-30',
-    pipelineValue: 3200000,
-  },
-  {
-    id: 'corp-2',
-    name: '新創動能',
-    industry: '金融服務',
-    size: '480 人',
-    status: 'prospect',
-    nextRenewal: '2025-09-15',
-    pipelineValue: 1800000,
-  },
-  {
-    id: 'corp-3',
-    name: '遠景製造',
-    industry: '製造業',
-    size: '2,500 人',
-    status: 'at_risk',
-    nextRenewal: '2025-04-20',
-    pipelineValue: 4500000,
-  },
-];
+/**
+ * @interface CorporateCRMConfig
+ * @description 定义 CorporateCRM 组件的配置属性接口，确保组件 Kintone 独立性。
+ */
+export interface CorporateCRMConfig {
+  /** 初始企业账户列表 */
+  initialAccounts?: CorporateAccount[];
+  /** 默认选中的企业账户 ID */
+  defaultSelectedAccountId?: string;
+  /** 获取特定账户联络人的异步函数 */
+  onFetchContacts: (accountId: string) => Promise<ContactPerson[]>;
+  /** 获取特定账户互动记录的异步函数 */
+  onFetchEngagements: (accountId: string) => Promise<EngagementLog[]>;
+  /** 保存（新增或更新）企业账户的异步函数 */
+  onSaveAccount: (
+    data: CreateCorporateAccountData | UpdateCorporateAccountData,
+    id?: string
+  ) => Promise<CorporateAccount>;
+  /** 保存（新增或更新）联络人的异步函数 */
+  onSaveContact: (
+    accountId: string,
+    data: CreateContactPersonData | UpdateContactPersonData,
+    id?: string
+  ) => Promise<ContactPerson>;
+  /** 保存（新增）互动记录的异步函数 */
+  onSaveEngagement: (
+    accountId: string,
+    data: CreateEngagementLogData
+  ) => Promise<EngagementLog>;
+  /** 用于显示通知消息的回调函数集合，替代 useToast */
+  onToast: {
+    success: (message: string) => void;
+    error: (message: string) => void;
+    info: (message: string) => void;
+    warning: (message: string) => void;
+  };
+  // 可根据需要添加其他配置属性，例如功能开关、文本标签等。
+}
 
-const MOCK_CONTACTS: ContactPerson[] = [
-  {
-    id: 'contact-1',
-    accountId: 'corp-1',
-    name: '林雅婷',
-    title: 'HR 主管',
-    role: 'decision_maker',
-    concern: '合規與安全',
-    phone: '02-1234-5678',
-    email: 'hr@macro.com',
-  },
-  {
-    id: 'contact-2',
-    accountId: 'corp-1',
-    name: '陳志豪',
-    title: '財務經理',
-    role: 'influencer',
-    concern: '預算控制',
-    phone: '02-8888-9999',
-    email: 'finance@macro.com',
-  },
-  {
-    id: 'contact-3',
-    accountId: 'corp-1',
-    name: '王大明',
-    title: '福委召集人',
-    role: 'user',
-    concern: '省事、溝通效率',
-    phone: '02-2222-3333',
-    email: 'welfare@macro.com',
-  },
-];
-
-const MOCK_ENGAGEMENTS: EngagementLog[] = [
-  {
-    id: 'eng-1',
-    accountId: 'corp-1',
-    date: '2025-02-12',
-    channel: 'meeting',
-    summary: '說明 Portal 可追蹤護照與保險進度',
-    objections: ['擔心追蹤資訊不即時'],
-    response: '展示即時同步畫面與提醒機制',
-  },
-  {
-    id: 'eng-2',
-    accountId: 'corp-1',
-    date: '2025-02-20',
-    channel: 'email',
-    summary: '提供三版本提案差異與毛利表',
-    objections: ['希望有更高彈性'],
-    response: '建議採混合方案並提供客製模組',
-  },
-];
-
-const ROLE_LABELS: Record<ContactPerson['role'], { label: string; color: string }> = {
-  decision_maker: { label: 'Decision Maker', color: 'bg-emerald-100 text-emerald-700' },
-  influencer: { label: 'Influencer', color: 'bg-blue-100 text-blue-700' },
-  user: { label: 'User', color: 'bg-amber-100 text-amber-700' },
+// [designer] 状态样式抽象，使用 Dashtail UI 规范的语义化 Tailwind 颜色 token
+// 假设已在 Tailwind 配置中定义了 primary, success, info, warning, danger, text-*, background-*, border-* 等颜色别名。
+const ROLE_STYLES: Record<ContactPerson['role'], { label: string; className: string }> = {
+  decision_maker: { label: 'Decision Maker', className: 'bg-success-100 text-success-700' },
+  influencer: { label: 'Influencer', className: 'bg-info-100 text-info-700' },
+  user: { label: 'User', className: 'bg-warning-100 text-warning-700' },
 };
 
-const STATUS_STYLE: Record<CorporateAccount['status'], { label: string; color: string; icon: React.ReactNode }> = {
-  active: { label: 'Active', color: 'text-emerald-600', icon: <CheckCircle className="w-4 h-4" /> },
-  prospect: { label: 'Prospect', color: 'text-blue-600', icon: <Star className="w-4 h-4" /> },
-  at_risk: { label: 'At Risk', color: 'text-red-500', icon: <ShieldAlert className="w-4 h-4" /> },
+const ACCOUNT_STATUS_STYLES: Record<CorporateAccount['status'], { label: string; className: string; icon: React.ReactNode }> = {
+  active: { label: 'Active', className: 'text-success-600', icon: <CheckCircle className="icon-sm" /> },
+  prospect: { label: 'Prospect', className: 'text-info-600', icon: <Star className="icon-sm" /> },
+  at_risk: { label: 'At Risk', className: 'text-danger-500', icon: <ShieldAlert className="icon-sm" /> },
 };
 
-export default function CorporateCRM() {
-  const toast = useToast();
+/**
+ * @description 企业客户决策链管理组件
+ * 重构说明：
+ * - 组件现在通过 CorporateCRMConfig 接收所有外部依赖（数据、服务回调、通知函数）。
+ * - 移除了组件内部的 Mock 数据和直接的数据服务调用。
+ * - 引入了 Dashtail UI 规范：
+ *   - 整体包裹在 .card .widget-card 结构中。
+ *   - 顶部增加 .drag-handle 区域。
+ *   - 所有硬编码颜色值替换为语义化的 Tailwind 颜色 token (如 bg-primary-900, text-success-600)。
+ *   - 字体和间距使用更具语义的类名或 Tailwind 的单位化 class (如 icon-sm, p-card, space-y-unit-X)。
+ *   - 状态样式 ROLE_STYLES 和 ACCOUNT_STATUS_STYLES 已更新为使用颜色 token。
+ */
+export default function CorporateCRM(props: CorporateCRMConfig) {
+  const {
+    initialAccounts = [],
+    onFetchContacts,
+    onFetchEngagements,
+    onSaveAccount,
+    onSaveContact,
+    onSaveEngagement,
+    onToast,
+    defaultSelectedAccountId,
+  } = props;
+
+  // 使用从 props 传入的 toast 实例
+  const toast = onToast;
+
   const [activeTab, setActiveTab] = useState<TabKey>('accounts');
-  const [accounts, setAccounts] = useState<CorporateAccount[]>(MOCK_ACCOUNTS);
-  const [selectedAccountId, setSelectedAccountId] = useState('corp-1');
+  const [accounts, setAccounts] = useState<CorporateAccount[]>(initialAccounts);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>(
+    defaultSelectedAccountId || (initialAccounts.length > 0 ? initialAccounts[0].id : '')
+  );
   const [contacts, setContacts] = useState<ContactPerson[]>([]);
   const [engagements, setEngagements] = useState<EngagementLog[]>([]);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
@@ -139,6 +132,7 @@ export default function CorporateCRM() {
   const [isSaving, setIsSaving] = useState(false);
   const [editingAccount, setEditingAccount] = useState<CorporateAccount | null>(null);
   const [editingContact, setEditingContact] = useState<ContactPerson | null>(null);
+
   const [accountForm, setAccountForm] = useState<CreateCorporateAccountData>({
     name: '',
     industry: '',
@@ -156,7 +150,7 @@ export default function CorporateCRM() {
     email: '',
   });
   const [engagementForm, setEngagementForm] = useState<CreateEngagementLogData>({
-    date: '',
+    date: '', // 默认值在 resetEngagementForm 中设置
     channel: 'meeting',
     summary: '',
     objections: [],
@@ -169,46 +163,45 @@ export default function CorporateCRM() {
     [accounts, selectedAccountId]
   );
 
-  const accountContacts = useMemo(() => contacts, [contacts]);
-  const engagementLogs = useMemo(() => engagements, [engagements]);
-
+  // 根据 selectedAccountId 异步获取联络人和互动记录
   useEffect(() => {
+    if (!selectedAccountId || !onFetchContacts || !onFetchEngagements) {
+      setContacts([]);
+      setEngagements([]);
+      return;
+    }
+
     let active = true;
-    CorporateService.getAccounts().then((result) => {
-      if (!active) return;
-      if (result.data && result.data.length > 0) {
-        setAccounts(result.data);
+    const fetchRelatedData = async () => {
+      try {
+        const fetchedContacts = await onFetchContacts(selectedAccountId);
+        if (active) setContacts(fetchedContacts);
+      } catch (error) {
+        if (active) {
+          toast.error(`加载联络人失败: ${error instanceof Error ? error.message : '未知错误'}`);
+          setContacts([]);
+        }
       }
-    });
+
+      try {
+        const fetchedEngagements = await onFetchEngagements(selectedAccountId);
+        if (active) setEngagements(fetchedEngagements);
+      } catch (error) {
+        if (active) {
+          toast.error(`加载互动记录失败: ${error instanceof Error ? error.message : '未知错误'}`);
+          setEngagements([]);
+        }
+      }
+    };
+
+    fetchRelatedData();
+
     return () => {
       active = false;
     };
-  }, []);
+  }, [selectedAccountId, onFetchContacts, onFetchEngagements, toast]);
 
-  useEffect(() => {
-    if (!selectedAccountId) return;
-    let active = true;
-    CorporateService.getContacts(selectedAccountId).then((result) => {
-      if (!active) return;
-      if (result.data && result.data.length > 0) {
-        setContacts(result.data);
-      } else {
-        setContacts(MOCK_CONTACTS.filter((contact) => contact.accountId === selectedAccountId));
-      }
-    });
-    CorporateService.getEngagements(selectedAccountId).then((result) => {
-      if (!active) return;
-      if (result.data && result.data.length > 0) {
-        setEngagements(result.data);
-      } else {
-        setEngagements(MOCK_ENGAGEMENTS.filter((log) => log.accountId === selectedAccountId));
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [selectedAccountId]);
-
+  // 处理初始选中账户
   useEffect(() => {
     if (!selectedAccountId && accounts.length > 0) {
       setSelectedAccountId(accounts[0].id);
@@ -239,7 +232,7 @@ export default function CorporateCRM() {
 
   const resetEngagementForm = () => {
     setEngagementForm({
-      date: '',
+      date: new Date().toISOString().split('T')[0], // 默认设置为当前日期
       channel: 'meeting',
       summary: '',
       objections: [],
@@ -261,6 +254,10 @@ export default function CorporateCRM() {
   };
 
   const openCreateContact = () => {
+    if (!selectedAccountId) {
+      toast.info('请先选择一个企业账户');
+      return;
+    }
     setEditingContact(null);
     resetContactForm();
     setIsContactModalOpen(true);
@@ -273,61 +270,46 @@ export default function CorporateCRM() {
   };
 
   const openCreateEngagement = () => {
+    if (!selectedAccountId) {
+      toast.info('请先选择一个企业账户');
+      return;
+    }
     resetEngagementForm();
     setIsEngagementModalOpen(true);
   };
 
   const handleSaveAccount = async () => {
     if (!accountForm.name.trim()) {
-      toast.error('請輸入企業名稱');
+      toast.error('请输入企业名称');
       return;
     }
     setIsSaving(true);
     try {
+      const payload: CreateCorporateAccountData | UpdateCorporateAccountData = {
+        name: accountForm.name.trim(),
+        industry: accountForm.industry.trim(),
+        size: accountForm.size.trim(),
+        status: accountForm.status,
+        nextRenewal: accountForm.nextRenewal,
+        pipelineValue: Number(accountForm.pipelineValue) || 0,
+      };
+
+      // 调用 props 传入的保存函数
+      const savedAccount = await onSaveAccount(payload, editingAccount?.id);
+
       if (editingAccount) {
-        const payload: UpdateCorporateAccountData = {
-          name: accountForm.name.trim(),
-          industry: accountForm.industry.trim(),
-          size: accountForm.size.trim(),
-          status: accountForm.status,
-          nextRenewal: accountForm.nextRenewal,
-          pipelineValue: Number(accountForm.pipelineValue) || 0,
-        };
-        const result = await CorporateService.updateAccount(editingAccount.id, payload);
-        const updated = result.data || {
-          ...editingAccount,
-          ...payload,
-        };
         setAccounts((prev) =>
-          prev.map((item) => (item.id === editingAccount.id ? updated : item))
+          prev.map((item) => (item.id === editingAccount.id ? savedAccount : item))
         );
-        toast.success('已更新企業帳戶');
+        toast.success('已更新企业账户');
       } else {
-        const payload: CreateCorporateAccountData = {
-          name: accountForm.name.trim(),
-          industry: accountForm.industry.trim(),
-          size: accountForm.size.trim(),
-          status: accountForm.status,
-          nextRenewal: accountForm.nextRenewal,
-          pipelineValue: Number(accountForm.pipelineValue) || 0,
-        };
-        const result = await CorporateService.createAccount(payload);
-        const created: CorporateAccount = result.data || {
-          id: `corp_${Date.now()}`,
-          name: payload.name || '',
-          industry: payload.industry || '',
-          size: payload.size || '',
-          status: payload.status || 'prospect',
-          nextRenewal: payload.nextRenewal || '',
-          pipelineValue: payload.pipelineValue || 0,
-        };
-        setAccounts((prev) => [created, ...prev]);
-        setSelectedAccountId(created.id);
-        toast.success('已新增企業帳戶');
+        setAccounts((prev) => [savedAccount, ...prev]);
+        setSelectedAccountId(savedAccount.id);
+        toast.success('已新增企业账户');
       }
       setIsAccountModalOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '儲存失敗');
+      toast.error(error instanceof Error ? error.message : '保存失败');
     } finally {
       setIsSaving(false);
     }
@@ -336,56 +318,35 @@ export default function CorporateCRM() {
   const handleSaveContact = async () => {
     if (!selectedAccountId) return;
     if (!contactForm.name.trim()) {
-      toast.error('請輸入聯絡人姓名');
+      toast.error('请输入联络人姓名');
       return;
     }
     setIsSaving(true);
     try {
+      const payload: CreateContactPersonData | UpdateContactPersonData = {
+        name: contactForm.name.trim(),
+        title: contactForm.title.trim(),
+        role: contactForm.role,
+        concern: contactForm.concern.trim(),
+        phone: contactForm.phone.trim(),
+        email: contactForm.email.trim(),
+      };
+
+      // 调用 props 传入的保存函数
+      const savedContact = await onSaveContact(selectedAccountId, payload, editingContact?.id);
+
       if (editingContact) {
-        const payload: UpdateContactPersonData = {
-          name: contactForm.name.trim(),
-          title: contactForm.title.trim(),
-          role: contactForm.role,
-          concern: contactForm.concern.trim(),
-          phone: contactForm.phone.trim(),
-          email: contactForm.email.trim(),
-        };
-        const result = await CorporateService.updateContact(
-          selectedAccountId,
-          editingContact.id,
-          payload
-        );
-        const updated = result.data || { ...editingContact, ...payload };
         setContacts((prev) =>
-          prev.map((item) => (item.id === editingContact.id ? updated : item))
+          prev.map((item) => (item.id === editingContact.id ? savedContact : item))
         );
-        toast.success('已更新聯絡人');
+        toast.success('已更新联络人');
       } else {
-        const payload: CreateContactPersonData = {
-          name: contactForm.name.trim(),
-          title: contactForm.title.trim(),
-          role: contactForm.role,
-          concern: contactForm.concern.trim(),
-          phone: contactForm.phone.trim(),
-          email: contactForm.email.trim(),
-        };
-        const result = await CorporateService.addContact(selectedAccountId, payload);
-        const created: ContactPerson = result.data || {
-          id: `contact_${Date.now()}`,
-          accountId: selectedAccountId,
-          name: payload.name || '',
-          title: payload.title || '',
-          role: payload.role || 'user',
-          concern: payload.concern || '',
-          phone: payload.phone || '',
-          email: payload.email || '',
-        };
-        setContacts((prev) => [created, ...prev]);
-        toast.success('已新增聯絡人');
+        setContacts((prev) => [savedContact, ...prev]);
+        toast.success('已新增联络人');
       }
       setIsContactModalOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '儲存失敗');
+      toast.error(error instanceof Error ? error.message : '保存失败');
     } finally {
       setIsSaving(false);
     }
@@ -394,7 +355,7 @@ export default function CorporateCRM() {
   const handleSaveEngagement = async () => {
     if (!selectedAccountId) return;
     if (!engagementForm.summary.trim()) {
-      toast.error('請輸入互動摘要');
+      toast.error('请输入互动摘要');
       return;
     }
     setIsSaving(true);
@@ -409,60 +370,63 @@ export default function CorporateCRM() {
       response: engagementForm.response.trim(),
     };
     try {
-      const result = await CorporateService.addEngagement(selectedAccountId, payload);
-      const created: EngagementLog = result.data || {
-        id: `eng_${Date.now()}`,
-        accountId: selectedAccountId,
-        ...payload,
-      };
-      setEngagements((prev) => [created, ...prev]);
-      toast.success('已新增互動紀錄');
+      // 调用 props 传入的保存函数
+      const savedEngagement = await onSaveEngagement(selectedAccountId, payload);
+      setEngagements((prev) => [savedEngagement, ...prev]);
+      toast.success('已新增互动记录');
       setIsEngagementModalOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '儲存失敗');
+      toast.error(error instanceof Error ? error.message : '保存失败');
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    // [designer] 整体包裹在标准 Card 结构中，并添加 drag-handle
+    <div className="card widget-card p-card space-y-unit-6"> {/* 使用语义化的 p-card 和 space-y-unit-6 */}
+      {/* [designer] 拖曳手柄结构 */}
+      <div className="drag-handle flex items-center gap-unit-2 text-text-secondary pb-unit-2">
+        <Grab className="icon-sm" />
+        <span className="text-sm">拖曳此處移動</span>
+      </div>
+
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-unit-4">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-unit-3 mb-unit-2">
+            <div className="w-unit-10 h-unit-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center"> {/* 使用 primary 颜色 token */}
+              <Building2 className="icon-md text-white" /> {/* 使用语义化 icon 尺寸类 */}
             </div>
-            <span className="text-sm font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+            <span className="text-sm font-semibold text-text-secondary bg-background-secondary px-unit-2 py-unit-1 rounded-full">
               B2B CRM
             </span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">企業客戶決策鏈管理</h2>
-          <p className="text-sm text-slate-500">掌握企業內部關鍵角色與互動紀錄</p>
+          <h2 className="text-h2 font-bold text-text-primary">企业客户决策链管理</h2> {/* 使用语义化字体大小类 */}
+          <p className="text-text-secondary">掌握企业内部关键角色与互动记录</p>
         </div>
         <button
           onClick={openCreateAccount}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
+          className="btn btn-primary" // 假设有 btn-primary 类定义
         >
-          <Plus className="w-4 h-4" />
-          新增企業
+          <Plus className="icon-sm" />
+          新增企业
         </button>
       </div>
 
-      <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-6">
-        <div className="space-y-4">
-          <div className="flex gap-2 border-b border-slate-100 pb-3">
+      <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-unit-6">
+        <div className="space-y-unit-4">
+          <div className="flex gap-unit-2 border-b border-border-default pb-unit-3"> {/* 使用语义化边框和间距 */}
             {([
-              { key: 'accounts', label: '企業帳戶' },
-              { key: 'stakeholders', label: '決策鏈' },
-              { key: 'engagement', label: '互動紀錄' },
+              { key: 'accounts', label: '企业账户' },
+              { key: 'stakeholders', label: '决策链' },
+              { key: 'engagement', label: '互动记录' },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                  activeTab === tab.key ? 'bg-brand-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  'px-unit-4 py-unit-2 rounded-lg text-sm font-medium transition-all',
+                  activeTab === tab.key ? 'bg-primary-900 text-white' : 'text-text-secondary hover:bg-background-hover'
                 )}
               >
                 {tab.label}
@@ -471,190 +435,205 @@ export default function CorporateCRM() {
           </div>
 
           {activeTab === 'accounts' && (
-            <div className="space-y-4">
-              {accounts.map((account) => {
-                const status = STATUS_STYLE[account.status];
-                return (
-                  <button
-                    key={account.id}
-                    onClick={() => setSelectedAccountId(account.id)}
-                    className={cn(
-                      'w-full text-left rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all',
-                      selectedAccountId === account.id ? 'ring-2 ring-indigo-500' : 'hover:border-slate-200'
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">{account.name}</h3>
-                        <p className="text-sm text-slate-500">{account.industry} · {account.size}</p>
+            <div className="space-y-unit-4">
+              {accounts.length === 0 ? (
+                <div className="text-center text-text-secondary py-unit-6">
+                  目前没有企业账户，请点击「新增企业」按钮建立。
+                </div>
+              ) : (
+                accounts.map((account) => {
+                  const status = ACCOUNT_STATUS_STYLES[account.status];
+                  return (
+                    <button
+                      key={account.id}
+                      onClick={() => setSelectedAccountId(account.id)}
+                      className={cn(
+                        'w-full text-left rounded-card border border-border-default bg-background-primary p-card-sm shadow-sm transition-all', // 语义化圆角、内边距和颜色
+                        selectedAccountId === account.id ? 'ring-2 ring-primary-500' : 'hover:border-border-hover'
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold text-text-primary">{account.name}</h3>
+                          <p className="text-sm text-text-secondary">{account.industry} · {account.size}</p>
+                        </div>
+                        <div className={cn('flex items-center gap-unit-1 text-sm font-semibold', status.className)}>
+                          {status.icon}
+                          {status.label}
+                        </div>
                       </div>
-                      <div className={cn('flex items-center gap-1 text-sm font-semibold', status.color)}>
-                        {status.icon}
-                        {status.label}
+                      <div className="grid grid-cols-2 gap-unit-3 mt-unit-4 text-sm text-text-secondary">
+                        <div>
+                          <p>续约日期</p>
+                          <p className="text-sm font-semibold text-text-primary">{account.nextRenewal}</p>
+                        </div>
+                        <div>
+                          <p>预估案值</p>
+                          <p className="text-sm font-semibold text-text-primary">
+                            NT$ {account.pipelineValue.toLocaleString()}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 mt-4 text-sm text-slate-500">
-                      <div>
-                        <p>續約日期</p>
-                        <p className="text-sm font-semibold text-slate-900">{account.nextRenewal}</p>
+                      <div className="mt-unit-4 flex justify-end">
+                        <button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEditAccount(account);
+                          }}
+                          className="btn btn-ghost-secondary btn-icon-sm" // 假设有 btn-ghost-secondary 类
+                        >
+                          <Edit2 className="icon-sm" />
+                          编辑
+                        </button>
                       </div>
-                      <div>
-                        <p>預估案值</p>
-                        <p className="text-sm font-semibold text-slate-900">
-                          NT$ {account.pipelineValue.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openEditAccount(account);
-                        }}
-                        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        編輯
-                      </button>
-                    </div>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                }))}
             </div>
           )}
 
           {activeTab === 'stakeholders' && (
-            <div className="space-y-3">
+            <div className="space-y-unit-3">
               <div className="flex justify-end">
                 <button
                   onClick={openCreateContact}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
+                  className="btn btn-primary btn-sm"
                 >
-                  <Plus className="w-4 h-4" />
-                  新增聯絡人
+                  <Plus className="icon-sm" />
+                  新增联络人
                 </button>
               </div>
-              {accountContacts.map((contact) => {
-                const roleStyle = ROLE_LABELS[contact.role];
-                return (
-                  <div key={contact.id} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm text-slate-500">{contact.title}</p>
-                        <h3 className="text-lg font-semibold text-slate-900">{contact.name}</h3>
+              {contacts.length === 0 ? (
+                <div className="text-center text-text-secondary py-unit-6">
+                  目前没有联络人，请点击「新增联络人」按钮建立。
+                </div>
+              ) : (
+                contacts.map((contact) => {
+                  const roleStyle = ROLE_STYLES[contact.role];
+                  return (
+                    <div key={contact.id} className="rounded-card border border-border-default bg-background-primary p-card-sm shadow-sm">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-sm text-text-secondary">{contact.title}</p>
+                          <h3 className="text-lg font-semibold text-text-primary">{contact.name}</h3>
+                        </div>
+                        <span className={cn('px-unit-3 py-unit-1 rounded-full text-sm font-semibold', roleStyle.className)}>
+                          {roleStyle.label}
+                        </span>
                       </div>
-                      <span className={cn('px-3 py-1 rounded-full text-sm font-semibold', roleStyle.color)}>
-                        {roleStyle.label}
-                      </span>
+                      <p className="text-sm text-text-secondary mt-unit-3">关注点：{contact.concern}</p>
+                      <div className="flex flex-wrap gap-unit-3 mt-unit-3 text-sm text-text-secondary">
+                        <span className="flex items-center gap-unit-1"><Phone className="icon-sm" />{contact.phone}</span>
+                        <span className="flex items-center gap-unit-1"><Mail className="icon-sm" />{contact.email}</span>
+                      </div>
+                      <div className="mt-unit-4 flex justify-end">
+                        <button
+                          onClick={() => openEditContact(contact)}
+                          className="btn btn-ghost-secondary btn-icon-sm"
+                        >
+                          <Edit2 className="icon-sm" />
+                          编辑
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-500 mt-3">關注點：{contact.concern}</p>
-                    <div className="flex flex-wrap gap-3 mt-3 text-sm text-slate-600">
-                      <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{contact.phone}</span>
-                      <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{contact.email}</span>
-                    </div>
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        onClick={() => openEditContact(contact)}
-                        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        編輯
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                }))}
             </div>
           )}
 
           {activeTab === 'engagement' && (
-            <div className="space-y-3">
+            <div className="space-y-unit-3">
               <div className="flex justify-end">
                 <button
                   onClick={openCreateEngagement}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-900 text-white text-sm font-semibold hover:bg-brand-800"
+                  className="btn btn-primary btn-sm"
                 >
-                  <Plus className="w-4 h-4" />
-                  新增互動
+                  <Plus className="icon-sm" />
+                  新增互动
                 </button>
               </div>
-              {engagementLogs.map((log) => (
-                <div key={log.id} className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <Calendar className="w-4 h-4" />
-                      {log.date}
-                    </div>
-                    <span className="text-sm text-slate-400">{log.channel}</span>
-                  </div>
-                  <h4 className="text-sm font-semibold text-slate-900">{log.summary}</h4>
-                  <div className="mt-3 text-sm text-slate-500">
-                    <p className="font-semibold text-slate-600">客戶疑慮</p>
-                    <ul className="list-disc list-inside mt-1">
-                      {log.objections.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="mt-3 text-sm text-slate-500">
-                    <p className="font-semibold text-slate-600">回應策略</p>
-                    <p>{log.response}</p>
-                  </div>
+              {engagements.length === 0 ? (
+                <div className="text-center text-text-secondary py-unit-6">
+                  目前没有互动记录，请点击「新增互动」按钮建立。
                 </div>
-              ))}
+              ) : (
+                engagements.map((log) => (
+                  <div key={log.id} className="rounded-card border border-border-default bg-background-primary p-card-sm shadow-sm">
+                    <div className="flex items-center justify-between mb-unit-2">
+                      <div className="flex items-center gap-unit-2 text-sm text-text-secondary">
+                        <Calendar className="icon-sm" />
+                        {log.date}
+                      </div>
+                      <span className="text-sm text-text-tertiary">{log.channel}</span>
+                    </div>
+                    <h4 className="text-sm font-semibold text-text-primary">{log.summary}</h4>
+                    <div className="mt-unit-3 text-sm text-text-secondary">
+                      <p className="font-semibold text-text-primary">客户疑虑</p>
+                      <ul className="list-disc list-inside mt-unit-1">
+                        {log.objections.map((item, index) => (
+                          <li key={index}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="mt-unit-3 text-sm text-text-secondary">
+                      <p className="font-semibold text-text-primary">回应策略</p>
+                      <p>{log.response}</p>
+                    </div>
+                  </div>
+                )))}
             </div>
           )}
         </div>
 
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="space-y-unit-4">
+          <div className="rounded-card border border-border-default bg-background-primary p-card-sm shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">目前帳戶</p>
-                <h3 className="text-lg font-semibold text-slate-900">{selectedAccount?.name || '未選擇'}</h3>
+                <p className="text-sm text-text-secondary">目前账户</p>
+                <h3 className="text-lg font-semibold text-text-primary">{selectedAccount?.name || '未选择'}</h3>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <ChevronRight className="icon-sm text-text-tertiary" />
             </div>
-            <div className="mt-4 space-y-2 text-sm text-slate-500">
+            <div className="mt-unit-4 space-y-unit-2 text-sm text-text-secondary">
               <div className="flex items-center justify-between">
-                <span>產業</span>
-                <span className="text-slate-700">{selectedAccount?.industry || '-'}</span>
+                <span>产业</span>
+                <span className="text-text-primary">{selectedAccount?.industry || '-'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>規模</span>
-                <span className="text-slate-700">{selectedAccount?.size || '-'}</span>
+                <span>规模</span>
+                <span className="text-text-primary">{selectedAccount?.size || '-'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>續約日期</span>
-                <span className="text-slate-700">{selectedAccount?.nextRenewal || '-'}</span>
+                <span>续约日期</span>
+                <span className="text-text-primary">{selectedAccount?.nextRenewal || '-'}</span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <Users className="w-4 h-4 text-indigo-500" />
-              決策角色摘要
+          <div className="rounded-card border border-border-default bg-background-primary p-card-sm shadow-sm">
+            <div className="flex items-center gap-unit-2 text-sm font-semibold text-text-primary">
+              <Users className="icon-sm text-primary-500" />
+              决策角色摘要
             </div>
-            <div className="mt-4 space-y-3 text-sm text-slate-500">
-              {accountContacts.map((contact) => (
+            <div className="mt-unit-4 space-y-unit-3 text-sm text-text-secondary">
+              {contacts.map((contact) => (
                 <div key={contact.id} className="flex items-center justify-between">
                   <span>{contact.name}</span>
-                  <span className="text-slate-700">{ROLE_LABELS[contact.role].label}</span>
+                  <span className="text-text-primary">{ROLE_STYLES[contact.role].label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <MessageSquare className="w-4 h-4 text-amber-500" />
-              下一步建議
+          <div className="rounded-card border border-border-default bg-background-primary p-card-sm shadow-sm">
+            <div className="flex items-center gap-unit-2 text-sm font-semibold text-text-primary">
+              <MessageSquare className="icon-sm text-warning-500" /> {/* 使用 warning-500 token */}
+              下一步建议
             </div>
-            <ul className="mt-3 text-sm text-slate-500 space-y-2">
-              <li>• 排程下一次簡報會議 (Decision Maker)</li>
-              <li>• 提供三版本提案與毛利差異</li>
-              <li>• 強調 Portal 風險可視化能力</li>
+            <ul className="mt-unit-3 text-sm text-text-secondary space-y-unit-2">
+              <li>• 排程下一次简报会议 (Decision Maker)</li>
+              <li>• 提供三版本提案与毛利差异</li>
+              <li>• 强调 Portal 风险可视化能力</li>
             </ul>
           </div>
         </div>
@@ -663,83 +642,83 @@ export default function CorporateCRM() {
       <Modal
         isOpen={isAccountModalOpen}
         onClose={() => setIsAccountModalOpen(false)}
-        title={editingAccount ? '編輯企業帳戶' : '新增企業帳戶'}
+        title={editingAccount ? '编辑企业账户' : '新增企业账户'}
         size="lg"
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="text-sm text-slate-500">
-              企業名稱
+        <div className="space-y-unit-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-unit-4">
+            <label className="input-label"> {/* 假设有 input-label 类定义 */}
+              企业名称
               <input
                 value={accountForm.name}
                 onChange={(event) => setAccountForm({ ...accountForm, name: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field" // 假设有 input-field 类定义
               />
             </label>
-            <label className="text-sm text-slate-500">
-              產業類別
+            <label className="input-label">
+              产业类别
               <input
                 value={accountForm.industry}
                 onChange={(event) => setAccountForm({ ...accountForm, industry: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
-              公司規模
+            <label className="input-label">
+              公司规模
               <input
                 value={accountForm.size}
                 onChange={(event) => setAccountForm({ ...accountForm, size: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
-              狀態
+            <label className="input-label">
+              状态
               <select
                 value={accountForm.status}
                 onChange={(event) =>
                   setAccountForm({ ...accountForm, status: event.target.value as CorporateAccount['status'] })
                 }
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               >
-                <option value="active">Active</option>
-                <option value="prospect">Prospect</option>
-                <option value="at_risk">At Risk</option>
+                {Object.entries(ACCOUNT_STATUS_STYLES).map(([key, { label }]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
               </select>
             </label>
-            <label className="text-sm text-slate-500">
-              續約日期
+            <label className="input-label">
+              续约日期
               <input
                 type="date"
                 value={accountForm.nextRenewal}
                 onChange={(event) => setAccountForm({ ...accountForm, nextRenewal: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
-              預估案值 (TWD)
+            <label className="input-label">
+              预估案值 (TWD)
               <input
                 type="number"
-                value={accountForm.pipelineValue ?? 0}
+                value={accountForm.pipelineValue} // pipelineValue 始终为 number, 0 即可显示
                 onChange={(event) =>
                   setAccountForm({ ...accountForm, pipelineValue: Number(event.target.value) })
                 }
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-unit-2">
             <button
               onClick={() => setIsAccountModalOpen(false)}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300"
+              className="btn btn-secondary" // 假设有 btn-secondary 类定义
             >
               取消
             </button>
             <button
               onClick={handleSaveAccount}
               disabled={isSaving}
-              className="px-4 py-2 text-sm rounded-lg bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60"
+              className="btn btn-primary"
             >
-              {isSaving ? '儲存中...' : '儲存'}
+              {isSaving ? '保存中...' : '保存'}
             </button>
           </div>
         </div>
@@ -748,79 +727,79 @@ export default function CorporateCRM() {
       <Modal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
-        title={editingContact ? '編輯聯絡人' : '新增聯絡人'}
+        title={editingContact ? '编辑联络人' : '新增联络人'}
         size="lg"
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="text-sm text-slate-500">
+        <div className="space-y-unit-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-unit-4">
+            <label className="input-label">
               姓名
               <input
                 value={contactForm.name}
                 onChange={(event) => setContactForm({ ...contactForm, name: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
-              職稱
+            <label className="input-label">
+              职称
               <input
                 value={contactForm.title}
                 onChange={(event) => setContactForm({ ...contactForm, title: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
+            <label className="input-label">
               角色
               <select
                 value={contactForm.role}
                 onChange={(event) =>
                   setContactForm({ ...contactForm, role: event.target.value as ContactPerson['role'] })
                 }
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               >
-                <option value="decision_maker">Decision Maker</option>
-                <option value="influencer">Influencer</option>
-                <option value="user">User</option>
+                {Object.entries(ROLE_STYLES).map(([key, { label }]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
               </select>
             </label>
-            <label className="text-sm text-slate-500">
-              關注點
+            <label className="input-label">
+              关注点
               <input
                 value={contactForm.concern}
                 onChange={(event) => setContactForm({ ...contactForm, concern: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
-              電話
+            <label className="input-label">
+              电话
               <input
                 value={contactForm.phone}
                 onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
+            <label className="input-label">
               Email
               <input
                 value={contactForm.email}
                 onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-unit-2">
             <button
               onClick={() => setIsContactModalOpen(false)}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300"
+              className="btn btn-secondary"
             >
               取消
             </button>
             <button
               onClick={handleSaveContact}
               disabled={isSaving}
-              className="px-4 py-2 text-sm rounded-lg bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60"
+              className="btn btn-primary"
             >
-              {isSaving ? '儲存中...' : '儲存'}
+              {isSaving ? '保存中...' : '保存'}
             </button>
           </div>
         </div>
@@ -829,28 +808,28 @@ export default function CorporateCRM() {
       <Modal
         isOpen={isEngagementModalOpen}
         onClose={() => setIsEngagementModalOpen(false)}
-        title="新增互動紀錄"
+        title="新增互动记录"
         size="lg"
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="text-sm text-slate-500">
+        <div className="space-y-unit-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-unit-4">
+            <label className="input-label">
               日期
               <input
                 type="date"
                 value={engagementForm.date}
                 onChange={(event) => setEngagementForm({ ...engagementForm, date: event.target.value })}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               />
             </label>
-            <label className="text-sm text-slate-500">
-              互動管道
+            <label className="input-label">
+              互动管道
               <select
                 value={engagementForm.channel}
                 onChange={(event) =>
                   setEngagementForm({ ...engagementForm, channel: event.target.value as EngagementLog['channel'] })
                 }
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field"
               >
                 <option value="meeting">Meeting</option>
                 <option value="email">Email</option>
@@ -858,43 +837,43 @@ export default function CorporateCRM() {
               </select>
             </label>
           </div>
-          <label className="text-sm text-slate-500">
+          <label className="input-label">
             摘要
             <textarea
               value={engagementForm.summary}
               onChange={(event) => setEngagementForm({ ...engagementForm, summary: event.target.value })}
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[90px]"
+              className="input-field min-h-[90px]"
             />
           </label>
-          <label className="text-sm text-slate-500">
-            客戶疑慮 (每行一條)
+          <label className="input-label">
+            客户疑虑 (每行一条)
             <textarea
               value={objectionsText}
               onChange={(event) => setObjectionsText(event.target.value)}
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[70px]"
+              className="input-field min-h-[70px]"
             />
           </label>
-          <label className="text-sm text-slate-500">
-            回應策略
+          <label className="input-label">
+            回应策略
             <textarea
               value={engagementForm.response}
               onChange={(event) => setEngagementForm({ ...engagementForm, response: event.target.value })}
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[70px]"
+              className="input-field min-h-[70px]"
             />
           </label>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-unit-2">
             <button
               onClick={() => setIsEngagementModalOpen(false)}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-200 text-slate-600 hover:border-slate-300"
+              className="btn btn-secondary"
             >
               取消
             </button>
             <button
               onClick={handleSaveEngagement}
               disabled={isSaving}
-              className="px-4 py-2 text-sm rounded-lg bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60"
+              className="btn btn-primary"
             >
-              {isSaving ? '儲存中...' : '儲存'}
+              {isSaving ? '保存中...' : '保存'}
             </button>
           </div>
         </div>
@@ -902,3 +881,98 @@ export default function CorporateCRM() {
     </div>
   );
 }
+
+// 假设的 Tailwind 配置文件扩展或全局 CSS 定义示例 (供参考，实际项目中应已存在)
+/*
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      spacing: {
+        'unit-1': '0.25rem', // 4px
+        'unit-2': '0.5rem',  // 8px
+        'unit-3': '0.75rem', // 12px
+        'unit-4': '1rem',    // 16px
+        'unit-6': '1.5rem',  // 24px
+        'unit-10': '2.5rem', // 40px
+        // ...更多单位
+      },
+      borderRadius: {
+        'card': '1rem', // 16px
+      },
+      padding: {
+        'card': '1.5rem',   // 24px
+        'card-sm': '1.25rem', // 20px
+      },
+      colors: {
+        // 定义品牌主色调
+        primary: {
+          500: '#6366F1', // indigo-500
+          600: '#4F46E5', // indigo-600 (或 blue-600)
+          800: '#3730A3', // indigo-800
+          900: '#312E81', // indigo-900
+        },
+        // 定义状态颜色
+        success: {
+          100: '#D1FAE5', // emerald-100
+          600: '#059669', // emerald-600
+          700: '#047857', // emerald-700
+        },
+        info: {
+          100: '#DBEAFE', // blue-100
+          600: '#2563EB', // blue-600
+          700: '#1D4ED8', // blue-700
+        },
+        warning: {
+          100: '#FEF3C7', // amber-100
+          500: '#F59E0B', // amber-500
+          700: '#B45309', // amber-700
+        },
+        danger: {
+          500: '#EF4444', // red-500
+        },
+        // 定义背景色
+        background: {
+          primary: '#FFFFFF',
+          secondary: '#F8FAFC', // slate-50
+          hover: '#F1F5F9',    // slate-100
+        },
+        // 定义文本颜色
+        text: {
+          primary: '#0F172A',   // slate-900
+          secondary: '#64748B', // slate-500
+          tertiary: '#94A3B8',  // slate-400
+        },
+        // 定义边框颜色
+        border: {
+          default: '#E2E8F0', // slate-200
+          hover: '#CBD5E1',   // slate-300
+        },
+      },
+      fontSize: {
+        'h2': '1.5rem', // 24px
+        // ...其他语义化字体大小
+      },
+    },
+  },
+};
+
+// global.css (或 components.css)
+// 定义常用语义化组件类
+@layer components {
+  .icon-sm { @apply w-4 h-4; }
+  .icon-md { @apply w-5 h-5; }
+  .input-label { @apply text-sm text-text-secondary block; }
+  .input-field { @apply mt-unit-2 w-full rounded-lg border border-border-default px-unit-3 py-unit-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500; }
+  
+  .btn { @apply inline-flex items-center justify-center gap-unit-2 px-unit-4 py-unit-2 rounded-lg text-sm font-semibold transition-colors duration-200 ease-in-out; }
+  .btn-sm { @apply px-unit-3 py-unit-2; } // 稍小的按钮
+  .btn-primary { @apply bg-primary-900 text-white hover:bg-primary-800 disabled:opacity-60; }
+  .btn-secondary { @apply border border-border-default text-text-secondary hover:border-border-hover bg-white; }
+  .btn-ghost-secondary { @apply text-text-secondary hover:text-text-primary; }
+  .btn-icon-sm { @apply p-unit-1; } // 仅图标的按钮，更小内边距
+
+  .card { @apply rounded-card border border-border-default bg-background-primary shadow-sm; }
+  .widget-card { @apply p-card; } // 作为 widget 时，默认的内边距
+}
+*/

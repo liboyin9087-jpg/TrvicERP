@@ -40,15 +40,52 @@ chmod +x setup.sh
 
 ### 2. 設定環境變數
 
-如果安裝腳本未自動設定，請手動設定 API Key：
+#### 方法一：使用 .env 文件（推薦）
+
+項目已經配置好 `.env` 文件支持，API 密鑰會自動從根目錄的 `.env` 文件讀取。
+
+```bash
+# 執行環境設定助手檢查配置
+chmod +x ./scripts/setup-env.sh
+./scripts/setup-env.sh
+```
+
+如需修改 API 密鑰，編輯項目根目錄的 `.env` 文件：
+
+```bash
+# 編輯 .env 文件
+nano ../../../../.env
+
+# 或使用 VS Code
+code ../../../../.env
+```
+
+需要設置以下 API 密鑰：
+
+```env
+# SiliconFlow API (主要 AI 審查服務)
+SILICONFLOW_API_KEY=sk-你的-siliconflow-key
+
+# Groq API (備用 AI 服務)
+GROQ_API_KEY=gsk-你的-groq-key
+
+# Gemini API (用於 AI 文案生成和備用修復)
+GEMINI_API_KEY=你的-gemini-api-key
+```
+
+#### 方法二：手動設定環境變數
+
+如果不使用 .env 文件，也可以手動設定：
 
 ```bash
 # 主要 API（SiliconFlow）
 export SILICONFLOW_API_KEY="sk-你的-siliconflow-key"
-export OPENAI_API_KEY="sk-你的-siliconflow-key"
 
-# 備用 API（Google Gemini）
-export GOOGLE_API_KEY="你的-gemini-api-key"
+# 備用 API（Groq）
+export GROQ_API_KEY="gsk-你的-groq-key"
+
+# Google Gemini
+export GEMINI_API_KEY="你的-gemini-api-key"
 ```
 
 建議將上述設定加入 `~/.bashrc` 或 `~/.zshrc`。
@@ -65,8 +102,8 @@ export GOOGLE_API_KEY="你的-gemini-api-key"
 # 執行多角色審查
 goose run --recipe recipes/multi-role-verify.yaml --params target_directory="./src/components"
 ```
-待 0 秒後進行下一次迭代
----
+
+## 待 0 秒後進行下一次迭代
 
 ## 目錄結構
 

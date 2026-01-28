@@ -1,23 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
-import QuotationPDF, { type QuotationPDFProps } from './QuotationPDF';
 
-interface PDFPreviewModalProps {
+// Generic interface for the modal props
+// T will be the type of data required by the PDF document component
+interface PDFPreviewModalProps<T> {
   isOpen: boolean;
   onClose: () => void;
-  data: QuotationPDFProps;
-  fileName?: string;
+  /** The data object passed to the PDF document rendering function. */
+  documentData: T;
+  /** A function that takes documentData and returns the React-PDF document component. */
+  renderDocument: (data: T) => React.ReactElement;
+  /** Optional: A function to generate the filename for download.
+   *  If not provided, a generic filename will be used. */
+  getFileName?: (data: T) => string;
+  /** Optional: The main title displayed in the modal header. */
+  title?: string;
+  /** Optional: The subtitle displayed below the title in the modal header. */
+  subtitle?: string;
 }
 
-export default function PDFPreviewModal({
+// Default filename generator for when getFileName is not provided.
+// It tries to infer a name from 'tripName' if present in data, otherwise uses a generic 'document'.
+const defaultFileNameGenerator = <T extends {}>(data: T): string => {
+  let baseName = 'document';
+  // Attempt to use 'tripName' if it exists in the data and is a string
+  if (typeof data === 'object' && data !== null && 'tripName' in data && typeof (data as any).tripName === 'string') {
+    baseName = (data as any).tripName;
+  }
+  return `${baseName}_${new Date().toISOString().split('T')[0]}.pdf`;
+};
+
+export default function PDFPreviewModal<T extends {} = any>({ // Default T to any for flexibility
   isOpen,
   onClose,
-  data,
-  fileName = '報價單',
-}: PDFPreviewModalProps) {
+  documentData,
+  renderDocument,
+  getFileName,
+  title = 'PDF 預覽',
+  subtitle,
+}: PDFPreviewModalProps<T>) {
   const [scale, setScale] = useState(100);
+  const parentRef = useRef<HTMLDivElement>(null); // Ref for the parent container (viewport) for drag constraints
 
   const handleZoomIn = () => {
     setScale((prev) => Math.min(prev + 25, 200));
@@ -27,12 +52,21 @@ export default function PDFPreviewModal({
     setScale((prev) => Math.max(prev - 25, 50));
   };
 
-  const pdfFileName = `${fileName}_${data.tripName}_${new Date().toISOString().split('T')[0]}.pdf`;
+  // Memoize the PDF document component to prevent unnecessary re-renders
+  const pdfDocument = useMemo(() => {
+    return renderDocument(documentData);
+  }, [renderDocument, documentData]);
+
+  // Generate the final filename, using provided function or default
+  const finalFileName = useMemo(() => {
+    return (getFileName ? getFileName(documentData) : defaultFileNameGenerator(documentData));
+  }, [documentData, getFileName]);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        // Backdrop and Modal Container (viewport)
+        <div ref={parentRef} className="fixed inset-0 z-50 flex items-center justify-center"> {/* z-index changed from hardcoded z-[9999] */}
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -48,12 +82,18 @@ export default function PDFPreviewModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className="relative w-[90vw] h-[90vh] max-w-5xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            drag // Enable dragging
+            dragConstraints={parentRef} // Constrain dragging within the parent (viewport)
+            dragElastic={0.1} // Little elastic effect when hitting constraints
+            dragMomentum={false} // Disable momentum for snappier feel
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+            {/* Header - designated as drag handle */}
+            <div
+              className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50 cursor-grab drag-handle" // Added cursor-grab and drag-handle class
+            >
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">PDF 預覽</h3>
-                <p className="text-sm text-gray-500">{data.tripName}</p>
+                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
               </div>
 
               <div className="flex items-center gap-3">
@@ -80,8 +120,8 @@ export default function PDFPreviewModal({
 
                 {/* Download Button */}
                 <PDFDownloadLink
-                  document={<QuotationPDF {...data} />}
-                  fileName={pdfFileName}
+                  document={pdfDocument} // Use memoized document
+                  fileName={finalFileName} // Use dynamically generated filename
                   className="flex items-center gap-2 px-4 py-2 bg-primary-900 text-white rounded-lg font-semibold text-sm hover:bg-primary-800 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
                 >
                   {({ loading }) =>
@@ -128,7 +168,7 @@ export default function PDFPreviewModal({
                   }}
                   showToolbar={false}
                 >
-                  <QuotationPDF {...data} />
+                  {pdfDocument} {/* Use memoized document */}
                 </PDFViewer>
               </div>
             </div>

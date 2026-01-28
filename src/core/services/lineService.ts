@@ -1,12 +1,147 @@
+interface ApiClientInstance {
+  post<T>(url: string, data?: any, config?: any): Promise<{ data?: T; error?: { message: string } }>;
+}
+
+// Define Line Flex Message types
+// These types are derived from Line's official documentation for Flex Message JSON.
+// They help provide type safety for the 'contents' property.
+
+interface FlexMessageTextComponent {
+  type: 'text';
+  text: string;
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl';
+  weight?: 'regular' | 'bold';
+  color?: string; // Hex color code
+  align?: 'start' | 'end' | 'center';
+  gravity?: 'top' | 'bottom' | 'center';
+  wrap?: boolean;
+  margin?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  flex?: number;
+  offsetStart?: string;
+  offsetEnd?: string;
+}
+
+interface FlexMessageImageComponent {
+  type: 'image';
+  url: string;
+  flex?: number;
+  margin?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  align?: 'start' | 'end' | 'center';
+  gravity?: 'top' | 'bottom' | 'center';
+  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl' | 'full';
+  aspectRatio?: string; // e.g., '1.5:1'
+  aspectMode?: 'fit' | 'cover';
+  backgroundColor?: string; // Hex color code
+}
+
+interface FlexMessageButtonComponent {
+  type: 'button';
+  action: {
+    type: 'uri' | 'postback' | 'message' | 'datetimepicker' | 'camera' | 'cameraRoll' | 'location';
+    label: string;
+    uri?: string;
+    data?: string; // for postback
+    text?: string; // for message
+    mode?: 'date' | 'time' | 'datetime'; // for datetimepicker
+    initial?: string; // for datetimepicker
+    max?: string; // for datetimepicker
+    min?: string; // for datetimepicker
+  };
+  style?: 'link' | 'primary' | 'secondary';
+  color?: string; // Hex color code
+  margin?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  height?: 'sm' | 'md';
+  gravity?: 'top' | 'bottom' | 'center';
+  flex?: number;
+  position?: 'relative' | 'absolute';
+}
+
+interface FlexMessageSeparatorComponent {
+  type: 'separator';
+  margin?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  color?: string; // Hex color code
+}
+
+// Basic Box component. Can contain other components.
+interface FlexMessageBoxComponent {
+  type: 'box';
+  layout: 'horizontal' | 'vertical' | 'baseline';
+  contents: FlexMessageComponent[];
+  flex?: number;
+  spacing?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  margin?: 'none' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  backgroundColor?: string; // Hex color code
+  borderColor?: string; // Hex color code
+  borderWidth?: string; // e.g., '1px'
+  cornerRadius?: string; // e.g., '5px'
+  paddingAll?: string; // e.g., '20px'
+  paddingTop?: string;
+  paddingBottom?: string;
+  paddingStart?: string;
+  paddingEnd?: string;
+  justifyContent?: 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around';
+  alignItems?: 'flex-start' | 'flex-end' | 'center';
+  offsetStart?: string;
+  offsetEnd?: string;
+  offsetTop?: string;
+  offsetBottom?: string;
+  position?: 'relative' | 'absolute';
+}
+
+// Union type for all possible Flex Message components
+type FlexMessageComponent =
+  | FlexMessageTextComponent
+  | FlexMessageImageComponent
+  | FlexMessageButtonComponent
+  | FlexMessageSeparatorComponent
+  | FlexMessageBoxComponent;
+
+// A Bubble container is typically used for a single rich message.
+interface FlexMessageBubbleContainer {
+  type: 'bubble';
+  header?: FlexMessageBoxComponent;
+  hero?: FlexMessageImageComponent | FlexMessageBoxComponent;
+  body?: FlexMessageBoxComponent;
+  footer?: FlexMessageBoxComponent;
+  size?: 'nano' | 'micro' | 'kilo' | 'mega' | 'giga';
+  direction?: 'ltr' | 'rtl';
+  backgroundColor?: string; // Hex color code
+}
+
+// A Carousel container is used for multiple bubbles.
+interface FlexMessageCarouselContainer {
+  type: 'carousel';
+  contents: FlexMessageBubbleContainer[];
+}
+
+// Main Flex Message container type
+export type FlexMessageContainer = FlexMessageBubbleContainer | FlexMessageCarouselContainer;
+
 /**
  * Line Messaging API 服務
  * Line Messaging API Service
  */
 
+// We assume `api` is an already instantiated API client from '@/lib/api'.
+// The actual type of `api` from '@/lib/api' should conform to `ApiClientInstance`.
 import { api } from '@/lib/api';
 
-// Line API 端點
-const LINE_API_BASE = import.meta.env.VITE_LINE_API_URL || '/api/v1/line';
+// --- Design Fixes (Tailwind Color Tokens for Line Flex Messages) ---
+// Since Line Flex Messages require hex codes directly in their JSON,
+// we create a mapping from conceptual "Tailwind-like" tokens to hex values.
+// This allows for centralized color management in a way compatible with Line API.
+const LINE_COLOR_TOKENS = {
+  // Primary (e.g., green for success/action)
+  'primary-main': '#06c167', // Corresponds to a strong green
+  // Accent/Info (e.g., light blue for headers/notifications)
+  'info-background': '#f0f9ff', // Light blue, used for document notification header
+  // Text colors
+  'text-dark': '#1a1a1a', // Near black, used for main text
+  'text-light': '#ffffff', // White, used on dark backgrounds
+  'text-muted': '#666666', // Gray, for secondary text
+  'text-super-muted': '#999999', // Lighter gray, for tertiary text
+} as const;
+
 
 /**
  * Line 訊息類型
@@ -15,13 +150,14 @@ export type LineMessageType = 'text' | 'image' | 'flex' | 'template';
 
 /**
  * Line 訊息
+ * Updated: `contents` now uses the specific `FlexMessageContainer` type.
  */
 export interface LineMessage {
   type: LineMessageType;
   text?: string;
   imageUrl?: string;
   altText?: string;
-  contents?: any; // Flex Message contents
+  contents?: FlexMessageContainer; // Flex Message contents
 }
 
 /**
@@ -53,6 +189,8 @@ export interface LineSendResult {
 
 /**
  * 文件發送選項
+ * (This interface is domain-specific and could be moved outside a generic LineService
+ * if more strict decoupling is desired, but for now, it's used by `sendDocumentNotification`).
  */
 export interface DocumentSendOptions {
   sessionId: string;
@@ -62,13 +200,43 @@ export interface DocumentSendOptions {
 }
 
 /**
+ * Line 服務配置介面
+ * 透過建構子注入配置，提升可測試性及環境變數管理。
+ */
+export interface LineServiceConfig {
+  lineApiBaseUrl: string;
+  appBaseUrl: string; // Base URL for generating document links
+  useMockService: boolean; // Flag to enable/disable mock behavior
+}
+
+/**
  * Line 服務
+ * Refactored:
+ * - Changed to instance methods for better testability (static methods -> instance methods).
+ * - Dependencies (api client, config) are injected via constructor.
+ * - `LINE_API_BASE` and mock logic are part of the injected config.
+ * - Hardcoded colors replaced with `LINE_COLOR_TOKENS`.
+ * - Kintone independence: No reliance on global stores; configuration via constructor.
  */
 export class LineService {
+  private api: ApiClientInstance;
+  private config: LineServiceConfig;
+
+  /**
+   * 構造 LineService 實例。
+   *
+   * @param apiClient API 客戶端實例，用於發送 HTTP 請求。
+   * @param config Line 服務的配置，包含 API 基礎 URL、應用程式基礎 URL 和模擬模式開關。
+   */
+  constructor(apiClient: ApiClientInstance, config: LineServiceConfig) {
+    this.api = apiClient;
+    this.config = config;
+  }
+
   /**
    * 發送文字訊息
    */
-  static async sendTextMessage(
+  async sendTextMessage(
     targets: LineSendTarget[],
     text: string
   ): Promise<LineSendResult> {
@@ -82,7 +250,7 @@ export class LineService {
   /**
    * 發送圖片訊息
    */
-  static async sendImageMessage(
+  async sendImageMessage(
     targets: LineSendTarget[],
     imageUrl: string,
     altText: string = '圖片訊息'
@@ -96,11 +264,12 @@ export class LineService {
 
   /**
    * 發送 Flex 訊息（用於豐富格式）
+   * Contents type is now `FlexMessageContainer`.
    */
-  static async sendFlexMessage(
+  async sendFlexMessage(
     targets: LineSendTarget[],
     altText: string,
-    contents: any
+    contents: FlexMessageContainer
   ): Promise<LineSendResult> {
     const request: LineSendRequest = {
       targets,
@@ -111,8 +280,9 @@ export class LineService {
 
   /**
    * 發送出團文件通知
+   * Refactored: Uses `LINE_COLOR_TOKENS` for colors.
    */
-  static async sendDocumentNotification(
+  async sendDocumentNotification(
     options: DocumentSendOptions
   ): Promise<LineSendResult> {
     const { sessionId, documentType, recipients, customMessage } = options;
@@ -126,11 +296,10 @@ export class LineService {
     };
 
     const documentLabel = documentLabels[documentType] || '文件';
-    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const documentUrl = `${baseUrl}/documents/${sessionId}/${documentType}`;
+    const documentUrl = `${this.config.appBaseUrl}/documents/${sessionId}/${documentType}`;
 
     // 建立 Flex Message
-    const flexContents = {
+    const flexContents: FlexMessageBubbleContainer = {
       type: 'bubble',
       header: {
         type: 'box',
@@ -141,10 +310,10 @@ export class LineService {
             text: '📄 出團文件通知',
             weight: 'bold',
             size: 'lg',
-            color: '#1a1a1a',
+            color: LINE_COLOR_TOKENS['text-dark'], // Replaced '#1a1a1a'
           },
         ],
-        backgroundColor: '#f0f9ff',
+        backgroundColor: LINE_COLOR_TOKENS['info-background'], // Replaced '#f0f9ff'
         paddingAll: '15px',
       },
       body: {
@@ -163,7 +332,7 @@ export class LineService {
                   type: 'text',
                   text: customMessage,
                   size: 'sm',
-                  color: '#666666',
+                  color: LINE_COLOR_TOKENS['text-muted'], // Replaced '#666666'
                   margin: 'md',
                   wrap: true,
                 },
@@ -184,7 +353,7 @@ export class LineService {
               uri: documentUrl,
             },
             style: 'primary',
-            color: '#06c167',
+            color: LINE_COLOR_TOKENS['primary-main'], // Replaced '#06c167'
           },
         ],
         paddingAll: '15px',
@@ -200,8 +369,9 @@ export class LineService {
 
   /**
    * 發送集合提醒
+   * Refactored: Uses `LINE_COLOR_TOKENS` for colors.
    */
-  static async sendMeetingReminder(
+  async sendMeetingReminder(
     targets: LineSendTarget[],
     meetingInfo: {
       location: string;
@@ -212,7 +382,7 @@ export class LineService {
       groupNumber: string;
     }
   ): Promise<LineSendResult> {
-    const flexContents = {
+    const flexContents: FlexMessageBubbleContainer = {
       type: 'bubble',
       header: {
         type: 'box',
@@ -223,17 +393,17 @@ export class LineService {
             text: '📍 集合提醒',
             weight: 'bold',
             size: 'lg',
-            color: '#ffffff',
+            color: LINE_COLOR_TOKENS['text-light'], // Replaced '#ffffff'
           },
           {
             type: 'text',
             text: `團號：${meetingInfo.groupNumber}`,
             size: 'sm',
-            color: '#ffffff',
+            color: LINE_COLOR_TOKENS['text-light'], // Replaced '#ffffff'
             margin: 'sm',
           },
         ],
-        backgroundColor: '#06c167',
+        backgroundColor: LINE_COLOR_TOKENS['primary-main'], // Replaced '#06c167'
         paddingAll: '15px',
       },
       body: {
@@ -244,7 +414,7 @@ export class LineService {
             type: 'box',
             layout: 'horizontal',
             contents: [
-              { type: 'text', text: '集合地點', size: 'sm', color: '#666666', flex: 0 },
+              { type: 'text', text: '集合地點', size: 'sm', color: LINE_COLOR_TOKENS['text-muted'], flex: 0 }, // Replaced '#666666'
               { type: 'text', text: meetingInfo.location, size: 'sm', weight: 'bold', align: 'end', flex: 1 },
             ],
             margin: 'md',
@@ -255,7 +425,7 @@ export class LineService {
                   type: 'text',
                   text: meetingInfo.address,
                   size: 'xs',
-                  color: '#999999',
+                  color: LINE_COLOR_TOKENS['text-super-muted'], // Replaced '#999999'
                   margin: 'sm',
                   wrap: true,
                 },
@@ -265,7 +435,7 @@ export class LineService {
             type: 'box',
             layout: 'horizontal',
             contents: [
-              { type: 'text', text: '集合時間', size: 'sm', color: '#666666', flex: 0 },
+              { type: 'text', text: '集合時間', size: 'sm', color: LINE_COLOR_TOKENS['text-muted'], flex: 0 }, // Replaced '#666666'
               { type: 'text', text: meetingInfo.meetingTime, size: 'sm', weight: 'bold', align: 'end', flex: 1 },
             ],
             margin: 'lg',
@@ -278,7 +448,7 @@ export class LineService {
             type: 'box',
             layout: 'horizontal',
             contents: [
-              { type: 'text', text: '聯絡人', size: 'sm', color: '#666666', flex: 0 },
+              { type: 'text', text: '聯絡人', size: 'sm', color: LINE_COLOR_TOKENS['text-muted'], flex: 0 }, // Replaced '#666666'
               { type: 'text', text: meetingInfo.contactPerson, size: 'sm', align: 'end', flex: 1 },
             ],
             margin: 'lg',
@@ -287,7 +457,7 @@ export class LineService {
             type: 'box',
             layout: 'horizontal',
             contents: [
-              { type: 'text', text: '聯絡電話', size: 'sm', color: '#666666', flex: 0 },
+              { type: 'text', text: '聯絡電話', size: 'sm', color: LINE_COLOR_TOKENS['text-muted'], flex: 0 }, // Replaced '#666666'
               { type: 'text', text: meetingInfo.contactPhone, size: 'sm', align: 'end', flex: 1 },
             ],
             margin: 'sm',
@@ -320,7 +490,7 @@ export class LineService {
   /**
    * 發送行程變更通知
    */
-  static async sendItineraryChangeNotification(
+  async sendItineraryChangeNotification(
     targets: LineSendTarget[],
     change: {
       groupNumber: string;
@@ -335,12 +505,10 @@ export class LineService {
 
   /**
    * 核心發送方法
+   * Refactored: Uses injected config for `useMock` and `lineApiBaseUrl`.
    */
-  private static async send(request: LineSendRequest): Promise<LineSendResult> {
-    // 檢查是否為 Mock 模式
-    const useMock = import.meta.env.VITE_USE_MOCK !== 'false';
-
-    if (useMock) {
+  private async send(request: LineSendRequest): Promise<LineSendResult> {
+    if (this.config.useMockService) {
       // Mock 模式：模擬發送成功
       console.log('[Line Mock] 發送訊息:', request);
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -352,9 +520,10 @@ export class LineService {
     }
 
     // 真實 API 呼叫
-    const response = await api.post<LineSendResult>(`${LINE_API_BASE}/send`, request);
+    const response = await this.api.post<LineSendResult>(`${this.config.lineApiBaseUrl}/send`, request);
 
-    if (response.error) {
+    // Assuming api.post returns an object with 'data' and 'error' properties
+    if (response && response.error) {
       return {
         success: false,
         sentCount: 0,
@@ -372,6 +541,8 @@ export class LineService {
 
   /**
    * 取得 Line 用戶列表（從訂單中提取）
+   * This remains static as it's a pure utility function that doesn't depend on instance state
+   * or injected dependencies. It's a helper for preparing data for the service.
    */
   static extractLineTargetsFromBookings(
     bookings: Array<{ id: string; customer_name: string; user_id?: string }>

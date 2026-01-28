@@ -1,149 +1,163 @@
-import type { DashboardRole, Widget, WidgetLibraryItem } from '../core/types/dashboard';
+import type { DashboardRole, Widget as BaseWidget } from '../core/types/dashboard';
 
-export const DEFAULT_WIDGET_LIBRARY: WidgetLibraryItem[] = [
-  {
-    type: 'kpi-card',
-    title: 'KPI 卡片',
-    description: '顯示關鍵績效指標',
-    defaultConfig: { kpiType: 'revenue', dateRange: 'month', showTrend: true },
-    defaultLayout: { x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-  },
-  {
-    type: 'chart-line',
-    title: '折線圖',
-    description: '營收趨勢、訂單分析',
-    defaultConfig: { chartDataSource: 'revenue_monthly', chartPeriod: 6 },
-    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
-  },
-  {
-    type: 'chart-bar',
-    title: '長條圖',
-    description: '分類或狀態統計',
-    defaultConfig: { chartDataSource: 'order_status' },
-    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
-  },
-  {
-    type: 'chart-pie',
-    title: '圓餅圖',
-    description: '占比與分布',
-    defaultConfig: { chartDataSource: 'order_status' },
-    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
-  },
-  {
-    type: 'data-table',
-    title: '資料表格',
-    description: '可篩選的清單表格',
-    defaultConfig: { tableRowLimit: 5 },
-    defaultLayout: { x: 0, y: 0, w: 8, h: 4, minW: 6, minH: 3 },
-  },
-  {
-    type: 'recent-orders',
-    title: '最近訂單',
-    description: '最新簽約紀錄',
-    defaultConfig: { tableRowLimit: 5 },
-    defaultLayout: { x: 0, y: 0, w: 8, h: 4, minW: 6, minH: 3 },
-  },
-  {
-    type: 'quick-actions',
-    title: '快速操作',
-    description: '常用功能捷徑',
-    defaultConfig: {},
-    defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
-  },
-  {
-    type: 'calendar',
-    title: '行事曆',
-    description: '即將出發的行程',
-    defaultConfig: {},
-    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 5, minH: 3 },
-  },
-  {
-    type: 'notifications',
-    title: '通知中心',
-    description: '系統通知與提醒',
-    defaultConfig: {},
-    defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
-  },
-  {
-    type: 'weather',
-    title: '天氣預報',
-    description: '目的地天氣資訊',
-    defaultConfig: {},
-    defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
-  },
-  {
-    type: 'pending-tasks',
-    title: '待辦事項',
-    description: '待處理任務清單',
-    defaultConfig: {},
-    defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
-  },
-  {
-    type: 'customer-ranking',
-    title: '客戶排名',
-    description: '高價值客戶排行',
-    defaultConfig: {},
-    defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
-  },
-];
+/**
+ * @description Defines standard layout dimensions for grid items.
+ */
+interface LayoutDimensions {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+}
 
-export const DEFAULT_LAYOUTS: Record<DashboardRole, Widget[]> = {
+/**
+ * @description Extends the base widget configuration to include design-related properties.
+ * These properties guide the rendering of the widget according to Dashtail UI standards.
+ */
+interface WidgetConfig extends Record<string, any> {
+  cardClassName?: string;    // Tailwind classes for the widget's outer card structure (e.g., bg-white p-4 rounded-lg shadow-md)
+  headerClassName?: string;  // Tailwind classes for the widget's header/title (e.g., text-lg font-semibold text-gray-800 mb-2)
+  contentClassName?: string; // Tailwind classes for the widget's content area
+  colorScheme?: string;      // A key for a Tailwind-based color palette (e.g., 'primary', 'blue-500', 'green')
+}
+
+/**
+ * @description An extended Widget type that incorporates additional properties for
+ * drag-and-drop functionality and Dashtail UI compliance.
+ * It omits and redefines 'config' and 'layout' to use our enhanced interfaces.
+ */
+export interface FixedWidget extends Omit<BaseWidget, 'config' | 'layout'> {
+  config: WidgetConfig;
+  layout: LayoutDimensions;
+  dragHandleClassName?: string; // Specifies the class name for the drag handle element within the widget
+}
+
+// --- Constants for standardized widget dimensions (Addressing hardcoded numerical values) ---
+const KPI_CARD_DIMENSIONS: Omit<LayoutDimensions, 'x' | 'y'> = { w: 3, h: 2, minW: 2, minH: 2 };
+const CHART_DIMENSIONS: Omit<LayoutDimensions, 'x' | 'y'> = { w: 6, h: 4, minW: 4, minH: 3 };
+const DATA_TABLE_DIMENSIONS: Omit<LayoutDimensions, 'x' | 'y'> = { w: 8, h: 4, minW: 6, minH: 3 };
+const SMALL_WIDGET_DIMENSIONS: Omit<LayoutDimensions, 'x' | 'y'> = { w: 4, h: 4, minW: 3, minH: 3 };
+const MEDIUM_WIDGET_DIMENSIONS: Omit<LayoutDimensions, 'x' | 'y'> = { w: 6, h: 4, minW: 5, minH: 3 };
+const LARGE_CALENDAR_DIMENSIONS: Omit<LayoutDimensions, 'x' | 'y'> = { w: 8, h: 5, minW: 6, minH: 4 };
+
+/**
+ * @description Defines default dashboard layouts for different user roles.
+ * Each widget in the layout now includes `dragHandleClassName` and enhanced `config`
+ * for Dashtail UI integration.
+ */
+export const DEFAULT_LAYOUTS: Record<DashboardRole, FixedWidget[]> = {
   staff: [
     {
       id: 'staff-kpi-revenue',
       type: 'kpi-card',
       title: '本月營收',
-      config: { kpiType: 'revenue', dateRange: 'month', showTrend: true },
-      layout: { x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      dragHandleClassName: 'drag-handle', // Added drag handle
+      config: {
+        kpiType: 'revenue',
+        dateRange: 'month',
+        showTrend: true,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md', // Dashtail Card structure
+        headerClassName: 'text-lg font-semibold text-gray-800 mb-2', // Tailwind font/spacing
+        colorScheme: 'primary', // Tailwind color system
+      },
+      layout: { x: 0, y: 0, ...KPI_CARD_DIMENSIONS }, // Using constants
     },
     {
       id: 'staff-kpi-orders',
       type: 'kpi-card',
       title: '待確認訂單',
-      config: { kpiType: 'orders', dateRange: 'week', showTrend: true },
-      layout: { x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        kpiType: 'orders',
+        dateRange: 'week',
+        showTrend: true,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-lg font-semibold text-gray-800 mb-2',
+        colorScheme: 'secondary',
+      },
+      layout: { x: 3, y: 0, ...KPI_CARD_DIMENSIONS },
     },
     {
       id: 'staff-kpi-customers',
       type: 'kpi-card',
       title: '本月新客戶',
-      config: { kpiType: 'customers', dateRange: 'month', showTrend: true },
-      layout: { x: 6, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        kpiType: 'customers',
+        dateRange: 'month',
+        showTrend: true,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-lg font-semibold text-gray-800 mb-2',
+        colorScheme: 'tertiary',
+      },
+      layout: { x: 6, y: 0, ...KPI_CARD_DIMENSIONS },
     },
     {
       id: 'staff-kpi-satisfaction',
       type: 'kpi-card',
       title: '客戶滿意度',
-      config: { kpiType: 'satisfaction', dateRange: 'month', showTrend: true },
-      layout: { x: 9, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        kpiType: 'satisfaction',
+        dateRange: 'month',
+        showTrend: true,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-lg font-semibold text-gray-800 mb-2',
+        colorScheme: 'success',
+      },
+      layout: { x: 9, y: 0, ...KPI_CARD_DIMENSIONS },
     },
     {
       id: 'staff-chart-revenue',
       type: 'chart-line',
       title: '營收趨勢',
-      config: { chartDataSource: 'revenue_monthly', chartPeriod: 6 },
-      layout: { x: 0, y: 2, w: 6, h: 4, minW: 4, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        chartDataSource: 'revenue_monthly',
+        chartPeriod: 6,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+        colorScheme: 'primary',
+      },
+      layout: { x: 0, y: 2, ...CHART_DIMENSIONS },
     },
     {
       id: 'staff-chart-status',
       type: 'chart-pie',
       title: '訂單狀態分佈',
-      config: { chartDataSource: 'order_status' },
-      layout: { x: 6, y: 2, w: 6, h: 4, minW: 4, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        chartDataSource: 'order_status',
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+        colorScheme: 'blue',
+      },
+      layout: { x: 6, y: 2, ...CHART_DIMENSIONS },
     },
     {
       id: 'staff-recent-orders',
       type: 'recent-orders',
       title: '最近簽約',
-      config: { tableRowLimit: 5 },
-      layout: { x: 0, y: 6, w: 8, h: 4, minW: 6, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        tableRowLimit: 5,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 0, y: 6, ...DATA_TABLE_DIMENSIONS },
     },
     {
       id: 'staff-quick-actions',
       type: 'quick-actions',
       title: '快速操作',
-      config: {},
-      layout: { x: 8, y: 6, w: 4, h: 4, minW: 3, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 8, y: 6, ...SMALL_WIDGET_DIMENSIONS },
     },
   ],
   welfare: [
@@ -151,50 +165,90 @@ export const DEFAULT_LAYOUTS: Record<DashboardRole, Widget[]> = {
       id: 'welfare-kpi-budget',
       type: 'kpi-card',
       title: '年度預算餘額',
-      config: { kpiType: 'revenue', dateRange: 'quarter', showTrend: true },
-      layout: { x: 0, y: 0, w: 4, h: 2, minW: 3, minH: 2 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        kpiType: 'revenue',
+        dateRange: 'quarter',
+        showTrend: true,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-lg font-semibold text-gray-800 mb-2',
+        colorScheme: 'indigo',
+      },
+      layout: { x: 0, y: 0, w: 4, h: 2, minW: 3, minH: 2 }, // Specific dimensions
     },
     {
       id: 'welfare-kpi-trips',
       type: 'kpi-card',
       title: '已規劃行程',
-      config: { kpiType: 'orders', showTrend: true },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        kpiType: 'orders',
+        showTrend: true,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-lg font-semibold text-gray-800 mb-2',
+        colorScheme: 'purple',
+      },
       layout: { x: 4, y: 0, w: 4, h: 2, minW: 3, minH: 2 },
     },
     {
       id: 'welfare-kpi-participation',
       type: 'kpi-card',
       title: '員工參與率',
-      config: { kpiType: 'satisfaction', showTrend: true },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        kpiType: 'satisfaction',
+        showTrend: true,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-lg font-semibold text-gray-800 mb-2',
+        colorScheme: 'teal',
+      },
       layout: { x: 8, y: 0, w: 4, h: 2, minW: 3, minH: 2 },
     },
     {
       id: 'welfare-calendar',
       type: 'calendar',
       title: '行程日曆',
-      config: {},
-      layout: { x: 0, y: 2, w: 8, h: 5, minW: 6, minH: 4 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 0, y: 2, ...LARGE_CALENDAR_DIMENSIONS },
     },
     {
       id: 'welfare-pending-tasks',
       type: 'pending-tasks',
       title: '待辦事項',
-      config: {},
-      layout: { x: 8, y: 2, w: 4, h: 5, minW: 3, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 8, y: 2, w: 4, h: 5, minW: 3, minH: 3 }, // Specific dimensions
     },
     {
       id: 'welfare-chart-budget',
       type: 'chart-bar',
       title: '預算使用分析',
-      config: { chartDataSource: 'budget_usage' },
-      layout: { x: 0, y: 7, w: 6, h: 4, minW: 4, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        chartDataSource: 'budget_usage',
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+        colorScheme: 'orange',
+      },
+      layout: { x: 0, y: 7, ...CHART_DIMENSIONS },
     },
     {
       id: 'welfare-notifications',
       type: 'notifications',
       title: '系統通知',
-      config: {},
-      layout: { x: 6, y: 7, w: 6, h: 4, minW: 4, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 6, y: 7, ...CHART_DIMENSIONS }, // Using CHART_DIMENSIONS as default
     },
   ],
   traveler: [
@@ -202,29 +256,46 @@ export const DEFAULT_LAYOUTS: Record<DashboardRole, Widget[]> = {
       id: 'traveler-upcoming',
       type: 'calendar',
       title: '即將出發的行程',
-      config: {},
-      layout: { x: 0, y: 0, w: 8, h: 4, minW: 6, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 0, y: 0, ...MEDIUM_WIDGET_DIMENSIONS }, // Using MEDIUM_WIDGET_DIMENSIONS as default
     },
     {
       id: 'traveler-weather',
       type: 'weather',
       title: '目的地天氣',
-      config: {},
-      layout: { x: 8, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 8, y: 0, ...SMALL_WIDGET_DIMENSIONS },
     },
     {
       id: 'traveler-recent-orders',
       type: 'recent-orders',
       title: '我的行程紀錄',
-      config: { tableRowLimit: 5 },
-      layout: { x: 0, y: 4, w: 6, h: 4, minW: 5, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        tableRowLimit: 5,
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 0, y: 4, ...MEDIUM_WIDGET_DIMENSIONS },
     },
     {
       id: 'traveler-quick-actions',
       type: 'quick-actions',
       title: '快速操作',
-      config: {},
-      layout: { x: 6, y: 4, w: 6, h: 4, minW: 4, minH: 3 },
+      dragHandleClassName: 'drag-handle',
+      config: {
+        cardClassName: 'bg-white p-4 rounded-lg shadow-md',
+        headerClassName: 'text-xl font-bold text-gray-900 mb-4',
+      },
+      layout: { x: 6, y: 4, ...MEDIUM_WIDGET_DIMENSIONS },
     },
   ],
 };

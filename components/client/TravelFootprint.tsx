@@ -1,50 +1,138 @@
 import React from 'react';
+import Image from 'next/image'; // For optimized images
 import { MapPin, Camera, Calendar, Heart } from 'lucide-react';
 
-interface Footprint { id: string; location: string; date: string; image: string; likes: number; }
+/**
+ * Defines the structure for a single travel footprint entry.
+ */
+interface Footprint {
+  id: string;
+  location: string;
+  date: string;
+  image: string;
+  likes: number;
+}
 
-const MOCK_FOOTPRINTS: Footprint[] = [
-  { id: '1', location: '東京鐵塔', date: '2024-12-15', image: 'https://images.unsplash.com/photo-1542183427-68c4c7952402?w=400', likes: 24 },
-  { id: '2', location: '淺草寺', date: '2024-12-16', image: 'https://images.unsplash.com/photo-1596557677270-4f74f74d0d0f?w=400', likes: 31 },
-  { id: '3', location: '澀谷十字路口', date: '2024-12-17', image: 'https://images.unsplash.com/photo-1597484662317-9bd76add290b?w=400', likes: 18 },
-];
+/**
+ * Defines the statistical data for travel.
+ */
+interface TravelStats {
+  countries: number;
+  cities: number;
+  attractions: number;
+}
 
-export default function TravelFootprint() {
+/**
+ * Defines the props interface for the TravelFootprint component.
+ * This adheres to the Kintone independence principle, allowing data to be passed via configuration.
+ */
+export interface TravelFootprintConfig {
+  footprints: Footprint[];
+  stats: TravelStats;
+  // Optional configurable properties for the component's title and description
+  widgetTitle?: string;
+  widgetDescription?: string;
+}
+
+/**
+ * A client-side React component to display travel footprints.
+ * It's designed as a standalone widget configurable via props, adhering to Dashtail UI guidelines.
+ */
+export default function TravelFootprint({ footprints, stats, widgetTitle, widgetDescription }: TravelFootprintConfig) {
+  // Use provided titles/descriptions or fall back to defaults
+  const componentTitle = widgetTitle || '旅遊足跡';
+  const componentDescription = widgetDescription || '您的旅行回憶';
+
   return (
-    <div className="min-h-screen bg-gray-50 animate-fade-in focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-      <header className="bg-primary-900 text-white px-6 py-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-        <div className="flex items-center gap-3"><MapPin className="w-6 h-6" /><h1 className="text-xl font-bold">旅遊足跡</h1></div>
-        <p className="text-sm text-gray-400 mt-1">您的旅行回憶</p>
+    // Widget Card Structure (Dashtail UI compliant)
+    // Removed page-level styles like min-h-screen and bg-gray-50, as this is a widget.
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 w-full max-w-lg mx-auto">
+      {/* Drag Handle - Required for Dashtail UI Widget */}
+      {/* This area allows users to drag the widget on a dashboard. */}
+      <div className="drag-handle bg-gray-50 px-4 py-2 border-b border-gray-100 flex items-center justify-between cursor-grab text-gray-700">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-primary-600" /> {/* Using primary token */}
+          <h2 className="text-md font-semibold">{componentTitle}</h2>
+        </div>
+        <span className="text-gray-400 text-sm">拖曳此處</span> {/* Indicative text for the drag area */}
+      </div>
+
+      {/* Main Header Section */}
+      <header className="bg-primary-900 text-white px-6 py-4">
+        <div className="flex items-center gap-3">
+          <MapPin className="w-6 h-6" />
+          <h1 className="text-xl font-bold">{componentTitle}</h1>
+        </div>
+        <p className="text-sm text-gray-400 mt-1">{componentDescription}</p>
       </header>
 
-      {/* Stats */}
-      <div className="bg-white border-b border-gray-100 px-6 py-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+      {/* Stats Section - Displays aggregated travel numbers */}
+      <div className="bg-white border-b border-gray-100 px-6 py-4">
         <div className="flex justify-around">
-          <div className="text-center"><p className="text-2xl font-bold text-gray-900">3</p><p className="text-sm text-gray-500">旅遊國家</p></div>
-          <div className="text-center"><p className="text-2xl font-bold text-gray-900">12</p><p className="text-sm text-gray-500">造訪城市</p></div>
-          <div className="text-center"><p className="text-2xl font-bold text-gray-900">45</p><p className="text-sm text-gray-500">打卡景點</p></div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-900">{stats.countries}</p>
+            <p className="text-sm text-gray-500">旅遊國家</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-900">{stats.cities}</p>
+            <p className="text-sm text-gray-500">造訪城市</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-900">{stats.attractions}</p>
+            <p className="text-sm text-gray-500">打卡景點</p>
+          </div>
         </div>
       </div>
 
-      {/* Footprints Grid */}
+      {/* Footprints Grid - Displays individual travel entries */}
       <main className="p-4">
         <div className="grid grid-cols-2 gap-4">
-          {MOCK_FOOTPRINTS.map((footprint) => (
-            <div key={footprint.id} className="bg-white rounded-lg overflow-hidden border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-              <div className="relative aspect-square">
-                <img src={footprint.image} alt={footprint.location} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <p className="font-semibold text-sm">{footprint.location}</p>
-                  <p className="text-sm opacity-80 flex items-center gap-1 mt-1"><Calendar className="w-3 h-3" />{footprint.date}</p>
+          {footprints.length > 0 ? (
+            footprints.map((footprint) => (
+              <div
+                key={footprint.id}
+                className="bg-white rounded-lg overflow-hidden border border-gray-100 group transition-all duration-200 hover:shadow-lg"
+              >
+                <div className="relative aspect-square">
+                  {/* Optimized Image Component (Next.js Image) */}
+                  <Image
+                    src={footprint.image}
+                    alt={footprint.location}
+                    fill // Fills the parent element
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw" // Responsive image sizes for better performance
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {/* Gradient Overlay for text readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  {/* Footprint Info Overlay */}
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <p className="font-semibold text-sm truncate" title={footprint.location}>
+                      {footprint.location}
+                    </p>
+                    <p className="text-xs opacity-80 flex items-center gap-1 mt-1">
+                      <Calendar className="w-3 h-3" />
+                      {footprint.date}
+                    </p>
+                  </div>
+                </div>
+                {/* Action Buttons */}
+                <div className="p-3 flex items-center justify-between">
+                  <button
+                    className="flex items-center gap-1 text-gray-500 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200"
+                    aria-label={`Like this footprint, currently ${footprint.likes} likes`}
+                  >
+                    <Heart className="w-4 h-4 fill-current" />
+                    <span className="text-sm">{footprint.likes}</span>
+                  </button>
+                  <Camera className="w-4 h-4 text-gray-400" />
                 </div>
               </div>
-              <div className="p-3 flex items-center justify-between">
-                <button className="flex items-center gap-1 text-gray-500"><Heart className="w-4 h-4" /><span className="text-sm">{footprint.likes}</span></button>
-                <Camera className="w-4 h-4 text-gray-400" />
-              </div>
+            ))
+          ) : (
+            <div className="col-span-2 text-center py-8 text-gray-500">
+              <p>目前沒有旅遊足跡可以顯示。</p>
             </div>
-          ))}
+          )}
         </div>
       </main>
     </div>

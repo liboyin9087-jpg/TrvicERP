@@ -49,6 +49,8 @@ export interface SeatAssignment {
 
 /**
  * 導遊/領隊
+ * 備註：email 和 licenseNumber 在資料結構層面為可選，
+ * 但在特定業務情境（例如團次確認出發時）可能需要業務邏輯進行強制驗證。
  */
 export interface TourLeader {
   id: string;
@@ -60,6 +62,64 @@ export interface TourLeader {
 }
 
 /**
+ * 行程活動類型
+ */
+export type ItineraryActivityType = 'sightseeing' | 'meal' | 'transportation' | 'accommodation' | 'free_time' | 'other';
+
+/**
+ * 行程中的單個活動
+ */
+export interface ItineraryActivity {
+  id: string; // 活動的唯一識別碼
+  type: ItineraryActivityType; // 活動類型
+  startTime?: string; // 活動開始時間 (例如: "08:00", "08:30 AM")
+  endTime?: string;   // 活動結束時間 (例如: "10:00", "10:30 AM")
+  title: string;      // 活動標題或名稱
+  description?: string; // 活動詳細描述
+  location?: string;  // 活動地點名稱或地址
+  coordinates?: { lat: number; lng: number }; // 活動的地理座標
+  notes?: string;     // 活動備註
+}
+
+/**
+ * 行程中的單天安排
+ */
+export interface ItineraryDay {
+  dayNumber: number; // 行程中的第幾天 (1-based)
+  date?: string;     // 該天的具體日期 (ISO 8601 格式: YYYY-MM-DD), 如果行程有固定日期
+  theme?: string;    // 該天的主題 (例如: "古蹟探索日", "海濱風情")
+  activities: ItineraryActivity[]; // 該天的活動列表
+  meals?: {
+    breakfast?: string; // 早餐描述 (例如: "飯店早餐", "自理")
+    lunch?: string;     // 午餐描述
+    dinner?: string;    // 晚餐描述
+  };
+  accommodation?: {
+    hotelName: string;
+    roomType?: RoomType;
+    address?: string;
+    contactPhone?: string;
+  };
+  transportationDetails?: string; // 該天交通總覽或備註
+  notes?: string;    // 該天備註
+}
+
+/**
+ * 團次行程內容
+ * 詳細定義 itineraryData 的結構，取代 any
+ */
+export interface ItineraryContent {
+  id: string; // 行程內容的唯一識別碼 (例如，作為版本識別的一部分)
+  name: string; // 行程名稱 (例如: "日本關西五日遊標準版")
+  durationDays: number; // 行程總天數
+  overview?: string; // 行程總覽描述
+  days: ItineraryDay[]; // 每日行程細節
+  inclusions?: string[]; // 包含項目列表 (例如: "來回機票", "全程餐食")
+  exclusions?: string[]; // 不包含項目列表
+  travelTips?: string; // 行程旅行提示
+}
+
+/**
  * 行程版本
  */
 export interface ItineraryVersion {
@@ -67,7 +127,7 @@ export interface ItineraryVersion {
   createdAt: string;
   createdBy: string;
   changes: string;
-  itineraryData: any;
+  itineraryData: ItineraryContent; // 已修正: 使用 ItineraryContent 類型取代 'any'
 }
 
 /**

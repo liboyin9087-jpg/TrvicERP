@@ -2,11 +2,12 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, Users, Target, ArrowDownCircle, DollarSign, Wallet,
-  Sparkles, BarChart3, ArrowUpRight, Activity, Globe, Zap
+  Sparkles, BarChart3, ArrowUpRight, Activity, Globe, Zap, GripVertical
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'; // Assuming cn utility is correctly configured for Tailwind
 
-// Animation variants
+// --- Animation Variants (Extracted from component) ---
+// In a real-world scenario, these would be imported from a design system's animation config file.
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -24,29 +25,69 @@ const cardHover = {
   hover: { y: -4, transition: { duration: 0.2 } }
 };
 
-export default function ERPInsights() {
-  const funnelData = [
-    { label: '潛在客戶', count: 1250, color: 'from-slate-200 to-slate-300', icon: Globe },
-    { label: '意向詢價', count: 420, color: 'from-brand-200 to-brand-300', icon: Activity },
-    { label: '支付訂金', count: 156, color: 'from-brand-400 to-brand-500', icon: Wallet },
-    { label: '確認成行', count: 98, color: 'from-brand-500 to-brand-600', icon: Zap },
-  ];
+// --- Kintone Widget Data Configuration Interface ---
+// This interface defines the expected structure for data passed into the ERPInsights component,
+// making it configurable as an independent widget.
+export interface ERPInsightsConfig {
+  kpiCards: {
+    title: string;
+    value: string;
+    trend: string;
+    icon: React.ReactNode;
+    color: 'primary' | 'secondary' | 'info' | 'warning'; // Using Dashtail/Tailwind standard names
+    delay: number;
+  }[];
+  funnelData: {
+    label: string;
+    count: number;
+    color: string; // Tailwind gradient classes, e.g., 'from-gray-200 to-gray-300'
+    icon: React.ElementType; // Use React.ElementType for component type
+  }[];
+  rankingItems: {
+    rank: number;
+    label: string;
+    value: string;
+    percent: number;
+  }[];
+  aiSuggestion: string;
+  quickStats: {
+    label: string;
+    value: string;
+    change: string;
+    suffix?: string;
+    isNegativeGood?: boolean;
+  }[];
+}
+
+// --- ERPInsights Component Props ---
+interface ERPInsightsProps {
+  config: ERPInsightsConfig;
+}
+
+export default function ERPInsights({ config }: ERPInsightsProps) {
+  const { kpiCards, funnelData, rankingItems, aiSuggestion, quickStats } = config;
 
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6"
+      // Added relative and a standard card-like structure to support drag-handle
+      className="relative p-6 lg:p-8 max-w-7xl mx-auto space-y-6 bg-white shadow-lg rounded-2xl border border-gray-100"
     >
+      {/* Drag Handle */}
+      <div className="drag-handle absolute top-4 right-4 cursor-grab text-gray-400 hover:text-gray-600 transition-colors">
+        <GripVertical className="w-5 h-5" />
+      </div>
+
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-400 to-primary-600 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               <BarChart3 className="w-4 h-4 text-white" />
             </div>
-            <span className="text-sm font-semibold text-brand-600 bg-brand-50 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+            <span className="text-sm font-semibold text-primary-600 bg-primary-50 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
               Dashboard
             </span>
           </div>
@@ -55,11 +96,11 @@ export default function ERPInsights() {
         </div>
         <motion.div
           whileHover={{ scale: 1.02 }}
-          className="glass-card px-4 py-2.5 flex items-center gap-3"
+          className="glass-card px-4 py-2.5 flex items-center gap-2" // Changed gap-3 to gap-2
         >
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand-500 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"></span>
           </span>
           <span className="text-sm font-semibold text-gray-600">即時數據同步中</span>
         </motion.div>
@@ -67,38 +108,9 @@ export default function ERPInsights() {
 
       {/* KPI Cards */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="本月預估營收"
-          value="$4,285,000"
-          trend="+12.5%"
-          icon={<DollarSign className="w-5 h-5" />}
-          color="brand"
-          delay={0}
-        />
-        <KPICard
-          title="平均轉化率"
-          value="7.8%"
-          trend="+1.2%"
-          icon={<Target className="w-5 h-5" />}
-          color="purple"
-          delay={0.1}
-        />
-        <KPICard
-          title="活躍旅客"
-          value="1,856"
-          trend="+245"
-          icon={<Users className="w-5 h-5" />}
-          color="blue"
-          delay={0.2}
-        />
-        <KPICard
-          title="通路淨利"
-          value="$642,800"
-          trend="+8.4%"
-          icon={<Wallet className="w-5 h-5" />}
-          color="orange"
-          delay={0.3}
-        />
+        {kpiCards.map((card, index) => (
+          <KPICard key={index} {...card} />
+        ))}
       </motion.div>
 
       {/* Main Content */}
@@ -108,8 +120,8 @@ export default function ERPInsights() {
           <div className="glass-card p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-                  <ArrowDownCircle className="text-brand-500 w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                  <ArrowDownCircle className="text-primary-500 w-4 h-4" />
                 </div>
                 銷售轉化漏斗
               </h3>
@@ -143,7 +155,7 @@ export default function ERPInsights() {
                         transition={{ delay: i * 0.15 + 0.3, duration: 0.8, ease: 'easeOut' }}
                         className={cn(
                           'h-full rounded-lg bg-gradient-to-r shadow-sm',
-                          stage.color
+                          stage.color // Color classes are expected from config now
                         )}
                       />
                       <div className="absolute inset-0 flex items-center px-4">
@@ -156,7 +168,8 @@ export default function ERPInsights() {
                       {i > 0 && (
                         <span className={cn(
                           'text-sm font-bold px-2 py-1 rounded-full',
-                          i === funnelData.length - 1 ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
+                          // Dynamic color based on last stage or general
+                          i === funnelData.length - 1 ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
                         )}>
                           {Math.round((stage.count / funnelData[i-1].count) * 100)}%
                         </span>
@@ -174,17 +187,17 @@ export default function ERPInsights() {
           <div className="glass-panel-dark text-white p-6 rounded-2xl h-full">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-brand-400" />
+                <TrendingUp className="w-4 h-4 text-primary-400" /> {/* Changed brand-400 to primary-400 */}
                 購物通路排行
               </h3>
               <span className="text-sm text-gray-400 bg-white/10 px-2 py-1 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                 TOP 3
               </span>
             </div>
-            <div className="space-y-5">
-              <RankingItem rank={1} label="阿里山高山茶廠" value="$185,000" percent={45} />
-              <RankingItem rank={2} label="奮起湖便當總部" value="$92,400" percent={25} />
-              <RankingItem rank={3} label="隙頂咖啡工坊" value="$62,000" percent={18} />
+            <div className="space-y-4"> {/* Changed space-y-5 to space-y-4 */}
+              {rankingItems.map((item) => (
+                <RankingItem key={item.rank} {...item} />
+              ))}
             </div>
 
             {/* AI Suggestion */}
@@ -195,13 +208,13 @@ export default function ERPInsights() {
               className="mt-6 pt-5 border-t border-white/10"
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-gradient-brand flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-primary-400 to-primary-600 flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
                   <Sparkles className="w-3 h-3 text-white" />
                 </div>
                 <p className="text-sm text-gray-400 uppercase font-semibold tracking-wider">AI 策略建議</p>
               </div>
               <p className="text-sm text-gray-300 leading-relaxed">
-                "目前「高山茶」類別轉化率最高，建議在 Day 2 加強行程導覽，預估可提升 <span className="text-brand-400 font-bold">5%</span> 淨利。"
+                {aiSuggestion}
               </p>
             </motion.div>
           </div>
@@ -210,44 +223,46 @@ export default function ERPInsights() {
 
       {/* Quick Stats Footer */}
       <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <QuickStat label="今日詢價" value="24" change="+8" />
-        <QuickStat label="待處理訂單" value="12" change="-3" isNegativeGood />
-        <QuickStat label="本週出團" value="6" change="0" />
-        <QuickStat label="客戶滿意度" value="4.8" change="+0.2" suffix="/5" />
+        {quickStats.map((stat, index) => (
+          <QuickStat key={index} {...stat} />
+        ))}
       </motion.div>
     </motion.div>
   );
 }
+
+// --- Sub-components (Kept local, but could be separate files) ---
 
 interface KPICardProps {
   title: string;
   value: string;
   trend: string;
   icon: React.ReactNode;
-  color: 'brand' | 'purple' | 'blue' | 'orange';
+  color: 'primary' | 'secondary' | 'info' | 'warning'; // Using Dashtail/Tailwind standard names
   delay: number;
 }
 
 function KPICard({ title, value, trend, icon, color, delay }: KPICardProps) {
+  // Map internal color names to Dashtail-compliant Tailwind classes
   const colorStyles = {
-    brand: {
-      bg: 'bg-brand-50',
-      iconBg: 'bg-gradient-brand',
-      trendBg: 'bg-brand-50 text-brand-700',
+    primary: {
+      bg: 'bg-primary-50',
+      iconBg: 'bg-gradient-to-r from-primary-400 to-primary-600',
+      trendBg: 'bg-primary-50 text-primary-700',
     },
-    purple: {
-      bg: 'bg-accent-50',
-      iconBg: 'bg-gradient-ocean',
-      trendBg: 'bg-accent-50 text-accent-700',
+    secondary: { // Mapped from 'purple'
+      bg: 'bg-secondary-50',
+      iconBg: 'bg-gradient-to-r from-secondary-400 to-secondary-600',
+      trendBg: 'bg-secondary-50 text-secondary-700',
     },
-    blue: {
-      bg: 'bg-brand-50',
-      iconBg: 'bg-gradient-ocean',
-      trendBg: 'bg-brand-50 text-brand-700',
+    info: { // Mapped from 'blue'
+      bg: 'bg-blue-50', // Assuming a distinct blue for 'info' if not part of primary/secondary
+      iconBg: 'bg-gradient-to-r from-blue-400 to-blue-600',
+      trendBg: 'bg-blue-50 text-blue-700',
     },
-    orange: {
-      bg: 'bg-orange-50',
-      iconBg: 'bg-gradient-sunset',
+    warning: { // Mapped from 'orange'
+      bg: 'bg-orange-50', // Assuming a distinct orange for 'warning'
+      iconBg: 'bg-gradient-to-r from-orange-400 to-orange-600',
       trendBg: 'bg-orange-50 text-orange-700',
     },
   };
@@ -302,7 +317,7 @@ function RankingItem({ rank, label, value, percent }: RankingItemProps) {
         <div className="flex items-center gap-2">
           <span className={cn(
             'w-5 h-5 rounded-md flex items-center justify-center text-sm font-bold',
-            rank === 1 ? 'bg-yellow-500 text-white' : 'bg-white/10 text-gray-400'
+            rank === 1 ? 'bg-warning-500 text-white' : 'bg-white/10 text-gray-400' // Changed yellow-500 to warning-500
           )}>
             {rank}
           </span>
@@ -315,7 +330,7 @@ function RankingItem({ rank, label, value, percent }: RankingItemProps) {
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
           transition={{ delay: rank * 0.15 + 0.5, duration: 0.6 }}
-          className="h-full bg-gradient-to-r from-brand-400 to-brand-500 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+          className="h-full bg-gradient-to-r from-primary-400 to-primary-500 rounded-full focus:ring-2 focus:ring-primary-300 active:bg-primary-800" // Changed brand-400/500 to primary-400/500
         />
       </div>
     </motion.div>
@@ -347,7 +362,7 @@ function QuickStat({ label, value, change, suffix, isNegativeGood }: QuickStatPr
         {!isNeutral && (
           <span className={cn(
             'text-sm font-bold',
-            isGood ? 'text-green-600' : 'text-red-500'
+            isGood ? 'text-success-600' : 'text-danger-500' // Changed green-600 to success-600, red-500 to danger-500
           )}>
             {change}
           </span>

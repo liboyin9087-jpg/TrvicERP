@@ -1,30 +1,64 @@
 import React from 'react';
 
-const STATUS_CONFIG: Record<
-  string,
-  { bg: string; text: string; label: string }
-> = {
-  draft: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Draft' },
-  quoted: { bg: 'bg-brand-100', text: 'text-brand-800', label: 'Quoted' },
-  confirmed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Confirmed' },
-  ongoing: { bg: 'bg-accent-100', text: 'text-accent-800', label: 'Ongoing' },
-  completed: { bg: 'bg-gray-200', text: 'text-gray-700', label: 'Completed' },
-  cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: 'Cancelled' },
-  pending: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending' },
-  paid: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Paid' },
+interface StatusBadgeConfigEntry {
+  bg: string;
+  text: string;
+  label: string;
+}
+
+type DefaultStatusKey = 'draft' | 'quoted' | 'confirmed' | 'ongoing' | 'completed' | 'cancelled' | 'pending' | 'paid';
+
+const DEFAULT_STATUS_BADGE_CONFIG: Record<DefaultStatusKey, StatusBadgeConfigEntry> = {
+  draft: { bg: 'bg-primary-100', text: 'text-primary-800', label: 'Draft' },
+  quoted: { bg: 'bg-secondary-100', text: 'text-secondary-800', label: 'Quoted' },
+  confirmed: { bg: 'bg-success-100', text: 'text-success-800', label: 'Confirmed' },
+  ongoing: { bg: 'bg-info-100', text: 'text-info-800', label: 'Ongoing' },
+  completed: { bg: 'bg-neutral-200', text: 'text-neutral-700', label: 'Completed' },
+  cancelled: { bg: 'bg-danger-100', text: 'text-danger-800', label: 'Cancelled' },
+  pending: { bg: 'bg-warning-100', text: 'text-warning-800', label: 'Pending' },
+  paid: { bg: 'bg-success-200', text: 'text-success-900', label: 'Paid' },
+};
+
+const UNKNOWN_STATUS_CONFIG_ENTRY: StatusBadgeConfigEntry = {
+  bg: 'bg-neutral-100',
+  text: 'text-neutral-600',
+  label: 'Unknown',
 };
 
 interface StatusBadgeProps {
-  status: string;
+  status: DefaultStatusKey | string;
+  statusConfig?: Partial<Record<DefaultStatusKey | string, StatusBadgeConfigEntry>>;
+  fallbackStatus?: DefaultStatusKey | string;
+  className?: string;
 }
 
-export default function StatusBadge({ status }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
+export default function StatusBadge({
+  status,
+  statusConfig,
+  fallbackStatus = 'draft',
+  className,
+}: StatusBadgeProps) {
+  const mergedConfig: Record<string, StatusBadgeConfigEntry> = {
+    ...DEFAULT_STATUS_BADGE_CONFIG,
+    ...(statusConfig as Record<string, StatusBadgeConfigEntry>),
+  };
+
+  let config = mergedConfig[status];
+
+  if (!config) {
+    if (fallbackStatus && mergedConfig[fallbackStatus]) {
+      config = mergedConfig[fallbackStatus];
+    } else if (mergedConfig.draft) {
+      config = mergedConfig.draft;
+    } else {
+      config = UNKNOWN_STATUS_CONFIG_ENTRY;
+    }
+  }
+
+  const baseClasses = `inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold`;
 
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-semibold ${config.bg} ${config.text}`}
-    >
+    <span className={`${baseClasses} ${config.bg} ${config.text} ${className || ''}`}>
       {config.label}
     </span>
   );

@@ -1,55 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2, Bus, User, Plus, Minus, Lock, Unlock, Edit, Trash2,
-  Save, X, Users, Bed, MapPin, Phone, Mail, Award, CheckCircle
+  Save, X, Users, Bed, MapPin, Phone, Mail, Award, CheckCircle, GripVertical
 } from 'lucide-react';
 import { cn } from '../../src/lib/utils';
 import type { HotelRoomAllocation, SeatAssignment, TourLeader } from '../../types';
 
 // ============================================
-// Types
+// Types and Config Interfaces
 // ============================================
 
 type TabKey = 'hotel' | 'transport' | 'leader';
 
-interface ResourceAllocationProps {
+// Main component's configuration props
+interface ResourceAllocationConfig {
   sessionId: string;
-  hotelRooms?: HotelRoomAllocation[];
-  transportationSeats?: SeatAssignment[];
-  tourLeaderId?: string;
-  onUpdate?: (data: {
+  hotelRooms: HotelRoomAllocation[]; // Initial hotel room allocations
+  transportationSeats: SeatAssignment[]; // Initial transportation seat assignments
+  tourLeaderId?: string; // Currently assigned tour leader ID
+  availableTourLeaders: TourLeader[]; // List of available tour leaders (replaces mock data)
+  onUpdate?: (data: { // Callback for when any resource allocation changes
     hotelRooms?: HotelRoomAllocation[];
     transportationSeats?: SeatAssignment[];
     tourLeaderId?: string;
   }) => void;
 }
 
-// ============================================
-// Mock Data
-// ============================================
-
-const MOCK_TOUR_LEADERS: TourLeader[] = [
-  { id: 'tl1', name: '張導遊', phone: '0912-345-678', email: 'guide1@travel.com', license_number: 'TL-2020-001', experience_years: 5 },
-  { id: 'tl2', name: '李領隊', phone: '0912-345-679', email: 'guide2@travel.com', license_number: 'TL-2018-015', experience_years: 8 },
-  { id: 'tl3', name: '王導遊', phone: '0912-345-680', email: 'guide3@travel.com', license_number: 'TL-2021-023', experience_years: 3 },
-];
-
-// ============================================
-// Hotel Allocation Tab
-// ============================================
-
-function HotelAllocationTab({ rooms, onUpdate }: {
+// Props for HotelAllocationTab
+interface HotelAllocationTabProps {
   rooms: HotelRoomAllocation[];
-  onUpdate: (rooms: HotelRoomAllocation[]) => void;
-}) {
+  onUpdateRooms: (rooms: HotelRoomAllocation[]) => void;
+}
+
+// Props for AddHotelModal
+interface AddHotelModalProps {
+  onClose: () => void;
+  onSubmit: (data: Partial<HotelRoomAllocation>) => void;
+}
+
+// Props for TransportAllocationTab
+interface TransportAllocationTabProps {
+  seats: SeatAssignment[];
+  onUpdateSeats: (seats: SeatAssignment[]) => void;
+}
+
+// Props for TourLeaderTab
+interface TourLeaderTabProps {
+  leaderId?: string;
+  availableLeaders: TourLeader[];
+  onUpdateLeader: (leaderId: string) => void;
+}
+
+// ============================================
+// Hotel Allocation Tab Component
+// ============================================
+
+function HotelAllocationTab({ rooms, onUpdateRooms }: HotelAllocationTabProps) {
   const [editingRoom, setEditingRoom] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const handleLockRoom = (roomId: string, count: number) => {
     const updated = rooms.map(r => {
       if (r.id === roomId) {
-        const newLocked = Math.min(r.locked_count + count, r.total_count);
+        const newLocked = Math.min(Math.max(0, r.locked_count + count), r.total_count);
         return {
           ...r,
           locked_count: newLocked,
@@ -58,7 +72,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
       }
       return r;
     });
-    onUpdate(updated);
+    onUpdateRooms(updated);
   };
 
   const handleAddRoom = (data: Partial<HotelRoomAllocation>) => {
@@ -73,7 +87,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
       price_per_night: data.price_per_night,
       nights: data.nights,
     };
-    onUpdate([...rooms, newRoom]);
+    onUpdateRooms([...rooms, newRoom]);
     setShowAddModal(false);
   };
 
@@ -100,12 +114,12 @@ function HotelAllocationTab({ rooms, onUpdate }: {
           <motion.div
             key={room.id}
             whileHover={{ y: -2 }}
-            className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+            className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-                  <Building2 className="w-5 h-5 text-brand-600" />
+                <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-primary-600" />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{room.hotel_name}</h4>
@@ -114,7 +128,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
               </div>
               <button
                 onClick={() => setEditingRoom(editingRoom === room.id ? null : room.id)}
-                className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300"
               >
                 <Edit className="w-4 h-4 text-gray-500" />
               </button>
@@ -127,7 +141,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">已鎖定</span>
-                <span className="font-semibold text-brand-600">{room.locked_count} 間</span>
+                <span className="font-semibold text-primary-600">{room.locked_count} 間</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-500">可用</span>
@@ -143,7 +157,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   {room.nights && (
                     <div className="flex items-center justify-between text-sm mt-1">
                       <span className="text-gray-500">總價（{room.nights}晚）</span>
-                      <span className="font-semibold text-brand-600">
+                      <span className="font-semibold text-primary-600">
                         NT${(room.price_per_night * room.nights).toLocaleString()}
                       </span>
                     </div>
@@ -158,7 +172,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   className={cn(
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1',
                     room.available_count > 0
-                      ? 'bg-brand-100 text-brand-700 hover:bg-brand-200'
+                      ? 'bg-primary-100 text-primary-700 hover:bg-primary-200 focus:ring-2 focus:ring-primary-300'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   )}
                 >
@@ -171,7 +185,7 @@ function HotelAllocationTab({ rooms, onUpdate }: {
                   className={cn(
                     'flex-1 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1',
                     room.locked_count > 0
-                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                      ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-2 focus:ring-red-300'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   )}
                 >
@@ -185,13 +199,12 @@ function HotelAllocationTab({ rooms, onUpdate }: {
       </div>
 
       {rooms.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500">尚未新增飯店</p>
         </div>
       )}
 
-      {/* Add Hotel Modal */}
       {showAddModal && (
         <AddHotelModal
           onClose={() => setShowAddModal(false)}
@@ -202,23 +215,20 @@ function HotelAllocationTab({ rooms, onUpdate }: {
   );
 }
 
-function AddHotelModal({ onClose, onSubmit }: {
-  onClose: () => void;
-  onSubmit: (data: Partial<HotelRoomAllocation>) => void;
-}) {
+function AddHotelModal({ onClose, onSubmit }: AddHotelModalProps) {
   const [formData, setFormData] = useState<Partial<HotelRoomAllocation>>({
     room_type: 'double',
     room_type_label: '雙人房',
     total_count: 0,
   });
 
-  const roomTypes = [
+  const roomTypes = useMemo(() => [
     { value: 'single', label: '單人房' },
     { value: 'double', label: '雙人房' },
     { value: 'twin', label: '兩床房' },
     { value: 'family', label: '家庭房' },
     { value: 'suite', label: '套房' },
-  ];
+  ], []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,15 +236,15 @@ function AddHotelModal({ onClose, onSubmit }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card w-full max-w-md"
+        className="glass-card w-full max-w-md bg-white rounded-2xl shadow-xl"
       >
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">新增飯店</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -321,33 +331,31 @@ function AddHotelModal({ onClose, onSubmit }: {
 }
 
 // ============================================
-// Transport Allocation Tab
+// Transport Allocation Tab Component
 // ============================================
 
-function TransportAllocationTab({ seats, onUpdate }: {
-  seats: SeatAssignment[];
-  onUpdate: (seats: SeatAssignment[]) => void;
-}) {
+function TransportAllocationTab({ seats, onUpdateSeats }: TransportAllocationTabProps) {
   const [vehicleType, setVehicleType] = useState<'bus' | 'train' | 'plane' | 'ferry'>('bus');
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [totalSeats, setTotalSeats] = useState(40);
 
   const generateSeats = () => {
+    if (totalSeats <= 0) return;
     const newSeats: SeatAssignment[] = [];
     for (let i = 1; i <= totalSeats; i++) {
       newSeats.push({
-        id: `seat_${i}`,
+        id: `seat_${Date.now()}_${i}`, // Ensure unique ID for new seats
         vehicle_type: vehicleType,
         vehicle_number: vehicleNumber,
         seat_number: String(i).padStart(2, '0'),
         is_assigned: false,
       });
     }
-    onUpdate(newSeats);
+    onUpdateSeats(newSeats);
   };
 
-  const assignedSeats = seats.filter(s => s.is_assigned).length;
-  const availableSeats = seats.length - assignedSeats;
+  const assignedSeatsCount = seats.filter(s => s.is_assigned).length;
+  const availableSeatsCount = seats.length - assignedSeatsCount;
 
   return (
     <div className="space-y-6">
@@ -359,7 +367,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
       </div>
 
       {/* Vehicle Setup */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <h4 className="font-semibold text-gray-900 mb-4">交通工具設定</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -391,7 +399,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
               type="number"
               min="1"
               value={totalSeats}
-              onChange={(e) => setTotalSeats(parseInt(e.target.value))}
+              onChange={(e) => setTotalSeats(parseInt(e.target.value) || 0)}
               className="input-modern w-full"
             />
           </div>
@@ -401,6 +409,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
           whileTap={{ scale: 0.98 }}
           onClick={generateSeats}
           className="mt-4 btn-pill btn-pill-primary gap-2"
+          disabled={totalSeats <= 0 || !vehicleNumber}
         >
           <Plus className="w-4 h-4" />
           產生座位表
@@ -413,17 +422,17 @@ function TransportAllocationTab({ seats, onUpdate }: {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-100 border border-green-300 rounded focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
-                <span className="text-sm text-gray-600">可用 ({availableSeats})</span>
+                <div className="w-4 h-4 bg-green-100 border border-green-300 rounded" />
+                <span className="text-sm text-gray-600">可用 ({availableSeatsCount})</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-brand-100 border border-brand-300 rounded focus:ring-2 focus:ring-primary-300 active:bg-primary-800" />
-                <span className="text-sm text-gray-600">已分配 ({assignedSeats})</span>
+                <div className="w-4 h-4 bg-primary-100 border border-primary-300 rounded" />
+                <span className="text-sm text-gray-600">已分配 ({assignedSeatsCount})</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <div className="grid grid-cols-10 gap-2">
               {seats.map((seat) => (
                 <motion.button
@@ -431,16 +440,16 @@ function TransportAllocationTab({ seats, onUpdate }: {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className={cn(
-                    'aspect-square rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all',
+                    'aspect-square rounded-lg border-2 flex items-center justify-center text-sm font-medium transition-all focus:ring-2 focus:ring-primary-300',
                     seat.is_assigned
-                      ? 'bg-brand-100 border-brand-300 text-brand-700'
+                      ? 'bg-primary-100 border-primary-300 text-primary-700'
                       : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
                   )}
                   onClick={() => {
                     const updated = seats.map(s =>
                       s.id === seat.id ? { ...s, is_assigned: !s.is_assigned } : s
                     );
-                    onUpdate(updated);
+                    onUpdateSeats(updated);
                   }}
                 >
                   {seat.seat_number}
@@ -452,7 +461,7 @@ function TransportAllocationTab({ seats, onUpdate }: {
       )}
 
       {seats.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
           <Bus className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500">請先設定交通工具並產生座位表</p>
         </div>
@@ -462,14 +471,11 @@ function TransportAllocationTab({ seats, onUpdate }: {
 }
 
 // ============================================
-// Tour Leader Tab
+// Tour Leader Tab Component
 // ============================================
 
-function TourLeaderTab({ leaderId, onUpdate }: {
-  leaderId?: string;
-  onUpdate: (leaderId: string) => void;
-}) {
-  const selectedLeader = MOCK_TOUR_LEADERS.find(l => l.id === leaderId);
+function TourLeaderTab({ leaderId, availableLeaders, onUpdateLeader }: TourLeaderTabProps) {
+  const selectedLeader = useMemo(() => availableLeaders.find(l => l.id === leaderId), [leaderId, availableLeaders]);
 
   return (
     <div className="space-y-6">
@@ -479,15 +485,15 @@ function TourLeaderTab({ leaderId, onUpdate }: {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {MOCK_TOUR_LEADERS.map((leader) => (
+        {availableLeaders.map((leader) => (
           <motion.button
             key={leader.id}
             whileHover={{ y: -2 }}
-            onClick={() => onUpdate(leader.id)}
+            onClick={() => onUpdateLeader(leader.id)}
             className={cn(
-              'p-6 rounded-2xl border-2 text-left transition-all',
+              'p-6 rounded-2xl border-2 text-left transition-all focus:ring-2 focus:ring-primary-300',
               leaderId === leader.id
-                ? 'border-brand-500 bg-brand-50'
+                ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-200 bg-white hover:border-gray-300'
             )}
           >
@@ -495,9 +501,9 @@ function TourLeaderTab({ leaderId, onUpdate }: {
               <div className="flex items-center gap-3">
                 <div className={cn(
                   'w-12 h-12 rounded-lg flex items-center justify-center',
-                  leaderId === leader.id ? 'bg-brand-100' : 'bg-gray-100'
+                  leaderId === leader.id ? 'bg-primary-100' : 'bg-gray-100'
                 )}>
-                  <User className={cn('w-6 h-6', leaderId === leader.id ? 'text-brand-600' : 'text-gray-600')} />
+                  <User className={cn('w-6 h-6', leaderId === leader.id ? 'text-primary-600' : 'text-gray-600')} />
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{leader.name}</h4>
@@ -505,7 +511,7 @@ function TourLeaderTab({ leaderId, onUpdate }: {
                 </div>
               </div>
               {leaderId === leader.id && (
-                <div className="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+                <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
               )}
@@ -531,12 +537,12 @@ function TourLeaderTab({ leaderId, onUpdate }: {
       </div>
 
       {selectedLeader && (
-        <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div className="bg-primary-50 border border-primary-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <CheckCircle className="w-6 h-6 text-brand-600" />
+            <CheckCircle className="w-6 h-6 text-primary-600" />
             <div>
-              <p className="font-semibold text-brand-900">已指派：{selectedLeader.name}</p>
-              <p className="text-sm text-brand-700">聯絡電話：{selectedLeader.phone}</p>
+              <p className="font-semibold text-primary-900">已指派：{selectedLeader.name}</p>
+              <p className="text-sm text-primary-700">聯絡電話：{selectedLeader.phone}</p>
             </div>
           </div>
         </div>
@@ -551,23 +557,13 @@ function TourLeaderTab({ leaderId, onUpdate }: {
 
 export default function ResourceAllocation({
   sessionId,
-  hotelRooms = [],
-  transportationSeats = [],
+  hotelRooms,
+  transportationSeats,
   tourLeaderId,
+  availableTourLeaders,
   onUpdate,
-}: ResourceAllocationProps) {
+}: ResourceAllocationConfig) {
   const [activeTab, setActiveTab] = useState<TabKey>('hotel');
-  const [rooms, setRooms] = useState<HotelRoomAllocation[]>(hotelRooms);
-  const [seats, setSeats] = useState<SeatAssignment[]>(transportationSeats);
-  const [leaderId, setLeaderId] = useState<string | undefined>(tourLeaderId);
-
-  const handleUpdate = () => {
-    onUpdate?.({
-      hotelRooms: rooms,
-      transportationSeats: seats,
-      tourLeaderId: leaderId,
-    });
-  };
 
   const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'hotel', label: '飯店分配', icon: <Building2 className="w-4 h-4" /> },
@@ -576,17 +572,22 @@ export default function ResourceAllocation({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"> {/* Dashtail Card Structure */}
+      <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6 drag-handle"> {/* Drag handle */}
+        <GripVertical className="w-5 h-5 text-gray-400" />
+        <h2 className="text-lg font-bold text-gray-900">資源分配管理</h2>
+      </div>
+
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-2 border-b border-gray-200 -mt-2"> {/* Negative margin to align with card border if needed */}
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              'flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors',
+              'flex items-center gap-2 px-4 py-3 font-medium text-sm border-b-2 transition-colors focus:ring-2 focus:ring-primary-300',
               activeTab === tab.key
-                ? 'border-brand-500 text-brand-600'
+                ? 'border-primary-500 text-primary-600'
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             )}
           >
@@ -597,31 +598,29 @@ export default function ResourceAllocation({
       </div>
 
       {/* Tab Content */}
-      <div>
+      <div className="pt-6">
         {activeTab === 'hotel' && (
           <HotelAllocationTab
-            rooms={rooms}
-            onUpdate={(updated) => {
-              setRooms(updated);
-              handleUpdate();
+            rooms={hotelRooms}
+            onUpdateRooms={(updated) => {
+              onUpdate?.({ hotelRooms: updated });
             }}
           />
         )}
         {activeTab === 'transport' && (
           <TransportAllocationTab
-            seats={seats}
-            onUpdate={(updated) => {
-              setSeats(updated);
-              handleUpdate();
+            seats={transportationSeats}
+            onUpdateSeats={(updated) => {
+              onUpdate?.({ transportationSeats: updated });
             }}
           />
         )}
         {activeTab === 'leader' && (
           <TourLeaderTab
-            leaderId={leaderId}
-            onUpdate={(id) => {
-              setLeaderId(id);
-              handleUpdate();
+            leaderId={tourLeaderId}
+            availableLeaders={availableTourLeaders}
+            onUpdateLeader={(id) => {
+              onUpdate?.({ tourLeaderId: id });
             }}
           />
         )}

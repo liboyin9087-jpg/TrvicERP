@@ -9,8 +9,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MAX_ITERATIONS=${1:-3}
 COMPONENT_DIR=${2:-"/workspaces/TrvicERP/components/shared"}
 PROGRESS_FILE="$SCRIPT_DIR/../.validation-progress.log"
-API_KEY="sk-yxxmoylcgblzlxyrkhpeehzzcrqfcvvaxqwvhujlrmeqcvsc"
-API_BASE="https://api.siliconflow.com/v1"
+API_KEY="${SILICONFLOW_API_KEY:-}"
+API_BASE="${SILICONFLOW_API_BASE:-https://api.siliconflow.com/v1}"
+
+# 檢查必要的 API 金鑰
+if [ -z "$API_KEY" ]; then
+    echo -e "${RED}❌ 錯誤：未設定 SILICONFLOW_API_KEY 環境變數${NC}"
+    echo -e "${YELLOW}請執行：export SILICONFLOW_API_KEY='your-api-key'${NC}"
+    exit 1
+fi
 
 # 顏色定義
 RED='\033[0;31m'

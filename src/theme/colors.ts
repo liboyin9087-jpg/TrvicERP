@@ -2,24 +2,137 @@
  * VicERP Design System - Color Tokens
  * 根據規格書建立的語意化色彩系統
  * 採用 Vision Pro 風格的 Glassmorphism 美學
+ * 此檔案專注於顏色系統，不包含字體或間距定義。
  */
 
-export const colors = {
+// ============================================
+// TypeScript 型別定義
+// ============================================
+
+export type ColorHex = `#${string}`;
+export type RgbaValue = `rgba(${number}, ${number}, ${number}, ${number})`;
+export type ShadowValue = string; // e.g., "0 8px 32px 0 rgba(31, 38, 135, 0.15)"
+export type BlendMode = "normal" | "multiply" | "screen" | "overlay" | "darken" | "lighten" | "color-dodge" | "color-burn" | "hard-light" | "soft-light" | "difference" | "exclusion" | "hue" | "saturation" | "color" | "luminosity";
+
+export interface PrimaryColorPalette {
+  50: ColorHex; // 背景色 (Light Mode)
+  100: ColorHex;
+  200: ColorHex;
+  300: ColorHex;
+  400: ColorHex;
+  500: ColorHex; // 主品牌色 - CTA 按鈕
+  600: ColorHex; // 主要文字強調
+  700: ColorHex;
+  800: ColorHex;
+  900: ColorHex; // 深色背景 (Dark Mode Base)
+  950: ColorHex; // 應用程式外框
+}
+
+export interface SemanticColorVariant {
+  base: ColorHex;
+  light: ColorHex;
+  dark: ColorHex;
+}
+
+export interface SemanticColorPalette {
+  success: SemanticColorVariant;
+  warning: SemanticColorVariant;
+  error: SemanticColorVariant;
+  info: SemanticColorVariant;
+}
+
+export interface GlassMorphismPalette {
+  // Light Mode Glass
+  bg: RgbaValue;
+  bgElevated: RgbaValue;
+  border: RgbaValue;
+  borderElevated: RgbaValue;
+  shadow: ShadowValue;
+  shadowLarge: ShadowValue;
+
+  // Dark Mode Glass
+  bgDark: RgbaValue;
+  bgDarkElevated: RgbaValue;
+  borderDark: RgbaValue;
+  borderDarkElevated: RgbaValue;
+  shadowDark: ShadowValue;
+  shadowDarkGlow: ShadowValue;
+}
+
+export interface AuroraPalette {
+  blue: RgbaValue;
+  purple: RgbaValue;
+  indigo: RgbaValue;
+  cyan: RgbaValue;
+  pink: RgbaValue;
+}
+
+export interface GlowPalette {
+  primary: ShadowValue;
+  success: ShadowValue;
+  warning: ShadowValue;
+  error: ShadowValue;
+  purple: ShadowValue;
+  subtle: ShadowValue;
+}
+
+export interface NoiseTextureConfig {
+  opacity: {
+    light: string; // "0.015" 明亮模式下的噪點不透明度
+    dark: string; // "0.025" 深色模式下需要稍微更明顯
+  };
+  blend: BlendMode; // 混合模式
+}
+
+export interface TypographyColorVariant {
+  light: ColorHex;
+  dark: ColorHex;
+}
+
+export interface TypographyColors {
+  primary: TypographyColorVariant;
+  secondary: TypographyColorVariant;
+  muted: TypographyColorVariant;
+  accent: TypographyColorVariant;
+}
+
+export interface DragHandlePalette {
+  bg: ColorHex; // 背景色
+  border: ColorHex; // 邊框色
+  icon: ColorHex; // 圖示色
+  activeBg: ColorHex; // 拖曳時的背景色
+  activeBorder: ColorHex; // 拖曳時的邊框色
+  activeIcon: ColorHex; // 拖曳時的圖示色
+}
+
+// ============================================
+// Color Definitions
+// ============================================
+export const colors: Readonly<{
+  primary: PrimaryColorPalette;
+  semantic: SemanticColorPalette;
+  glass: GlassMorphismPalette;
+  aurora: AuroraPalette;
+  glow: GlowPalette;
+  noise: NoiseTextureConfig;
+  text: TypographyColors;
+  dragHandle: DragHandlePalette;
+}> = {
   // ============================================
-  // Primary Color System (主品牌色系)
+  // Primary Color System (主品牌色系) - 對應 Tailwind 預設顏色
   // ============================================
   primary: {
-    50: "#eef4ff", // 背景色 (Light Mode)
-    100: "#d9e6ff",
-    200: "#bcd7ff",
-    300: "#90c1ff",
-    400: "#5da2ff",
-    500: "#3b82f6", // 主品牌色 - CTA 按鈕
-    600: "#1f6feb", // 主要文字強調
-    700: "#1758c7",
-    800: "#12439a",
-    900: "#0b1f3a", // 深色背景 (Dark Mode Base)
-    950: "#050d1a", // 應用程式外框
+    50: "#eef4ff", // Tailwind: blue-50
+    100: "#d9e6ff", // Tailwind: blue-100
+    200: "#bcd7ff", // Tailwind: blue-200
+    300: "#90c1ff", // Tailwind: blue-300
+    400: "#5da2ff", // Tailwind: blue-400
+    500: "#3b82f6", // Tailwind: blue-500 - 主品牌色 - CTA 按鈕
+    600: "#1f6feb", // Tailwind: blue-600 - 主要文字強調
+    700: "#1758c7", // Tailwind: blue-700
+    800: "#12439a", // Tailwind: blue-800
+    900: "#0b1f3a", // Tailwind: blue-900 - 深色背景 (Dark Mode Base)
+    950: "#050d1a", // Tailwind: blue-950 - 應用程式外框
   },
 
   // ============================================
@@ -27,24 +140,24 @@ export const colors = {
   // ============================================
   semantic: {
     success: {
-      base: "#22c55e", // 用於「已成團」、「獲利達標」
-      light: "#dcfce7",
-      dark: "#15803d",
+      base: "#22c55e", // Tailwind: green-500 - 用於「已成團」、「獲利達標」
+      light: "#dcfce7", // Tailwind: green-100
+      dark: "#15803d", // Tailwind: green-700
     },
     warning: {
-      base: "#f59e0b", // 用於「毛利偏低」、「庫存緊張」
-      light: "#fef3c7",
-      dark: "#d97706",
+      base: "#f59e0b", // Tailwind: amber-500 - 用於「毛利偏低」、「庫存緊張」
+      light: "#fef3c7", // Tailwind: amber-100
+      dark: "#d97706", // Tailwind: amber-700
     },
     error: {
-      base: "#ef4444", // 用於「虧損」、「系統錯誤」
-      light: "#fecaca",
-      dark: "#dc2626",
+      base: "#ef4444", // Tailwind: red-500 - 用於「虧損」、「系統錯誤」
+      light: "#fecaca", // Tailwind: red-100
+      dark: "#dc2626", // Tailwind: red-700
     },
     info: {
-      base: "#3b82f6",
-      light: "#dbeafe",
-      dark: "#1d4ed8",
+      base: "#3b82f6", // Tailwind: blue-500
+      light: "#dbeafe", // Tailwind: blue-100
+      dark: "#1d4ed8", // Tailwind: blue-700
     },
   },
 
@@ -66,30 +179,30 @@ export const colors = {
     borderDark: "rgba(255, 255, 255, 0.08)",
     borderDarkElevated: "rgba(255, 255, 255, 0.12)",
     shadowDark: "0 20px 40px rgba(0, 0, 0, 0.3)",
-    shadowDarkGlow: "0 8px 30px rgba(59, 130, 246, 0.15)",
+    shadowDarkGlow: "0 8px 30px rgba(59, 130, 246, 0.15)", // Primary color glow
   },
 
   // ============================================
   // Aurora Effects (氛圍光)
   // ============================================
   aurora: {
-    blue: "rgba(59, 130, 246, 0.15)",
-    purple: "rgba(147, 51, 234, 0.12)",
-    indigo: "rgba(99, 102, 241, 0.12)",
-    cyan: "rgba(6, 182, 212, 0.10)",
-    pink: "rgba(236, 72, 153, 0.08)",
+    blue: "rgba(59, 130, 246, 0.15)", // Tailwind blue-500 with opacity
+    purple: "rgba(147, 51, 234, 0.12)", // Tailwind purple-600 with opacity
+    indigo: "rgba(99, 102, 241, 0.12)", // Tailwind indigo-500 with opacity
+    cyan: "rgba(6, 182, 212, 0.10)", // Tailwind cyan-500 with opacity
+    pink: "rgba(236, 72, 153, 0.08)", // Tailwind pink-500 with opacity
   },
 
   // ============================================
   // Glow Effects (發光效果)
   // ============================================
   glow: {
-    primary: "0 0 24px rgba(59, 130, 246, 0.35)",
-    success: "0 0 20px rgba(34, 197, 94, 0.35)",
-    warning: "0 0 20px rgba(245, 158, 11, 0.35)",
-    error: "0 0 20px rgba(239, 68, 68, 0.35)",
-    purple: "0 0 25px rgba(147, 51, 234, 0.35)",
-    subtle: "0 0 15px rgba(59, 130, 246, 0.2)",
+    primary: "0 0 24px rgba(59, 130, 246, 0.35)", // Primary color (blue-500) glow
+    success: "0 0 20px rgba(34, 197, 94, 0.35)", // Success color (green-500) glow
+    warning: "0 0 20px rgba(245, 158, 11, 0.35)", // Warning color (amber-500) glow
+    error: "0 0 20px rgba(239, 68, 68, 0.35)", // Error color (red-500) glow
+    purple: "0 0 25px rgba(147, 51, 234, 0.35)", // Purple-600 glow
+    subtle: "0 0 15px rgba(59, 130, 246, 0.2)", // Subtle primary color glow
   },
 
   // ============================================
@@ -108,65 +221,154 @@ export const colors = {
   // ============================================
   text: {
     primary: {
-      light: "#1f2937", // 深色文字 (Light Mode)
-      dark: "#f9fafb", // 淺色文字 (Dark Mode)
+      light: "#1f2937", // Tailwind: gray-800 - 深色文字 (Light Mode)
+      dark: "#f9fafb", // Tailwind: gray-50 - 淺色文字 (Dark Mode)
     },
     secondary: {
-      light: "#6b7280",
-      dark: "#9ca3af",
+      light: "#6b7280", // Tailwind: gray-500
+      dark: "#9ca3af", // Tailwind: gray-400
     },
     muted: {
-      light: "#9ca3af",
-      dark: "#6b7280",
+      light: "#9ca3af", // Tailwind: gray-400
+      dark: "#6b7280", // Tailwind: gray-500
     },
     accent: {
-      light: "#3b82f6",
-      dark: "#60a5fa",
+      light: "#3b82f6", // Tailwind: blue-500
+      dark: "#60a5fa", // Tailwind: blue-400
     },
   },
-} as const;
+
+  // ============================================
+  // Drag Handle Colors (拖曳手把色彩)
+  // ============================================
+  dragHandle: {
+    bg: "#e5e7eb", // Tailwind: gray-200
+    border: "#d1d5db", // Tailwind: gray-300
+    icon: "#6b7280", // Tailwind: gray-500
+    activeBg: "#dbeafe", // Tailwind: blue-100
+    activeBorder: "#93c5fd", // Tailwind: blue-300
+    activeIcon: "#2563eb", // Tailwind: blue-600
+  },
+};
 
 // ============================================
 // Type Exports for TypeScript
 // ============================================
-export type ColorKey = keyof typeof colors;
-export type PrimaryColorKey = keyof typeof colors.primary;
-export type SemanticColorKey = keyof typeof colors.semantic;
-export type GlassColorKey = keyof typeof colors.glass;
-export type AuroraColorKey = keyof typeof colors.aurora;
+export type ColorCategoryKey = keyof typeof colors;
+export type PrimaryColorLevel = keyof typeof colors.primary;
+export type SemanticColorType = keyof typeof colors.semantic;
+export type SemanticColorVariantKey = "base" | "light" | "dark";
+export type GlassColorProperty = keyof typeof colors.glass;
+export type AuroraColorName = keyof typeof colors.aurora;
+export type GlowEffectName = keyof typeof colors.glow;
+export type NoiseOpacityMode = keyof typeof colors.noise.opacity;
+export type TypographyColorType = keyof typeof colors.text;
+export type TypographyColorVariantKey = "light" | "dark";
+export type DragHandleColorProperty = keyof typeof colors.dragHandle;
 
 // ============================================
-// Utility Functions
+// Utility Functions for CSS Variable Access
 // ============================================
 
 /**
- * 取得語意化色彩 CSS Variable 名稱
+ * 取得 Primary 色彩的 CSS Variable 名稱
+ * @param level - 色彩深度 (50-950)
+ */
+export function getPrimaryColorVar(level: PrimaryColorLevel): string {
+  return `var(--color-primary-${level})`;
+}
+
+/**
+ * 取得語意化色彩的 CSS Variable 名稱
+ * @param type - 語意類型 (success, warning, error, info)
+ * @param variant - 變體 (base, light, dark)
  */
 export function getSemanticColorVar(
-  type: SemanticColorKey,
-  variant: "base" | "light" | "dark" = "base",
+  type: SemanticColorType,
+  variant: SemanticColorVariantKey = "base",
 ): string {
   return `var(--color-semantic-${type}-${variant})`;
 }
 
 /**
- * 取得玻璃效果 CSS Variable 名稱
+ * 取得玻璃擬態效果的 CSS Variable 名稱
+ * @param property - 玻璃效果屬性 (e.g., bg, border, shadow)
  */
-export function getGlassVar(property: GlassColorKey): string {
-  return `var(--glass-${property})`;
+export function getGlassVar(property: GlassColorProperty): string {
+  const varNameMap: Record<GlassColorProperty, string> = {
+    bg: "--glass-bg",
+    bgElevated: "--glass-bg-elevated",
+    border: "--glass-border",
+    borderElevated: "--glass-border-elevated",
+    shadow: "--glass-shadow",
+    shadowLarge: "--glass-shadow-large",
+    bgDark: "--glass-bg-dark",
+    bgDarkElevated: "--glass-bg-dark-elevated",
+    borderDark: "--glass-border-dark",
+    borderDarkElevated: "--glass-border-dark-elevated",
+    shadowDark: "--glass-shadow-dark",
+    shadowDarkGlow: "--glass-shadow-dark-glow",
+  };
+  return `var(${varNameMap[property]})`;
 }
 
 /**
- * 取得極光效果 CSS Variable 名稱
+ * 取得極光效果的 CSS Variable 名稱
+ * @param color - 極光顏色名稱 (blue, purple, etc.)
  */
-export function getAuroraVar(color: AuroraColorKey): string {
+export function getAuroraVar(color: AuroraColorName): string {
   return `var(--aurora-${color})`;
 }
 
+/**
+ * 取得發光效果的 CSS Variable 名稱
+ * @param effect - 發光效果名稱 (primary, success, etc.)
+ */
+export function getGlowVar(effect: GlowEffectName): string {
+  return `var(--glow-${effect})`;
+}
+
+/**
+ * 取得噪點不透明度的 CSS Variable 名稱
+ * @param mode - 模式 (light, dark)
+ */
+export function getNoiseOpacityVar(mode: NoiseOpacityMode): string {
+  return `var(--noise-opacity-${mode})`;
+}
+
+/**
+ * 取得噪點混合模式的 CSS Variable 名稱
+ */
+export function getNoiseBlendVar(): string {
+  return `var(--noise-blend)`;
+}
+
+/**
+ * 取得文字色彩的 CSS Variable 名稱
+ * @param type - 文字類型 (primary, secondary, muted, accent)
+ * @param variant - 變體 (light, dark)
+ */
+export function getTextColorVar(
+  type: TypographyColorType,
+  variant: TypographyColorVariantKey,
+): string {
+  return `var(--text-${type}-${variant})`;
+}
+
+/**
+ * 取得拖曳手把色彩的 CSS Variable 名稱
+ * @param property - 拖曳手把屬性 (bg, border, icon, activeBg, activeBorder, activeIcon)
+ */
+export function getDragHandleColorVar(property: DragHandleColorProperty): string {
+  const kebabCaseProperty = property.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, "$1-$2").toLowerCase();
+  return `var(--color-drag-handle-${kebabCaseProperty})`;
+}
+
 // ============================================
-// CSS Variables Mapping (for CSS file generation)
+// CSS Variables Mapping (for CSS file generation/Tailwind config)
+// = 此物件用於將 JS 中的顏色定義映射為 CSS 變數，供 Tailwind CSS 等工具使用。
 // ============================================
-export const cssVariables = {
+export const cssVariables: Readonly<Record<string, string>> = {
   // Primary colors
   "--color-primary-50": colors.primary[50],
   "--color-primary-100": colors.primary[100],
@@ -197,12 +399,16 @@ export const cssVariables = {
   // Glass morphism
   "--glass-bg": colors.glass.bg,
   "--glass-bg-elevated": colors.glass.bgElevated,
-  "--glass-bg-dark": colors.glass.bgDark,
-  "--glass-bg-dark-elevated": colors.glass.bgDarkElevated,
   "--glass-border": colors.glass.border,
   "--glass-border-elevated": colors.glass.borderElevated,
+  "--glass-shadow": colors.glass.shadow,
+  "--glass-shadow-large": colors.glass.shadowLarge,
+  "--glass-bg-dark": colors.glass.bgDark,
+  "--glass-bg-dark-elevated": colors.glass.bgDarkElevated,
   "--glass-border-dark": colors.glass.borderDark,
   "--glass-border-dark-elevated": colors.glass.borderDarkElevated,
+  "--glass-shadow-dark": colors.glass.shadowDark,
+  "--glass-shadow-dark-glow": colors.glass.shadowDarkGlow,
 
   // Aurora effects
   "--aurora-blue": colors.aurora.blue,
@@ -210,6 +416,19 @@ export const cssVariables = {
   "--aurora-indigo": colors.aurora.indigo,
   "--aurora-cyan": colors.aurora.cyan,
   "--aurora-pink": colors.aurora.pink,
+
+  // Glow effects
+  "--glow-primary": colors.glow.primary,
+  "--glow-success": colors.glow.success,
+  "--glow-warning": colors.glow.warning,
+  "--glow-error": colors.glow.error,
+  "--glow-purple": colors.glow.purple,
+  "--glow-subtle": colors.glow.subtle,
+
+  // Noise Texture
+  "--noise-opacity-light": colors.noise.opacity.light,
+  "--noise-opacity-dark": colors.noise.opacity.dark,
+  "--noise-blend": colors.noise.blend,
 
   // Text colors
   "--text-primary-light": colors.text.primary.light,
@@ -220,4 +439,12 @@ export const cssVariables = {
   "--text-muted-dark": colors.text.muted.dark,
   "--text-accent-light": colors.text.accent.light,
   "--text-accent-dark": colors.text.accent.dark,
+
+  // Drag Handle Colors
+  "--color-drag-handle-bg": colors.dragHandle.bg,
+  "--color-drag-handle-border": colors.dragHandle.border,
+  "--color-drag-handle-icon": colors.dragHandle.icon,
+  "--color-drag-handle-active-bg": colors.dragHandle.activeBg,
+  "--color-drag-handle-active-border": colors.dragHandle.activeBorder,
+  "--color-drag-handle-active-icon": colors.dragHandle.activeIcon,
 } as const;

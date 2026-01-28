@@ -1,23 +1,32 @@
-import React, { useState } from 'react';
+// ============================================
+// File Path: /workspaces/TrvicERP/components/admin/CaseClosureReport.tsx
+// ============================================
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Download, Users, Calendar, MapPin, CheckCircle, AlertTriangle,
   Star, MessageSquare, TrendingUp, Clock, Printer, Mail, Loader2, Sparkles
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { aiService } from '@/lib/ai/aiService';
-import { useToast } from '@/store/useToastStore';
-import type { NpsInsightOutput } from '../../src/types/ai';
-import type { TourSession, Booking } from '../../types';
+import { cn } from '@/lib/utils'; // Assuming cn utility is still valid and needed
 
 // ============================================
-// Types
+// Shared Types (ideally in _types.ts)
 // ============================================
 
-interface CaseClosureReportProps {
-  session: TourSession;
-  bookings: Booking[];
-  onClose?: () => void;
+interface TourSession {
+  id: string;
+  group_number?: string;
+  series_id?: string;
+  start_date: string;
+  end_date: string;
+  current_pax: number;
+}
+
+interface Booking {
+  id: string;
+  status: 'confirmed' | 'paid' | 'pending' | 'cancelled';
+  special_needs?: boolean;
 }
 
 interface FeedbackSummary {
@@ -40,8 +49,47 @@ interface IncidentLog {
   severity: 'low' | 'medium' | 'high';
 }
 
+interface NpsInsightOutput {
+  nps_score: number;
+  response_count: number;
+  promoter_ratio: number;
+  detractor_ratio: number;
+  key_themes: string[];
+  improvement_actions: string[];
+}
+
+interface ToastService {
+  success: (message: string) => void;
+  error: (message: string) => void;
+  info: (message: string) => void;
+  warning: (message: string) => void;
+}
+
 // ============================================
-// Mock Data
+// Config Props Interface (for Kintone independent widget)
+// ============================================
+
+export interface CaseClosureReportConfig {
+  session: TourSession;
+  bookings: Booking[];
+  initialFeedback?: FeedbackSummary;
+  initialIncidents?: IncidentLog[];
+  initialNpsInsight?: NpsInsightOutput;
+  aiService: {
+    generateStructured: <T>(params: {
+      message: string;
+      mode: string;
+      schema: string;
+      context: string;
+      max_attempts: number;
+    }) => Promise<{ data: T }>;
+  };
+  toastService: ToastService;
+  onClose?: () => void;
+}
+
+// ============================================
+// Mock Data (moved for demonstration; in production, this would come from an API)
 // ============================================
 
 const MOCK_FEEDBACK: FeedbackSummary = {
@@ -94,32 +142,107 @@ const MOCK_NPS_INSIGHT: NpsInsightOutput = {
 };
 
 // ============================================
-// Helper Components
+// Custom Hooks (for business logic separation)
 // ============================================
 
-function StatCard({ icon, label, value, subValue, trend }: {
+// Hook to simulate data loading and calculation
+function useCaseReportData(session: TourSession, bookings: Booking[], initialFeedback?: FeedbackSummary, initialIncidents?: IncidentLog[]) {
+  const [feedback, setFeedback] = useState<FeedbackSummary | null>(initialFeedback || null);
+  const [incidents, setIncidents] = useState<IncidentLog[]>(initialIncidents || []);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // In a real application, this would be an API call
+      // await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+      setFeedback(initialFeedback || MOCK_FEEDBACK);
+      setIncidents(initialIncidents || MOCK_INCIDENTS);
+      setLoading(false);
+    };
+    fetchData();
+  }, [session, bookings, initialFeedback, initialIncidents]);
+
+  const totalPax = session.current_pax;
+  const confirmedPax = bookings.filter(b => b.status === 'confirmed' || b.status === 'paid').length;
+  const duration = Math.ceil(
+    (new Date(session.end_date).getTime() - new Date(session.start_date).getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  return { feedback, incidents, totalPax, confirmedPax, duration, loading };
+}
+
+// Hook for AI insight generation
+function useNpsInsightGeneration(feedback: FeedbackSummary | null, aiService: CaseClosureReportConfig['aiService'], toast: ToastService, initialNpsInsight?: NpsInsightOutput) {
+  const [npsInsight, setNpsInsight] = useState<NpsInsightOutput | null>(initialNpsInsight || MOCK_NPS_INSIGHT);
+  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+
+  const handleGenerateInsight = useCallback(async () => {
+    if (!feedback) {
+      toast.error('無法生成 AI 摘要：缺少回饋數據。');
+      return;
+    }
+
+    setIsGeneratingInsight(true);
+    try {
+      const message = `
+請根據以下滿意度數據生成 NPS 分析摘要：
+- 平均評分: ${feedback.averageRating}
+- 回覆數: ${feedback.totalResponses}
+- 好評項目: ${feedback.highlights.join(', ')}
+- 待改進項目: ${feedback.improvements.join(', ')}
+      `.trim();
+
+      const response = await aiService.generateStructured<NpsInsightOutput>({
+        message,
+        mode: 'general',
+        schema: 'nps_insight',
+        context: '',
+        max_attempts: 2,
+      });
+      setNpsInsight(response.data);
+      toast.success('已產生 AI 結案摘要');
+    } catch (error) {
+      console.error('AI insight generation failed:', error);
+      setNpsInsight(MOCK_NPS_INSIGHT); // Fallback to mock data
+      toast.info('AI 摘要生成失敗，使用預設 NPS 分析 (Demo)');
+    } finally {
+      setIsGeneratingInsight(false);
+    }
+  }, [feedback, aiService, toast]);
+
+  return { npsInsight, isGeneratingInsight, handleGenerateInsight };
+}
+
+// ============================================
+// Helper Components (ideally in _shared_components.tsx)
+// ============================================
+
+interface StatCardProps {
   icon: React.ReactNode;
   label: string;
   value: string;
   subValue?: string;
   trend?: 'up' | 'down' | 'neutral';
-}) {
+}
+
+function StatCard({ icon, label, value, subValue, trend }: StatCardProps) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-card rounded-2xl border border-neutral-100 p-5 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600">
+        {/* Changed bg-gray-50 to bg-brand-50, text-gray-600 to text-brand-600 */}
+        <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center text-brand-600">
           {icon}
         </div>
-        <span className="text-sm text-gray-500">{label}</span>
+        <span className="text-sm text-neutral-500">{label}</span>
       </div>
       <div className="flex items-end justify-between">
-        <span className="text-2xl font-bold text-gray-900">{value}</span>
+        <span className="text-2xl font-bold text-neutral-900">{value}</span>
         {subValue && (
           <span className={cn(
             'text-sm',
             trend === 'up' && 'text-success-600',
             trend === 'down' && 'text-danger-600',
-            trend === 'neutral' && 'text-gray-500'
+            trend === 'neutral' && 'text-neutral-500'
           )}>
             {subValue}
           </span>
@@ -129,16 +252,18 @@ function StatCard({ icon, label, value, subValue, trend }: {
   );
 }
 
-function RatingBar({ label, rating, maxRating = 5 }: {
+interface RatingBarProps {
   label: string;
   rating: number;
   maxRating?: number;
-}) {
+}
+
+function RatingBar({ label, rating, maxRating = 5 }: RatingBarProps) {
   const percentage = (rating / maxRating) * 100;
   return (
     <div className="flex items-center gap-4">
-      <span className="text-sm text-gray-600 w-24 shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+      <span className="text-sm text-neutral-600 w-24 shrink-0">{label}</span>
+      <div className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
@@ -146,82 +271,202 @@ function RatingBar({ label, rating, maxRating = 5 }: {
           className={cn(
             'h-full rounded-full',
             rating >= 4.5 ? 'bg-success-500' :
-            rating >= 4.0 ? 'bg-brand-500' :
+            rating >= 4.0 ? 'bg-brand-500' : // Using brand-500 for mid-range good
             rating >= 3.5 ? 'bg-warning-500' : 'bg-danger-500'
           )}
         />
       </div>
-      <span className="text-sm font-medium text-gray-900 w-10 text-right">{rating.toFixed(1)}</span>
+      <span className="text-sm font-medium text-neutral-900 w-10 text-right">{rating.toFixed(1)}</span>
     </div>
   );
 }
 
-function IncidentCard({ incident }: { incident: IncidentLog }) {
+interface IncidentCardProps {
+  incident: IncidentLog;
+}
+
+function IncidentCard({ incident }: IncidentCardProps) {
   const typeLabels: Record<string, { label: string; color: string }> = {
     delay: { label: '延誤', color: 'bg-warning-100 text-warning-700' },
     complaint: { label: '客訴', color: 'bg-danger-100 text-danger-700' },
-    medical: { label: '醫療', color: 'bg-brand-100 text-brand-700' },
+    medical: { label: '醫療', color: 'bg-brand-100 text-brand-700' }, // Using brand for medical related
     lost_item: { label: '遺失', color: 'bg-accent-100 text-accent-700' },
-    other: { label: '其他', color: 'bg-gray-100 text-gray-700' },
+    other: { label: '其他', color: 'bg-neutral-100 text-neutral-700' }, // Using neutral for gray
   };
 
   const { label, color } = typeLabels[incident.type] || typeLabels.other;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-100 p-4 hover:border-gray-200 hover:shadow-sm transition-all focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+    <div className="bg-card rounded-lg border border-neutral-100 p-4 hover:border-neutral-200 hover:shadow-sm transition-all focus:ring-2 focus:ring-primary-300 active:bg-primary-50">
       <div className="flex items-start justify-between mb-2">
         <span className={cn('px-2 py-1 rounded-lg text-sm font-medium', color)}>
           {label}
         </span>
-        <span className="text-sm text-gray-400">{incident.timestamp}</span>
+        <span className="text-sm text-neutral-400">{incident.timestamp}</span>
       </div>
-      <p className="text-sm text-gray-900 mb-2">{incident.description}</p>
+      <p className="text-sm text-neutral-900 mb-2">{incident.description}</p>
       <div className="flex items-start gap-2 text-sm">
         <CheckCircle className="w-4 h-4 text-success-500 mt-0.5 shrink-0" />
-        <span className="text-gray-600">{incident.resolution}</span>
+        <span className="text-neutral-600">{incident.resolution}</span>
       </div>
     </div>
   );
 }
 
 // ============================================
-// Main Component
+// Export Utilities (ideally in _export_service.ts)
 // ============================================
 
-export default function CaseClosureReport({
-  session,
-  bookings,
-}: CaseClosureReportProps) {
-  const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'overview' | 'feedback' | 'incidents' | 'export'>('overview');
-  const [npsInsight, setNpsInsight] = useState<NpsInsightOutput | null>(null);
-  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+interface ReportExportServiceProps {
+  session: TourSession;
+  feedback: FeedbackSummary;
+  incidents: IncidentLog[];
+  totalPax: number;
+  duration: number;
+  toast: ToastService;
+}
 
-  const feedback = MOCK_FEEDBACK;
-  const incidents = MOCK_INCIDENTS;
-  const insight = npsInsight || MOCK_NPS_INSIGHT;
+function useReportExportService({ session, feedback, incidents, totalPax, duration, toast }: ReportExportServiceProps) {
 
-  // 計算統計數據
-  const totalPax = session.current_pax;
-  const confirmedPax = bookings.filter(b => b.status === 'confirmed' || b.status === 'paid').length;
-  // const specialNeedsCount = bookings.filter(b => b.special_needs).length; // Variable not used
-  const duration = Math.ceil(
-    (new Date(session.end_date).getTime() - new Date(session.start_date).getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const generateReportHTML = useCallback((): string => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>結案報告 - ${session.group_number || session.series_id}</title>
+        <style>
+          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; line-height: 1.6; font-size: 14px; color: #333; }
+          .header { border-bottom: 3px solid #1f2937; padding-bottom: 20px; margin-bottom: 30px; } /* Darker border */
+          .title { font-size: 28px; font-weight: bold; margin-bottom: 10px; color: #1f2937; }
+          .meta { color: #6b7280; font-size: 14px; } /* Neutral colors */
+          .section { margin-bottom: 30px; page-break-inside: avoid; }
+          .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #1f2937; }
+          .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+          .stat-box { background: #f9fafb; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb; } /* Neutral background */
+          .stat-value { font-size: 24px; font-weight: bold; color: #1f2937; }
+          .stat-label { font-size: 14px; color: #6b7280; margin-top: 5px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+          th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+          th { background: #f9fafb; font-weight: bold; color: #1f2937; }
+          .rating { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;}
+          .rating-high { background: #dcfce7; color: #166534; } /* Success colors */
+          .rating-mid { background: #fef3c7; color: #92400e; } /* Warning colors */
+          .highlight { background: #ecfdf5; border-left: 4px solid #10b981; padding: 10px 15px; margin: 5px 0; font-size: 14px; color: #065f46; } /* Success green */
+          .improvement { background: #fef2f2; border-left: 4px solid #ef4444; padding: 10px 15px; margin: 5px 0; font-size: 14px; color: #b91c1c; } /* Danger red */
+          h4 { font-size: 16px; color: #1f2937; }
+          p { font-size: 14px; color: #333; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">團次結案報告</div>
+          <div class="meta">
+            團號：${session.group_number || 'N/A'} |
+            出發日期：${session.start_date} ~ ${session.end_date} |
+            報告日期：${new Date().toLocaleDateString('zh-TW')}
+          </div>
+        </div>
 
-  const handleExportPDF = () => {
+        <div class="section">
+          <div class="section-title">基本資訊</div>
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-value">${totalPax}</div>
+              <div class="stat-label">總人數</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${duration}</div>
+              <div class="stat-label">天數</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${feedback.averageRating.toFixed(1)}</div>
+              <div class="stat-label">平均評分</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${incidents.length}</div>
+              <div class="stat-label">事件記錄</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">滿意度分析</div>
+          <p>回覆率：${feedback.totalResponses}/${totalPax} (${Math.round(feedback.totalResponses / totalPax * 100)}%)</p>
+          <table>
+            <thead>
+              <tr>
+                <th>評分項目</th>
+                <th>評分</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${feedback.categoryRatings.map(cat => `
+                <tr>
+                  <td>${cat.category}</td>
+                  <td><span class="rating ${cat.rating >= 4.5 ? 'rating-high' : 'rating-mid'}">${cat.rating.toFixed(1)}</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">旅客回饋</div>
+          <h4 style="margin: 15px 0 10px; color: #065f46; font-size: 16px;">✓ 好評項目</h4>
+          ${feedback.highlights.map(h => `<div class="highlight">${h}</div>`).join('')}
+          <h4 style="margin: 15px 0 10px; color: #b91c1c; font-size: 16px;">△ 待改進項目</h4>
+          ${feedback.improvements.map(i => `<div class="improvement">${i}</div>`).join('')}
+        </div>
+
+        <div class="section">
+          <div class="section-title">事件記錄</div>
+          ${incidents.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>類型</th>
+                  <th>說明</th>
+                  <th>處理方式</th>
+                  <th>時間</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${incidents.map(inc => `
+                  <tr>
+                    <td>${inc.type}</td>
+                    <td>${inc.description}</td>
+                    <td>${inc.resolution}</td>
+                    <td>${inc.timestamp}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : '<p>本團次無特殊事件記錄</p>'}
+        </div>
+
+        <div class="footer">
+          本報告由 TravelMaster OS 自動生成 | ${new Date().toLocaleString('zh-TW')}
+        </div>
+      </body>
+      </html>
+    `;
+  }, [session, totalPax, duration, feedback, incidents]);
+
+  const handleExportPDF = useCallback(() => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(generateReportHTML());
       printWindow.document.close();
       printWindow.print();
     }
-  };
+  }, [generateReportHTML]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = useCallback(() => {
     const filename = `結案報告_${session.group_number || session.series_id}_${new Date().toISOString().split('T')[0]}`;
 
-    // 生成 Excel XML 格式
+    // Generate Excel XML format
     const escapeXML = (str: string) =>
       str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -331,10 +576,9 @@ export default function CaseClosureReport({
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     toast.success('Excel 報告已下載');
-  };
+  }, [session, totalPax, duration, feedback, incidents, toast]);
 
-  const handleSendEmail = () => {
-    // 建立 mailto 連結，包含報告摘要
+  const handleSendEmail = useCallback(() => {
     const subject = encodeURIComponent(`結案報告 - ${session.group_number || session.series_id}`);
     const body = encodeURIComponent(`
 團次結案報告摘要
@@ -368,180 +612,418 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
 
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
     toast.success('已開啟郵件編輯器');
-  };
+  }, [session, totalPax, duration, feedback, incidents, toast]);
 
-  const handleSendSurvey = () => {
-    toast.success('已發送 NPS 問卷 (Demo)');
-  };
+  return { handleExportPDF, handleExportExcel, handleSendEmail, generateReportHTML };
+}
 
-  const handleGenerateInsight = async () => {
-    setIsGeneratingInsight(true);
-    try {
-      const message = `
-請根據以下滿意度數據生成 NPS 分析摘要：
-- 平均評分: ${feedback.averageRating}
-- 回覆數: ${feedback.totalResponses}
-- 好評項目: ${feedback.highlights.join(', ')}
-- 待改進項目: ${feedback.improvements.join(', ')}
-      `.trim();
+// ============================================
+// Tab Components (for responsibility segregation)
+// ============================================
 
-      const response = await aiService.generateStructured<NpsInsightOutput>({
-        message,
-        mode: 'general',
-        schema: 'nps_insight',
-        context: '',
-        max_attempts: 2,
-      });
-      setNpsInsight(response.data);
-      toast.success('已產生 AI 結案摘要');
-    } catch (error) {
-      setNpsInsight(MOCK_NPS_INSIGHT);
-      toast.info('使用預設 NPS 分析 (Demo)');
-    } finally {
-      setIsGeneratingInsight(false);
-    }
-  };
+interface OverviewTabProps {
+  totalPax: number;
+  confirmedPax: number;
+  duration: number;
+  feedback: FeedbackSummary;
+  incidents: IncidentLog[];
+  loading: boolean;
+}
 
-  const generateReportHTML = (): string => {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>結案報告 - ${session.group_number || session.series_id}</title>
-        <style>
-          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; line-height: 1.6; font-size: 14px; }
-          .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
-          .meta { color: #666; font-size: 14px; }
-          .section { margin-bottom: 30px; page-break-inside: avoid; }
-          .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-          .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
-          .stat-box { background: #f5f5f5; padding: 15px; border-radius: 8px; text-align: center; }
-          .stat-value { font-size: 24px; font-weight: bold; color: #333; }
-          .stat-label { font-size: 14px; color: #666; margin-top: 5px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-          th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
-          th { background: #f5f5f5; font-weight: bold; }
-          .rating { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px;}
-          .rating-high { background: #dcfce7; color: #166534; } /* Success colors */
-          .rating-mid { background: #fef3c7; color: #92400e; } /* Warning colors */
-          .highlight { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 10px 15px; margin: 5px 0; font-size: 14px; } /* Success colors */
-          .improvement { background: #fff5f5; border-left: 4px solid #ef4444; padding: 10px 15px; margin: 5px 0; font-size: 14px; } /* Danger colors */
-          h4 { font-size: 16px; }
-          p { font-size: 14px; }
-          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #999; font-size: 14px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">團次結案報告</div>
-          <div class="meta">
-            團號：${session.group_number || 'N/A'} |
-            出發日期：${session.start_date} ~ ${session.end_date} |
-            報告日期：${new Date().toLocaleDateString('zh-TW')}
+function OverviewTab({ totalPax, confirmedPax, duration, feedback, incidents, loading }: OverviewTabProps) {
+  if (loading || !feedback) {
+    return (
+      <div className="flex justify-center items-center py-16 bg-card rounded-2xl border border-neutral-100 shadow-sm">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+        <p className="ml-3 text-neutral-500">載入中...</p>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Users className="w-5 h-5" />}
+          label="總參加人數"
+          value={totalPax.toString()}
+          subValue={`${confirmedPax} 已確認`}
+        />
+        <StatCard
+          icon={<Calendar className="w-5 h-5" />}
+          label="行程天數"
+          value={`${duration} 天`}
+        />
+        <StatCard
+          icon={<Star className="w-5 h-5" />}
+          label="平均評分"
+          value={feedback.averageRating.toFixed(1)}
+          subValue={`${feedback.totalResponses} 則評價`}
+          trend={feedback.averageRating >= 4.5 ? 'up' : 'neutral'}
+        />
+        <StatCard
+          icon={<AlertTriangle className="w-5 h-5" />}
+          label="事件記錄"
+          value={incidents.length.toString()}
+          subValue={incidents.filter(i => i.severity === 'high').length > 0 ? '需關注' : '正常'}
+          trend={incidents.filter(i => i.severity === 'high').length > 0 ? 'down' : 'up'}
+        />
+      </div>
+
+      {/* Quick Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Ratings */}
+        <div className="bg-card rounded-2xl border border-neutral-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h4 className="font-bold text-neutral-900 mb-4">滿意度概覽</h4>
+          <div className="space-y-3">
+            {feedback.categoryRatings.map((cat) => (
+              <RatingBar key={cat.category} label={cat.category} rating={cat.rating} />
+            ))}
           </div>
         </div>
 
-        <div class="section">
-          <div class="section-title">基本資訊</div>
-          <div class="stat-grid">
-            <div class="stat-box">
-              <div class="stat-value">${totalPax}</div>
-              <div class="stat-label">總人數</div>
+        {/* Recent Incidents */}
+        <div className="bg-card rounded-2xl border border-neutral-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h4 className="font-bold text-neutral-900 mb-4">事件摘要</h4>
+          {incidents.length > 0 ? (
+            <div className="space-y-3">
+              {incidents.slice(0, 3).map((incident) => (
+                <IncidentCard key={incident.id} incident={incident} />
+              ))}
             </div>
-            <div class="stat-box">
-              <div class="stat-value">${duration}</div>
-              <div class="stat-label">天數</div>
+          ) : (
+            <div className="text-center py-8 text-neutral-500">
+              <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success-500" />
+              <p className="text-sm">本團次無特殊事件記錄</p>
             </div>
-            <div class="stat-box">
-              <div class="stat-value">${feedback.averageRating.toFixed(1)}</div>
-              <div class="stat-label">平均評分</div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+interface FeedbackTabProps {
+  feedback: FeedbackSummary;
+  npsInsight: NpsInsightOutput;
+  isGeneratingInsight: boolean;
+  handleGenerateInsight: () => void;
+  toastService: ToastService;
+  totalPax: number;
+  loading: boolean;
+}
+
+function FeedbackTab({ feedback, npsInsight, isGeneratingInsight, handleGenerateInsight, toastService, totalPax, loading }: FeedbackTabProps) {
+  const handleSendSurvey = useCallback(() => {
+    toastService.success('已發送 NPS 問卷 (Demo)');
+  }, [toastService]);
+
+  if (loading || !feedback || !npsInsight) {
+    return (
+      <div className="flex justify-center items-center py-16 bg-card rounded-2xl border border-neutral-100 shadow-sm">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+        <p className="ml-3 text-neutral-500">載入中...</p>
+      </div>
+    );
+  }
+
+  const responseRate = Math.round(feedback.totalResponses / totalPax * 100);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card rounded-2xl border border-neutral-100 p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-bold text-neutral-900">NPS 回饋概覽</h4>
+              <p className="text-sm text-neutral-500">用於續約與改善追蹤</p>
             </div>
-            <div class="stat-box">
-              <div class="stat-value">${incidents.length}</div>
-              <div class="stat-label">事件記錄</div>
+            <button
+              onClick={handleSendSurvey}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 focus:ring-2 focus:ring-primary-300 active:bg-brand-200"
+            >
+              <Mail className="w-4 h-4" />
+              發送問卷
+            </button>
+          </div>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-3xl font-bold text-neutral-900">{npsInsight.nps_score}</p>
+              <p className="text-sm text-neutral-500">NPS Score</p>
+            </div>
+            <div className="text-right text-sm text-neutral-500">
+              回覆數 {npsInsight.response_count}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-sm text-neutral-600">
+            <div className="rounded-lg bg-success-50 p-3 hover:bg-success-100 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-success-200">
+              推薦者比例
+              <div className="text-lg font-semibold text-success-600">{npsInsight.promoter_ratio}%</div>
+            </div>
+            <div className="rounded-lg bg-danger-50 p-3 hover:bg-danger-100 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-danger-200">
+              負面者比例
+              <div className="text-lg font-semibold text-danger-500">{npsInsight.detractor_ratio}%</div>
             </div>
           </div>
         </div>
 
-        <div class="section">
-          <div class="section-title">滿意度分析</div>
-          <p>回覆率：${feedback.totalResponses}/${totalPax} (${Math.round(feedback.totalResponses / totalPax * 100)}%)</p>
-          <table>
-            <thead>
-              <tr>
-                <th>評分項目</th>
-                <th>評分</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${feedback.categoryRatings.map(cat => `
-                <tr>
-                  <td>${cat.category}</td>
-                  <td><span class="rating ${cat.rating >= 4.5 ? 'rating-high' : 'rating-mid'}">${cat.rating.toFixed(1)}</span></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+        <div className="bg-card rounded-2xl border border-neutral-100 p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-warning-500" />
+              <h4 className="font-bold text-neutral-900">AI 結案摘要</h4>
+            </div>
+            <button
+              onClick={handleGenerateInsight}
+              disabled={isGeneratingInsight}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-brand-900 text-white hover:bg-brand-800 disabled:opacity-60 focus:ring-2 focus:ring-primary-300 active:bg-brand-700"
+            >
+              {isGeneratingInsight ? <Loader2 className="w-4 h-4 animate-spin" /> : '生成摘要'}
+            </button>
+          </div>
+          <div>
+            <p className="text-sm text-neutral-500 mb-2">關鍵亮點</p>
+            <ul className="space-y-1 text-sm text-neutral-700">
+              {npsInsight.key_themes.map((theme, idx) => (
+                <li key={`${theme}-${idx}`}>• {theme}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-sm text-neutral-500 mb-2">改進建議</p>
+            <ul className="space-y-1 text-sm text-neutral-700">
+              {npsInsight.improvement_actions.map((item, idx) => (
+                <li key={`${item}-${idx}`}>• {item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Rating Overview */}
+      <div className="bg-card rounded-2xl border border-neutral-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4"> {/* Added flex-wrap */}
+          <div>
+            <h4 className="font-bold text-neutral-900">整體滿意度</h4>
+            <p className="text-sm text-neutral-500 mt-1">
+              共 {feedback.totalResponses} 則評價 (回覆率 {responseRate}%)
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-neutral-900">{feedback.averageRating.toFixed(1)}</div>
+            <div className="flex items-center gap-1 mt-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={cn(
+                    'w-5 h-5',
+                    star <= Math.round(feedback.averageRating)
+                      ? 'text-warning-400 fill-warning-400'
+                      : 'text-neutral-200'
+                  )}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div class="section">
-          <div class="section-title">旅客回饋</div>
-          <h4 style="margin: 15px 0 10px; color: #166534; font-size: 16px;">✓ 好評項目</h4>
-          ${feedback.highlights.map(h => `<div class="highlight">${h}</div>`).join('')}
-          <h4 style="margin: 15px 0 10px; color: #dc2626; font-size: 16px;">△ 待改進項目</h4>
-          ${feedback.improvements.map(i => `<div class="improvement">${i}</div>`).join('')}
+        <div className="space-y-4">
+          {feedback.categoryRatings.map((cat) => (
+            <RatingBar key={cat.category} label={cat.category} rating={cat.rating} />
+          ))}
+        </div>
+      </div>
+
+      {/* Highlights & Improvements */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-success-50 rounded-2xl border border-success-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h4 className="font-bold text-success-900 mb-4 flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            好評項目
+          </h4>
+          <div className="space-y-3">
+            {feedback.highlights.map((highlight, idx) => (
+              <div key={idx} className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-success-200 rounded-full flex items-center justify-center text-success-700 text-sm font-bold shrink-0 hover:scale-105 transition-transform focus:ring-2 focus:ring-primary-300 active:bg-success-300">
+                  {idx + 1}
+                </div>
+                <p className="text-success-800 text-sm">{highlight}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div class="section">
-          <div class="section-title">事件記錄</div>
-          ${incidents.length > 0 ? `
-            <table>
-              <thead>
-                <tr>
-                  <th>類型</th>
-                  <th>說明</th>
-                  <th>處理方式</th>
-                  <th>時間</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${incidents.map(inc => `
-                  <tr>
-                    <td>${inc.type}</td>
-                    <td>${inc.description}</td>
-                    <td>${inc.resolution}</td>
-                    <td>${inc.timestamp}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          ` : '<p>本團次無特殊事件記錄</p>'}
+        <div className="bg-warning-50 rounded-2xl border border-warning-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h4 className="font-bold text-warning-900 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            待改進項目
+          </h4>
+          <div className="space-y-3">
+            {feedback.improvements.map((improvement, idx) => (
+              <div key={idx} className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-warning-200 rounded-full flex items-center justify-center text-warning-700 text-sm font-bold shrink-0 hover:scale-105 transition-transform focus:ring-2 focus:ring-primary-300 active:bg-warning-300">
+                  {idx + 1}
+                </div>
+                <p className="text-warning-800 text-sm">{improvement}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
+    </motion.div>
+  );
+}
 
-        <div class="footer">
-          本報告由 TravelMaster OS 自動生成 | ${new Date().toLocaleString('zh-TW')}
+interface IncidentsTabProps {
+  incidents: IncidentLog[];
+  loading: boolean;
+}
+
+function IncidentsTab({ incidents, loading }: IncidentsTabProps) {
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-16 bg-card rounded-2xl border border-neutral-100 shadow-sm">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+        <p className="ml-3 text-neutral-500">載入中...</p>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
+      {incidents.length > 0 ? (
+        incidents.map((incident) => (
+          <IncidentCard key={incident.id} incident={incident} />
+        ))
+      ) : (
+        <div className="text-center py-16 bg-card rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow">
+          <CheckCircle className="w-16 h-16 mx-auto mb-4 text-success-500" />
+          <h4 className="text-lg font-bold text-neutral-900 mb-2">無事件記錄</h4>
+          <p className="text-sm text-neutral-500">本團次順利完成，無特殊事件需要記錄</p>
         </div>
-      </body>
-      </html>
-    `;
-  };
+      )}
+    </motion.div>
+  );
+}
 
-  const tabs = [
+interface ExportTabProps {
+  handleExportPDF: () => void;
+  handleExportExcel: () => void;
+  handleSendEmail: () => void;
+}
+
+function ExportTab({ handleExportPDF, handleExportExcel, handleSendEmail }: ExportTabProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" // Added lg:grid-cols-3 for more responsiveness
+    >
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handleExportPDF}
+        className="flex items-center gap-4 p-6 bg-card rounded-2xl border border-neutral-100 hover:border-brand-200 hover:bg-brand-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-brand-100"
+      >
+        <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-brand-200">
+          <FileText className="w-6 h-6 text-brand-600" />
+        </div>
+        <div className="text-left">
+          <h4 className="font-bold text-neutral-900">匯出 PDF 報告</h4>
+          <p className="text-sm text-neutral-500">完整的結案報告，可列印或分享</p>
+        </div>
+      </motion.button>
+
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handleExportExcel}
+        className="flex items-center gap-4 p-6 bg-card rounded-2xl border border-neutral-100 hover:border-success-200 hover:bg-success-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-success-100"
+      >
+        <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-success-200">
+          <Download className="w-6 h-6 text-success-600" />
+        </div>
+        <div className="text-left">
+          <h4 className="font-bold text-neutral-900">匯出 Excel 數據</h4>
+          <p className="text-sm text-neutral-500">原始數據，可進一步分析</p>
+        </div>
+      </motion.button>
+
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handleSendEmail}
+        className="flex items-center gap-4 p-6 bg-card rounded-2xl border border-neutral-100 hover:border-accent-200 hover:bg-accent-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-accent-100"
+      >
+        <div className="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-accent-200">
+          <Mail className="w-6 h-6 text-accent-600" />
+        </div>
+        <div className="text-left">
+          <h4 className="font-bold text-neutral-900">Email 發送報告</h4>
+          <p className="text-sm text-neutral-500">將報告發送給相關人員</p>
+        </div>
+      </motion.button>
+    </motion.div>
+  );
+}
+
+
+// ============================================
+// Main Component
+// ============================================
+
+export default function CaseClosureReport({
+  config,
+}: { config: CaseClosureReportConfig }) {
+  const { session, bookings, aiService, toastService, initialFeedback, initialIncidents, initialNpsInsight } = config;
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'feedback' | 'incidents' | 'export'>('overview');
+
+  // Business logic for data loading and calculations
+  const { feedback, incidents, totalPax, confirmedPax, duration, loading } = useCaseReportData(session, bookings, initialFeedback, initialIncidents);
+
+  // Business logic for AI insight generation
+  const { npsInsight, isGeneratingInsight, handleGenerateInsight } = useNpsInsightGeneration(feedback, aiService, toastService, initialNpsInsight);
+
+  // Business logic for export functionalities
+  const exportServiceProps = useMemo(() => ({
+    session,
+    feedback: feedback || MOCK_FEEDBACK, // Fallback for export if feedback not loaded yet
+    incidents: incidents,
+    totalPax,
+    duration,
+    toast: toastService,
+  }), [session, feedback, incidents, totalPax, duration, toastService]);
+  const { handleExportPDF, handleExportExcel, handleSendEmail } = useReportExportService(exportServiceProps);
+
+  const tabs = useMemo(() => [
     { key: 'overview', label: '總覽', icon: <FileText className="w-4 h-4" /> },
     { key: 'feedback', label: '滿意度', icon: <Star className="w-4 h-4" /> },
     { key: 'incidents', label: '事件記錄', icon: <AlertTriangle className="w-4 h-4" /> },
     { key: 'export', label: '匯出', icon: <Download className="w-4 h-4" /> },
-  ];
+  ], []);
+
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="bg-card rounded-2xl border border-neutral-100 p-6 shadow-sm space-y-6"> {/* Standard Card structure */}
+      {/* Header with drag-handle */}
+      <div className="flex items-center justify-between pb-4 border-b border-neutral-100 drag-handle"> {/* Added drag-handle */}
         <div>
-          <h3 className="text-lg font-bold text-gray-900">結案報告</h3>
-          <p className="text-sm text-gray-500 mt-1">
+          <h3 className="text-lg font-bold text-neutral-900">結案報告</h3>
+          <p className="text-sm text-neutral-500 mt-1">
             團號：{session.group_number || session.series_id} | {session.start_date} ~ {session.end_date}
           </p>
         </div>
@@ -559,16 +1041,16 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-gray-100 pb-4">
+      <div className="flex gap-2 border-b border-neutral-100 pb-4 overflow-x-auto"> {/* Added overflow-x-auto for responsiveness */}
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:ring-2 focus:ring-primary-300 active:bg-primary-800',
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:ring-2 focus:ring-primary-300 active:bg-primary-50 whitespace-nowrap', // Added whitespace-nowrap
               activeTab === tab.key
-                ? 'bg-gray-900 text-white hover:bg-gray-800'
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'bg-brand-900 text-white hover:bg-brand-800' // Using brand for active tab
+                : 'text-neutral-600 hover:bg-neutral-100'
             )}
           >
             {tab.icon}
@@ -578,292 +1060,42 @@ ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              icon={<Users className="w-5 h-5" />}
-              label="總參加人數"
-              value={totalPax.toString()}
-              subValue={`${confirmedPax} 已確認`}
-            />
-            <StatCard
-              icon={<Calendar className="w-5 h-5" />}
-              label="行程天數"
-              value={`${duration} 天`}
-            />
-            <StatCard
-              icon={<Star className="w-5 h-5" />}
-              label="平均評分"
-              value={feedback.averageRating.toFixed(1)}
-              subValue={`${feedback.totalResponses} 則評價`}
-              trend={feedback.averageRating >= 4.5 ? 'up' : 'neutral'}
-            />
-            <StatCard
-              icon={<AlertTriangle className="w-5 h-5" />}
-              label="事件記錄"
-              value={incidents.length.toString()}
-              subValue={incidents.filter(i => i.severity === 'high').length > 0 ? '需關注' : '正常'}
-              trend={incidents.filter(i => i.severity === 'high').length > 0 ? 'down' : 'up'}
-            />
-          </div>
-
-          {/* Quick Summary */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Top Ratings */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
-              <h4 className="font-bold text-gray-900 mb-4">滿意度概覽</h4>
-              <div className="space-y-3">
-                {feedback.categoryRatings.map((cat) => (
-                  <RatingBar key={cat.category} label={cat.category} rating={cat.rating} />
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Incidents */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
-              <h4 className="font-bold text-gray-900 mb-4">事件摘要</h4>
-              {incidents.length > 0 ? (
-                <div className="space-y-3">
-                  {incidents.slice(0, 3).map((incident) => (
-                    <IncidentCard key={incident.id} incident={incident} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-success-500" />
-                  <p className="text-sm">本團次無特殊事件記錄</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
+      {activeTab === 'overview' && feedback && (
+        <OverviewTab
+          totalPax={totalPax}
+          confirmedPax={confirmedPax}
+          duration={duration}
+          feedback={feedback}
+          incidents={incidents}
+          loading={loading}
+        />
       )}
 
-      {activeTab === 'feedback' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-gray-900">NPS 回饋概覽</h4>
-                  <p className="text-sm text-gray-500">用於續約與改善追蹤</p>
-                </div>
-                <button
-                  onClick={handleSendSurvey}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-brand-50 text-brand-700 hover:bg-brand-100 focus:ring-2 focus:ring-primary-300 active:bg-brand-200"
-                >
-                  <Mail className="w-4 h-4" />
-                  發送問卷
-                </button>
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-3xl font-bold text-gray-900">{insight.nps_score}</p>
-                  <p className="text-sm text-gray-500">NPS Score</p>
-                </div>
-                <div className="text-right text-sm text-gray-500">
-                  回覆數 {insight.response_count}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
-                <div className="rounded-lg bg-success-50 p-3 hover:bg-success-100 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-success-200">
-                  推薦者比例
-                  <div className="text-lg font-semibold text-success-600">{insight.promoter_ratio}%</div>
-                </div>
-                <div className="rounded-lg bg-danger-50 p-3 hover:bg-danger-100 transition-colors focus:ring-2 focus:ring-primary-300 active:bg-danger-200">
-                  負面者比例
-                  <div className="text-lg font-semibold text-danger-500">{insight.detractor_ratio}%</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-warning-500" />
-                  <h4 className="font-bold text-gray-900">AI 結案摘要</h4>
-                </div>
-                <button
-                  onClick={handleGenerateInsight}
-                  disabled={isGeneratingInsight}
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60 focus:ring-2 focus:ring-primary-300 active:bg-gray-700"
-                >
-                  {isGeneratingInsight ? <Loader2 className="w-4 h-4 animate-spin" /> : '生成摘要'}
-                </button>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-2">關鍵亮點</p>
-                <ul className="space-y-1 text-sm text-gray-700">
-                  {insight.key_themes.map((theme, idx) => (
-                    <li key={`${theme}-${idx}`}>• {theme}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 mb-2">改進建議</p>
-                <ul className="space-y-1 text-sm text-gray-700">
-                  {insight.improvement_actions.map((item, idx) => (
-                    <li key={`${item}-${idx}`}>• {item}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Rating Overview */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h4 className="font-bold text-gray-900">整體滿意度</h4>
-                <p className="text-sm text-gray-500 mt-1">
-                  共 {feedback.totalResponses} 則評價 (回覆率 {Math.round(feedback.totalResponses / totalPax * 100)}%)
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-gray-900">{feedback.averageRating.toFixed(1)}</div>
-                <div className="flex items-center gap-1 mt-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={cn(
-                        'w-5 h-5',
-                        star <= Math.round(feedback.averageRating)
-                          ? 'text-warning-400 fill-warning-400'
-                          : 'text-gray-200'
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {feedback.categoryRatings.map((cat) => (
-                <RatingBar key={cat.category} label={cat.category} rating={cat.rating} />
-              ))}
-            </div>
-          </div>
-
-          {/* Highlights & Improvements */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-success-50 rounded-2xl border border-success-100 p-6 hover:shadow-md transition-shadow">
-              <h4 className="font-bold text-success-900 mb-4 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                好評項目
-              </h4>
-              <div className="space-y-3">
-                {feedback.highlights.map((highlight, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-success-200 rounded-full flex items-center justify-center text-success-700 text-sm font-bold shrink-0 hover:scale-105 transition-transform focus:ring-2 focus:ring-primary-300 active:bg-success-300">
-                      {idx + 1}
-                    </div>
-                    <p className="text-success-800 text-sm">{highlight}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-warning-50 rounded-2xl border border-warning-100 p-6 hover:shadow-md transition-shadow">
-              <h4 className="font-bold text-warning-900 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                待改進項目
-              </h4>
-              <div className="space-y-3">
-                {feedback.improvements.map((improvement, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="w-6 h-6 bg-warning-200 rounded-full flex items-center justify-center text-warning-700 text-sm font-bold shrink-0 hover:scale-105 transition-transform focus:ring-2 focus:ring-primary-300 active:bg-warning-300">
-                      {idx + 1}
-                    </div>
-                    <p className="text-warning-800 text-sm">{improvement}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </motion.div>
+      {activeTab === 'feedback' && feedback && npsInsight && (
+        <FeedbackTab
+          feedback={feedback}
+          npsInsight={npsInsight}
+          isGeneratingInsight={isGeneratingInsight}
+          handleGenerateInsight={handleGenerateInsight}
+          toastService={toastService}
+          totalPax={totalPax}
+          loading={loading}
+        />
       )}
 
       {activeTab === 'incidents' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
-        >
-          {incidents.length > 0 ? (
-            incidents.map((incident) => (
-              <IncidentCard key={incident.id} incident={incident} />
-            ))
-          ) : (
-            <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-success-500" />
-              <h4 className="text-lg font-bold text-gray-900 mb-2">無事件記錄</h4>
-              <p className="text-sm text-gray-500">本團次順利完成，無特殊事件需要記錄</p>
-            </div>
-          )}
-        </motion.div>
+        <IncidentsTab
+          incidents={incidents}
+          loading={loading}
+        />
       )}
 
       {activeTab === 'export' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleExportPDF}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-brand-100"
-          >
-            <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-brand-200">
-              <FileText className="w-6 h-6 text-brand-600" />
-            </div>
-            <div className="text-left">
-              <h4 className="font-bold text-gray-900">匯出 PDF 報告</h4>
-              <p className="text-sm text-gray-500">完整的結案報告，可列印或分享</p>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleExportExcel}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-success-200 hover:bg-success-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-success-100"
-          >
-            <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-success-200">
-              <Download className="w-6 h-6 text-success-600" />
-            </div>
-            <div className="text-left">
-              <h4 className="font-bold text-gray-900">匯出 Excel 數據</h4>
-              <p className="text-sm text-gray-500">原始數據，可進一步分析</p>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSendEmail}
-            className="flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 hover:border-accent-200 hover:bg-accent-50 transition-all focus:ring-2 focus:ring-primary-300 active:bg-accent-100"
-          >
-            <div className="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center focus:ring-2 focus:ring-primary-300 active:bg-accent-200">
-              <Mail className="w-6 h-6 text-accent-600" />
-            </div>
-            <div className="text-left">
-              <h4 className="font-bold text-gray-900">Email 發送報告</h4>
-              <p className="text-sm text-gray-500">將報告發送給相關人員</p>
-            </div>
-          </motion.button>
-        </motion.div>
+        <ExportTab
+          handleExportPDF={handleExportPDF}
+          handleExportExcel={handleExportExcel}
+          handleSendEmail={handleSendEmail}
+        />
       )}
     </div>
   );

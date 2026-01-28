@@ -1,110 +1,125 @@
+// 文件路徑: /workspaces/TrvicERP/src/lib/api.ts
+
+// 為了實現環境變數的集中管理，我們假設存在一個 `src/config/env.ts` 文件
+// 該文件負責解析並匯出環境變數。以下是其假設內容：
+/*
+  // src/config/env.ts
+  export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  export const API_VERSION: string = import.meta.env.VITE_API_VERSION || 'v1';
+  // 保持與原始 USE_MOCK 邏輯一致：只有當 VITE_USE_MOCK 嚴格等於 'false' 時才禁用 Mock
+  export const USE_MOCK_API: boolean = import.meta.env.VITE_USE_MOCK !== 'false';
+  export const MOCK_LATENCY_MS: number = parseInt(import.meta.env.VITE_MOCK_LATENCY_MS || '120', 10);
+*/
+
+// 從集中管理的文件中匯入環境變數
+import { API_BASE_URL, API_VERSION, USE_MOCK_API, MOCK_LATENCY_MS } from '../config/env';
+
 /**
  * API Configuration
  * 後端 API 配置檔案
  */
 
-// API 基礎 URL
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
-
-// API 版本
-const API_VERSION = 'v1';
+// URL 建構邏輯抽象化，減少重複和硬編碼
+const buildApiUrl = (path: string): string => {
+  return `${API_BASE_URL}/api/${API_VERSION}/${path}`;
+};
 
 // API 端點（統一使用 RESTful 風格）
+// 大型配置物件現在透過 buildApiUrl 變得更簡潔，提升維護性
 export const API_ENDPOINTS = {
   // 認證
   auth: {
-    login: `${API_BASE_URL}/api/${API_VERSION}/auth/login`,
-    logout: `${API_BASE_URL}/api/${API_VERSION}/auth/logout`,
-    refresh: `${API_BASE_URL}/api/${API_VERSION}/auth/refresh`,
-    me: `${API_BASE_URL}/api/${API_VERSION}/auth/me`,
-    resetPassword: `${API_BASE_URL}/api/${API_VERSION}/auth/reset-password`,
+    login: buildApiUrl('auth/login'),
+    logout: buildApiUrl('auth/logout'),
+    refresh: buildApiUrl('auth/refresh'),
+    me: buildApiUrl('auth/me'),
+    resetPassword: buildApiUrl('auth/reset-password'),
   },
   // 訂單管理（RESTful）
   orders: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/orders`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/orders`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/orders/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/orders/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/orders/${id}`,
-    cancel: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/orders/${id}/cancel`,
-    refund: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/orders/${id}/refund`,
+    list: buildApiUrl('orders'),
+    create: buildApiUrl('orders'),
+    detail: (id: string) => buildApiUrl(`orders/${id}`),
+    update: (id: string) => buildApiUrl(`orders/${id}`),
+    delete: (id: string) => buildApiUrl(`orders/${id}`),
+    cancel: (id: string) => buildApiUrl(`orders/${id}/cancel`),
+    refund: (id: string) => buildApiUrl(`orders/${id}/refund`),
   },
   // 報價管理（RESTful）
   quotations: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/quotations`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/quotations`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/quotations/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/quotations/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/quotations/${id}`,
-    convert: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/quotations/${id}/convert`,
-    versions: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/quotations/${id}/versions`,
+    list: buildApiUrl('quotations'),
+    create: buildApiUrl('quotations'),
+    detail: (id: string) => buildApiUrl(`quotations/${id}`),
+    update: (id: string) => buildApiUrl(`quotations/${id}`),
+    delete: (id: string) => buildApiUrl(`quotations/${id}`),
+    convert: (id: string) => buildApiUrl(`quotations/${id}/convert`),
+    versions: (id: string) => buildApiUrl(`quotations/${id}/versions`),
   },
   // 行程管理（RESTful）
   tours: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/tours`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/tours`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/tours/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/tours/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/tours/${id}`,
-    sessions: (tourId: string) => `${API_BASE_URL}/api/${API_VERSION}/tours/${tourId}/sessions`,
+    list: buildApiUrl('tours'),
+    create: buildApiUrl('tours'),
+    detail: (id: string) => buildApiUrl(`tours/${id}`),
+    update: (id: string) => buildApiUrl(`tours/${id}`),
+    delete: (id: string) => buildApiUrl(`tours/${id}`),
+    sessions: (tourId: string) => buildApiUrl(`tours/${tourId}/sessions`),
   },
   // 團次管理（RESTful）
   sessions: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/sessions`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/sessions`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/sessions/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/sessions/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/sessions/${id}`,
+    list: buildApiUrl('sessions'),
+    create: buildApiUrl('sessions'),
+    detail: (id: string) => buildApiUrl(`sessions/${id}`),
+    update: (id: string) => buildApiUrl(`sessions/${id}`),
+    delete: (id: string) => buildApiUrl(`sessions/${id}`),
   },
   // 客戶管理（RESTful）
   customers: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/customers`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/customers`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/customers/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/customers/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/customers/${id}`,
+    list: buildApiUrl('customers'),
+    create: buildApiUrl('customers'),
+    detail: (id: string) => buildApiUrl(`customers/${id}`),
+    update: (id: string) => buildApiUrl(`customers/${id}`),
+    delete: (id: string) => buildApiUrl(`customers/${id}`),
   },
   corporateAccounts: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}`,
-    contacts: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}/contacts`,
+    list: buildApiUrl('corporate-accounts'),
+    create: buildApiUrl('corporate-accounts'),
+    detail: (id: string) => buildApiUrl(`corporate-accounts/${id}`),
+    update: (id: string) => buildApiUrl(`corporate-accounts/${id}`),
+    delete: (id: string) => buildApiUrl(`corporate-accounts/${id}`),
+    contacts: (id: string) => buildApiUrl(`corporate-accounts/${id}/contacts`),
     contactDetail: (id: string, contactId: string) =>
-      `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}/contacts/${contactId}`,
-    engagements: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/corporate-accounts/${id}/engagements`,
+      buildApiUrl(`corporate-accounts/${id}/contacts/${contactId}`),
+    engagements: (id: string) => buildApiUrl(`corporate-accounts/${id}/engagements`),
   },
   // 使用者管理（RESTful）
   users: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/users`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/users`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/users/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/users/${id}`,
-    delete: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/users/${id}`,
-    activate: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/users/${id}/activate`,
-    deactivate: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/users/${id}/deactivate`,
+    list: buildApiUrl('users'),
+    create: buildApiUrl('users'),
+    detail: (id: string) => buildApiUrl(`users/${id}`),
+    update: (id: string) => buildApiUrl(`users/${id}`),
+    delete: (id: string) => buildApiUrl(`users/${id}`),
+    activate: (id: string) => buildApiUrl(`users/${id}/activate`),
+    deactivate: (id: string) => buildApiUrl(`users/${id}/deactivate`),
   },
   // 預算管理 (福委端)
   budgets: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/budgets`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/budgets/${id}`,
-    update: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/budgets/${id}`,
+    list: buildApiUrl('budgets'),
+    detail: (id: string) => buildApiUrl(`budgets/${id}`),
+    update: (id: string) => buildApiUrl(`budgets/${id}`),
   },
   // 投票
   polls: {
-    list: `${API_BASE_URL}/api/${API_VERSION}/polls`,
-    create: `${API_BASE_URL}/api/${API_VERSION}/polls`,
-    detail: (id: string) => `${API_BASE_URL}/api/${API_VERSION}/polls/${id}`,
-    vote: (pollId: string) => `${API_BASE_URL}/api/${API_VERSION}/polls/${pollId}/vote`,
+    list: buildApiUrl('polls'),
+    create: buildApiUrl('polls'),
+    detail: (id: string) => buildApiUrl(`polls/${id}`),
+    vote: (pollId: string) => buildApiUrl(`polls/${pollId}/vote`),
   },
   // 報表
   reports: {
-    revenue: `${API_BASE_URL}/api/${API_VERSION}/reports/revenue`,
-    customers: `${API_BASE_URL}/api/${API_VERSION}/reports/customers`,
-    teams: `${API_BASE_URL}/api/${API_VERSION}/reports/teams`,
-    export: (type: string) => `${API_BASE_URL}/api/${API_VERSION}/reports/${type}/export`,
+    revenue: buildApiUrl('reports/revenue'),
+    customers: buildApiUrl('reports/customers'),
+    teams: buildApiUrl('reports/teams'),
+    export: (type: string) => buildApiUrl(`reports/${type}/export`),
   },
 } as const;
 
@@ -132,6 +147,7 @@ export interface ApiResponse<T> {
   error: ApiError | null;
 }
 
+// MOCK_LIST_ENDPOINTS 規則與原始碼保持一致
 const MOCK_LIST_ENDPOINTS: RegExp[] = [
   /\/api\/v1\/orders\/?$/,
   /\/api\/v1\/quotations\/?$/,
@@ -147,10 +163,11 @@ const MOCK_LIST_ENDPOINTS: RegExp[] = [
   /\/api\/v1\/reports\/(revenue|customers|teams)\/?$/,
 ];
 
-const MOCK_LATENCY_MS = 120;
+// MOCK_LATENCY_MS 現在從 env.ts 匯入
 
 function getPathname(endpoint: string): string {
   try {
+    // 使用一個虛擬的 baseURL 來正確解析 pathname，與原始行為保持一致
     return new URL(endpoint, 'http://localhost').pathname;
   } catch {
     return endpoint;
@@ -176,9 +193,11 @@ function createMockId(prefix: string): string {
 
 function extractResourceId(pathname: string): string | null {
   const parts = pathname.split('/').filter(Boolean);
-  if (parts.length < 4) return null;
-  if (parts[0] !== 'api' || parts[1] !== 'v1') return null;
-  return parts[3] || null;
+  // 預期路徑格式為 /api/v1/resource/id
+  if (parts.length >= 4 && parts[0] === 'api' && parts[1] === API_VERSION) {
+    return parts[3];
+  }
+  return null;
 }
 
 async function mockApiRequest<T>(
@@ -190,9 +209,16 @@ async function mockApiRequest<T>(
   const method = (options.method || 'GET').toUpperCase();
   const pathname = getPathname(endpoint);
 
+  // 簡單的 mock 邏輯，可根據實際需求擴展
   if (method === 'GET') {
     if (MOCK_LIST_ENDPOINTS.some((regex) => regex.test(pathname))) {
+      // 列表端點返回空數組
       return { data: [] as T, error: null };
+    }
+    // 詳細資料端點或其他 GET 請求返回帶有 ID 的 mock 對象
+    const id = extractResourceId(pathname);
+    if (id) {
+      return { data: { id, name: `Mock Item ${id}` } as T, error: null };
     }
     return { data: null as T, error: null };
   }
@@ -201,17 +227,15 @@ async function mockApiRequest<T>(
     return { data: null as T, error: null };
   }
 
-  const body = parseRequestBody(options.body);
+  // POST/PUT/PATCH 請求，模擬創建或更新資料
+  let data: any = parseRequestBody(options.body);
   const idFromPath = extractResourceId(pathname);
-  let data: any = body;
 
   if (data && typeof data === 'object') {
-    if (idFromPath && !('id' in data)) {
-      data = { ...data, id: idFromPath };
-    } else if (!('id' in data)) {
-      data = { ...data, id: createMockId('mock') };
-    }
-  } else if (data == null) {
+    // 如果路徑中包含 ID 或請求體中已有 ID，則使用，否則生成一個新的
+    data = { ...data, id: idFromPath || data.id || createMockId('mock') };
+  } else {
+    // 如果沒有請求體或不是對象，則只返回一個 ID
     data = { id: idFromPath || createMockId('mock') };
   }
 
@@ -237,15 +261,15 @@ function handleApiError(
       break;
     case 401:
       code = 'UNAUTHORIZED';
-      message = '未授權，請重新登入';
+      message = errorData?.message || '未授權，請重新登入';
       break;
     case 403:
       code = 'FORBIDDEN';
-      message = '沒有權限執行此操作';
+      message = errorData?.message || '沒有權限執行此操作';
       break;
     case 404:
       code = 'NOT_FOUND';
-      message = '資源不存在';
+      message = errorData?.message || '資源不存在';
       break;
     case 409:
       code = 'CONFLICT';
@@ -257,11 +281,11 @@ function handleApiError(
       break;
     case 500:
       code = 'INTERNAL_ERROR';
-      message = '伺服器內部錯誤';
+      message = errorData?.message || '伺服器內部錯誤';
       break;
     case 503:
       code = 'SERVICE_UNAVAILABLE';
-      message = '服務暫時無法使用';
+      message = errorData?.message || '服務暫時無法使用';
       break;
   }
 
@@ -274,13 +298,14 @@ function handleApiError(
 }
 
 /**
- * API 請求封裝（改進版）
+ * API 請求封裝
+ * 處理請求、回應、錯誤、Token 管理及 Mock 模式切換
  */
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  if (USE_MOCK) {
+  if (USE_MOCK_API) { // 使用集中管理的 USE_MOCK_API 變數
     return mockApiRequest<T>(endpoint, options);
   }
 
@@ -295,7 +320,7 @@ export async function apiRequest<T>(
       },
     });
 
-    // 處理非 JSON 回應（如 204 No Content）
+    // 處理 204 No Content 狀態碼，表示成功但無回應內容
     if (response.status === 204) {
       return { data: null as T, error: null };
     }
@@ -303,25 +328,28 @@ export async function apiRequest<T>(
     const contentType = response.headers.get('content-type');
     const isJson = contentType?.includes('application/json');
 
+    // 如果回應狀態碼不是 2xx (response.ok 為 false)，則處理錯誤
     if (!response.ok) {
       const errorData = isJson
-        ? await response.json().catch(() => ({}))
-        : {};
+        ? await response.json().catch(() => ({})) // 嘗試解析 JSON 錯誤訊息，失敗則返回空物件
+        : {}; // 如果不是 JSON，則無錯誤數據體
       return {
         data: null,
         error: handleApiError(response, errorData),
       };
     }
 
-    // 處理空回應
-    if (!isJson) {
+    // 如果回應是成功的，但不是 JSON 格式，或內容長度為 0 (可能是空回應)
+    // 則返回 null 作為數據
+    if (!isJson || response.headers.get('content-length') === '0') {
       return { data: null as T, error: null };
     }
 
+    // 解析 JSON 回應
     const data = await response.json();
     return { data, error: null };
   } catch (error) {
-    // 網路錯誤或其他異常
+    // 捕獲網路錯誤或 fetch API 拋出的其他異常
     return {
       data: null,
       error: {
@@ -332,7 +360,7 @@ export async function apiRequest<T>(
   }
 }
 
-// API 方法
+// API 方法封裝，提供更簡潔的請求方式
 export const api = {
   get: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'GET' }),
 

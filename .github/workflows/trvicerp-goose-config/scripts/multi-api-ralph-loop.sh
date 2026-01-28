@@ -11,10 +11,23 @@ MAX_ITERATIONS=${1:-3}
 COMPONENT_DIR=${2:-"/workspaces/TrvicERP/components/shared"}
 PROGRESS_FILE="$SCRIPT_DIR/../.validation-progress.log"
 
-# API 配置 - 免費優先策略
-GEMINI_API_KEY="AIzaSyDhRnlEqVV97a2OS0t0b8wgoTfdKR105u4"
-SILICONFLOW_API_KEY="sk-yxxmoylcgblzlxyrkhpeehzzcrqfcvvaxqwvhujlrmeqcvsc"
-SILICONFLOW_API_BASE="https://api.siliconflow.com/v1"
+# API 配置 - 從環境變數載入
+GEMINI_API_KEY="${GEMINI_API_KEY:-}"
+SILICONFLOW_API_KEY="${SILICONFLOW_API_KEY:-}"
+SILICONFLOW_API_BASE="${SILICONFLOW_API_BASE:-https://api.siliconflow.com/v1}"
+
+# 檢查必要的 API 金鑰
+if [ -z "$GEMINI_API_KEY" ]; then
+    echo -e "${RED}❌ 錯誤：未設定 GEMINI_API_KEY 環境變數${NC}"
+    echo -e "${YELLOW}請執行：export GEMINI_API_KEY='your-api-key'${NC}"
+    exit 1
+fi
+
+if [ -z "$SILICONFLOW_API_KEY" ]; then
+    echo -e "${RED}❌ 錯誤：未設定 SILICONFLOW_API_KEY 環境變數${NC}"
+    echo -e "${YELLOW}請執行：export SILICONFLOW_API_KEY='your-api-key'${NC}"
+    exit 1
+fi
 
 # 顏色定義
 RED='\033[0;31m'

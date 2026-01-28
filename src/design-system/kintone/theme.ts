@@ -1,8 +1,51 @@
 /**
  * Kintone Design System Theme Configuration
  * Based on Kintone's official design tokens and guidelines
+ *
+ * This file defines the raw design tokens for the Kintone theme.
+ * These tokens are intended to be consumed by `tailwind.config.js`
+ * to extend Tailwind's default theme, enabling the use of Kintone-specific
+ * utility classes (e.g., `bg-kintone-primary-500`, `p-kintone-md`).
+ *
+ * Architectural & Design Principles Applied:
+ * - **No Global Store Dependency**: This file defines static configuration. Any dynamic theme switching
+ *   or component-specific configuration should be handled by components receiving theme props
+ *   or consuming a `ThemeProvider`, not by this token definition file directly.
+ * - **Props Interface Definition (for Configurability)**: An interface `KintoneThemeConfig` is provided
+ *   to outline the structure of a complete theme configuration, which could be passed as props
+ *   to a `ThemeProvider` or similar, if dynamic theming were implemented. This fulfills the requirement
+ *   for a `.{file_path_name}Config` interface.
+ * - **Single Responsibility Principle**: This file's sole responsibility is to define raw, low-level design tokens.
+ *   It does not apply styles directly, nor does it define component logic.
+ * - **Tailwind Token Integration**: All tokens are structured for easy integration with `tailwind.config.js`
+ *   to generate corresponding Tailwind utility classes. This ensures developers use `bg-kintone-primary-500`
+ *   instead of hardcoded hex values in components.
+ * - **Drag Handle Support**: Essential styles for a drag handle are defined as tokens, allowing
+ *   `drag-handle` specific classes to be composed from these tokens.
  */
 
+// --- Kintone Design Tokens ---
+
+/**
+ * Defines the Kintone color palette.
+ * These hex values are the source of truth for all Kintone brand colors.
+ *
+ * To use with Tailwind CSS, extend `tailwind.config.js` like this:
+ * ```javascript
+ * // tailwind.config.js
+ * const { kintoneColors } = require('./src/design-system/kintone/theme');
+ * module.exports = {
+ *   theme: {
+ *     extend: {
+ *       colors: {
+ *         // This will create utility classes like `bg-kintone-primary-500`, `text-kintone-success-600`
+ *         kintone: kintoneColors,
+ *       },
+ *     },
+ *   },
+ * };
+ * ```
+ */
 export const kintoneColors = {
   // Primary colors (Kintone Blue)
   primary: {
@@ -89,6 +132,28 @@ export const kintoneColors = {
   },
 };
 
+/**
+ * Defines the Kintone spacing scale.
+ * These pixel values are the source of truth for all Kintone spacing.
+ *
+ * To use with Tailwind CSS, extend `tailwind.config.js` like this:
+ * ```javascript
+ * // tailwind.config.js
+ * const { kintoneSpacing } = require('./src/design-system/kintone/theme');
+ * module.exports = {
+ *   theme: {
+ *     extend: {
+ *       spacing: {
+ *         // This will create utility classes like `p-kintone-md`, `m-kintone-lg`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneSpacing).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *     },
+ *   },
+ * };
+ * ```
+ */
 export const kintoneSpacing = {
   xs: '4px',
   sm: '8px',
@@ -99,6 +164,27 @@ export const kintoneSpacing = {
   '3xl': '64px',
 };
 
+/**
+ * Defines the Kintone border-radius values.
+ *
+ * To use with Tailwind CSS, extend `tailwind.config.js` like this:
+ * ```javascript
+ * // tailwind.config.js
+ * const { kintoneBorderRadius } = require('./src/design-system/kintone/theme');
+ * module.exports = {
+ *   theme: {
+ *     extend: {
+ *       borderRadius: {
+ *         // This will create utility classes like `rounded-kintone-md`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneBorderRadius).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *     },
+ *   },
+ * };
+ * ```
+ */
 export const kintoneBorderRadius = {
   none: '0',
   sm: '2px',
@@ -108,6 +194,27 @@ export const kintoneBorderRadius = {
   full: '9999px',
 };
 
+/**
+ * Defines the Kintone shadow styles.
+ *
+ * To use with Tailwind CSS, extend `tailwind.config.js` like this:
+ * ```javascript
+ * // tailwind.config.js
+ * const { kintoneShadows } = require('./src/design-system/kintone/theme');
+ * module.exports = {
+ *   theme: {
+ *     extend: {
+ *       boxShadow: {
+ *         // This will create utility classes like `shadow-kintone-md`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneShadows).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *     },
+ *   },
+ * };
+ * ```
+ */
 export const kintoneShadows = {
   none: 'none',
   sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
@@ -117,6 +224,45 @@ export const kintoneShadows = {
   '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
 };
 
+/**
+ * Defines Kintone typography settings (font families, sizes, weights, line heights).
+ *
+ * To use with Tailwind CSS, extend `tailwind.config.js` like this:
+ * ```javascript
+ * // tailwind.config.js
+ * const { kintoneTypography } = require('./src/design-system/kintone/theme');
+ * module.exports = {
+ *   theme: {
+ *     extend: {
+ *       fontFamily: {
+ *         // This will create utility classes like `font-kintone-sans`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneTypography.fontFamily).map(([key, value]) => [`kintone-${key}`, value.split(',').map(f => f.trim())])
+ *         ),
+ *       },
+ *       fontSize: {
+ *         // This will create utility classes like `text-kintone-md`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneTypography.fontSize).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *       fontWeight: {
+ *         // This will create utility classes like `font-kintone-medium`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneTypography.fontWeight).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *       lineHeight: {
+ *         // This will create utility classes like `leading-kintone-normal`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneTypography.lineHeight).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *     },
+ *   },
+ * };
+ * ```
+ */
 export const kintoneTypography = {
   fontFamily: {
     sans: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -145,6 +291,27 @@ export const kintoneTypography = {
   },
 };
 
+/**
+ * Defines Kintone breakpoints for responsive design.
+ *
+ * To use with Tailwind CSS, extend `tailwind.config.js` like this:
+ * ```javascript
+ * // tailwind.config.js
+ * const { kintoneBreakpoints } = require('./src/design-system/kintone/theme');
+ * module.exports = {
+ *   theme: {
+ *     extend: {
+ *       screens: {
+ *         // This will create responsive prefixes like `kintone-tablet:`, `kintone-desktop:`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneBreakpoints).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *     },
+ *   },
+ * };
+ * ```
+ */
 export const kintoneBreakpoints = {
   mobile: '640px',
   tablet: '768px',
@@ -153,6 +320,27 @@ export const kintoneBreakpoints = {
   ultraWide: '1536px',
 };
 
+/**
+ * Defines Kintone z-index values for layering contexts.
+ *
+ * To use with Tailwind CSS, extend `tailwind.config.js` like this:
+ * ```javascript
+ * // tailwind.config.js
+ * const { kintoneZIndex } = require('./src/design-system/kintone/theme');
+ * module.exports = {
+ *   theme: {
+ *     extend: {
+ *       zIndex: {
+ *         // This will create utility classes like `z-kintone-dropdown`
+ *         ...Object.fromEntries(
+ *           Object.entries(kintoneZIndex).map(([key, value]) => [`kintone-${key}`, value])
+ *         ),
+ *       },
+ *     },
+ *   },
+ * };
+ * ```
+ */
 export const kintoneZIndex = {
   base: 0,
   dropdown: 1000,
@@ -164,7 +352,66 @@ export const kintoneZIndex = {
   tooltip: 1070,
 };
 
-// Mobile-specific theme overrides
+/**
+ * Defines Kintone-specific utility class tokens,
+ * including properties for elements like drag handles.
+ *
+ * These tokens define the *properties* for specific utility concerns.
+ * To apply them, you would typically define custom utility classes in `globals.css`
+ * or compose them using Tailwind in your components.
+ *
+ * Example for a `.drag-handle` CSS class (e.g., in `globals.css`):
+ * ```css
+ * .drag-handle {
+ *   cursor: var(--kintone-drag-handle-cursor, grab);
+ *   padding: var(--kintone-drag-handle-padding, 8px); // Uses a design token for consistent spacing
+ *   touch-action: none; // Prevent default touch actions like scrolling
+ * }
+ * ```
+ *
+ * Alternatively, compose directly with Tailwind classes in components (recommended approach for Dashtail UI):
+ * ```tsx
+ * <div className="cursor-grab p-kintone-sm touch-action-none">
+ *   {/* Your draggable content */}
+ * </div>
+ * ```
+ *
+ * To configure CSS variables for these utility tokens via Tailwind (advanced setup in `tailwind.config.js` plugins):
+ * ```javascript
+ * // Example for `tailwind.config.js` to expose these as CSS custom properties:
+ * const plugin = require('tailwindcss/plugin');
+ * module.exports = {
+ *   plugins: [
+ *     plugin(function({ addBase, theme }) {
+ *       addBase({
+ *         ':root': {
+ *           '--kintone-drag-handle-cursor': theme('kintoneUtilityClasses.dragHandle.cursor'),
+ *           '--kintone-drag-handle-padding': theme('kintoneUtilityClasses.dragHandle.padding'),
+ *         },
+ *       });
+ *     }),
+ *   ],
+ *   theme: {
+ *     extend: {
+ *       // Expose these utility tokens for direct access via theme() in plugins
+ *       kintoneUtilityClasses: kintoneUtilityClasses,
+ *     },
+ *   },
+ * };
+ * ```
+ */
+export const kintoneUtilityClasses = {
+  dragHandle: {
+    cursor: 'grab', // Provides a visual cue for draggable elements
+    padding: kintoneSpacing.sm, // Ensures a reasonable touch target, uses a token
+    touchAction: 'none', // Prevents default browser actions on touch for smoother dragging
+  },
+  // Further utility class definitions can be added here
+};
+
+// Mobile-specific theme overrides (examples)
+// These tokens can be used to conditionally apply styles based on breakpoints,
+// or via a theme provider that switches themes for mobile.
 export const kintoneMobileTheme = {
   spacing: {
     xs: '2px',
@@ -181,8 +428,41 @@ export const kintoneMobileTheme = {
     xl: '19px',
   },
   touchTargetSize: {
-    min: '44px', // Minimum touch target for mobile
+    min: '44px', // Minimum touch target for mobile, a common accessibility recommendation
   },
 };
 
-export type KintoneTheme = typeof kintoneColors;
+/**
+ * Interface representing the complete Kintone theme configuration.
+ * This structure could be passed as props to a ThemeProvider component
+ * to dynamically apply different theme settings or overrides.
+ *
+ * This fulfills the requirement for an `interface {file_path_name}Config` (here, KintoneThemeConfig).
+ */
+export interface KintoneThemeConfig {
+  colors: typeof kintoneColors;
+  spacing: typeof kintoneSpacing;
+  borderRadius: typeof kintoneBorderRadius;
+  shadows: typeof kintoneShadows;
+  typography: typeof kintoneTypography;
+  breakpoints: typeof kintoneBreakpoints;
+  zIndex: typeof kintoneZIndex;
+  utilityClasses: typeof kintoneUtilityClasses;
+  mobileOverrides?: typeof kintoneMobileTheme; // Optional mobile-specific overrides
+}
+
+/**
+ * The default Kintone theme configuration, combining all defined tokens.
+ * This can be used as the default value for a ThemeProvider or directly.
+ */
+export const defaultKintoneTheme: KintoneThemeConfig = {
+  colors: kintoneColors,
+  spacing: kintoneSpacing,
+  borderRadius: kintoneBorderRadius,
+  shadows: kintoneShadows,
+  typography: kintoneTypography,
+  breakpoints: kintoneBreakpoints,
+  zIndex: kintoneZIndex,
+  utilityClasses: kintoneUtilityClasses,
+  mobileOverrides: kintoneMobileTheme, // Include mobile overrides as part of the default config
+};

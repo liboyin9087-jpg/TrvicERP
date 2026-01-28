@@ -1,33 +1,46 @@
-import React, { useState } from 'react';
+/**
+ * @file DocumentGenerator.tsx
+ * @description This component allows administrators to generate, preview, export, and send various tour-related documents.
+ * It has been refactored for better architecture, state management, and Dashtail UI compliance.
+ */
+import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  FileText, Download, Mail, Send, FileDown, Users, Bed, Bus,
-  Calendar, MapPin, Phone, Printer, X, CheckCircle, Loader2
+  FileText, Download, Send, FileDown, Users, Bed, Bus, MapPin, Printer, X, Loader2, GripVertical, CheckCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { TourSession, Booking, HotelRoomAllocation, SeatAssignment, RoomAssignment, MeetingInfo } from '../../types';
-import { LineService, LineSendTarget } from '@/core/services/lineService';
-import { exportToPDF, exportToExcel, type DocumentType as ExportDocType } from '@/lib/exportService';
+import { cn } from '@/lib/utils'; // Assuming cn utility is for conditional classNames
 
-// ============================================
-// Types
-// ============================================
+// Importing component-specific types and interfaces from a dedicated file
+import type { DocumentType, DocumentGeneratorProps, DocumentDefinition, DocumentGenerationData } from './document-generator.types';
+// Importing custom hook for state and logic separation
+import { useDocumentGenerator } from './useDocumentGenerator';
 
-interface DocumentGeneratorProps {
-  session: TourSession;
-  bookings: Booking[];
-  hotelRooms?: HotelRoomAllocation[];
-  roomAssignments?: RoomAssignment[];
-  seatAssignments?: SeatAssignment[];
-  meetingInfo?: MeetingInfo;
-}
-
-type DocumentType = 'itinerary' | 'room_list' | 'seat_chart' | 'roster' | 'meeting_info';
-
-// ============================================
-// Document Generator Component
-// ============================================
-
+/**
+ * Renders a document generation tool for tour sessions.
+ *
+ * This component provides an interface to generate, preview, export (PDF/Excel),
+ * and send (Line) various documents related to a tour session, such as itineraries,
+ * room lists, seat charts, rosters, and meeting information.
+ *
+ * It is designed to be a Dashtail-compatible widget, supporting drag-and-drop
+ * and configurable options via props, adhering to Kintone independence.
+ *
+ * All external service interactions (export, Line send, HTML content generation)
+ * are injected via props, making the component highly decoupled and testable.
+ *
+ * @param {DocumentGeneratorProps} props - The properties for the DocumentGenerator component.
+ * @param {TourSession} props.session - The tour session data.
+ * @param {Booking[]} props.bookings - List of bookings associated with the session.
+ * @param {HotelRoomAllocation[]} [props.hotelRooms=[]] - Optional hotel room allocations.
+ * @param {RoomAssignment[]} [props.roomAssignments=[]] - Optional room assignments.
+ * @param {SeatAssignment[]} [props.seatAssignments=[]] - Optional seat assignments.
+ * @param {MeetingInfo} [props.meetingInfo] - Optional meeting information.
+ * @param {DocumentGeneratorConfig} [props.config] - Configuration options for the widget, e.g., available document types, title.
+ * @param {(type: DocumentType, data: DocumentGenerationData) => void} props.onExportPDF - Injected function to handle PDF export.
+ * @param {(type: DocumentType, data: DocumentGenerationData) => void} props.onExportExcel - Injected function to handle Excel export.
+ * @param {(type: DocumentType, data: DocumentGenerationData) => Promise<{ success: boolean; message: string; sentCount?: number; errors?: any[] }>} props.onSendLine - Injected function to handle sending document notifications via Line.
+ * @param {(type: DocumentType, data: DocumentGenerationData) => string} props.generateDocumentContent - Injected function to generate HTML content for document preview.
+ */
 export default function DocumentGenerator({
   session,
   bookings,
@@ -35,13 +48,45 @@ export default function DocumentGenerator({
   roomAssignments = [],
   seatAssignments = [],
   meetingInfo,
+  config,
+  onExportPDF,
+  onExportExcel,
+  onSendLine,
+  generateDocumentContent, // Injected function for HTML generation
 }: DocumentGeneratorProps) {
-  const [selectedDoc, setSelectedDoc] = useState<DocumentType | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const [sendingLine, setSendingLine] = useState(false);
-  const [lineSendResult, setLineSendResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  const documents: { type: DocumentType; label: string; icon: React.ReactNode; description: string }[] = [
+  // Default configuration for the widget, can be overridden by props.config
+  const defaultConfig = {
+    title: '出團前文件生成',
+    description: '產生並發送團體相關文件',
+    enableLineSend: true,
+    availableDocumentTypes: ['itinerary', 'room_list', 'seat_chart', 'roster', 'meeting_info'] as DocumentType[],
+  };
+  const mergedConfig = { ...defaultConfig, ...config };
+
+  // Prepare a bundled data object to pass to injected functions and hooks
+  const documentGenerationData: DocumentGenerationData = {
+    session,
+    bookings,
+    hotelRooms,
+    roomAssignments,
+    seatAssignments,
+    meetingInfo,
+  };
+
+  // Utilize the custom hook to manage component-specific state and logic
+  const {
+    selectedDoc,
+    showPreview,
+    sendingLine,
+    lineSendResult,
+    handlePreview,
+    handleClosePreview,
+    handleSendLineAction,
+  } = useDocumentGenerator(onSendLine, documentGenerationData);
+
+  // Define all possible document types and their UI representations
+  const allDocumentDefinitions: DocumentDefinition[] = [
     {
       type: 'itinerary',
       label: '團體行程表',
@@ -74,406 +119,164 @@ export default function DocumentGenerator({
     },
   ];
 
-  const handleGenerate = (type: DocumentType) => {
-    setSelectedDoc(type);
-    setShowPreview(true);
+  // Filter and display documents based on the `availableDocumentTypes` configuration
+  const documentsToDisplay = mergedConfig.availableDocumentTypes
+    ? allDocumentDefinitions.filter(doc => mergedConfig.availableDocumentTypes?.includes(doc.type))
+    : allDocumentDefinitions;
+
+  // Handlers for export operations, now directly calling the injected functions
+  const handleExportPDFAction = (type: DocumentType) => {
+    onExportPDF(type, documentGenerationData);
   };
 
-  const handleExportPDF = (type: DocumentType) => {
-    exportToPDF(type as ExportDocType, {
-      session,
-      bookings,
-      roomAssignments,
-      seatAssignments,
-      meetingInfo,
-    });
-  };
-
-  const handleExportExcel = (type: DocumentType) => {
-    exportToExcel(type as ExportDocType, {
-      session,
-      bookings,
-      roomAssignments,
-      seatAssignments,
-      meetingInfo,
-    });
-  };
-
-  const handleSendLine = async (type: DocumentType) => {
-    setSendingLine(true);
-    setLineSendResult(null);
-
-    try {
-      // 從訂單中提取 Line 發送目標
-      const targets: LineSendTarget[] = LineService.extractLineTargetsFromBookings(bookings);
-
-      if (targets.length === 0) {
-        setLineSendResult({
-          success: false,
-          message: '沒有可發送的用戶（需要用戶 ID）',
-        });
-        return;
-      }
-
-      const result = await LineService.sendDocumentNotification({
-        sessionId: session.id,
-        documentType: type,
-        recipients: targets,
-        customMessage: `團號：${session.group_number || session.series_id}`,
-      });
-
-      setLineSendResult({
-        success: result.success,
-        message: result.success
-          ? `已成功發送至 ${result.sentCount} 位用戶`
-          : `發送失敗：${result.errors?.[0]?.error || '未知錯誤'}`,
-      });
-    } catch (error) {
-      setLineSendResult({
-        success: false,
-        message: `發送錯誤：${error}`,
-      });
-    } finally {
-      setSendingLine(false);
-      // 3 秒後清除結果提示
-      setTimeout(() => setLineSendResult(null), 3000);
-    }
-  };
-
-  const generateHTML = (type: DocumentType): string => {
-    switch (type) {
-      case 'itinerary':
-        return generateItineraryHTML();
-      case 'room_list':
-        return generateRoomListHTML();
-      case 'seat_chart':
-        return generateSeatChartHTML();
-      case 'roster':
-        return generateRosterHTML();
-      case 'meeting_info':
-        return generateMeetingInfoHTML();
-      default:
-        return '';
-    }
-  };
-
-  const generateItineraryHTML = (): string => {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>團體行程表 - ${session.group_number || session.series_id}</title>
-        <style>
-          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
-          .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-          .meta { color: #666; font-size: 14px; }
-          .section { margin-bottom: 30px; }
-          .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
-          th { background: #f5f5f5; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">團體行程表</div>
-          <div class="meta">
-            團號：${session.group_number || 'N/A'} | 
-            出發日期：${session.start_date} ~ ${session.end_date} | 
-            人數：${session.current_pax}/${session.max_pax}
-          </div>
-        </div>
-        <div class="section">
-          <div class="section-title">行程資訊</div>
-          <p>詳細行程內容將在此顯示...</p>
-        </div>
-      </body>
-      </html>
-    `;
-  };
-
-  const generateRoomListHTML = (): string => {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>分房表 - ${session.group_number || session.series_id}</title>
-        <style>
-          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
-          .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { padding: 12px; text-align: left; border: 1px solid #ddd; }
-          th { background: #f5f5f5; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">分房表</div>
-          <div>團號：${session.group_number || 'N/A'} | 出發日期：${session.start_date}</div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>房號</th>
-              <th>房型</th>
-              <th>入住旅客</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${roomAssignments.map(room => `
-              <tr>
-                <td>${room.roomNumber}</td>
-                <td>${room.roomType}</td>
-                <td>${room.occupants.map(o => o.name).join('、')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `;
-  };
-
-  const generateSeatChartHTML = (): string => {
-    const assignedSeats = seatAssignments.filter(s => s.is_assigned);
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>座位表 - ${session.group_number || session.series_id}</title>
-        <style>
-          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
-          .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-          .seat-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 20px; }
-          .seat { padding: 15px; border: 2px solid #ddd; border-radius: 8px; text-align: center; }
-          .seat.assigned { background: #dbeafe; border-color: #3b82f6; }
-          .seat.available { background: #f0fdf4; border-color: #22c55e; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">座位表</div>
-          <div>團號：${session.group_number || 'N/A'} | 交通工具：${seatAssignments[0]?.vehicle_type || 'N/A'}</div>
-        </div>
-        <div class="seat-grid">
-          ${seatAssignments.map(seat => `
-            <div class="seat ${seat.is_assigned ? 'assigned' : 'available'}">
-              <div style="font-weight: bold;">${seat.seat_number}</div>
-              ${seat.passenger_name ? `<div style="font-size: 12px; margin-top: 5px;">${seat.passenger_name}</div>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      </body>
-      </html>
-    `;
-  };
-
-  const generateRosterHTML = (): string => {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>名單清冊 - ${session.group_number || session.series_id}</title>
-        <style>
-          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
-          .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
-          th { background: #f5f5f5; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">名單清冊</div>
-          <div>團號：${session.group_number || 'N/A'} | 總人數：${bookings.length}</div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>序號</th>
-              <th>姓名</th>
-              <th>護照號碼</th>
-              <th>房間號</th>
-              <th>座位號</th>
-              <th>特殊需求</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${bookings.map((booking, idx) => `
-              <tr>
-                <td>${idx + 1}</td>
-                <td>${booking.customer_name}</td>
-                <td>${booking.passport_data?.passport_number || 'N/A'}</td>
-                <td>${booking.assigned_room || 'N/A'}</td>
-                <td>${booking.assigned_seat || 'N/A'}</td>
-                <td>${booking.special_needs || '無'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `;
-  };
-
-  const generateMeetingInfoHTML = (): string => {
-    if (!meetingInfo) return '<html><body><p>無集合資訊</p></body></html>';
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>集合資訊 - ${session.group_number || session.series_id}</title>
-        <style>
-          body { font-family: 'Microsoft JhengHei', sans-serif; padding: 40px; }
-          .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-          .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-          .info-box { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 20px; }
-          .info-item { margin-bottom: 15px; }
-          .info-label { font-weight: bold; color: #666; margin-bottom: 5px; }
-          .info-value { font-size: 18px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">集合資訊</div>
-          <div>團號：${session.group_number || 'N/A'}</div>
-        </div>
-        <div class="info-box">
-          <div class="info-item">
-            <div class="info-label">集合地點</div>
-            <div class="info-value">${meetingInfo.location}</div>
-            ${meetingInfo.address ? `<div style="color: #666; margin-top: 5px;">${meetingInfo.address}</div>` : ''}
-          </div>
-          <div class="info-item">
-            <div class="info-label">集合時間</div>
-            <div class="info-value">${meetingInfo.meeting_time}</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">聯絡人</div>
-            <div class="info-value">${meetingInfo.contact_person}</div>
-          </div>
-          <div class="info-item">
-            <div class="info-label">聯絡電話</div>
-            <div class="info-value">${meetingInfo.contact_phone}</div>
-          </div>
-          ${meetingInfo.notes ? `
-            <div class="info-item">
-              <div class="info-label">備註</div>
-              <div>${meetingInfo.notes}</div>
-            </div>
-          ` : ''}
-        </div>
-      </body>
-      </html>
-    `;
+  const handleExportExcelAction = (type: DocumentType) => {
+    onExportExcel(type, documentGenerationData);
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-bold text-gray-900">出團前文件生成</h3>
-        <p className="text-sm text-gray-500 mt-1">產生並發送團體相關文件</p>
+    // Dashtail/TrvicERP standard Card Structure for a draggable widget
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col w-full min-h-[200px] sm:min-h-[250px]">
+      {/* Drag Handle Area - Essential for Dashtail draggable widgets */}
+      <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4 drag-handle cursor-grab select-none">
+        <div className="flex items-center gap-3">
+          <GripVertical className="w-5 h-5 text-gray-400" aria-hidden="true" />
+          <h3 className="text-lg font-bold text-gray-900">{mergedConfig.title}</h3>
+        </div>
+        {/* Additional widget controls can be placed here */}
       </div>
 
-      {/* Document Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {documents.map((doc) => (
-          <motion.div
-            key={doc.type}
-            whileHover={{ y: -2 }}
-            className="bg-white p-6 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
-                {doc.icon}
+      {/* Widget Content */}
+      <div className="space-y-6 flex-grow">
+        <p className="text-sm text-gray-500 mt-1">{mergedConfig.description}</p>
+
+        {/* Responsive Grid for Document Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {documentsToDisplay.map((doc) => (
+            <motion.div
+              key={doc.type}
+              whileHover={{ y: -2 }}
+              className="bg-white p-6 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow-transform duration-200 ease-in-out flex flex-col"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600">
+                  {doc.icon}
+                </div>
+                <div className="flex-grow">
+                  <h4 className="font-bold text-gray-900 text-base">{doc.label}</h4>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">{doc.description}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-gray-900">{doc.label}</h4>
-                <p className="text-sm text-gray-500">{doc.description}</p>
+              <div className="flex flex-wrap gap-2 mt-auto"> {/* Pushes buttons to the bottom */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handlePreview(doc.type)}
+                  className="flex-1 min-w-[100px] py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-1 px-3 focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                  aria-label={`預覽 ${doc.label}`}
+                >
+                  <FileText className="w-4 h-4" />
+                  預覽
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleExportPDFAction(doc.type)}
+                  className="flex-1 min-w-[100px] py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1 px-3 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  aria-label={`導出 ${doc.label} 為 PDF`}
+                >
+                  <Download className="w-4 h-4" />
+                  PDF
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleExportExcelAction(doc.type)}
+                  className="flex-1 min-w-[100px] py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1 px-3 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  aria-label={`導出 ${doc.label} 為 Excel`}
+                >
+                  <FileDown className="w-4 h-4" />
+                  Excel
+                </motion.button>
+                {mergedConfig.enableLineSend && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleSendLineAction(doc.type)}
+                    className="flex-1 min-w-[100px] py-2 bg-brand-line text-white rounded-lg text-sm font-medium hover:bg-brand-line-dark transition-colors flex items-center justify-center gap-1 px-3 disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-brand-line focus:ring-offset-2"
+                    disabled={sendingLine}
+                    aria-label={`透過 Line 發送 ${doc.label}`}
+                  >
+                    {sendingLine && selectedDoc === doc.type ? (
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Send className="w-4 h-4" aria-hidden="true" />
+                    )}
+                    Line
+                  </motion.button>
+                )}
               </div>
-            </div>
-            <div className="flex gap-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleGenerate(doc.type)}
-                className="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
-              >
-                <FileText className="w-4 h-4" />
-                預覽
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleExportPDF(doc.type)}
-                className="flex-1 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
-              >
-                <Download className="w-4 h-4" />
-                PDF
-              </motion.button>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleExportExcel(doc.type)}
-                className="flex-1 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
-              >
-                <FileDown className="w-4 h-4" />
-                Excel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleSendLine(doc.type)}
-                className="flex-1 py-2 bg-[#00B900] text-white rounded-lg text-sm font-medium hover:bg-[#009900] transition-colors flex items-center justify-center gap-1 focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
-              >
-                <Send className="w-4 h-4" />
-                Line
-              </motion.button>
-            </div>
-          </motion.div>
-        ))}
+              {/* Line send result feedback (only for the selected document type) */}
+              {lineSendResult && selectedDoc === doc.type && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={cn(
+                    "mt-2 p-2 text-xs rounded-md flex items-center gap-1",
+                    lineSendResult.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                  )}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {lineSendResult.success ? <CheckCircle className="w-3 h-3" aria-hidden="true" /> : <X className="w-3 h-3" aria-hidden="true" />}
+                  <span>{lineSendResult.message}</span>
+                </motion.div>
+              )}
+            </motion.div>
+          ))}
+        </div>
       </div>
 
-      {/* Preview Modal */}
+      {/* Document Preview Modal */}
       {showPreview && selectedDoc && (
-        <div className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 focus:ring-2 focus:ring-primary-300 active:bg-primary-800">
+        <div
+          className="fixed inset-0 bg-primary-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 md:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="preview-modal-title"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl overflow-hidden flex flex-col focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white w-full max-w-4xl max-h-[95vh] rounded-2xl overflow-hidden flex flex-col shadow-xl"
           >
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">
-                {documents.find(d => d.type === selectedDoc)?.label} 預覽
+            <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 id="preview-modal-title" className="text-lg sm:text-xl font-bold text-gray-900">
+                {documentsToDisplay.find(d => d.type === selectedDoc)?.label} 預覽
               </h2>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => handleExportPDF(selectedDoc)}
-                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                  onClick={() => handleExportPDFAction(selectedDoc)} // Export from preview
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  aria-label="導出為 PDF"
                 >
-                  <Printer className="w-5 h-5" />
+                  <Printer className="w-5 h-5" aria-hidden="true" />
                 </button>
                 <button
-                  onClick={() => setShowPreview(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg focus:ring-2 focus:ring-primary-300 active:bg-primary-800"
+                  onClick={handleClosePreview}
+                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  aria-label="關閉預覽"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-6">
-              <div dangerouslySetInnerHTML={{ __html: generateHTML(selectedDoc) }} />
+            <div className="flex-1 overflow-auto p-4 sm:p-6">
+              {/* Dynamically generated HTML content for the preview */}
+              <div dangerouslySetInnerHTML={{ __html: generateDocumentContent(selectedDoc, documentGenerationData) }} />
             </div>
           </motion.div>
         </div>

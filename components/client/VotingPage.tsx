@@ -1,198 +1,123 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Vote, CheckCircle, Users } from "lucide-react";
 import Button from "@/design-system/Button";
+
+interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
 
 interface Poll {
   id: string;
   title: string;
   description: string;
-  options: { id: string; text: string; votes: number }[];
+  options: PollOption[];
   totalVotes: number;
   hasVoted: boolean;
   selectedOption?: string;
 }
 
-const MOCK_POLLS: Poll[] = [
-  {
-    id: "1",
-    title: "第三天自由活動地點",
-    description: "請投票選擇您偏好的自由活動地點",
-    options: [
-      { id: "a", text: "原宿竹下通", votes: 12 },
-      { id: "b", text: "秋葉原電器街", votes: 8 },
-      { id: "c", text: "銀座購物區", votes: 4 },
-    ],
-    totalVotes: 24,
-    hasVoted: false, // Default to false, determined by localStorage
-  },
-  {
-    id: "2",
-    title: "團體晚餐餐廳選擇",
-    description: "請選擇第二天的晚餐餐廳",
-    options: [
-      { id: "d", text: "燒肉敘敘苑", votes: 15 },
-      { id: "e", text: "壽司大", votes: 6 },
-      { id: "f", text: "一蘭拉麵", votes: 3 },
-    ],
-    totalVotes: 24,
-    hasVoted: false, // Default to false, determined by localStorage
-    // selectedOption removed, determined by localStorage
-  },
-];
+interface VotingPageProps {
+  polls: Poll[];
+  onVote: (pollId: string, optionId: string) => void;
+}
 
-export default function VotingPage() {
-  const [polls, setPolls] = useState<Poll[]>(MOCK_POLLS);
-
-  // Load persisted votes from localStorage on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("trvicerp_voting");
-      if (!raw) return;
-      const saved: Record<string, string> = JSON.parse(raw);
-      if (!saved || typeof saved !== "object") return;
-
-      setPolls((prev) =>
-        prev.map((poll) => {
-          const selected = saved[poll.id];
-          // Apply persisted vote if found and not already marked as voted (or if poll was reset)
-          // Also, ensure the option exists in the current poll, preventing errors if poll options change
-          const optionExists = poll.options.some(opt => opt.id === selected);
-
-          if (selected && !poll.hasVoted && optionExists) {
-            return {
-              ...poll,
-              hasVoted: true,
-              selectedOption: selected,
-              // Increment counts because MOCK_POLLS is a base state without current user's vote
-              totalVotes: poll.totalVotes + 1,
-              options: poll.options.map((opt) =>
-                opt.id === selected ? { ...opt, votes: opt.votes + 1 } : opt,
-              ),
-            };
-          }
-          return poll;
-        }),
-      );
-    } catch (e) {
-      console.warn("Failed to load persisted votes", e);
-    }
-  }, []);
-
-  const handleVote = (pollId: string, optionId: string) => {
-    setPolls((prev) =>
-      prev.map((poll) => {
-        if (poll.id === pollId && !poll.hasVoted) {
-          return {
-            ...poll,
-            hasVoted: true,
-            selectedOption: optionId,
-            totalVotes: poll.totalVotes + 1,
-            options: poll.options.map((opt) =>
-              opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt,
-            ),
-          };
-        }
-        return poll;
-      }),
-    );
-
-    // Persist selection for this poll
-    try {
-      const raw = localStorage.getItem("trvicerp_voting");
-      const saved: Record<string, string> = raw ? JSON.parse(raw) : {};
-      saved[pollId] = optionId;
-      localStorage.setItem("trvicerp_voting", JSON.stringify(saved));
-    } catch (e) {
-      console.warn("Failed to persist vote", e);
-    }
+export default function VotingPage({ polls, onVote }: VotingPageProps) {
+  const handleVoteClick = (pollId: string, optionId: string) => {
+    onVote(pollId, optionId);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 animate-fade-in">
-      <header className="bg-primary-900 text-white px-6 py-4">
-        <div className="flex items-center gap-3">
-          <Vote className="w-6 h-6" />
-          <h1 className="text-xl font-bold">團體投票</h1>
-        </div>
-      </header>
+    <div className="dashtail-widget-card p-0">
+      <div className="drag-handle p-4 bg-gray-50 border-b border-gray-100 rounded-t-2xl flex items-center gap-3">
+        <Vote className="w-5 h-5 text-primary-700" />
+        <h2 className="text-lg font-semibold text-gray-800">團體投票</h2>
+      </div>
+
       <main className="p-6 space-y-6">
-        {polls.map((poll) => (
-          <div
-            key={poll.id}
-            className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
-          >
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h2 className="font-bold text-gray-900">{poll.title}</h2>
-                {poll.hasVoted && (
-                  <span className="text-sm bg-success-100 text-success-700 px-2 py-1 rounded-full flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    已投票
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-gray-500 mt-1">{poll.description}</p>
-              <p className="text-sm text-gray-400 mt-2 flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                {poll.totalVotes} 人已投票
-              </p>
-            </div>
-            <div className="p-4 space-y-3">
-              {poll.options.map((option) => {
-                const percentage =
-                  poll.totalVotes > 0
-                    ? Math.round((option.votes / poll.totalVotes) * 100)
-                    : 0;
-                const isSelected = poll.selectedOption === option.id;
-                const isDisabled = poll.hasVoted;
-
-                const buttonBaseClasses = `w-full p-4 rounded-lg border-2 transform transition duration-200 ease`;
-                const interactiveClasses = isDisabled
-                  ? "cursor-default opacity-80" // Slightly dim disabled options
-                  : `cursor-pointer focus:ring-2 focus:ring-primary-300 focus:outline-none 
-                     ${isSelected ? "hover:bg-primary-100 active:bg-primary-200" : "hover:bg-gray-50 active:bg-gray-100 hover:border-gray-200"}`;
-
-                const selectedStyles = `scale-100 border-primary-500 bg-primary-50 text-primary-700`;
-                const unselectedStyles = `border-gray-100 text-gray-900 ${!isSelected ? "hover:scale-[0.995]" : ""}`; // Apply hover scale only if not selected
-
-                return (
-                  <Button
-                    key={option.id}
-                    onClick={() => handleVote(poll.id, option.id)}
-                    disabled={isDisabled}
-                    aria-disabled={isDisabled}
-                    variant="ghost" // Assuming 'ghost' is the correct variant for this styling
-                    className={`${buttonBaseClasses} ${isSelected ? selectedStyles : unselectedStyles} ${interactiveClasses}`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span
-                        className="font-semibold" // Text color is set on the parent button's className
-                      >
-                        {option.text}
-                      </span>
-                      {poll.hasVoted && (
-                        <span className="text-sm font-bold text-gray-600">
-                          {percentage}%
-                        </span>
-                      )}
-                    </div>
-                    {poll.hasVoted && (
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${isSelected ? "bg-primary-500" : "bg-gray-300"}`}
-                          style={{
-                            width: `${percentage}%`,
-                            transition: "width 400ms ease",
-                          }}
-                        />
-                      </div>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
+        {polls.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            目前沒有可用的投票。
           </div>
-        ))}
+        ) : (
+          polls.map((poll) => (
+            <div
+              key={poll.id}
+              className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
+            >
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-gray-900">{poll.title}</h3>
+                  {poll.hasVoted && (
+                    <span className="text-sm bg-success-100 text-success-700 px-2 py-1 rounded-full flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      已投票
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mt-1">{poll.description}</p>
+                <p className="text-sm text-gray-400 mt-2 flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {poll.totalVotes} 人已投票
+                </p>
+              </div>
+              <div className="p-4 space-y-3">
+                {poll.options.map((option) => {
+                  const percentage =
+                    poll.totalVotes > 0
+                      ? Math.round((option.votes / poll.totalVotes) * 100)
+                      : 0;
+                  const isSelected = poll.selectedOption === option.id;
+                  const isDisabled = poll.hasVoted;
+
+                  const buttonClasses = [
+                    "w-full p-4 rounded-lg border-2 transform transition duration-200 ease",
+                    isDisabled ? "cursor-default opacity-80" : "cursor-pointer",
+                    isSelected
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-100 text-gray-900",
+                    !isDisabled && !isSelected && "hover:bg-gray-50 active:bg-gray-100 hover:border-gray-200 hover:scale-[0.995]",
+                    !isDisabled && "focus:ring-2 focus:ring-primary-300 focus:outline-none",
+                  ].filter(Boolean).join(" ");
+
+                  return (
+                    <Button
+                      key={option.id}
+                      onClick={() => handleVoteClick(poll.id, option.id)}
+                      disabled={isDisabled}
+                      aria-disabled={isDisabled}
+                      variant="ghost"
+                      className={buttonClasses}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold">
+                          {option.text}
+                        </span>
+                        {poll.hasVoted && (
+                          <span className="text-sm font-bold text-gray-600">
+                            {percentage}%
+                          </span>
+                        )}
+                      </div>
+                      {poll.hasVoted && (
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${isSelected ? "bg-primary-500" : "bg-gray-300"}`}
+                            style={{
+                              width: `${percentage}%`,
+                              transition: "width 400ms ease",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
       </main>
     </div>
   );
