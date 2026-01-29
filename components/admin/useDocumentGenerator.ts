@@ -16,6 +16,11 @@ export function useDocumentGenerator(
     isExporting: false,
   });
 
+  const [selectedDoc, setSelectedDoc] = useState<DocumentType | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [sendingLine, setSendingLine] = useState(false);
+  const [lineSendResult, setLineSendResult] = useState<{ success: boolean; message: string } | null>(null);
+
   const toggleDocument = useCallback((docType: DocumentType) => {
     setState(prev => ({
       ...prev,
@@ -64,11 +69,44 @@ export function useDocumentGenerator(
     [onSendLine],
   );
 
+  const handlePreview = useCallback((docType: DocumentType) => {
+    setSelectedDoc(docType);
+    setShowPreview(true);
+  }, []);
+
+  const handleClosePreview = useCallback(() => {
+    setShowPreview(false);
+    setSelectedDoc(null);
+  }, []);
+
+  const handleSendLineAction = useCallback(async (docType: DocumentType, content: string) => {
+    setSendingLine(true);
+    setLineSendResult(null);
+    try {
+      await sendViaLine(docType, content);
+      setLineSendResult({ success: true, message: '已成功發送至 LINE' });
+    } catch (error) {
+      setLineSendResult({
+        success: false,
+        message: error instanceof Error ? error.message : '發送失敗',
+      });
+    } finally {
+      setSendingLine(false);
+    }
+  }, [sendViaLine]);
+
   return {
     ...state,
+    selectedDoc,
+    showPreview,
+    sendingLine,
+    lineSendResult,
     toggleDocument,
     generateDocuments,
     exportDocument,
     sendViaLine,
+    handlePreview,
+    handleClosePreview,
+    handleSendLineAction,
   };
 }

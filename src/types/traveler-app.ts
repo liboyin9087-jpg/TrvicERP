@@ -6,24 +6,24 @@ export type TabKey = 'home' | 'explore' | 'register' | 'mytrips' | 'account' | '
 
 export interface AvailableTrip {
   id: string;
-  title: string;
-  name?: string;
+  title?: string;
+  name: string;
   description?: string;
   destination: string;
   startDate: string;
   endDate: string;
-  duration: number;
+  duration?: number;
   price: number;
-  availability: number;
-  spotsLeft?: number;
-  totalSpots?: number;
+  availability?: number;
+  spotsLeft: number;
+  totalSpots: number;
   imageUrl?: string;
-  image?: string;
+  image: string;
   tags?: string[];
-  status?: 'available' | 'full' | 'cancelled';
-  subsidyType?: string;
+  status: 'available' | 'open' | 'closing' | 'full' | 'cancelled';
+  subsidyType?: 'fixed' | 'percentage' | string;
   subsidyAmount?: number;
-  maxSubsidy?: number;
+  maxSubsidy: number;
   registrationDeadline?: string;
   highlights?: string[];
 }
@@ -31,23 +31,26 @@ export interface AvailableTrip {
 export interface MyRegistration {
   id: string;
   tripId: string;
-  tripTitle: string;
-  tripName?: string;
-  destination?: string;
-  image?: string;
-  registrationDate: string;
-  startDate?: string;
-  endDate?: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  participantCount: number;
-  totalPrice: number;
-  roomType?: string;
-  companions?: Array<{
+  tripTitle?: string;
+  tripName: string;
+  destination: string;
+  image: string;
+  registrationDate?: string;
+  registeredAt?: string;
+  startDate: string;
+  endDate: string;
+  status: 'pending' | 'approved' | 'confirmed' | 'completed' | 'cancelled';
+  participantCount?: number;
+  totalPrice?: number;
+  roomType: string;
+  companions: Array<{
     name: string;
     relation?: string;
+    relationship?: string;
+    age?: number;
   }>;
-  subsidyAmount?: number;
-  selfPay?: number;
+  subsidyAmount: number;
+  selfPay: number;
   specialNeeds?: string;
 }
 
@@ -56,25 +59,26 @@ export interface Notification {
   type: 'info' | 'warning' | 'success' | 'error';
   title: string;
   message: string;
-  timestamp: string;
-  date?: string;
+  timestamp?: string;
+  date: string;
   read: boolean;
+  tripId?: string;
 }
 
 export interface UserProfile {
-  id: string;
+  id?: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   dateOfBirth?: string;
   address?: string;
   profileImage?: string;
-  subsidyTier?: 'silver' | 'gold' | 'platinum';
-  seniority?: number;
-  maxSubsidy?: number;
-  isEligible?: boolean;
-  department?: string;
-  employeeId?: string;
+  subsidyTier: string;
+  seniority: number;
+  maxSubsidy: number;
+  isEligible: boolean;
+  department: string;
+  employeeId: string;
   preferences?: {
     newsletter: boolean;
     notifications: boolean;
@@ -84,20 +88,23 @@ export interface UserProfile {
 export interface RegistrationFormData {
   tripId: string;
   destination?: string;
-  mealPreference?: string;
-  participantCount: number;
-  participants: Array<{
+  mealPreference: string;
+  seatPreference?: string;
+  participantCount?: number;
+  participants?: Array<{
     name: string;
     email: string;
     phone: string;
     dateOfBirth: string;
   }>;
-  roomType?: string;
-  companions?: Array<{
+  roomType: string;
+  companions: Array<{
     name: string;
     relation?: string;
+    relationship?: string;
+    age?: number;
   }>;
-  specialNeeds?: string;
+  specialNeeds: string;
   specialRequests?: string;
 }
 
@@ -109,48 +116,4 @@ export interface TravelerAppState {
   notifications: Notification[];
   isLoading: boolean;
   error?: string;
-}
-
-// Add missing properties to support full component usage
-export interface RegistrationFormData {
-  tripId: string;
-  destination?: string;
-  mealPreference?: string;
-  participantCount: number;
-  participants: Array<{
-    name: string;
-    email: string;
-    phone: string;
-    dateOfBirth: string;
-  }>;
-  roomType?: string;
-  companions?: Array<{
-    name: string;
-    relation?: string;
-  }>;
-  specialNeeds?: string;
-  specialRequests?: string;
-}
-
-export interface MyRegistration {
-  id: string;
-  tripId: string;
-  tripTitle: string;
-  tripName?: string;
-  destination?: string;
-  image?: string;
-  registrationDate: string;
-  startDate?: string;
-  endDate?: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  participantCount: number;
-  totalPrice: number;
-  roomType?: string;
-  companions?: Array<{
-    name: string;
-    relation?: string;
-  }>;
-  subsidyAmount?: number;
-  selfPay?: number;
-  specialNeeds?: string;
 }

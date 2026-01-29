@@ -277,7 +277,7 @@ export default function LoginPage({ config, onLogin }: LoginPageProps) {
       } else {
         // Handle explicit error messages from the service
         // TypeScript discriminated union: if not success, result has error property
-        const errorMessage = result.success ? '登入失敗，請檢查您的帳號密碼' : result.error;
+        const errorMessage = !result.success ? result.error : '登入失敗，請檢查您的帳號密碼';
         showNotification(errorMessage, 'error');
       }
     } catch (error) {
