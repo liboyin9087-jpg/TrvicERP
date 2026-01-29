@@ -9,18 +9,18 @@
 #   bash setup-ollama.sh [模型名稱]
 #
 # 推薦模型（依記憶體需求排序）：
-#   - qwen2.5-coder:7b   (4.7GB) - 推薦，程式碼任務表現好
+#   - qwen2.5-coder:14b  (8.7GB) - 推薦，程式碼任務表現優異
+#   - qwen2.5-coder:7b   (4.7GB) - 輕量版，記憶體較少時使用
 #   - codellama:13b       (7.4GB) - Meta 程式碼模型
 #   - deepseek-coder-v2:16b (8.9GB) - DeepSeek 程式碼模型
 #   - llama3.1:8b         (4.7GB) - 通用型
 #   - mistral:7b          (4.1GB) - 輕量快速
-#   - phi3:14b            (7.9GB) - Microsoft 小型模型
 # ═══════════════════════════════════════════════════════════════
 
 set -euo pipefail
 
 # ── 配置 ──────────────────────────────────────────────────────
-DEFAULT_MODEL="qwen2.5-coder:7b"
+DEFAULT_MODEL="qwen2.5-coder:14b"
 MODEL=${1:-$DEFAULT_MODEL}
 OLLAMA_HOST="${OLLAMA_HOST:-http://localhost:11434}"
 GOOSE_CONFIG_DIR="$HOME/.config/goose"
