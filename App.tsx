@@ -153,6 +153,7 @@ function DraggableDashboardWrapper() {
     isEditMode,
     selectedWidgetId,
     lastSavedAt,
+    availableWidgets,
     setEditMode,
     setSelectedWidgetId,
     applyLayout,
@@ -174,6 +175,7 @@ function DraggableDashboardWrapper() {
       selectedWidgetId={selectedWidgetId}
       lastSavedAt={lastSavedAt ? new Date(lastSavedAt) : null}
       canEdit={canEdit}
+      availableWidgets={availableWidgets}
       onSetEditMode={setEditMode}
       onSetSelectedWidgetId={setSelectedWidgetId}
       onApplyLayout={applyLayout}

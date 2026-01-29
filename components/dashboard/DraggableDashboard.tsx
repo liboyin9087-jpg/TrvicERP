@@ -89,11 +89,16 @@ interface DraggableDashboardConfig {
   selectedWidgetId: string | null;
   lastSavedAt: Date | null;
   canEdit: boolean; // Derived in parent and passed down
+  availableWidgets: Array<{
+    type: WidgetType;
+    title: string;
+    description: string;
+  }>;
 
   // Actions as callbacks from the parent component
   onSetEditMode: (mode: boolean) => void;
   onSetSelectedWidgetId: (id: string | null) => void;
-  onApplyLayout: (layout: Pick<Layout, 'i' | 'x' | 'y' | 'w' | 'h'>[]) => void;
+  onApplyLayout: (layout: Array<{ i: string; x: number; y: number; w: number; h: number }>) => void;
   onRemoveWidget: (id: string) => void;
   onAddWidgetByType: (type: WidgetType) => void;
   onSaveLayout: () => void;
@@ -110,6 +115,7 @@ export default function DraggableDashboard(props: DraggableDashboardConfig) {
     selectedWidgetId,
     lastSavedAt,
     canEdit,
+    availableWidgets,
     onSetEditMode,
     onSetSelectedWidgetId,
     onApplyLayout,
@@ -219,7 +225,7 @@ export default function DraggableDashboard(props: DraggableDashboardConfig) {
               onSave={handleSave}
               onCancel={handleCancel}
               onReset={handleReset}
-              lastSavedAt={lastSavedAt}
+              lastSavedAt={lastSavedAt ? lastSavedAt.toISOString() : null}
             />
           </div>
         )}
@@ -318,6 +324,7 @@ export default function DraggableDashboard(props: DraggableDashboardConfig) {
             handleAddWidget(type);
             setShowLibrary(false);
           }}
+          availableWidgets={availableWidgets}
         />
       </div>
     </ErrorBoundary>
