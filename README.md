@@ -202,6 +202,57 @@ npm run build
 npm run check:env
 ```
 
+## 部署到 Vercel
+
+### 架構說明
+
+此專案由兩個部分組成：
+1. **前端 (React + Vite)** - 可直接部署到 Vercel
+2. **後端 (FastAPI)** - 需要部署到支援 Python 的平台（Railway、Render、Heroku 等）
+
+### 前端部署 (Vercel)
+
+#### 前置準備
+
+1. 在 Vercel 建立新專案，連結到此 GitHub 倉庫
+2. 設定環境變數（在 Vercel 專案設定中）：
+   - `VITE_API_URL` - 後端 API 位址（後端部署後的 URL）
+   - `VITE_AI_API_URL` - AI 服務 API 位址  
+   - `VITE_WS_URL` - WebSocket 位址
+   - `VITE_USE_MOCK` - 是否使用 Mock 資料（可設為 `true` 進行測試）
+   - 其他必要的環境變數（參考 `.env.example`）
+
+#### 自動部署
+
+專案已配置 `vercel.json`，推送到 GitHub 後會自動觸發部署：
+- 推送到主分支 → 生產環境部署
+- 推送到其他分支 → 預覽環境部署
+
+#### 建置設定
+
+- **Framework**: Vite
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Install Command**: `npm install`
+
+### 後端部署建議
+
+後端是 FastAPI 應用程式，建議部署到：
+- **Railway** - 支援 Python，自動化部署
+- **Render** - 免費方案可用
+- **Heroku** - 成熟的 PaaS 平台
+- **AWS/GCP/Azure** - 企業級部署
+
+詳細後端部署說明請參考 `backend/README.md`
+
+### 注意事項
+
+1. **環境變數**: 所有以 `VITE_` 開頭的環境變數都會在建置時嵌入到前端程式碼中
+2. **API 連線**: 確保 `VITE_API_URL` 指向可訪問的後端服務
+3. **CORS 設定**: 後端需要允許來自 Vercel 網域的請求
+4. **路由**: 專案使用 React Router，`vercel.json` 已配置 SPA fallback
+5. **Mock 模式**: 若暫時無後端，可設定 `VITE_USE_MOCK=true` 使用模擬資料
+
 ## 授權
 
 MIT License
