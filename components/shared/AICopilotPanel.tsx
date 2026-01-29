@@ -341,7 +341,7 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
                   key={action.id}
                   className="flex items-center gap-2 px-2 py-1.5 bg-yellow-500/20 rounded-lg text-sm border border-yellow-500/30" // Standard yellow for warning
                 >
-                  <span className="flex-1">{action.reason}</span>
+                  <span className="flex-1">{action.reason || action.action}</span>
                   {onApprovePending && (
                     <button
                       onClick={() => onApprovePending(action)}
@@ -361,7 +361,9 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
               <div className="text-sm text-white/60 mb-1">參考來源：</div>
               <div className="text-sm text-white/40 space-y-1">
                 {message.ragSources.map((source, idx) => (
-                  <div key={idx} className="truncate">• {source}</div>
+                  <div key={idx} className="truncate">
+                    • {typeof source === 'string' ? source : source.title || source.url}
+                  </div>
                 ))}
               </div>
             </div>
