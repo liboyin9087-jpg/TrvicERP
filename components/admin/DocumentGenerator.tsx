@@ -201,7 +201,10 @@ export default function DocumentGenerator({
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleSendLineAction(doc.type)}
+                    onClick={() => {
+                      const content = generateDocumentContent?.(doc.type, documentGenerationData) || '';
+                      handleSendLineAction(doc.type, content);
+                    }}
                     className="flex-1 min-w-[100px] py-2 bg-brand-line text-white rounded-lg text-sm font-medium hover:bg-brand-line-dark transition-colors flex items-center justify-center gap-1 px-3 disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-brand-line focus:ring-offset-2"
                     disabled={sendingLine}
                     aria-label={`透過 Line 發送 ${doc.label}`}

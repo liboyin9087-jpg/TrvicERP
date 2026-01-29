@@ -690,6 +690,8 @@ function RegistrationForm({
   const handleSubmit = useCallback(() => {
     onSubmit({
       tripId: trip.id,
+      participantCount: 1,
+      participants: [],
       roomType,
       mealPreference,
       seatPreference,
@@ -1396,13 +1398,17 @@ export default function TravelerApp({
       const newRegistration: MyRegistration = {
         id: `r${Date.now()}`,
         tripId: trip.id,
+        tripTitle: trip.title,
         tripName: trip.name,
         destination: trip.destination,
+        registrationDate: new Date().toISOString().split("T")[0],
         startDate: trip.startDate,
         endDate: trip.endDate,
         image: trip.image,
         status: "pending", // Initial status
         registeredAt: new Date().toISOString().split("T")[0],
+        participantCount: data.participantCount || 1,
+        totalPrice: trip.price,
         roomType:
           data.roomType === "single"
             ? "單人房"
