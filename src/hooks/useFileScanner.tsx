@@ -230,81 +230,15 @@ export function FileScannerInput({
   onScan, 
   multiple = true,
   directory = false,
-  title = "File Scanner", // Default title
-  options = {} // Pass scanner options
+  title = "File Scanner",
+  options = {}
 }: FileScannerInputConfig) {
   const { scanFiles, files, loading } = useFileScanner(options);
   
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       await scanFiles(e.target.files);
-      // Wait for files state to update, then call onScan
-      // This might require a useEffect or passing the scanned files from scanFiles directly
-      // For simplicity here, assuming files state updates synchronously enough or using a ref.
-      // A more robust solution might return the scannedFiles from scanFiles.
-      // Let's modify scanFiles to return the processed list.
-    }
-  };
-
-  // Kintone Independence: A common pattern is to return the scanned files from scanFiles.
-  // Re-calling scanFiles in handleChange and then using the hook's `files` state might
-  // lead to stale `files` for the immediate `onScan` call.
-  // Let's adjust scanFiles to return the result, and handleChange to use that.
-  const handleEffectiveScan = useCallback(async (fileList: FileList | File[]) => {
-    setLoading(true);
-    setError(null);
-    let currentScannedFiles: ScannedFile[] = [];
-    try {
-      const scannedFiles: ScannedFile[] = [];
-      const filesArray = Array.from(fileList);
-      
-      for (const file of filesArray) {
-        const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-        const filePath = (file as any).webkitRelativePath || file.name;
-
-        if (isFileExcluded(filePath, options.excludePatterns)) {
-          console.debug(`File excluded by pattern: ${filePath}`);
-          continue;
-        }
-        
-        if (!options.allowedExtensions?.includes(extension) && !getSupportedExtensions().includes(extension)) {
-          console.warn(`File type not allowed: ${file.name} (Extension: ${extension})`);
-          continue;
-        }
-        
-        if (file.size > (options.maxFileSize ?? DEFAULT_MAX_FILE_SIZE)) {
-          console.warn(`File too large: ${file.name} (${formatFileSize(file.size)})`);
-          continue;
-        }
-        
-        const scannedFile: ScannedFile = {
-          name: file.name,
-          path: filePath,
-          size: file.size,
-          type: file.type,
-          category: getFileCategory(file.name),
-          lastModified: file.lastModified,
-        };
-        
-        scannedFile.content = await readFileContent(file);
-        
-        scannedFiles.push(scannedFile);
-      }
-      
-      setStats(calculateScanStats(scannedFiles));
-      setFiles(scannedFiles);
-      currentScannedFiles = scannedFiles; // Capture for onScan
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-      onScan(currentScannedFiles); // Pass the directly scanned files
-    }
-  }, [options.allowedExtensions, options.maxFileSize, options.excludePatterns, onScan]); // Ensure dependencies are correct
-
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      await handleEffectiveScan(e.target.files);
+      onScan(files);
     }
   };
 
@@ -323,7 +257,7 @@ export function FileScannerInput({
       <div className="dashtail-card-content">
         <input
           type="file"
-          onChange={handleInputChange}
+          onChange={handleChange}
           multiple={multiple}
           disabled={loading}
           {...(directory ? { webkitdirectory: '', directory: '' } : {})}

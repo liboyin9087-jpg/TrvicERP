@@ -9,10 +9,13 @@ export type IconComponentType = React.ComponentType<{ className?: string; size?:
 export interface Column<T = any> {
   key: keyof T;
   label: string;
+  title?: string;
+  dataIndex?: keyof T | string;
   width?: number | string;
   sortable?: boolean;
   filterable?: boolean;
   align?: 'left' | 'center' | 'right';
+  fixed?: 'left' | 'right' | boolean;
   render?: (value: any, row: T, index: number) => React.ReactNode;
   minWidth?: string;
 }

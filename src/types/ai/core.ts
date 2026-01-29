@@ -10,10 +10,24 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   metadata?: Record<string, unknown>;
-  functionCalls?: FunctionCall[];
-  ragSources?: string[];
-  pendingActions?: PendingAction[];
-  blockedActions?: string[];
+  functionCalls?: Array<{
+    name: string;
+    arguments: Record<string, unknown>;
+  }>;
+  ragSources?: Array<{
+    title: string;
+    url: string;
+    snippet: string;
+  }>;
+  pendingActions?: Array<{
+    id: string;
+    action: string;
+    status: string;
+  }>;
+  blockedActions?: Array<{
+    id: string;
+    reason: string;
+  }>;
   pendingResolved?: boolean;
 }
 
@@ -28,10 +42,12 @@ export interface FunctionCall {
 
 export interface PendingAction {
   id: string;
-  type: string;
-  description: string;
-  requiredApproval: boolean;
-  data: Record<string, unknown>;
+  type?: string;
+  action?: string;
+  description?: string;
+  requiredApproval?: boolean;
+  status?: string;
+  data?: Record<string, unknown>;
   reason?: string;
   call?: FunctionCall;
 }

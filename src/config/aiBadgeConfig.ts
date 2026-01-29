@@ -33,7 +33,40 @@ export {
 export type AIBadgeType = 'suggestion' | 'analysis' | 'warning' | 'success' | 'processing';
 export type AIBadgeSize = 'sm' | 'md' | 'lg';
 
-export const defaultAIBadgeComponentConfig = {
+export interface AIBadgeComponentConfig {
+  suggestion: {
+    icon: typeof Sparkles;
+    color: string;
+    textColor: string;
+    borderColor: string;
+  };
+  analysis: {
+    icon: typeof Brain;
+    color: string;
+    textColor: string;
+    borderColor: string;
+  };
+  warning: {
+    icon: typeof AlertCircle;
+    color: string;
+    textColor: string;
+    borderColor: string;
+  };
+  success: {
+    icon: typeof CheckCircle;
+    color: string;
+    textColor: string;
+    borderColor: string;
+  };
+  processing: {
+    icon: typeof Zap;
+    color: string;
+    textColor: string;
+    borderColor: string;
+  };
+}
+
+export const defaultAIBadgeComponentConfig: AIBadgeComponentConfig = {
   suggestion: {
     icon: Sparkles,
     color: 'bg-blue-100',
@@ -65,9 +98,6 @@ export const defaultAIBadgeComponentConfig = {
     borderColor: 'border-indigo-300',
   },
 };
-
-// Alias for backward compatibility
-export const AIBadgeComponentConfig = defaultAIBadgeComponentConfig;
 
 export interface AIContext {
   mode: AIBadgeType;

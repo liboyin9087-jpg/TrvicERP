@@ -16,7 +16,28 @@ export interface ChatRequest {
 export interface ChatResponse {
   id: string;
   content: string;
+  reply?: string;
   model: string;
+  function_calls?: Array<{
+    name: string;
+    arguments: Record<string, unknown>;
+  }>;
+  rag_sources?: Array<{
+    title: string;
+    url: string;
+    snippet: string;
+  }>;
+  pending_actions?: Array<{
+    id: string;
+    action: string;
+    status: string;
+  }>;
+  blocked_actions?: Array<{
+    id: string;
+    reason: string;
+  }>;
+  image_url?: string;
+  image_prompt?: string;
   usage?: {
     promptTokens: number;
     completionTokens: number;
@@ -38,6 +59,7 @@ export interface ModesResponse {
 export interface AIModeOption {
   id: string;
   name: string;
+  label: string;
   description: string;
   enabled: boolean;
 }
@@ -48,15 +70,16 @@ export interface StructuredOutputRequest {
   model?: string;
 }
 
-export interface StructuredOutputResponse {
+export interface StructuredOutputResponse<T = Record<string, unknown>> {
   id: string;
-  data: Record<string, unknown>;
+  data: T;
   raw: string;
 }
 
 // Function argument types for AI functions
 export interface NavigateArguments {
   page: string;
+  viewKey?: string;
   params?: Record<string, unknown>;
 }
 
@@ -70,6 +93,7 @@ export interface ShowQuotationArguments {
 
 export interface ShowItineraryArguments {
   itineraryId: string;
+  sessionId?: string;
 }
 
 export interface SetDashboardEditModeArguments {
@@ -82,10 +106,12 @@ export interface AddDashboardWidgetArguments {
 }
 
 export interface RemoveDashboardWidgetArguments {
+  id?: string;
   widgetId: string;
 }
 
 export interface UpdateDashboardWidgetArguments {
+  id?: string;
   widgetId: string;
   config: Record<string, unknown>;
 }

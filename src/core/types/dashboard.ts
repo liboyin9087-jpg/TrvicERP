@@ -304,6 +304,8 @@ export type Widget =
 export interface WidgetLibraryItem {
   /** The type of widget this library item represents. */
   type: WidgetType;
+  /** Legacy name property for backward compatibility. */
+  name?: string;
   /** A user-friendly title for the widget. */
   title: string;
   /** A brief description of what the widget does. */
