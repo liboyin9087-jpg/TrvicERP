@@ -189,7 +189,11 @@ function DraggableDashboardWrapper() {
 }
 
 function ClientPortalWrapper() {
-  const { showToast } = useToastStore();
+  const { addToast } = useToastStore();
+  
+  const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
+    addToast({ message, type });
+  };
   
   return (
     <ClientPortal
