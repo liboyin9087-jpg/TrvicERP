@@ -690,13 +690,13 @@ function RegistrationForm({
   const handleSubmit = useCallback(() => {
     onSubmit({
       tripId: trip.id,
-      participantCount: 1,
+      participantCount: 1 + companions.length,
       participants: [],
       roomType,
       mealPreference,
       seatPreference,
       specialNeeds,
-      companions,
+      companions: companions.map(c => ({ name: c.name, relation: c.relationship })),
     });
   }, [
     trip.id,
@@ -1406,7 +1406,6 @@ export default function TravelerApp({
         endDate: trip.endDate,
         image: trip.image,
         status: "pending", // Initial status
-        registeredAt: new Date().toISOString().split("T")[0],
         participantCount: data.participantCount || 1,
         totalPrice: trip.price,
         roomType:
