@@ -88,6 +88,10 @@ interface EmptyStateConfig {
   icon?: React.ReactNode;
   title: string;
   description?: string;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
   action?: {
     label: string;
     onClick: () => void;

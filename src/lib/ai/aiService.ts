@@ -57,11 +57,11 @@ interface IAIApiClient {
 
 // --- Mock Data and Client (Separation of Concerns) ---
 const MOCK_MODE_OPTIONS: AIModeOption[] = [
-  { id: 'general', label: '一般諮詢', description: 'Mock 模式 (無後端)' },
-  { id: 'itinerary', label: '行程規劃', description: 'Mock 模式 (無後端)' },
-  { id: 'marketing', label: '行銷文案', description: 'Mock 模式 (無後端)' },
-  { id: 'costing', label: '成本估算', description: 'Mock 模式 (無後端)' },
-  { id: 'legal', label: '法規諮詢', description: 'Mock 模式 (無後端)' },
+  { id: 'general', name: 'general', label: '一般諮詢', description: 'Mock 模式 (無後端)', enabled: true },
+  { id: 'itinerary', name: 'itinerary', label: '行程規劃', description: 'Mock 模式 (無後端)', enabled: true },
+  { id: 'marketing', name: 'marketing', label: '行銷文案', description: 'Mock 模式 (無後端)', enabled: true },
+  { id: 'costing', name: 'costing', label: '成本估算', description: 'Mock 模式 (無後端)', enabled: true },
+  { id: 'legal', name: 'legal', label: '法規諮詢', description: 'Mock 模式 (無後端)', enabled: true },
 ];
 
 const MOCK_MODE_DESCRIPTIONS = MOCK_MODE_OPTIONS.reduce<Record<AIMode, string>>(
@@ -86,10 +86,10 @@ class MockAIApiClient implements IAIApiClient {
   async chat(request: ChatRequest): Promise<ChatResponse> {
     await this.simulateDelay();
     return {
+      id: '1',
+      content: '目前為 Mock 模式，尚未連接 AI 後端。',
       reply: '目前為 Mock 模式，尚未連接 AI 後端。',
-      mode: request.mode,
-      mode_description: MOCK_MODE_DESCRIPTIONS[request.mode] || '未知模式',
-      function_calls: null,
+      model: 'mock',
     };
   }
 
@@ -97,14 +97,17 @@ class MockAIApiClient implements IAIApiClient {
     await this.simulateDelay(50, 200);
     return {
       status: 'healthy',
+      timestamp: Date.now(),
       llm_configured: false,
-      rules_loaded: false,
     };
   }
 
   async getModes(): Promise<ModesResponse> {
     await this.simulateDelay(100, 300);
-    return { modes: MOCK_MODE_OPTIONS };
+    return { 
+      modes: MOCK_MODE_OPTIONS,
+      defaultMode: 'general',
+    };
   }
 
   async generateStructured<T = ProposalComparisonOutput>(
@@ -150,11 +153,10 @@ class MockAIApiClient implements IAIApiClient {
     };
 
     return {
-      schema: request.schema,
+      id: '1',
       data: mockData as T,
-      raw_text: JSON.stringify(mockData),
-      attempts: 1,
-      provider: 'mock',
+      raw: JSON.stringify(mockData),
+    };
     };
   }
 }
@@ -197,7 +199,7 @@ class RealAIApiClient implements IAIApiClient {
     } catch (error) {
       // Wrap all errors into AIServiceError for consistent error handling by consumers
       if (error instanceof ApiError) {
-        throw new AIServiceError(error.userMessage, error, error.type);
+        throw new AIServiceError(error.message, error, error.type);
       }
       throw new AIServiceError('AI 服務請求失敗', error);
     }

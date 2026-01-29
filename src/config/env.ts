@@ -23,3 +23,9 @@ export const getEnvConfig = (): EnvConfig => {
     isProd: import.meta.env.PROD,
   };
 };
+
+// Export individual environment variables for backward compatibility
+export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+export const API_VERSION: string = import.meta.env.VITE_API_VERSION || 'v1';
+export const USE_MOCK_API: boolean = import.meta.env.VITE_USE_MOCK !== 'false';
+export const MOCK_LATENCY_MS: number = parseInt(import.meta.env.VITE_MOCK_LATENCY_MS || '120', 10);
