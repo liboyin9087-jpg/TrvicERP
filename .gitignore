@@ -35,3 +35,7 @@ yarn-error.log*
 analysis_reports/
 .vercel
 .env*.local
+
+# QA Reports (auto-generated)
+.qa-reports/
+.validation-progress.log
