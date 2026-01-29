@@ -1,18 +1,6 @@
 import { AnimatePresence } from 'framer-motion';
 import Toast from './Toast';
-
-/**
- * @interface ToastData
- * @description 定義單個 Toast 訊息的資料結構。
- *              此介面假設 Toast 元件需要這些屬性來顯示和管理訊息。
- */
-interface ToastData {
-  id: string;
-  message: string;
-  type?: 'success' | 'error' | 'warning' | 'info'; // 例如：不同類型的 Toast
-  duration?: number; // 顯示時間，例如自動關閉的延遲
-  // 您可以根據實際的 Toast 元件需求添加更多屬性
-}
+import type { Toast as ToastType } from '@/store/useToastStore';
 
 /**
  * @interface ToastContainerConfig
@@ -23,7 +11,7 @@ interface ToastContainerConfig {
   /**
    * 欲顯示的 Toast 訊息陣列。
    */
-  toasts: ToastData[];
+  toasts: ToastType[];
   /**
    * 關閉 Toast 訊息的回調函數，當 Toast 被關閉時會被呼叫，並傳遞該 Toast 的 ID。
    */
@@ -44,7 +32,16 @@ export default function ToastContainer({ toasts, onClose }: ToastContainerConfig
     <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
-          <Toast key={toast.id} toast={toast} onClose={onClose} />
+          <Toast 
+            key={toast.id} 
+            config={{
+              id: toast.id,
+              type: toast.type as 'success' | 'error' | 'info',
+              message: toast.message,
+              duration: toast.duration,
+            }} 
+            onClose={onClose} 
+          />
         ))}
       </AnimatePresence>
     </div>

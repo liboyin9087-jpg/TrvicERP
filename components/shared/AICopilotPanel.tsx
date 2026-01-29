@@ -58,7 +58,19 @@ const useAICopilotChat = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { executeFunction, executeFunctions } = useFunctionExecutor();
+  // Note: useFunctionExecutor requires a config but may not be used in this component
+  const { executeFunction, executeFunctions } = useFunctionExecutor({
+    setCurrentView: () => {},
+    setSelectedSession: () => {},
+    validViewKeys: [],
+    getDashboardState: () => ({ widgets: [], availableWidgets: [] }),
+    setDashboardEditMode: () => {},
+    addDashboardWidget: () => {},
+    removeDashboardWidget: () => {},
+    updateDashboardWidgetConfig: () => {},
+    updateDashboardWidgetLayout: () => {},
+    updateDashboardWidgetTitle: () => {},
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

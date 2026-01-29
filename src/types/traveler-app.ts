@@ -59,6 +59,8 @@ export interface UserProfile {
   seniority?: number;
   maxSubsidy?: number;
   isEligible?: boolean;
+  department?: string;
+  employeeId?: string;
   preferences?: {
     newsletter: boolean;
     notifications: boolean;

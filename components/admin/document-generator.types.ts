@@ -38,6 +38,7 @@ export interface DocumentGenerationData {
     seatNumber: string;
     passengerId: string;
   }>;
+  meetingInfo?: any;
 }
 
 export interface DocumentGeneratorProps {
