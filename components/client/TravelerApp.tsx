@@ -303,14 +303,14 @@ function TripCard({ trip, onRegister }: TripCardProps) {
           <span
             className={cn(
               "px-2 py-1 rounded-full text-sm font-semibold",
-              trip.status === "open" && "bg-success text-white",
-              trip.status === "closing" && "bg-warning text-white",
+              trip.status === "available" && "bg-success text-white",
               trip.status === "full" && "bg-gray-500 text-white",
+              trip.status === "cancelled" && "bg-warning text-white",
             )}
           >
-            {trip.status === "open" && "報名中"}
-            {trip.status === "closing" && "即將額滿"}
+            {trip.status === "available" && "報名中"}
             {trip.status === "full" && "已額滿"}
+            {trip.status === "cancelled" && "已取消"}
           </span>
         </div>
         <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -452,7 +452,7 @@ function TodoItem({ icon, title, subtitle, action, done }: TodoItemProps) {
 
 function HomeTab({ user, registrations, notifications, onNavigate }: HomeTabProps) {
   const upcomingTrip = registrations.find(
-    (r) => r.status === "approved" || r.status === "confirmed",
+    (r) => r.status === "confirmed",
   );
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 

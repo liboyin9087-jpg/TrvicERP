@@ -75,6 +75,8 @@ interface ProcessedBooking extends Booking {
  * These control its behavior and visible sections.
  */
 interface GroupRosterConfig {
+  title?: string;
+  description?: string;
   initialFilter?: 'all' | 'confirmed' | 'pending';
   showSpecialNeedsSection?: boolean;
   showRoomAssignmentPreview?: boolean;
