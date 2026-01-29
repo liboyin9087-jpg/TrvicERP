@@ -4,9 +4,6 @@
  */
 
 import type { TourSession, Booking, RoomAssignment, SeatAssignment, MeetingInfo } from '../../types';
-import { exportToCSVInternal } from './export/csvExportService';
-import { exportToExcelInternal } from './export/excelExportService';
-import { exportToPDFInternal } from './export/pdfExportService';
 
 /**
  * Common interface for export options, ensuring Kintone independence by receiving data via props.
@@ -50,12 +47,9 @@ export function exportRosterToCSV(options: ExportOptions): void {
   exportToCSVInternal(options);
 }
 
----
-
-**新增檔案: `/workspaces/TrvicERP/src/lib/export/utils.ts`**
-
 /**
  * exportService 的通用工具函式和常數
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/utils.ts
  */
 
 // ============================================
@@ -209,16 +203,10 @@ export function generateFilename(
   return `${prefix}_${groupIdentifier}_${datePart}${suffix}`;
 }
 
----
-
-**新增檔案: `/workspaces/TrvicERP/src/lib/export/csvExportService.ts`**
-
 /**
  * CSV 匯出服務
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/csvExportService.ts
  */
-
-import { ExportOptions } from '../exportService';
-import { escapeCSV, safeBrowserDownload, generateFilename } from './utils';
 
 // ============================================
 // CSV Export
@@ -270,16 +258,10 @@ export function exportToCSVInternal(options: ExportOptions): void {
   safeBrowserDownload(csvContent, filename, 'text/csv;charset=utf-8;', 'csv', true);
 }
 
----
-
-**新增檔案: `/workspaces/TrvicERP/src/lib/export/excelExportService.ts`**
-
 /**
  * Excel 匯出服務
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/excelExportService.ts
  */
-
-import { ExportOptions, DocumentType } from '../exportService';
-import { escapeXML, safeBrowserDownload, EXCEL_HEADER_BG_COLOR_HEX, generateFilename, formatDate } from './utils';
 
 // ============================================
 // Excel Export (使用原生方式，無需額外依賴)
@@ -480,35 +462,10 @@ export function exportToExcelInternal(type: DocumentType, options: ExportOptions
   }
 }
 
----
-
-**新增檔案: `/workspaces/TrvicERP/src/lib/export/pdfExportService.ts`**
-
 /**
  * PDF 匯出服務 (透過瀏覽器列印功能)
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/pdfExportService.ts
  */
-
-import { ExportOptions, DocumentType } from '../exportService';
-import {
-  safeWindowOpenAndPrint,
-  PDF_COLOR_TEXT_PRIMARY_HEX,
-  PDF_COLOR_TEXT_SECONDARY_HEX,
-  PDF_COLOR_TEXT_TERTIARY_HEX,
-  PDF_COLOR_BORDER_LIGHT_HEX,
-  PDF_COLOR_BACKGROUND_LIGHT_HEX,
-  PDF_COLOR_BACKGROUND_BLUE_LIGHT_HEX,
-  PDF_COLOR_BLUE_PRIMARY_HEX,
-  PDF_COLOR_BACKGROUND_GREEN_LIGHT_HEX,
-  PDF_COLOR_GREEN_PRIMARY_HEX,
-  PDF_COLOR_GRAY_DARK_HEX,
-  PDF_COLOR_GRAY_MEDIUM_HEX,
-  PDF_SPACING_BASE_PX,
-  PDF_SPACING_LG_PX,
-  PDF_SPACING_XL_PX,
-  PDF_SPACING_XXL_PX,
-  generateFilename,
-  formatDate,
-} from './utils';
 
 // ============================================
 // PDF Export (使用瀏覽器列印功能)

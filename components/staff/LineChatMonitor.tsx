@@ -179,8 +179,8 @@ export default function LineChatMonitor({ config }: LineChatMonitorProps) {
                       </div>
                       <p className="text-sm text-gray-500 truncate mt-1">{thread.lastMessage}</p>
                     </div>
+                    {/* [designer] 使用硬編碼顏色 bg-brand-500 -> bg-primary-500 */}
                     {thread.unreadCount > 0 && (
-                      {/* [designer] 使用硬編碼顏色 bg-brand-500 -> bg-primary-500 */}
                       <span className="w-5 h-5 bg-primary-500 text-white text-sm rounded-full flex items-center justify-center">
                         {thread.unreadCount}
                       </span>

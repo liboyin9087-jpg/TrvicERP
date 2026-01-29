@@ -103,14 +103,16 @@ export default function CostingDashboard({
             value={formatAmountToMillion(totalCost)}
             valueColor="text-gray-900"
           />
+          {/* 修正為 Tailwind 標準顏色 */}
           <MetricCard
-            icon={<TrendingUp className="w-5 h-5 text-primary-600" />} {/* 修正為 Tailwind 標準顏色 */}
+            icon={<TrendingUp className="w-5 h-5 text-primary-600" />}
             label="預估營收"
             value={formatAmountToMillion(estimatedRevenue)}
             valueColor="text-primary-600"
           />
+          {/* 修正為 Tailwind 標準顏色 */}
           <MetricCard
-            icon={<BarChart3 className="w-5 h-5 text-primary-600" />} {/* 修正為 Tailwind 標準顏色 */}
+            icon={<BarChart3 className="w-5 h-5 text-primary-600" />}
             label="毛利率"
             value={`${grossMarginPercent.toFixed(1)}%`}
             valueColor="text-primary-600"
