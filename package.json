@@ -6,8 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:check": "tsc --noEmit",
     "preview": "vite preview",
-    "check:env": "node scripts/check-env.mjs"
+    "check:env": "node scripts/check-env.mjs",
+    "lint": "eslint src/ components/ --max-warnings=9999",
+    "lint:fix": "eslint src/ components/ --fix --max-warnings=9999",
+    "qa": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh",
+    "qa:fix": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh 15 --auto-fix --report",
+    "qa:report": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh 1 --report",
+    "qa:goose": "bash .github/workflows/trvicerp-goose-config/scripts/qa-autofix-loop.sh",
+    "qa:strict": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh 15 --auto-fix --strict --report",
+    "setup:ollama": "bash .github/workflows/trvicerp-goose-config/scripts/setup-ollama.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
@@ -29,6 +38,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^25.0.10",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -36,6 +46,9 @@
     "autoprefixer": "^10.4.16",
     "eslint": "^9.39.2",
     "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^17.2.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.2.0",
