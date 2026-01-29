@@ -1,6 +1,6 @@
 import React from 'react';
 import { BarChart3, DollarSign, Star, Users } from 'lucide-react';
-import type { Widget } from '@/core/types/dashboard';
+import type { GenericWidget } from '@/core/types/dashboard';
 // Removed direct dependency on global KPI_DATA as per [architect] 1
 import { formatCurrency, formatDecimal, formatNumber } from '@/lib/formatters';
 
@@ -32,7 +32,7 @@ interface KpiCardWidgetProps {
   /**
    * Widget 的通用配置，包含 KpiCardWidgetConfig。
    */
-  widget: Widget<KpiCardWidgetConfig>;
+  widget: GenericWidget<KpiCardWidgetConfig>;
   /**
    * 該 KPI Widget 要顯示的具體數據。
    * 這使得元件可以獨立運作，不依賴全域數據。

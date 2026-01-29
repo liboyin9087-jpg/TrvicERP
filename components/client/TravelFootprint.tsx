@@ -1,5 +1,4 @@
 import React from 'react';
-import Image from 'next/image'; // For optimized images
 import { MapPin, Camera, Calendar, Heart } from 'lucide-react';
 
 /**
@@ -94,13 +93,11 @@ export default function TravelFootprint({ footprints, stats, widgetTitle, widget
                 className="bg-white rounded-lg overflow-hidden border border-gray-100 group transition-all duration-200 hover:shadow-lg"
               >
                 <div className="relative aspect-square">
-                  {/* Optimized Image Component (Next.js Image) */}
-                  <Image
+                  {/* Image */}
+                  <img
                     src={footprint.image}
                     alt={footprint.location}
-                    fill // Fills the parent element
-                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw" // Responsive image sizes for better performance
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   {/* Gradient Overlay for text readability */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

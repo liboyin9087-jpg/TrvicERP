@@ -452,3 +452,31 @@ export const globalResetApp = () => {
 // The "Kintone independence" and "Config Props" rules apply to how components
 // consume these stores or receive data, not directly to this store definition file.
 // UI/design rules (Tailwind tokens, Card structure) are also not applicable here.
+
+// ============================================
+// Unified useAppStore for backward compatibility
+// This combines all stores into a single hook for components
+// that expect the old unified store interface.
+// ============================================
+
+export const useAppStore = (selector?: (state: any) => any) => {
+  const authState = useAuthStore();
+  const uiState = useUIStore();
+  const itineraryState = useItineraryStore();
+  const bookingsState = useBookingsStore();
+  const sessionsState = useSessionsStore();
+
+  const combinedState = {
+    ...authState,
+    ...uiState,
+    ...itineraryState,
+    ...bookingsState,
+    ...sessionsState,
+  };
+
+  if (selector) {
+    return selector(combinedState);
+  }
+
+  return combinedState;
+};

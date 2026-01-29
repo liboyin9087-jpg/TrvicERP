@@ -48,9 +48,10 @@ export interface LoginPageConfig {
   features?: { icon: React.ReactNode; text: string; }[];
 }
 
-// Props for the LoginPage component. It now takes a config object.
+// Props for the LoginPage component. It now takes a config object OR a simpler onLogin callback.
 export interface LoginPageProps {
-  config: LoginPageConfig;
+  config?: LoginPageConfig;
+  onLogin?: (role: AppUserRole, userId?: string, userName?: string) => void;
 }
 
 // --- UTILITY HOOKS & FUNCTIONS (for single responsibility principle) ---
@@ -192,7 +193,15 @@ const toastVariants: Variants = {
 };
 
 // Main Component
-export default function LoginPage({ config }: LoginPageProps) {
+export default function LoginPage({ config, onLogin }: LoginPageProps) {
+  // If onLogin is provided directly, create a minimal config
+  const effectiveConfig = config || {
+    authService: {
+      login: async () => ({ success: false, error: 'Auth service not configured' })
+    },
+    onLoginSuccess: onLogin || (() => {}),
+  };
+  
   // Destructure config with defaults for optional properties
   const {
     authService,
@@ -209,7 +218,7 @@ export default function LoginPage({ config }: LoginPageProps) {
       { icon: <Globe className="w-5 h-5" />, text: '全球旅遊資源整合' },
       { icon: <Sparkles className="w-5 h-5" />, text: 'AI 智能輔助決策' },
     ]
-  } = config;
+  } = effectiveConfig;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -267,7 +276,9 @@ export default function LoginPage({ config }: LoginPageProps) {
         }, 500);
       } else {
         // Handle explicit error messages from the service
-        showNotification(result.error || '登入失敗，請檢查您的帳號密碼', 'error');
+        // TypeScript discriminated union: if not success, result has error property
+        const errorMessage = result.success ? '登入失敗，請檢查您的帳號密碼' : result.error;
+        showNotification(errorMessage, 'error');
       }
     } catch (error) {
       // Catch unexpected errors (e.g., network issues before service response, or unhandled exceptions in authService)

@@ -110,3 +110,21 @@ const EnvConfigWidget: React.FC<EnvConfigWidgetConfig> = (props) => {
 };
 
 export default EnvConfigWidget;
+
+export const warnIfEnvMisconfigured = (config: EnvConfigWidgetConfig): boolean => {
+  const { isProd, useMock, ...envUrlProps } = config;
+
+  if (!isProd || useMock) {
+    return false;
+  }
+
+  for (const { key } of REQUIRED_URLS) {
+    const value = (envUrlProps as Record<string, string | undefined>)[key];
+    if (!value) {
+      console.warn(`Environment variable ${key} is missing`);
+      return true;
+    }
+  }
+
+  return false;
+};

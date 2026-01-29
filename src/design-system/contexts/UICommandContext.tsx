@@ -1,3 +1,12 @@
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { uiCommandRegistry } from '../kintone/ui-commands';
+import type { UICommandRegistry, CommandResult } from '../kintone/ui-commands';
+
+// Export types for external use
+export type UICommandParams = Record<string, unknown>;
+export type UICommandResult = CommandResult<unknown, Error>;
+
 interface UICommandContextConfig<C = any, M = any> extends React.PropsWithChildren {
   /**
    * Optional callback for centralized error handling.

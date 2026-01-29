@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Widget } from '@/core/types/dashboard'; // 假設此路徑定義了基礎的 Widget 類型
+import type { GenericWidget } from '@/core/types/dashboard'; // 假設此路徑定義了基礎的 Widget 類型
 import { formatDecimal } from '@/lib/formatters';
 
 // [architect] Widget 介面明確定義 Pie Chart 專用 Config 類型
@@ -72,7 +72,7 @@ function buildConicGradient(data: PieChartDataItem[]): string {
  * PieChartWidget 元件，用於以餅圖格式顯示資料。
  * 遵循 Dashtail UI 指南和架構最佳實踐。
  */
-export default function PieChartWidget({ widget }: { widget: Widget<PieChartWidgetConfig> }) {
+export default function PieChartWidget({ widget }: { widget: GenericWidget<PieChartWidgetConfig> }) {
   // [architect] 元件直接依賴全域靜態資料 (PIE_CHART_DATA) -> 改為透過 Props 傳入
   // 資料現在直接來自 widget 的配置。
   const chartData: PieChartDataItem[] = widget.config?.data || [];

@@ -267,6 +267,18 @@ export type WidgetConfig =
   | CustomerRankingWidgetConfig;
 
 /**
+ * Generic Widget type for components that need flexible config types.
+ * Use this when building reusable widget components that accept any config.
+ */
+export interface GenericWidget<TConfig = WidgetConfig> {
+  id: string;
+  type: string;
+  title: string;
+  config: TConfig;
+  layout: WidgetLayout;
+}
+
+/**
  * Represents a single widget instance with its specific type, configuration, and layout.
  * This is a discriminated union, ensuring that the `config` property's type
  * is strictly coupled with the `type` property.
@@ -292,6 +304,8 @@ export type Widget =
 export interface WidgetLibraryItem {
   /** The type of widget this library item represents. */
   type: WidgetType;
+  /** Legacy name property for backward compatibility. */
+  name?: string;
   /** A user-friendly title for the widget. */
   title: string;
   /** A brief description of what the widget does. */

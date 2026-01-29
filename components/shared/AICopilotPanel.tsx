@@ -46,7 +46,7 @@ const useAICopilotChat = ({
       id: 'welcome',
       role: 'assistant',
       content: '你好！我是 TrvicERP AI 助手 ✨\n\n我可以幫你：\n• 規劃行程與景點安排\n• 撰寫行銷文案\n• 計算成本與報價\n• 查詢旅遊法規\n\n請問有什麼需要幫忙的嗎？',
-      timestamp: new Date(),
+      timestamp: Date.now(),
     },
   ],
   defaultMode = 'general',
@@ -58,7 +58,22 @@ const useAICopilotChat = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { executeFunction, executeFunctions } = useFunctionExecutor();
+  
+  // Note: useFunctionExecutor is called but may not be actively used in this component.
+  // The stub config is provided to satisfy the hook's type requirements.
+  // TODO: Either integrate proper function execution or remove this hook if not needed.
+  const { executeFunction, executeFunctions } = useFunctionExecutor({
+    setCurrentView: () => {},
+    setSelectedSession: () => {},
+    validViewKeys: [],
+    getDashboardState: () => ({ widgets: [], availableWidgets: [] }),
+    setDashboardEditMode: () => {},
+    addDashboardWidget: () => {},
+    removeDashboardWidget: () => {},
+    updateDashboardWidgetConfig: () => {},
+    updateDashboardWidgetLayout: () => {},
+    updateDashboardWidgetTitle: () => {},
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,7 +86,7 @@ const useAICopilotChat = ({
       id: Date.now().toString(),
       role: 'user',
       content: messageContent.trim(),
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -99,7 +114,7 @@ const useAICopilotChat = ({
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.reply,
-        timestamp: new Date(),
+        timestamp: Date.now(),
         functionCalls: response.function_calls || undefined,
         ragSources: response.rag_sources || undefined,
         pendingActions: response.pending_actions || undefined,
@@ -112,7 +127,7 @@ const useAICopilotChat = ({
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: `抱歉，發生了錯誤：${error instanceof Error ? error.message : '未知錯誤'}\n\n請稍後再試。`,
-        timestamp: new Date(),
+        timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -128,7 +143,7 @@ const useAICopilotChat = ({
       content: result.success
         ? `✅ 已執行：${result.message}`
         : `❌ 執行失敗：${result.message}`,
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, feedbackMessage]);
   }, [executeFunction]);
@@ -148,7 +163,7 @@ const useAICopilotChat = ({
       content: result.success
         ? `✅ 已確認執行：${result.message}`
         : `❌ 執行失敗：${result.message}`,
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, feedbackMessage]);
   }, [executeFunction]);
@@ -159,7 +174,7 @@ const useAICopilotChat = ({
         id: 'welcome',
         role: 'assistant',
         content: '對話已清除。有什麼需要幫忙的嗎？',
-        timestamp: new Date(),
+        timestamp: Date.now(),
       },
     ]);
   }, []);
@@ -364,7 +379,7 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             </button>
             <span className="text-xs text-white/30"> {/* Changed to xs for better hierarchy */}
-              {message.timestamp.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+              {new Date(message.timestamp).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         )}
@@ -380,11 +395,11 @@ function MessageBubble({ message, onExecuteFunction, onApprovePending }: Message
 interface AICopilotPanelProps {
   isOpen: boolean;
   onToggle: () => void;
-  userRole: string | null; // Config prop from parent
-  userId: string | null;   // Config prop from parent
+  userRole?: string | null; // Config prop from parent
+  userId?: string | null;   // Config prop from parent
 }
 
-export default function AICopilotPanel({ isOpen, onToggle, userRole, userId }: AICopilotPanelProps) {
+export default function AICopilotPanel({ isOpen, onToggle, userRole = null, userId = null }: AICopilotPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const {

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Widget } from '@/core/types/dashboard';
+import type { GenericWidget } from '@/core/types/dashboard';
 import { formatCurrency, formatNumber } from '@/lib/formatters';
 import StatusBadge from '../ui/StatusBadge';
 
@@ -47,7 +47,7 @@ function DataTableHeader({ columns }: DataTableHeaderProps) {
 }
 
 interface DataTableWidgetProps {
-  widget: Widget<DataTableWidgetConfig>;
+  widget: GenericWidget<DataTableWidgetConfig>;
 }
 
 export default function DataTableWidget({ widget }: DataTableWidgetProps) {
@@ -55,7 +55,10 @@ export default function DataTableWidget({ widget }: DataTableWidgetProps) {
   const limit = config.tableRowLimit || 5;
   const rows = config.data ? config.data.slice(0, limit) : [];
 
-  const tableColumns = [
+  const tableColumns: {
+    label: string;
+    align?: 'left' | 'right' | 'center';
+  }[] = [
     { label: 'Company', align: 'left' },
     { label: 'Trip', align: 'left' },
     { label: 'Date', align: 'left' },

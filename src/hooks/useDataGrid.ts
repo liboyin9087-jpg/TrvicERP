@@ -459,3 +459,9 @@ export function useDataGrid<T>(options: UseDataGridOptions<T> = {}) {
     setPagination,
   };
 }
+/**
+ * useAudit Hook - For audit log queries
+ */
+export const useAudit = () => {
+  return useDataGrid();
+};

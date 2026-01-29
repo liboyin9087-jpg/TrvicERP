@@ -10,6 +10,7 @@ import { cn } from './src/lib/utils';
 
 // Zustand Store
 import { useAppStore, type ViewKey, type UserRole } from './src/store/useAppStore';
+import { useToastStore } from './src/store/useToastStore';
 
 // Auth (保持靜態引入，因為這是進入點)
 import LoginPage from './components/auth/LoginPage';
@@ -541,6 +542,8 @@ function AppContent() {
 // Protected Layout
 function ProtectedLayout() {
   const [isAICopilotOpen, setIsAICopilotOpen] = React.useState(false);
+  const userRole = useAppStore((state) => state.userRole);
+  const userId = useAppStore((state) => state.userId);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -552,6 +555,8 @@ function ProtectedLayout() {
         <AICopilotPanel
           isOpen={isAICopilotOpen}
           onToggle={() => setIsAICopilotOpen(!isAICopilotOpen)}
+          userRole={userRole}
+          userId={userId}
         />
       </Suspense>
     </div>
@@ -571,6 +576,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   const login = useAppStore((state) => state.login);
+  const toasts = useToastStore((state) => state.toasts);
+  const removeToast = useToastStore((state) => state.removeToast);
 
   const handleLogin = (role: 'staff' | 'welfare' | 'traveler', userId?: string, userName?: string) => {
     login(role, userId, userName);
@@ -579,7 +586,7 @@ function App() {
   return (
     <BrowserRouter>
       <ErrorBoundary>
-        <ToastContainer />
+        <ToastContainer toasts={toasts} onClose={removeToast} />
         <Routes>
           {/* Login Page */}
           <Route path="/login" element={

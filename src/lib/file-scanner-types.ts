@@ -168,3 +168,44 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
 
 // All functions containing business logic have been removed from this file.
 // They should be placed in a separate utility or service file (e.g., `file-scanner-utils.ts`).
+
+/**
+ * Utility function to format file size
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
+/**
+ * Get file category from file extension
+ */
+export function getFileCategory(extension: string): FileCategory {
+  const ext = extension.toLowerCase();
+
+  for (const [, config] of Object.entries(FILE_TYPE_CONFIG)) {
+    if ((config.extensions as string[]).includes(ext)) {
+      return config.category;
+    }
+  }
+
+  return 'other';
+}
+
+/**
+ * Get supported file extensions
+ */
+export function getSupportedExtensions(): string[] {
+  const extensions = new Set<string>();
+
+  for (const config of Object.values(FILE_TYPE_CONFIG)) {
+    (config.extensions as string[]).forEach(ext => extensions.add(ext));
+  }
+
+  return Array.from(extensions);
+}

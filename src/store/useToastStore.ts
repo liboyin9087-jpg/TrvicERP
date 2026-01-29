@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { produce } from 'immer'; // Recommended for immutable updates in complex state
 
 // ============================================
 // Type Definitions
@@ -129,41 +128,47 @@ export const createToastStore = (config?: Partial<useToastStoreConfig>) => {
       }
       newToast.timeoutId = timeoutId; // Store the timeout ID for later cleanup
 
-      set(produce((state: ToastState) => {
+      set((state) => {
+        const currentToasts = [...state.toasts];
+        
         // Enforce maximum number of toasts
-        if (state.toasts.length >= finalConfig.maxToasts!) {
-          const oldestToast = state.toasts.shift(); // Remove the oldest toast
+        if (currentToasts.length >= finalConfig.maxToasts!) {
+          const oldestToast = currentToasts.shift(); // Remove the oldest toast
           if (oldestToast) {
             get()._clearToastTimeout(oldestToast.id); // Clear its associated timeout
             oldestToast.onClose?.(); // Call its onClose callback
           }
         }
-        state.toasts.push(newToast); // Add the new toast
-      }));
+        
+        return { toasts: [...currentToasts, newToast] };
+      });
 
       return id; // Return the ID for potential manual interaction
     },
 
     removeToast: (id) => {
-      set(produce((state: ToastState) => {
+      set((state) => {
         const index = state.toasts.findIndex((t) => t.id === id);
         if (index !== -1) {
           const removedToast = state.toasts[index];
           get()._clearToastTimeout(removedToast.id); // Clear the timeout to prevent memory leaks
-          state.toasts.splice(index, 1); // Remove toast from the array
           removedToast.onClose?.(); // Call the toast's onClose callback
+          
+          return {
+            toasts: state.toasts.filter((t) => t.id !== id)
+          };
         }
-      }));
+        return state;
+      });
     },
 
     clearAllToasts: () => {
-      set(produce((state: ToastState) => {
-        state.toasts.forEach((toast) => {
-          get()._clearToastTimeout(toast.id); // Clear all active timeouts
-          toast.onClose?.(); // Call onClose for all cleared toasts
-        });
-        state.toasts = []; // Clear all toasts from the state
-      }));
+      const currentToasts = get().toasts;
+      currentToasts.forEach((toast) => {
+        get()._clearToastTimeout(toast.id); // Clear all active timeouts
+        toast.onClose?.(); // Call onClose for all cleared toasts
+      });
+      set({ toasts: [] });
     },
 
     _clearToastTimeout: (id) => {

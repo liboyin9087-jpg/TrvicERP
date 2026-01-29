@@ -63,6 +63,49 @@ export type Permission =
  * 若需修改角色與權限對應，請至該檔案進行調整。
  */
 
+export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  admin: [
+    'order:create', 'order:read', 'order:update', 'order:delete', 'order:cancel', 'order:refund',
+    'quotation:create', 'quotation:read', 'quotation:update', 'quotation:delete', 'quotation:convert',
+    'itinerary:create', 'itinerary:read', 'itinerary:update', 'itinerary:delete',
+    'customer:create', 'customer:read', 'customer:update', 'customer:delete',
+    'financial:view', 'financial:export', 'financial:approve',
+    'admin:manage', 'admin:settings', 'admin:users',
+  ],
+  manager: [
+    'order:read', 'order:update', 'order:cancel',
+    'quotation:create', 'quotation:read', 'quotation:update', 'quotation:convert',
+    'itinerary:read', 'itinerary:update',
+    'customer:read', 'customer:update',
+    'financial:view', 'financial:export', 'financial:approve',
+    'admin:manage',
+  ],
+  sales: [
+    'order:create', 'order:read', 'order:update',
+    'quotation:create', 'quotation:read', 'quotation:update', 'quotation:convert',
+    'customer:create', 'customer:read', 'customer:update',
+    'financial:view',
+  ],
+  operator: [
+    'order:read', 'order:update',
+    'itinerary:create', 'itinerary:read', 'itinerary:update',
+    'customer:read',
+  ],
+  finance: [
+    'order:read', 'order:refund',
+    'quotation:read',
+    'financial:view', 'financial:export', 'financial:approve',
+  ],
+  welfare: [
+    'order:read',
+    'customer:read',
+  ],
+  traveler: [
+    'order:read',
+    'customer:read',
+  ],
+};
+
 /**
  * 使用者狀態
  */

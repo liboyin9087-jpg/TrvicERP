@@ -109,3 +109,11 @@ export default function Loading({
     </div>
   );
 }
+
+/**
+ * ButtonLoading - A specialized loading component for use within buttons
+ * This is a pre-configured version of Loading with variant='button'
+ */
+export const ButtonLoading = (props: Omit<LoadingProps, 'variant'>) => (
+  <Loading variant="button" {...props} />
+);

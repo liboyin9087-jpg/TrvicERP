@@ -299,3 +299,91 @@ export const DEFAULT_LAYOUTS: Record<DashboardRole, FixedWidget[]> = {
     },
   ],
 };
+
+/**
+ * @description Widget library containing all available widget types
+ */
+import type { WidgetLibraryItem } from '../core/types/dashboard';
+
+export const DEFAULT_WIDGET_LIBRARY: WidgetLibraryItem[] = [
+  {
+    type: 'kpi-card',
+    name: 'KPI Card',
+    description: 'Display key performance indicators',
+    category: 'metrics',
+    defaultLayout: { x: 0, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+    defaultConfig: {},
+  },
+  {
+    type: 'chart-line',
+    name: 'Line Chart',
+    description: 'Display data trends over time',
+    category: 'charts',
+    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
+    defaultConfig: {},
+  },
+  {
+    type: 'chart-bar',
+    name: 'Bar Chart',
+    description: 'Display comparative data',
+    category: 'charts',
+    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
+    defaultConfig: {},
+  },
+  {
+    type: 'chart-pie',
+    name: 'Pie Chart',
+    description: 'Display proportional data',
+    category: 'charts',
+    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
+    defaultConfig: {},
+  },
+  {
+    type: 'recent-orders',
+    name: 'Recent Orders',
+    description: 'Display recent order list',
+    category: 'data',
+    defaultLayout: { x: 0, y: 0, w: 8, h: 4, minW: 6, minH: 3 },
+    defaultConfig: {},
+  },
+  {
+    type: 'quick-actions',
+    name: 'Quick Actions',
+    description: 'Quick access buttons',
+    category: 'actions',
+    defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
+    defaultConfig: {},
+  },
+  {
+    type: 'calendar',
+    name: 'Calendar',
+    description: 'Display calendar events',
+    category: 'planning',
+    defaultLayout: { x: 0, y: 0, w: 8, h: 5, minW: 6, minH: 4 },
+    defaultConfig: {},
+  },
+  {
+    type: 'pending-tasks',
+    name: 'Pending Tasks',
+    description: 'Display pending tasks list',
+    category: 'tasks',
+    defaultLayout: { x: 0, y: 0, w: 4, h: 5, minW: 3, minH: 3 },
+    defaultConfig: {},
+  },
+  {
+    type: 'notifications',
+    name: 'Notifications',
+    description: 'Display system notifications',
+    category: 'notifications',
+    defaultLayout: { x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
+    defaultConfig: {},
+  },
+  {
+    type: 'weather',
+    name: 'Weather',
+    description: 'Display weather information',
+    category: 'info',
+    defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
+    defaultConfig: {},
+  },
+];
