@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Widget as CoreWidget } from '@/core/types/dashboard';
+import type { GenericWidget } from '@/core/types/dashboard';
 
 // Define the structure for an individual bar item
 interface BarDataItem {
@@ -10,16 +10,15 @@ interface BarDataItem {
 // Define the specific configuration for BarChartWidget
 interface BarChartWidgetConfig {
   chartDataSource?: string;
-  chartData: BarDataItem[];
+  chartData?: BarDataItem[];
 }
 
-// Extend the core Widget type with the specific config for this widget
-interface Widget extends CoreWidget {
-  config: BarChartWidgetConfig & CoreWidget['config'];
+interface BarChartWidgetProps {
+  widget: GenericWidget<BarChartWidgetConfig>;
 }
 
-export default function BarChartWidget({ widget }: { widget: Widget }) {
-  const { chartData, chartDataSource } = widget.config;
+export default function BarChartWidget({ widget }: BarChartWidgetProps) {
+  const { chartData = [], chartDataSource } = widget.config || {};
 
   // Ensure max is at least 1 to prevent division by zero if all values are 0
   const max = Math.max(...chartData.map((item) => item.value), 1);

@@ -9,16 +9,7 @@ import { WIDGET_COMPONENTS, WIDGET_TYPES, GenericWidgetComponentProps } from './
 // This schema validates the 'type' property of the incoming widget object
 // against the list of known widget types from the registry.
 const widgetTypeSchema = z.object({
-  type: z.enum(WIDGET_TYPES as [string, ...string[]], {
-    errorMap: (issue, ctx) => {
-      if (issue.code === z.ZodIssueCode.invalid_value) {
-        return {
-          message: `Unsupported widget type: '${ctx.data}'. Expected one of: ${WIDGET_TYPES.join(', ')}.`,
-        };
-      }
-      return { message: ctx.defaultError };
-    },
-  }),
+  type: z.enum(WIDGET_TYPES as [string, ...string[]]),
 });
 
 // --- Component Props Definition ---

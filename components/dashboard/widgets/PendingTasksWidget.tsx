@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Widget } from '@/core/types/dashboard';
+import type { GenericWidget } from '@/core/types/dashboard';
 
 interface Task {
   id: string;
@@ -9,13 +9,16 @@ interface Task {
 }
 
 interface PendingTasksWidgetConfig {
-  initialTasks: Task[];
+  initialTasks?: Task[];
 }
 
-interface PendingTasksWidgetProps extends Widget, PendingTasksWidgetConfig {}
+interface PendingTasksWidgetProps {
+  widget: GenericWidget<PendingTasksWidgetConfig>;
+}
 
-export default function PendingTasksWidget({ title, initialTasks }: PendingTasksWidgetProps) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+export default function PendingTasksWidget({ widget }: PendingTasksWidgetProps) {
+  const { title, config } = widget;
+  const [tasks, setTasks] = useState<Task[]>(config?.initialTasks || []);
 
   const toggleTask = (id: string) => {
     setTasks((prev) =>

@@ -8,7 +8,7 @@ export type SeasonType = 'all' | 'spring' | 'summer' | 'autumn' | 'winter';
 // Define the structure for each season option's configuration
 export interface SeasonOption {
   label: string;
-  icon: React.ElementType<{ size: number; className?: string }>;
+  icon: React.ComponentType<any>;
 }
 
 // Define the configuration props for the SeasonFilter component

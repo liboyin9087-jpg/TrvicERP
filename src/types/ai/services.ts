@@ -4,10 +4,15 @@
  */
 
 export interface ChatRequest {
-  messages: Array<{
+  message?: string;
+  messages?: Array<{
     role: 'user' | 'assistant' | 'system';
     content: string;
   }>;
+  mode?: string;
+  context?: string;
+  user_role?: string;
+  user_id?: string;
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -19,8 +24,10 @@ export interface ChatResponse {
   reply?: string;
   model: string;
   function_calls?: Array<{
+    id?: string;
     name: string;
     arguments: Record<string, unknown>;
+    status?: string;
   }>;
   rag_sources?: Array<{
     title: string;
@@ -31,10 +38,12 @@ export interface ChatResponse {
     id: string;
     action: string;
     status: string;
+    reason?: string;
   }>;
   blocked_actions?: Array<{
     id: string;
     reason: string;
+    call?: any;
   }>;
   image_url?: string;
   image_prompt?: string;
@@ -49,6 +58,7 @@ export interface HealthResponse {
   status: 'healthy' | 'degraded' | 'unhealthy';
   message?: string;
   timestamp: number;
+  llm_configured?: boolean;
 }
 
 export interface ModesResponse {
@@ -65,8 +75,14 @@ export interface AIModeOption {
 }
 
 export interface StructuredOutputRequest {
-  prompt: string;
-  schema: Record<string, unknown>;
+  message?: string;
+  prompt?: string;
+  schema?: Record<string, unknown>;
+  mode?: string;
+  context?: string;
+  user_role?: string;
+  user_id?: string;
+  max_attempts?: number;
   model?: string;
 }
 
@@ -74,6 +90,7 @@ export interface StructuredOutputResponse<T = Record<string, unknown>> {
   id: string;
   data: T;
   raw: string;
+  schema?: Record<string, unknown>;
 }
 
 // Function argument types for AI functions

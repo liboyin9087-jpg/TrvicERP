@@ -49,7 +49,7 @@ export interface DocumentGeneratorProps {
   seatAssignments?: any[];
   meetingInfo?: any;
   config?: any;
-  generateDocumentContent?: (docType: DocumentType, data: any) => string;
+  generateDocumentContent?: (docType: DocumentType, data: DocumentGenerationData) => string;
   onSendLine?: (docType: DocumentType, content: string) => Promise<void>;
   onExportPDF?: (docType: DocumentType, data: DocumentGenerationData) => Promise<void>;
   onExportExcel?: (docType: DocumentType, data: DocumentGenerationData) => Promise<void>;

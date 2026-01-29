@@ -167,9 +167,8 @@ export default function PDFPreviewModal<T extends {} = any>({ // Default T to an
                     minHeight: '80vh',
                   }}
                   showToolbar={false}
-                >
-                  {pdfDocument} {/* Use memoized document */}
-                </PDFViewer>
+                  children={pdfDocument}
+                />
               </div>
             </div>
           </motion.div>

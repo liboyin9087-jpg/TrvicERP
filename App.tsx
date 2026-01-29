@@ -17,6 +17,7 @@ import LoginPage from './components/auth/LoginPage';
 
 // Admin Components - 預設首頁保持靜態引入，提升 LCP 速度
 import DraggableDashboard from './components/dashboard/DraggableDashboard';
+import { useDashboardStore } from './src/store/useDashboardStore';
 
 // 🔄 [優化重點] 其他所有組件改為懶加載 (Lazy Load)
 // 這樣打包時，這些檔案會被切分成獨立的 chunk，不會全部塞進 index.js
@@ -142,11 +143,88 @@ function getNavGroups(role: UserRole): NavGroup[] {
 }
 
 // ============================================
+// Wrapper Components for components requiring props
+// ============================================
+function DraggableDashboardWrapper() {
+  const userRole = useAppStore((state) => state.userRole);
+  const userName = useAppStore((state) => state.userName);
+  const {
+    widgets,
+    isEditMode,
+    selectedWidgetId,
+    lastSavedAt,
+    availableWidgets,
+    setEditMode,
+    setSelectedWidgetId,
+    applyLayout,
+    removeWidget,
+    addWidgetByType,
+    saveLayout,
+    discardChanges,
+    resetToDefault,
+  } = useDashboardStore();
+
+  const canEdit = userRole === 'admin' || userRole === 'staff';
+
+  return (
+    <DraggableDashboard
+      userRole={userRole}
+      userName={userName}
+      widgets={widgets}
+      isEditMode={isEditMode}
+      selectedWidgetId={selectedWidgetId}
+      lastSavedAt={lastSavedAt ? new Date(lastSavedAt) : null}
+      canEdit={canEdit}
+      availableWidgets={availableWidgets}
+      onSetEditMode={setEditMode}
+      onSetSelectedWidgetId={setSelectedWidgetId}
+      onApplyLayout={applyLayout}
+      onRemoveWidget={removeWidget}
+      onAddWidgetByType={addWidgetByType}
+      onSaveLayout={saveLayout}
+      onDiscardChanges={discardChanges}
+      onResetToDefault={resetToDefault}
+    />
+  );
+}
+
+function ClientPortalWrapper() {
+  const { addToast } = useToastStore();
+  
+  const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
+    addToast({ message, type });
+  };
+  
+  return (
+    <ClientPortal
+      employees={[]}
+      documents={[]}
+      companyName="示例公司"
+      tripName="示例行程"
+      briefingDate="2025/03/10 (一)"
+      briefingTime="10:00"
+      briefingLocation="Microsoft Teams"
+      briefingNotes="連結已寄送"
+      briefingCollectionLocation="桃園機場第一航廈"
+      briefingCollectionTime="集合時間 05:30"
+      briefingCollectionNotes="請攜帶護照"
+      loginHelpText="系統會將登入連結寄送到您的信箱"
+      portalTitle="客戶入口"
+      portalSubtitle="歡迎使用"
+      onLoginSuccess={(msg) => showToast(msg, 'success')}
+      onLoginError={(msg) => showToast(msg, 'error')}
+      onInfoMessage={(msg) => showToast(msg, 'info')}
+      onLogout={() => showToast('已登出', 'info')}
+    />
+  );
+}
+
+// ============================================
 // Component Map (新增：策略模式)
 // ============================================
 // 這裡將 ViewKey 對應到組件，消除巨大的 Switch Case
 const VIEW_COMPONENTS: Record<string, React.LazyExoticComponent<any> | React.ComponentType<any>> = {
-  'dashboard': DraggableDashboard, // 靜態
+  'dashboard': DraggableDashboardWrapper, // 靜態
   'sessions': SessionManager,
   'planner': VisualPlanner,
   'builder': ItineraryBuilder,
@@ -158,7 +236,7 @@ const VIEW_COMPONENTS: Record<string, React.LazyExoticComponent<any> | React.Com
   'insurance': InsuranceExport,
   'quotation': QuotationBuilder,
   'proposal-engine': ProposalEngine,
-  'client-portal': ClientPortal,
+  'client-portal': ClientPortalWrapper,
   'operations': OperationHub,
   'expense': LeaderExpenseApp,
   'chat': LineChatMonitor,
@@ -189,7 +267,7 @@ const PageLoader = () => (
 
 function ViewRenderer({ view }: { view: ViewKey }) {
   // 從 Map 中查找組件，找不到則預設顯示 Dashboard
-  const Component = VIEW_COMPONENTS[view] || DraggableDashboard;
+  const Component = VIEW_COMPONENTS[view] || DraggableDashboardWrapper;
 
   return (
     // Suspense 是 React 懶加載必備的，當組件還在下載時顯示 fallback
@@ -605,7 +683,7 @@ function App() {
           {/* Client Portal - Public */}
           <Route path="/portal" element={
             <Suspense fallback={<PageLoader />}>
-              <ClientPortal />
+              <ClientPortalWrapper />
             </Suspense>
           } />
 

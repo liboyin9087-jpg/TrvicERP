@@ -274,7 +274,7 @@ export default function LoginPage({ config, onLogin }: LoginPageProps) {
           // 4. Service layer error boundary: Uses the injected mapBackendRoleToAppRole
           onLoginSuccess(mapBackendRoleToAppRole(result.user!.role), result.user!.id, result.user!.name);
         }, 500);
-      } else {
+      } else if (!result.success) {
         // Handle explicit error messages from the service
         // TypeScript discriminated union: if not success, result has error property
         const errorMessage = result.success === false ? result.error : '登入失敗，請檢查您的帳號密碼';

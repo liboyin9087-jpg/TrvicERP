@@ -21,9 +21,9 @@ export interface ChatMessage {
   functionCalls?: any[]; // For detailed type, define specific function call interfaces
   imageUrl?: string;
   imagePrompt?: string;
-  ragSources?: string[];
-  pendingActions?: Array<{ id: string; call: any; reason: string }>;
-  blockedActions?: Array<{ id: string; call: any; reason: string }>;
+  ragSources?: Array<{ title: string; url: string; snippet: string }> | string[];
+  pendingActions?: Array<{ id: string; action: string; status: string; reason?: string }>;
+  blockedActions?: Array<{ id: string; reason: string; call?: any }>;
   pendingResolved?: boolean;
 }
 
@@ -174,7 +174,18 @@ export default function EdgeAssistant({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const modeSelectorRef = useRef<HTMLDivElement>(null);
-  const { executeFunctions } = useFunctionExecutor();
+  const { executeFunctions } = useFunctionExecutor({
+    setCurrentView: () => {},
+    setSelectedSession: () => {},
+    validViewKeys: [],
+    getDashboardState: () => ({ widgets: [], availableWidgets: [] }),
+    setDashboardEditMode: () => {},
+    addDashboardWidget: () => {},
+    removeDashboardWidget: () => {},
+    updateDashboardWidgetConfig: () => {},
+    updateDashboardWidgetLayout: () => {},
+    updateDashboardWidgetTitle: () => {},
+  });
 
   // AI Context derived from props
   const aiContext = useMemo(() => {
