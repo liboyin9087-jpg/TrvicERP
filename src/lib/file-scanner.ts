@@ -339,3 +339,6 @@ export async function quickScan(dirPath: string): Promise<ScanResult> {
   const scanner = createScanner();
   return scanner.scanDirectory(dirPath);
 }
+
+// Re-export utility functions from file-scanner-types for convenience
+export { getFileCategory, formatFileSize, countLines } from './file-scanner-types';

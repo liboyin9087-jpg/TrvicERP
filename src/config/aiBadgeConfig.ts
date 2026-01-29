@@ -65,3 +65,13 @@ export const defaultAIBadgeComponentConfig = {
     borderColor: 'border-indigo-300',
   },
 };
+
+// Alias for backward compatibility
+export const AIBadgeComponentConfig = defaultAIBadgeComponentConfig;
+
+export interface AIContext {
+  mode: AIBadgeType;
+  userId: string;
+  timestamp: number;
+  metadata?: Record<string, unknown>;
+}

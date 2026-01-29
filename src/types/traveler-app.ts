@@ -2,12 +2,12 @@
  * Traveler App Types
  */
 
-export type TabKey = 'home' | 'explore' | 'register' | 'account' | 'feedback';
+export type TabKey = 'home' | 'explore' | 'register' | 'mytrips' | 'account' | 'feedback' | 'notifications';
 
 export interface AvailableTrip {
   id: string;
   title: string;
-  name: string;
+  name?: string;
   description?: string;
   destination: string;
   startDate: string;
@@ -15,13 +15,13 @@ export interface AvailableTrip {
   duration: number;
   price: number;
   availability: number;
+  spotsLeft?: number;
+  totalSpots?: number;
   imageUrl?: string;
   image?: string;
   tags?: string[];
   status?: 'available' | 'full' | 'cancelled';
-  spotsLeft?: number;
-  totalSpots?: number;
-  subsidyType?: 'percentage' | 'fixed' | 'none';
+  subsidyType?: string;
   subsidyAmount?: number;
   maxSubsidy?: number;
   registrationDeadline?: string;
@@ -32,10 +32,22 @@ export interface MyRegistration {
   id: string;
   tripId: string;
   tripTitle: string;
+  tripName?: string;
+  image?: string;
   registrationDate: string;
+  startDate?: string;
+  endDate?: string;
   status: 'pending' | 'confirmed' | 'cancelled';
   participantCount: number;
   totalPrice: number;
+  roomType?: string;
+  companions?: Array<{
+    name: string;
+    relation?: string;
+  }>;
+  subsidyAmount?: number;
+  selfPay?: number;
+  specialNeeds?: string;
 }
 
 export interface Notification {
@@ -44,6 +56,7 @@ export interface Notification {
   title: string;
   message: string;
   timestamp: string;
+  date?: string;
   read: boolean;
 }
 
@@ -55,7 +68,7 @@ export interface UserProfile {
   dateOfBirth?: string;
   address?: string;
   profileImage?: string;
-  subsidyTier?: string;
+  subsidyTier?: 'silver' | 'gold' | 'platinum';
   seniority?: number;
   maxSubsidy?: number;
   isEligible?: boolean;
@@ -76,6 +89,12 @@ export interface RegistrationFormData {
     phone: string;
     dateOfBirth: string;
   }>;
+  roomType?: string;
+  companions?: Array<{
+    name: string;
+    relation?: string;
+  }>;
+  specialNeeds?: string;
   specialRequests?: string;
 }
 

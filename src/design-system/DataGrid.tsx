@@ -1034,3 +1034,5 @@ export default function DataGrid<T = any>({
     </div>
   );
 }
+// Export types
+export type { DataGridProps, Column, IconComponentType } from './DataGrid.types';

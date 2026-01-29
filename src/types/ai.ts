@@ -8,3 +8,4 @@ export * from './ai/functions';
 export * from './ai/outputs';
 export * from './ai/api';
 export * from './ai/chat';
+export * from './ai/services';

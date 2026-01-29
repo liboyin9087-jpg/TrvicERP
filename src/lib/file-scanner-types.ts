@@ -181,3 +181,31 @@ export function formatFileSize(bytes: number): string {
 
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 }
+
+/**
+ * Get file category from file extension
+ */
+export function getFileCategory(extension: string): FileCategory {
+  const ext = extension.toLowerCase();
+
+  for (const [, config] of Object.entries(FILE_TYPE_CONFIG)) {
+    if ((config.extensions as string[]).includes(ext)) {
+      return config.category;
+    }
+  }
+
+  return 'other';
+}
+
+/**
+ * Get supported file extensions
+ */
+export function getSupportedExtensions(): string[] {
+  const extensions = new Set<string>();
+
+  for (const config of Object.values(FILE_TYPE_CONFIG)) {
+    (config.extensions as string[]).forEach(ext => extensions.add(ext));
+  }
+
+  return Array.from(extensions);
+}
