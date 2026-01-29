@@ -15,6 +15,9 @@ import { ProposalComparisonOutput, ProposalTier } from '@/types/ai';
 const PROPOSAL_TAGS = ['奢華', '親子', '冒險', '員工旅遊', 'CSR', '美食'];
 
 const DEFAULT_PROPOSAL: ProposalComparisonOutput = {
+  proposalId: 'default',
+  score: 0,
+  comparison: {},
   title: '企業東京五日 - 三版本提案',
   summary: '依照預算與需求調整住宿與活動層級，維持安全與體驗。',
   tiers: [],
