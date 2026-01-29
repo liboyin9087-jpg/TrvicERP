@@ -2,13 +2,6 @@
  * AI function and capability definitions
  */
 
-export interface FunctionCall {
-  id: string;
-  name: string;
-  arguments: Record<string, unknown>;
-  status: string;
-}
-
 export interface AIFunction {
   id: string;
   name: string;

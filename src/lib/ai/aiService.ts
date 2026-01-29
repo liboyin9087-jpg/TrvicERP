@@ -66,16 +66,10 @@ const MOCK_MODE_OPTIONS: AIModeOption[] = [
 
 const MOCK_MODE_DESCRIPTIONS = MOCK_MODE_OPTIONS.reduce<Record<AIMode, string>>(
   (acc, mode) => {
-    acc[mode.id] = mode.label;
+    acc[mode.id as AIMode] = mode.label;
     return acc;
   },
-  {
-    general: '一般諮詢',
-    itinerary: '行程規劃',
-    marketing: '行銷文案',
-    costing: '成本估算',
-    legal: '法規諮詢',
-  }
+  {} as Record<AIMode, string>
 );
 
 class MockAIApiClient implements IAIApiClient {
@@ -156,7 +150,6 @@ class MockAIApiClient implements IAIApiClient {
       id: '1',
       data: mockData as T,
       raw: JSON.stringify(mockData),
-    };
     };
   }
 }
