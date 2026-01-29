@@ -11,7 +11,7 @@ import { WIDGET_COMPONENTS, WIDGET_TYPES, GenericWidgetComponentProps } from './
 const widgetTypeSchema = z.object({
   type: z.enum(WIDGET_TYPES as [string, ...string[]], {
     errorMap: (issue, ctx) => {
-      if (issue.code === z.ZodIssueCode.invalid_enum_value) {
+      if (issue.code === z.ZodIssueCode.invalid_value) {
         return {
           message: `Unsupported widget type: '${ctx.data}'. Expected one of: ${WIDGET_TYPES.join(', ')}.`,
         };
@@ -54,7 +54,8 @@ export default function WidgetRenderer({ widget, isDragging }: WidgetRendererPro
     }
   } else {
     // If validation fails, capture the error message
-    errorMessage = validationResult.error.errors[0]?.message || 'Invalid widget data provided.';
+    const errorIssues = validationResult.error.issues || [];
+    errorMessage = errorIssues[0]?.message || 'Invalid widget data provided.';
   }
 
   // Define the common card structure and styles using Tailwind CSS tokens

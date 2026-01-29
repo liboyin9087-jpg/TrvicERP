@@ -901,7 +901,7 @@ export default function ItineraryBuilder({
 
   // Derive categories from categoryConfig for filter buttons
   const categories: (SpotCategory | "all")[] = useMemo(() => {
-    return ["all", ...Object.keys(categoryConfig).filter(k => k !== '其他') as SpotCategory[]].sort();
+    return ["all" as const, ...Object.keys(categoryConfig).filter(k => k !== '其他') as SpotCategory[]].sort();
   }, [categoryConfig]);
 
 

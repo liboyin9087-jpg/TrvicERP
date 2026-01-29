@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import type { Widget } from '@/core/types/dashboard';
+import type { Widget, GenericWidget, WidgetConfig } from '@/core/types/dashboard';
 
 export type WidgetType =
   | 'kpi-card'
@@ -28,7 +28,7 @@ export const WIDGET_TYPES: WidgetType[] = [
 ];
 
 export interface GenericWidgetComponentProps {
-  widget: Widget;
+  widget: GenericWidget<any>;
   onUpdate?: (widget: Widget) => void;
   onRemove?: () => void;
   isEditing?: boolean;
@@ -40,13 +40,13 @@ const CustomWidgetComponent: React.ComponentType<GenericWidgetComponentProps> = 
 };
 
 export const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType<GenericWidgetComponentProps>> = {
-  'kpi-card': React.lazy(() => import('./widgets/KpiCardWidget').then(m => ({ default: m.KpiCardWidget }))),
-  'line-chart': React.lazy(() => import('./widgets/LineChartWidget').then(m => ({ default: m.LineChartWidget }))),
-  'bar-chart': React.lazy(() => import('./widgets/BarChartWidget').then(m => ({ default: m.BarChartWidget }))),
-  'pie-chart': React.lazy(() => import('./widgets/PieChartWidget').then(m => ({ default: m.PieChartWidget }))),
-  'data-table': React.lazy(() => import('./widgets/DataTableWidget').then(m => ({ default: m.DataTableWidget }))),
-  'notifications': React.lazy(() => import('./widgets/NotificationsWidget').then(m => ({ default: m.NotificationsWidget }))),
-  'pending-tasks': React.lazy(() => import('./widgets/PendingTasksWidget').then(m => ({ default: m.PendingTasksWidget }))),
+  'kpi-card': React.lazy(() => import('./widgets/KpiCardWidget')),
+  'line-chart': React.lazy(() => import('./widgets/LineChartWidget')),
+  'bar-chart': React.lazy(() => import('./widgets/BarChartWidget')),
+  'pie-chart': React.lazy(() => import('./widgets/PieChartWidget')),
+  'data-table': React.lazy(() => import('./widgets/DataTableWidget')),
+  'notifications': React.lazy(() => import('./widgets/NotificationsWidget')),
+  'pending-tasks': React.lazy(() => import('./widgets/PendingTasksWidget')),
   'custom': CustomWidgetComponent,
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Widget } from '@/core/types/dashboard'; // Assuming Widget is a generic type, e.g., Widget<TConfig>
+import type { GenericWidget } from '@/core/types/dashboard'; // Assuming Widget is a generic type, e.g., GenericWidget<TConfig>
 
 // Define the type for notification levels for better type safety
 type NotificationLevel = 'info' | 'warning' | 'success';
@@ -23,7 +23,7 @@ export interface NotificationsWidgetConfig {
 // We assume the generic `Widget` type from '@/core/types/dashboard' can be specialized
 // to include our specific configuration type.
 export interface NotificationsWidgetProps {
-  widget: Widget<NotificationsWidgetConfig>;
+  widget: GenericWidget<NotificationsWidgetConfig>;
 }
 
 // Style mapping for notification levels using Tailwind tokens.

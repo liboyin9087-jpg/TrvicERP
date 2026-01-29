@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Widget } from '@/core/types/dashboard';
+import type { GenericWidget } from '@/core/types/dashboard';
 
 export interface LineChartWidgetConfig {
   data: number[];
@@ -29,7 +29,7 @@ function buildPath(data: number[], width: number, height: number): string {
     .join(' ');
 }
 
-export default function LineChartWidget({ widget }: { widget: Widget<LineChartWidgetConfig> }) {
+export default function LineChartWidget({ widget }: { widget: GenericWidget<LineChartWidgetConfig> }) {
   const {
     data: rawData,
     labels,

@@ -33,6 +33,7 @@ export interface MyRegistration {
   tripId: string;
   tripTitle: string;
   tripName?: string;
+  destination?: string;
   image?: string;
   registrationDate: string;
   startDate?: string;
@@ -82,6 +83,8 @@ export interface UserProfile {
 
 export interface RegistrationFormData {
   tripId: string;
+  destination?: string;
+  mealPreference?: string;
   participantCount: number;
   participants: Array<{
     name: string;
@@ -106,4 +109,48 @@ export interface TravelerAppState {
   notifications: Notification[];
   isLoading: boolean;
   error?: string;
+}
+
+// Add missing properties to support full component usage
+export interface RegistrationFormData {
+  tripId: string;
+  destination?: string;
+  mealPreference?: string;
+  participantCount: number;
+  participants: Array<{
+    name: string;
+    email: string;
+    phone: string;
+    dateOfBirth: string;
+  }>;
+  roomType?: string;
+  companions?: Array<{
+    name: string;
+    relation?: string;
+  }>;
+  specialNeeds?: string;
+  specialRequests?: string;
+}
+
+export interface MyRegistration {
+  id: string;
+  tripId: string;
+  tripTitle: string;
+  tripName?: string;
+  destination?: string;
+  image?: string;
+  registrationDate: string;
+  startDate?: string;
+  endDate?: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  participantCount: number;
+  totalPrice: number;
+  roomType?: string;
+  companions?: Array<{
+    name: string;
+    relation?: string;
+  }>;
+  subsidyAmount?: number;
+  selfPay?: number;
+  specialNeeds?: string;
 }
