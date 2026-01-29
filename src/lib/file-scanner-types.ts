@@ -168,3 +168,16 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
 
 // All functions containing business logic have been removed from this file.
 // They should be placed in a separate utility or service file (e.g., `file-scanner-utils.ts`).
+
+/**
+ * Utility function to format file size
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
