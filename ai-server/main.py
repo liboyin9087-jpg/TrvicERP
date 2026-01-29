@@ -3,8 +3,9 @@
 TrvicERP AI Copilot - FastAPI 後端
 實現多智能體動態路由架構
 使用 Google Gemini (免費額度) 或 SiliconFlow + DeepSeek-V3
+優化版：Redis 快取層 + Qdrant 向量資料庫 + 非同步圖片生成
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ValidationError
 from dotenv import load_dotenv
@@ -13,10 +14,29 @@ import re
 import json
 import httpx
 import math
+import hashlib
 from uuid import uuid4
 from typing import Optional, List, Dict, Any, Tuple
 import asyncio
 import prompt_templates
+
+# Redis 快取
+try:
+    import redis.asyncio as aioredis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    print("⚠️ Redis 未安裝，快取功能停用")
+
+# Qdrant 向量資料庫
+try:
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Distance, VectorParams, PointStruct
+    from sentence_transformers import SentenceTransformer
+    QDRANT_AVAILABLE = True
+except ImportError:
+    QDRANT_AVAILABLE = False
+    print("⚠️ Qdrant 或 sentence-transformers 未安裝，向量檢索功能停用")
 
 BASE_DIR = os.path.dirname(__file__)
 load_dotenv(os.path.join(BASE_DIR, ".env"), override=False)
@@ -72,8 +92,33 @@ BFL_MODEL = os.getenv("BFL_MODEL", "flux-pro")
 BFL_API_KEY = os.getenv("BFL_API_KEY")
 BFL_API_STYLE = os.getenv("BFL_API_STYLE", "auto")
 
+# Redis 快取設定
+REDIS_ENABLED = os.getenv("REDIS_ENABLED", "true").lower() == "true" and REDIS_AVAILABLE
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD") or None
+REDIS_CACHE_TTL = int(os.getenv("REDIS_CACHE_TTL", "3600"))  # 1 小時
+
+# Qdrant 向量資料庫設定
+QDRANT_ENABLED = os.getenv("QDRANT_ENABLED", "true").lower() == "true" and QDRANT_AVAILABLE
+QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
+QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION_NAME", "trvicerp_rules")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY") or None
+
+# 圖片生成非同步設定
+IMAGE_GENERATION_ASYNC = os.getenv("IMAGE_GENERATION_ASYNC", "true").lower() == "true"
+IMAGE_GENERATION_TIMEOUT = int(os.getenv("IMAGE_GENERATION_TIMEOUT", "60"))
+
 # 使用哪個 LLM 提供者：'gemini' 或 'siliconflow'
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
+
+# 全域變數
+redis_client: Optional["aioredis.Redis"] = None
+qdrant_client: Optional["QdrantClient"] = None
+embedding_model: Optional["SentenceTransformer"] = None
+image_generation_tasks: Dict[str, Dict[str, Any]] = {}  # 儲存非同步圖片生成任務
 
 # Function calling definitions
 VIEW_KEYS = [
@@ -264,6 +309,183 @@ def load_rules() -> str:
 
 RULES = load_rules()
 
+# =============================================================================
+# Redis 快取層
+# =============================================================================
+
+async def init_redis():
+    """初始化 Redis 連線"""
+    global redis_client
+    if not REDIS_ENABLED:
+        print("ℹ️ Redis 快取已停用")
+        return
+    
+    try:
+        redis_client = await aioredis.from_url(
+            f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
+            password=REDIS_PASSWORD,
+            encoding="utf-8",
+            decode_responses=True
+        )
+        await redis_client.ping()
+        print(f"✅ Redis 連線成功: {REDIS_HOST}:{REDIS_PORT}")
+    except Exception as e:
+        print(f"⚠️ Redis 連線失敗: {e}，快取功能停用")
+        redis_client = None
+
+
+async def close_redis():
+    """關閉 Redis 連線"""
+    global redis_client
+    if redis_client:
+        await redis_client.close()
+        print("✅ Redis 連線已關閉")
+
+
+def generate_cache_key(mode: str, message: str, context: str = "") -> str:
+    """生成快取鍵"""
+    content = f"{mode}:{message}:{context}"
+    return f"trvicerp:chat:{hashlib.md5(content.encode()).hexdigest()}"
+
+
+async def get_cached_response(mode: str, message: str, context: str = "") -> Optional[Dict[str, Any]]:
+    """從快取取得回應"""
+    if not redis_client:
+        return None
+    
+    try:
+        cache_key = generate_cache_key(mode, message, context)
+        cached = await redis_client.get(cache_key)
+        if cached:
+            print(f"✅ 快取命中: {cache_key[:50]}...")
+            return json.loads(cached)
+    except Exception as e:
+        print(f"⚠️ Redis 讀取錯誤: {e}")
+    
+    return None
+
+
+async def set_cached_response(mode: str, message: str, context: str, response: Dict[str, Any]):
+    """儲存回應到快取"""
+    if not redis_client:
+        return
+    
+    try:
+        cache_key = generate_cache_key(mode, message, context)
+        await redis_client.setex(
+            cache_key,
+            REDIS_CACHE_TTL,
+            json.dumps(response, ensure_ascii=False)
+        )
+        print(f"✅ 快取已儲存: {cache_key[:50]}... (TTL: {REDIS_CACHE_TTL}s)")
+    except Exception as e:
+        print(f"⚠️ Redis 寫入錯誤: {e}")
+
+
+# =============================================================================
+# Qdrant 向量資料庫
+# =============================================================================
+
+def init_qdrant():
+    """初始化 Qdrant 向量資料庫"""
+    global qdrant_client, embedding_model
+    
+    if not QDRANT_ENABLED:
+        print("ℹ️ Qdrant 向量檢索已停用")
+        return
+    
+    try:
+        # 初始化 Qdrant 客戶端
+        if QDRANT_API_KEY:
+            qdrant_client = QdrantClient(
+                host=QDRANT_HOST,
+                port=QDRANT_PORT,
+                api_key=QDRANT_API_KEY
+            )
+        else:
+            qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+        
+        # 初始化嵌入模型
+        embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+        
+        # 檢查 collection 是否存在
+        collections = qdrant_client.get_collections().collections
+        collection_names = [c.name for c in collections]
+        
+        if QDRANT_COLLECTION not in collection_names:
+            # 建立 collection
+            qdrant_client.create_collection(
+                collection_name=QDRANT_COLLECTION,
+                vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+            )
+            print(f"✅ Qdrant collection 已建立: {QDRANT_COLLECTION}")
+            
+            # 載入法規資料
+            if RULES and len(RULES) > 50:
+                load_rules_to_qdrant()
+        else:
+            print(f"✅ Qdrant collection 已存在: {QDRANT_COLLECTION}")
+        
+        print(f"✅ Qdrant 連線成功: {QDRANT_HOST}:{QDRANT_PORT}")
+    except Exception as e:
+        print(f"⚠️ Qdrant 初始化失敗: {e}，使用傳統 RAG")
+        qdrant_client = None
+        embedding_model = None
+
+
+def load_rules_to_qdrant():
+    """將法規知識庫載入 Qdrant"""
+    if not qdrant_client or not embedding_model or not RULES:
+        return
+    
+    try:
+        chunks = chunk_text(RULES, RAG_MAX_CHARS)
+        points = []
+        
+        for idx, chunk in enumerate(chunks):
+            vector = embedding_model.encode(chunk).tolist()
+            points.append(
+                PointStruct(
+                    id=idx,
+                    vector=vector,
+                    payload={"text": chunk, "chunk_id": idx}
+                )
+            )
+        
+        qdrant_client.upsert(
+            collection_name=QDRANT_COLLECTION,
+            points=points
+        )
+        print(f"✅ {len(chunks)} 個法規片段已載入 Qdrant")
+    except Exception as e:
+        print(f"⚠️ 法規載入 Qdrant 失敗: {e}")
+
+
+def retrieve_rules_qdrant(query: str, top_k: int = RAG_TOP_K) -> List[Dict[str, Any]]:
+    """使用 Qdrant 檢索法規"""
+    if not qdrant_client or not embedding_model:
+        return []
+    
+    try:
+        query_vector = embedding_model.encode(query).tolist()
+        results = qdrant_client.search(
+            collection_name=QDRANT_COLLECTION,
+            query_vector=query_vector,
+            limit=top_k
+        )
+        
+        snippets = []
+        for result in results:
+            snippets.append({
+                "score": result.score,
+                "text": result.payload["text"]
+            })
+        
+        return snippets
+    except Exception as e:
+        print(f"⚠️ Qdrant 檢索失敗: {e}")
+        return []
+
 RAG_MAX_CHARS = int(os.getenv("RAG_MAX_CHARS", "900"))
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
 LEGAL_KEYWORDS = [
@@ -320,6 +542,12 @@ def score_chunk(chunk: str, keywords: List[str]) -> float:
 
 
 def retrieve_rules_snippets(query: str, top_k: int = RAG_TOP_K) -> List[Dict[str, Any]]:
+    """檢索法規片段（優先使用 Qdrant，否則使用傳統 RAG）"""
+    # 優先使用 Qdrant
+    if QDRANT_ENABLED and qdrant_client and embedding_model:
+        return retrieve_rules_qdrant(query, top_k)
+    
+    # 傳統 RAG 檢索
     if not RULES_CHUNKS:
         return []
     keywords = extract_keywords(query)
@@ -674,8 +902,13 @@ async def call_bfl_flux(
     steps: int = 30,
     guidance: float = 3.5,
     seed: Optional[int] = None,
-    output_format: str = "png"
+    output_format: str = "png",
+    async_mode: bool = IMAGE_GENERATION_ASYNC
 ) -> Dict[str, Any]:
+    """
+    呼叫 BFL Flux 圖片生成 API
+    支援同步與非同步模式
+    """
     api_key = BFL_API_KEY or os.getenv("SILICONFLOW_API_KEY")
     if not api_key:
         raise HTTPException(
@@ -756,8 +989,20 @@ async def call_bfl_flux(
 
         request_id = data.get("id") or data.get("request_id")
         if not request_id:
-            return {"image_url": None, "raw": data}
+            return {"image_url": None, "raw": data, "status": "failed"}
 
+        # 非同步模式：立即返回任務 ID
+        if async_mode:
+            task_id = str(uuid4())
+            image_generation_tasks[task_id] = {
+                "status": "pending",
+                "request_id": request_id,
+                "image_url": None,
+                "created_at": asyncio.get_event_loop().time()
+            }
+            return {"task_id": task_id, "status": "pending", "raw": data}
+
+        # 同步模式：輪詢結果（最多 20 秒）
         for _ in range(20):
             await asyncio.sleep(1)
             result_resp = await client.get(
@@ -770,11 +1015,53 @@ async def call_bfl_flux(
             result_data = result_resp.json()
             status = (result_data.get("status") or result_data.get("state") or "").lower()
             if status in ["ready", "succeeded", "success", "completed"]:
-                return {"image_url": extract_image_url(result_data), "raw": result_data}
+                return {"image_url": extract_image_url(result_data), "raw": result_data, "status": "completed"}
             if status in ["failed", "error"]:
                 break
 
-        return {"image_url": None, "raw": data}
+        return {"image_url": None, "raw": data, "status": "timeout"}
+
+
+async def poll_image_generation(task_id: str):
+    """背景任務：輪詢圖片生成結果"""
+    if task_id not in image_generation_tasks:
+        return
+    
+    task = image_generation_tasks[task_id]
+    request_id = task["request_id"]
+    api_key = BFL_API_KEY or os.getenv("SILICONFLOW_API_KEY")
+    
+    headers = {"x-key": api_key, "Content-Type": "application/json"}
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        for _ in range(IMAGE_GENERATION_TIMEOUT):
+            await asyncio.sleep(1)
+            
+            try:
+                result_resp = await client.get(
+                    f"{BFL_BASE_URL}/get_result",
+                    headers=headers,
+                    params={"id": request_id}
+                )
+                
+                if result_resp.status_code == 200:
+                    result_data = result_resp.json()
+                    status = (result_data.get("status") or result_data.get("state") or "").lower()
+                    
+                    if status in ["ready", "succeeded", "success", "completed"]:
+                        task["status"] = "completed"
+                        task["image_url"] = extract_image_url(result_data)
+                        print(f"✅ 圖片生成完成: {task_id}")
+                        return
+                    elif status in ["failed", "error"]:
+                        task["status"] = "failed"
+                        print(f"❌ 圖片生成失敗: {task_id}")
+                        return
+            except Exception as e:
+                print(f"⚠️ 輪詢圖片生成錯誤: {e}")
+        
+        task["status"] = "timeout"
+        print(f"⏱️ 圖片生成逾時: {task_id}")
 
 
 # Request/Response Models
@@ -799,6 +1086,7 @@ class ChatResponse(BaseModel):
     function_calls: Optional[List[FunctionCall]] = None
     image_url: Optional[str] = None
     image_prompt: Optional[str] = None
+    image_task_id: Optional[str] = None  # 非同步圖片生成任務 ID
     rag_sources: Optional[List[str]] = None
     pending_actions: Optional[List["PendingAction"]] = None
     blocked_actions: Optional[List["PendingAction"]] = None
@@ -1277,6 +1565,9 @@ class HealthResponse(BaseModel):
     llm_configured: bool
     rules_loaded: bool
     provider: str
+    redis_enabled: bool
+    qdrant_enabled: bool
+    image_async_mode: bool
 
 
 # API Endpoints
@@ -1292,7 +1583,10 @@ async def health_check():
         status="healthy",
         llm_configured=bool(gemini_key or siliconflow_key),
         rules_loaded=len(RULES) > 50,
-        provider=provider
+        provider=provider,
+        redis_enabled=REDIS_ENABLED and redis_client is not None,
+        qdrant_enabled=QDRANT_ENABLED and qdrant_client is not None,
+        image_async_mode=IMAGE_GENERATION_ASYNC
     )
 
 
@@ -1311,10 +1605,15 @@ async def get_modes():
 
 
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
     """
-    主要聊天端點 - 動態路由架構
+    主要聊天端點 - 動態路由架構（支援 Redis 快取）
     """
+    # 0. 檢查快取
+    cached = await get_cached_response(req.mode, req.message, req.context)
+    if cached:
+        return ChatResponse(**cached)
+    
     # 1. 根據模式取得溫度
     temperature = prompt_templates.get_temperature(req.mode)
 
@@ -1362,6 +1661,7 @@ async def chat(req: ChatRequest):
         # 7. 行銷模式圖片產出 (Flux Pro)
         image_url = None
         image_prompt = None
+        image_task_id = None
         image_args: Dict[str, Any] = {}
         filtered_calls: List[FunctionCall] = []
         for call in function_calls:
@@ -1384,22 +1684,41 @@ async def chat(req: ChatRequest):
                         guidance=float(image_args.get("guidance") or 3.5),
                         seed=image_args.get("seed"),
                         output_format=str(image_args.get("output_format") or "png"),
+                        async_mode=IMAGE_GENERATION_ASYNC
                     )
-                    image_url = image_result.get("image_url")
+                    
+                    if IMAGE_GENERATION_ASYNC and "task_id" in image_result:
+                        # 非同步模式：啟動背景輪詢
+                        image_task_id = image_result["task_id"]
+                        background_tasks.add_task(poll_image_generation, image_task_id)
+                        print(f"✅ 圖片生成任務已啟動: {image_task_id}")
+                    else:
+                        # 同步模式或立即完成
+                        image_url = image_result.get("image_url")
                 except HTTPException as e:
                     print(f"⚠️ 圖片生成失敗: {e.detail}")
 
-        return ChatResponse(
-            reply=clean_reply,
-            mode=req.mode,
-            mode_description=prompt_templates.get_mode_description(req.mode),
-            function_calls=filtered_calls if filtered_calls else None,
-            image_url=image_url,
-            image_prompt=image_prompt,
-            rag_sources=rag_sources if rag_sources else None,
-            pending_actions=pending_actions if pending_actions else None,
-            blocked_actions=blocked_actions if blocked_actions else None
-        )
+        response_data = {
+            "reply": clean_reply,
+            "mode": req.mode,
+            "mode_description": prompt_templates.get_mode_description(req.mode),
+            "function_calls": filtered_calls if filtered_calls else None,
+            "image_url": image_url,
+            "image_prompt": image_prompt,
+            "rag_sources": rag_sources if rag_sources else None,
+            "pending_actions": pending_actions if pending_actions else None,
+            "blocked_actions": blocked_actions if blocked_actions else None
+        }
+        
+        # 添加圖片任務 ID（若為非同步模式）
+        if image_task_id:
+            response_data["image_task_id"] = image_task_id
+        
+        # 儲存到快取（排除圖片生成任務）
+        if not image_task_id:
+            await set_cached_response(req.mode, req.message, req.context, response_data)
+        
+        return ChatResponse(**response_data)
     except HTTPException:
         raise
     except Exception as e:
@@ -1423,11 +1742,46 @@ async def structured_output(req: StructuredOutputRequest):
     )
 
 
+@app.get("/api/image-status/{task_id}")
+async def get_image_status(task_id: str):
+    """查詢圖片生成任務狀態"""
+    if task_id not in image_generation_tasks:
+        raise HTTPException(status_code=404, detail="任務不存在")
+    
+    task = image_generation_tasks[task_id]
+    return {
+        "task_id": task_id,
+        "status": task["status"],
+        "image_url": task.get("image_url")
+    }
+
+
+@app.on_event("startup")
+async def startup_event():
+    """應用啟動時初始化"""
+    await init_redis()
+    init_qdrant()
+    print("🚀 TrvicERP AI Copilot 已啟動")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """應用關閉時清理資源"""
+    await close_redis()
+    print("👋 TrvicERP AI Copilot 已關閉")
+
+
 # 開發時直接執行
 if __name__ == "__main__":
     import uvicorn
+    print("=" * 80)
     print("🚀 TrvicERP AI Copilot 啟動中...")
-    print(f"📚 法規知識庫: {'已載入' if len(RULES) > 50 else '未載入'}")
-    print(f"🔑 Gemini API: {'已設定' if os.getenv('GOOGLE_API_KEY') else '未設定'}")
-    print(f"🔑 SiliconFlow API: {'已設定 (備用)' if os.getenv('SILICONFLOW_API_KEY') else '未設定'}")
+    print("=" * 80)
+    print(f"📚 法規知識庫: {'✅ 已載入' if len(RULES) > 50 else '❌ 未載入'}")
+    print(f"🔑 Gemini API: {'✅ 已設定' if os.getenv('GOOGLE_API_KEY') else '❌ 未設定'}")
+    print(f"🔑 SiliconFlow API: {'✅ 已設定 (備用)' if os.getenv('SILICONFLOW_API_KEY') else '❌ 未設定'}")
+    print(f"💾 Redis 快取: {'✅ 啟用' if REDIS_ENABLED else '❌ 停用'}")
+    print(f"🔍 Qdrant 向量檢索: {'✅ 啟用' if QDRANT_ENABLED else '❌ 停用'}")
+    print(f"🖼️  圖片生成模式: {'⚡ 非同步' if IMAGE_GENERATION_ASYNC else '⏱️ 同步'}")
+    print("=" * 80)
     uvicorn.run(app, host="0.0.0.0", port=4000, reload=True)
