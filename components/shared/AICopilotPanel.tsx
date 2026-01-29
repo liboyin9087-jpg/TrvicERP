@@ -58,7 +58,10 @@ const useAICopilotChat = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  // Note: useFunctionExecutor requires a config but may not be used in this component
+  
+  // Note: useFunctionExecutor is called but may not be actively used in this component.
+  // The stub config is provided to satisfy the hook's type requirements.
+  // TODO: Either integrate proper function execution or remove this hook if not needed.
   const { executeFunction, executeFunctions } = useFunctionExecutor({
     setCurrentView: () => {},
     setSelectedSession: () => {},

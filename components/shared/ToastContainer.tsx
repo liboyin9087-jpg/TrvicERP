@@ -31,18 +31,22 @@ export default function ToastContainer({ toasts, onClose }: ToastContainerConfig
   return (
     <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
       <AnimatePresence mode="popLayout">
-        {toasts.map((toast) => (
-          <Toast 
-            key={toast.id} 
-            config={{
-              id: toast.id,
-              type: toast.type as 'success' | 'error' | 'info',
-              message: toast.message,
-              duration: toast.duration,
-            }} 
-            onClose={onClose} 
-          />
-        ))}
+        {toasts.map((toast) => {
+          // Map toast type, filtering out 'warning' which isn't supported by Toast component
+          const supportedType = toast.type === 'warning' ? 'info' : toast.type;
+          return (
+            <Toast 
+              key={toast.id} 
+              config={{
+                id: toast.id,
+                type: supportedType as 'success' | 'error' | 'info',
+                message: toast.message,
+                duration: toast.duration,
+              }} 
+              onClose={onClose} 
+            />
+          );
+        })}
       </AnimatePresence>
     </div>
   );

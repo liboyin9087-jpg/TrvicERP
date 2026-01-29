@@ -276,7 +276,9 @@ export default function LoginPage({ config, onLogin }: LoginPageProps) {
         }, 500);
       } else {
         // Handle explicit error messages from the service
-        showNotification(!result.success && 'error' in result ? result.error : '登入失敗，請檢查您的帳號密碼', 'error');
+        // TypeScript discriminated union: if not success, result has error property
+        const errorMessage = result.success ? '登入失敗，請檢查您的帳號密碼' : result.error;
+        showNotification(errorMessage, 'error');
       }
     } catch (error) {
       // Catch unexpected errors (e.g., network issues before service response, or unhandled exceptions in authService)
