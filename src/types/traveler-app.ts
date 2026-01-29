@@ -31,19 +31,19 @@ export interface AvailableTrip {
 export interface MyRegistration {
   id: string;
   tripId: string;
-  tripTitle?: string;
-  tripName: string;
-  destination: string;
-  image: string;
-  registrationDate?: string;
+  tripTitle: string;
+  tripName?: string;
+  destination?: string;
+  image?: string;
+  registrationDate: string;
   registeredAt?: string;
-  startDate: string;
-  endDate: string;
-  status: 'pending' | 'approved' | 'confirmed' | 'completed' | 'cancelled';
-  participantCount?: number;
-  totalPrice?: number;
-  roomType: string;
-  companions: Array<{
+  startDate?: string;
+  endDate?: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  participantCount: number;
+  totalPrice: number;
+  roomType?: string;
+  companions?: Array<{
     name: string;
     relation?: string;
     relationship?: string;
@@ -88,10 +88,10 @@ export interface UserProfile {
 export interface RegistrationFormData {
   tripId: string;
   destination?: string;
-  mealPreference: string;
+  mealPreference?: string;
   seatPreference?: string;
-  participantCount?: number;
-  participants?: Array<{
+  participantCount: number;
+  participants: Array<{
     name: string;
     email: string;
     phone: string;

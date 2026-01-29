@@ -84,11 +84,11 @@ export function useDocumentGenerator(
     setLineSendResult(null);
     try {
       await sendViaLine(docType, content);
-      setLineSendResult({ success: true, message: '已成功發送至 LINE' });
+      setLineSendResult({ success: true, message: '成功發送至 LINE' });
     } catch (error) {
-      setLineSendResult({
-        success: false,
-        message: error instanceof Error ? error.message : '發送失敗',
+      setLineSendResult({ 
+        success: false, 
+        message: error instanceof Error ? error.message : '發送失敗' 
       });
     } finally {
       setSendingLine(false);

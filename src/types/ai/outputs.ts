@@ -11,21 +11,13 @@ export interface AIOutput {
 }
 
 export interface ProposalComparisonOutput {
-  proposalId?: string;
-  score?: number;
-  comparison?: Record<string, unknown>;
-  recommendation?: string;
+  proposalId: string;
   title?: string;
   summary?: string;
-  tiers?: Array<{
-    name: string;
-    price_per_person: number;
-    margin_percent: number;
-    lodging: string;
-    transport: string;
-    meals: string;
-    highlights: string[];
-  }>;
+  score: number;
+  comparison: Record<string, unknown>;
+  recommendation?: string;
+  tiers?: ProposalTier[];
   inclusions?: string[];
   exclusions?: string[];
   safety_commitments?: string[];
@@ -37,6 +29,12 @@ export interface ProposalTier {
   level: 'basic' | 'standard' | 'premium';
   score: number;
   features: string[];
+  margin_percent?: number;
+  price_per_person?: number;
+  lodging?: string;
+  transport?: string;
+  meals?: string;
+  highlights?: string[];
 }
 
 export interface AnalysisOutput extends AIOutput {
