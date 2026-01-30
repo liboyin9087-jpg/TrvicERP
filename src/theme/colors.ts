@@ -1,8 +1,15 @@
 /**
- * VicERP Design System - Color Tokens
- * 根據規格書建立的語意化色彩系統
- * 採用 Vision Pro 風格的 Glassmorphism 美學
- * 此檔案專注於顏色系統，不包含字體或間距定義。
+ * VicERP Design System - Color Tokens (TypeScript API Layer)
+ *
+ * Architecture (3-layer design system):
+ *   1. index.css :root    — Single source of truth for all CSS custom properties.
+ *   2. tailwind.config.js — References CSS variables via var(--...) so Tailwind
+ *                           utilities stay in sync without duplicating hex values.
+ *   3. This file (colors.ts) — Provides typed constants and utility functions for
+ *                               programmatic access in TypeScript/React code.
+ *                               Hex values here MUST match the CSS variables in index.css.
+ *
+ * When changing a color value, update index.css first, then mirror here.
  */
 
 // ============================================

@@ -63,6 +63,7 @@ import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
 import ViewSwitcher from './components/shared/ViewSwitcher';
 import LandingPage from './components/shared/LandingPage';
+import SkipNavigation from './components/shared/SkipNavigation';
 import ClientPortal from './components/portal/ClientPortal';
 
 // Glassmorphism Demo
@@ -349,7 +350,7 @@ function FloatingSidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-6">
+        <nav aria-label="主導覽" className="flex-1 overflow-y-auto p-3 space-y-6">
           {navGroups.map((group, idx) => (
             <div key={idx}>
               <AnimatePresence mode="wait">
@@ -557,7 +558,7 @@ function MobileMenu() {
             </div>
 
             {/* Navigation */}
-            <nav className="p-3 space-y-6">
+            <nav aria-label="行動裝置導覽" className="p-3 space-y-6">
               {navGroups.map((group, idx) => (
                 <div key={idx}>
                   <div className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -613,7 +614,7 @@ function AppContent() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       <GlassHeader />
-      <main className="flex-1 p-6">
+      <main id="main-content" className="flex-1 p-6" role="main">
         <ViewRenderer view={currentView} />
       </main>
     </div>
@@ -632,6 +633,7 @@ function ProtectedLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden" data-role={userRole}>
+      <SkipNavigation />
       <FloatingSidebar />
       <AppContent />
       <MobileMenu />

@@ -1,0 +1,74 @@
+{
+  "app": {
+    "name": "TravelMaster",
+    "loading": "Loading module...",
+    "logout": "Logout",
+    "login": "Login",
+    "search": "Search..."
+  },
+  "roles": {
+    "staff": "Admin",
+    "welfare": "Welfare",
+    "traveler": "Traveler",
+    "staffTitle": "Administrator",
+    "welfareTitle": "Welfare Committee",
+    "travelerTitle": "Employee"
+  },
+  "nav": {
+    "collapseSidebar": "Collapse sidebar",
+    "coreManagement": "Core Management",
+    "financeOps": "Finance & Ops",
+    "businessTools": "Business Tools",
+    "welfareCommittee": "Welfare Committee",
+    "myTrip": "My Trip",
+    "dashboard": "Dashboard",
+    "sessions": "Sessions",
+    "planner": "Planner",
+    "crm": "CRM",
+    "payments": "Payments",
+    "costing": "Costing",
+    "passport": "Passport",
+    "operations": "Operations",
+    "quotation": "Quotation",
+    "proposalEngine": "Proposal Engine",
+    "insurance": "Insurance",
+    "expense": "Expenses",
+    "welfareDashboard": "Welfare Dashboard",
+    "activityManagement": "Activity Management",
+    "corporateCRM": "Corporate CRM",
+    "travelerApp": "Traveler App",
+    "itinerary": "Itinerary",
+    "voting": "Voting",
+    "briefing": "Briefing"
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content",
+    "mainNavigation": "Main navigation",
+    "mobileNavigation": "Mobile navigation menu"
+  },
+  "auth": {
+    "loginFailed": "Login failed",
+    "loggedOut": "Logged out",
+    "sessionExpired": "Session expired, please log in again"
+  },
+  "portal": {
+    "title": "Client Portal",
+    "subtitle": "Welcome",
+    "loginHelp": "A login link will be sent to your email"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "reset": "Reset",
+    "user": "User",
+    "notifications": "Notifications",
+    "settings": "Settings"
+  }
+}
