@@ -7,7 +7,8 @@ from app.core.config import settings
 from app.db.database import Base, engine
 from app.api import (
     auth, users, orders, quotations, customers, tours,
-    sessions, corporate_accounts, budgets, polls, reports, line
+    sessions, corporate_accounts, budgets, polls, reports, line,
+    suppliers, flights, payments, passports, operations
 )
 import json
 from typing import Dict, Set
@@ -47,6 +48,12 @@ app.include_router(budgets.router)
 app.include_router(polls.router)
 app.include_router(reports.router)
 app.include_router(line.router)
+# P0 Critical Modules
+app.include_router(suppliers.router)
+app.include_router(flights.router)
+app.include_router(payments.router)
+app.include_router(passports.router)
+app.include_router(operations.router)
 
 
 # WebSocket connection manager

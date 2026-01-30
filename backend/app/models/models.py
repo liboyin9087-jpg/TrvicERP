@@ -225,3 +225,204 @@ class Poll(Base):
     created_by = Column(String, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# --- P0 Critical Modules ---
+
+class Supplier(Base):
+    """供應商/供應商管理 - Vendor/Supplier Management"""
+    __tablename__ = "suppliers"
+    
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)
+    type = Column(String, nullable=False)  # hotel, restaurant, transport, activity, ground_handler, airline
+    contact_person = Column(String)
+    email = Column(String)
+    phone = Column(String)
+    address = Column(String)
+    tax_id = Column(String)
+    payment_terms = Column(String)  # 付款條件
+    currency = Column(String, default="TWD")
+    bank_account = Column(String)
+    rating = Column(Float, default=0)  # 供應商評分
+    is_active = Column(Boolean, default=True)
+    contract_start = Column(DateTime)
+    contract_end = Column(DateTime)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Flight(Base):
+    """航班/機票管理 - Flight/Ticket Management"""
+    __tablename__ = "flights"
+    
+    id = Column(String, primary_key=True, index=True)
+    pnr = Column(String, unique=True, index=True)  # Passenger Name Record
+    booking_reference = Column(String)
+    airline = Column(String, nullable=False)
+    flight_number = Column(String, nullable=False)
+    departure_airport = Column(String, nullable=False)
+    arrival_airport = Column(String, nullable=False)
+    departure_time = Column(DateTime, nullable=False)
+    arrival_time = Column(DateTime, nullable=False)
+    booking_class = Column(String)  # Economy, Business, First
+    ticket_status = Column(String, default="pending")  # pending, confirmed, ticketed, cancelled, refunded
+    passenger_count = Column(Integer, default=1)
+    total_price = Column(Float)
+    currency = Column(String, default="TWD")
+    supplier_id = Column(String, ForeignKey("suppliers.id"))
+    session_id = Column(String, ForeignKey("sessions.id"))
+    order_id = Column(String, ForeignKey("orders.id"))
+    notes = Column(Text)
+    gds_data = Column(JSON)  # GDS (Global Distribution System) raw data
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Passport(Base):
+    """護照管理 - Passport Management"""
+    __tablename__ = "passports"
+    
+    id = Column(String, primary_key=True, index=True)
+    customer_id = Column(String, ForeignKey("customers.id"), nullable=False)
+    passport_number = Column(String, nullable=False, index=True)
+    full_name = Column(String, nullable=False)
+    nationality = Column(String, nullable=False)
+    date_of_birth = Column(String)
+    issue_date = Column(String)
+    expiry_date = Column(String, nullable=False)
+    issue_country = Column(String)
+    status = Column(String, default="pending")  # pending, reviewing, approved, expired
+    scan_url = Column(String)  # 掃描檔案 URL
+    session_id = Column(String, ForeignKey("sessions.id"))
+    submitted_at = Column(DateTime)
+    reviewed_at = Column(DateTime)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Visa(Base):
+    """簽證管理 - Visa Management"""
+    __tablename__ = "visas"
+    
+    id = Column(String, primary_key=True, index=True)
+    passport_id = Column(String, ForeignKey("passports.id"), nullable=False)
+    destination_country = Column(String, nullable=False)
+    visa_type = Column(String)  # tourist, business, transit
+    application_status = Column(String, default="pending")  # pending, processing, approved, rejected
+    application_date = Column(DateTime)
+    approval_date = Column(DateTime)
+    valid_from = Column(String)
+    valid_until = Column(String)
+    visa_number = Column(String)
+    processing_fee = Column(Float)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Payment(Base):
+    """收付款管理 - Payment Management (AR/AP)"""
+    __tablename__ = "payments"
+    
+    id = Column(String, primary_key=True, index=True)
+    type = Column(String, nullable=False)  # receivable (AR), payable (AP)
+    order_id = Column(String, ForeignKey("orders.id"))
+    supplier_id = Column(String, ForeignKey("suppliers.id"))
+    customer_id = Column(String, ForeignKey("customers.id"))
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="TWD")
+    payment_method = Column(String)  # credit_card, bank_transfer, cash, line_pay
+    payment_status = Column(String, default="pending")  # pending, processing, completed, failed, refunded
+    due_date = Column(DateTime)
+    paid_date = Column(DateTime)
+    installment_plan = Column(JSON)  # 分期付款計畫
+    reference_number = Column(String)  # 交易參考號
+    reconciled = Column(Boolean, default=False)  # 是否已對帳
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Insurance(Base):
+    """旅遊保險管理 - Travel Insurance Management"""
+    __tablename__ = "insurances"
+    
+    id = Column(String, primary_key=True, index=True)
+    order_id = Column(String, ForeignKey("orders.id"))
+    session_id = Column(String, ForeignKey("sessions.id"))
+    customer_id = Column(String, ForeignKey("customers.id"))
+    policy_number = Column(String, unique=True)
+    insurance_company = Column(String)
+    plan_type = Column(String)  # basic, premium, comprehensive
+    coverage_amount = Column(Float)
+    premium = Column(Float)
+    currency = Column(String, default="TWD")
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    beneficiary = Column(String)
+    status = Column(String, default="pending")  # pending, active, expired, claimed
+    claim_records = Column(JSON)  # 理賠紀錄
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class HotelAllotment(Base):
+    """飯店房控管理 - Hotel Room Allotment Management"""
+    __tablename__ = "hotel_allotments"
+    
+    id = Column(String, primary_key=True, index=True)
+    supplier_id = Column(String, ForeignKey("suppliers.id"), nullable=False)  # 酒店供應商
+    session_id = Column(String, ForeignKey("sessions.id"))
+    hotel_name = Column(String, nullable=False)
+    room_type = Column(String, nullable=False)
+    total_rooms = Column(Integer, nullable=False)
+    allocated_rooms = Column(Integer, default=0)
+    available_rooms = Column(Integer)  # Calculated: total - allocated
+    check_in_date = Column(DateTime, nullable=False)
+    check_out_date = Column(DateTime, nullable=False)
+    cutoff_date = Column(DateTime)  # 截止日期 - 超過此日期不能再訂房
+    price_per_room = Column(Float)
+    currency = Column(String, default="TWD")
+    rooming_list = Column(JSON)  # 住房名單
+    status = Column(String, default="available")  # available, blocked, released
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Notification(Base):
+    """通知系統 - Notification System"""
+    __tablename__ = "notifications"
+    
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"))
+    type = Column(String, nullable=False)  # email, sms, system
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    status = Column(String, default="pending")  # pending, sent, failed
+    priority = Column(String, default="normal")  # low, normal, high, urgent
+    template_id = Column(String)
+    sent_at = Column(DateTime)
+    read_at = Column(DateTime)
+    notification_metadata = Column(JSON)  # 額外資訊 (如訂單ID、session ID等) - renamed from 'metadata' to avoid SQLAlchemy conflict
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ExchangeRate(Base):
+    """匯率管理 - Exchange Rate Management"""
+    __tablename__ = "exchange_rates"
+    
+    id = Column(String, primary_key=True, index=True)
+    base_currency = Column(String, nullable=False, default="TWD")
+    target_currency = Column(String, nullable=False)
+    rate = Column(Float, nullable=False)
+    source = Column(String)  # API source (e.g., "exchangerate-api", "manual")
+    valid_from = Column(DateTime, nullable=False)
+    valid_until = Column(DateTime)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
