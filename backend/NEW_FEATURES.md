@@ -285,7 +285,7 @@ CREATE TABLE exchange_rates (
 
 **Currency Conversion**:
 ```
-GET /api/v1/exchange-rates/convert/{amount}?from_currency=USD&to_currency=TWD
+GET /api/v1/exchange-rates/convert?amount=100&from_currency=USD&to_currency=TWD
 Response: {
     "from_currency": "USD",
     "to_currency": "TWD",

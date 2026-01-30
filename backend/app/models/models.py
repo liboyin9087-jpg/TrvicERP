@@ -408,7 +408,7 @@ class Notification(Base):
     template_id = Column(String)
     sent_at = Column(DateTime)
     read_at = Column(DateTime)
-    notification_metadata = Column(JSON)  # 額外資訊 (如訂單ID、session ID等) - renamed from 'metadata' to avoid SQLAlchemy conflict
+    notification_metadata = Column(JSON)  # 額外資訊 (如訂單ID、session ID等)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

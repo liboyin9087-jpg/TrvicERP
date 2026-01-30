@@ -76,7 +76,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         
         # Check expiration
         exp = payload.get("exp")
-        if exp and datetime.utcnow() > datetime.fromtimestamp(exp):
+        if exp and datetime.utcnow() > datetime.utcfromtimestamp(exp):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has expired"

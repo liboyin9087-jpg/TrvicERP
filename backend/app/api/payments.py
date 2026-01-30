@@ -197,6 +197,7 @@ async def list_overdue_payments(
     """List overdue payments (past due date and not completed)"""
     now = datetime.utcnow()
     payments = db.query(Payment).filter(
+        Payment.due_date != None,
         Payment.due_date < now,
         Payment.payment_status != "completed",
         Payment.payment_status != "refunded"
@@ -235,6 +236,7 @@ async def get_payment_summary(
     # Overdue
     now = datetime.utcnow()
     overdue_count = db.query(Payment).filter(
+        Payment.due_date != None,
         Payment.due_date < now,
         Payment.payment_status != "completed",
         Payment.payment_status != "refunded"

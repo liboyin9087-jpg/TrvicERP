@@ -61,9 +61,10 @@ async def list_expiring_passports(
             try:
                 # Assuming expiry_date format is YYYY-MM-DD
                 expiry = datetime.strptime(passport.expiry_date, "%Y-%m-%d")
-                if expiry <= datetime.now() + timedelta(days=days):
+                if expiry <= datetime.utcnow() + timedelta(days=days):
                     expiring_soon.append(passport)
-            except:
+            except ValueError:
+                # Skip passports with invalid date format
                 pass
     
     return expiring_soon

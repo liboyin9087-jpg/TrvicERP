@@ -210,7 +210,7 @@ The API will be available at:
 - `POST /api/v1/exchange-rates` - Create exchange rate
 - `GET /api/v1/exchange-rates/{id}` - Get rate details
 - `PUT /api/v1/exchange-rates/{id}` - Update rate
-- `GET /api/v1/exchange-rates/convert/{amount}` - Convert currency
+- `GET /api/v1/exchange-rates/convert` - Convert currency
 
 ### Excel Import/Export
 - `POST /api/v1/excel/import/customers` - Import customers from Excel

@@ -648,7 +648,6 @@ class HotelAllotmentBase(BaseModel):
     room_type: str
     total_rooms: int
     allocated_rooms: int = 0
-    available_rooms: Optional[int] = None
     check_in_date: datetime
     check_out_date: datetime
     cutoff_date: Optional[datetime] = None
@@ -673,6 +672,7 @@ class HotelAllotmentUpdate(BaseModel):
 
 class HotelAllotmentResponse(HotelAllotmentBase):
     id: str
+    available_rooms: Optional[int] = None  # Calculated field
     created_at: datetime
     updated_at: datetime
     

@@ -189,8 +189,8 @@ async def update_hotel_allotment(
     for key, value in update_data.items():
         setattr(allotment, key, value)
     
-    # Recalculate available rooms if needed
-    if 'allocated_rooms' in update_data or 'available_rooms' not in update_data:
+    # Always recalculate available rooms when allocated_rooms changes
+    if 'allocated_rooms' in update_data or 'total_rooms' in update_data:
         allotment.available_rooms = allotment.total_rooms - allotment.allocated_rooms
     
     db.commit()
@@ -201,7 +201,7 @@ async def update_hotel_allotment(
 @router.post("/hotel-allotments/{allotment_id}/allocate")
 async def allocate_rooms(
     allotment_id: str,
-    rooms_to_allocate: int,
+    rooms_to_allocate: int = Query(..., gt=0, description="Number of rooms to allocate (must be positive)"),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -213,6 +213,10 @@ async def allocate_rooms(
     # Check if cutoff date has passed
     if allotment.cutoff_date and allotment.cutoff_date < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Cutoff date has passed")
+    
+    # Calculate available rooms if not set
+    if allotment.available_rooms is None:
+        allotment.available_rooms = allotment.total_rooms - (allotment.allocated_rooms or 0)
     
     # Check if enough rooms are available
     if allotment.available_rooms < rooms_to_allocate:
@@ -378,9 +382,9 @@ async def update_exchange_rate(
     return rate
 
 
-@router.get("/exchange-rates/convert/{amount}")
+@router.get("/exchange-rates/convert")
 async def convert_currency(
-    amount: float,
+    amount: float = Query(..., gt=0, description="Amount to convert (must be positive)"),
     from_currency: str = Query(..., description="Source currency code"),
     to_currency: str = Query(..., description="Target currency code"),
     db: Session = Depends(get_db),

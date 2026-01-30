@@ -61,7 +61,7 @@ async def calculate_order_profit_loss(
             Payment.order_id == order_id,
             Payment.type == "payable"
         ).all()
-        total_cost = sum(p.amount for p in payables)
+        supplier_costs = sum(p.amount for p in payables)
         
         # Calculate flights cost
         flights = db.query(Flight).filter(Flight.order_id == order_id).all()
@@ -72,7 +72,7 @@ async def calculate_order_profit_loss(
         insurance_cost = sum(i.premium or 0 for i in insurances)
         
         # Total cost
-        total_cost = total_cost + flights_cost + insurance_cost
+        total_cost = supplier_costs + flights_cost + insurance_cost
         
         # Calculate profit
         gross_profit = total_revenue - total_cost
