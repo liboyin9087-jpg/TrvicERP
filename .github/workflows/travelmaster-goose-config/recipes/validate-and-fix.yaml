@@ -1,0 +1,122 @@
+version: 1.0.0
+title: "自我修正元件驗證器"
+description: "驗證並修正 TravelMaster UI 元件直到所有檢查通過"
+author:
+  name: "TravelMaster 開發團隊"
+
+prompt: |
+  這是驗證迴圈的第 {{iteration}} 次迭代。
+  
+  重要指示：
+  - 只有當所有檢查都通過時，才輸出 <promise>VALIDATION_COMPLETE</promise>
+  - 如果仍有任何問題，請修復它們，不要輸出完成標記
+  - 每次只修復最多 5 個問題，避免一次性變更過多
+
+instructions: |
+  你正在持續驗證迴圈中，負責 TravelMaster UI 元件的設計系統合規性檢查與修正。
+  
+  ## 步驟 1：執行驗證檢查
+  依序執行以下命令並擷取結果：
+  
+  ```bash
+  # TypeScript 型別檢查
+  echo "=== TypeScript 檢查 ==="
+  npx tsc --noEmit 2>&1 | head -50
+  
+  # ESLint 設計系統規則
+  echo "=== ESLint 檢查 ==="
+  npx eslint {{target}} --ext .ts,.tsx --format stylish 2>&1 | head -100
+  
+  # 搜尋硬編碼顏色
+  echo "=== 顏色代碼檢查 ==="
+  grep -rn --include="*.tsx" --include="*.ts" -E "#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}" {{target}} | head -50
+  ```
+  
+  ## 步驟 2：分析結果
+  解析輸出。評估標準：
+  - TypeScript 錯誤數量為 0
+  - ESLint 錯誤數量為 0
+  - 所有顏色都使用設計代碼（非硬編碼）
+  
+  如果所有檢查都通過：
+  - 輸出: <promise>VALIDATION_COMPLETE</promise>
+  - 立即結束，不要做其他事
+  
+  如果存在問題，繼續步驟 3。
+  
+  ## 步驟 3：修復問題（每次最多 5 個）
+  
+  ### 優先順序
+  1. TypeScript 編譯錯誤（最高優先）
+  2. ESLint 錯誤
+  3. 設計代碼違規
+  4. ESLint 警告
+  
+  ### 修復流程
+  對於每個問題：
+  1. 讀取有問題的檔案
+  2. 理解錯誤上下文
+  3. 套用最小修復（不要過度重構）
+  4. 寫入修正後的檔案
+  
+  ### TravelMaster 設計代碼參考
+  
+  **色彩系統**
+  ```typescript
+  // 正確用法
+  import { colors } from '@/tokens';
+  background: colors.primary[900]  // Navigator Blue #1E3A8A
+  color: colors.success            // Forest Green #10B981
+  
+  // 錯誤用法（硬編碼）
+  background: '#1E3A8A'  // ❌ 應改用 token
+  ```
+  
+  **允許的顏色值**
+  - Navigator Blue: #1E3A8A（主色）
+  - Forest Green: #10B981（成功）
+  - Error Red: #EF4444（錯誤）
+  - Warning Amber: #F59E0B（警告）
+  - Info Blue: #3B82F6（資訊）
+  - 中性色: #F9FAFB, #F3F4F6, #E5E7EB, #D1D5DB, #9CA3AF, #6B7280, #4B5563, #374151, #1F2937, #111827
+  
+  **字體規範**
+  - UI 文字: Inter (400, 500, 600, 700)
+  - 繁體中文: Noto Sans TC
+  - 最小字級: 14px
+  
+  **間距網格**
+  - 基礎單位: 4px
+  - 允許值: 4, 8, 12, 16, 24, 32, 48, 64
+  
+  ## 步驟 4：記錄修復內容
+  
+  修復完成後，在 .validation-progress.log 追加記錄：
+  ```
+  迭代 {{iteration}}: 修復了 [問題數量] 個問題
+  - [檔案名]: [修復描述]
+  ```
+  
+  ## 注意事項
+  - 不要刪除任何功能性程式碼
+  - 保持原有的程式邏輯
+  - 只修改與設計系統相關的部分
+  - 如果不確定，選擇保守的修復方式
+
+parameters:
+  - key: target
+    input_type: string
+    requirement: required
+    description: "要驗證的目標目錄"
+  - key: iteration
+    input_type: string
+    default: "1"
+    description: "當前迭代次數"
+
+extensions:
+  - type: builtin
+    name: developer
+
+settings:
+  temperature: 0.0
+  goose_max_turns: 30

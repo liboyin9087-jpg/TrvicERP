@@ -29,9 +29,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# TrvicERP Analyzer
-.trvic_sessions/
-.trvic_patterns.json
+# TravelMaster Analyzer
+.travelmaster_sessions/
+.travelmaster_patterns.json
 analysis_reports/
 .vercel
 .env*.local

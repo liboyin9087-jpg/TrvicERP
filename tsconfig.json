@@ -24,12 +24,17 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    /* Phase 1: 逐步啟用嚴格模式 — 避免一次性全開導致大量錯誤 */
     "strict": false,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictFunctionTypes": true,
+    /* Phase 2 目標：啟用 "strict": true (包含 strictBindCallApply, strictPropertyInitialization 等) */
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitReturns": false,
+    "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "components/**/*", "*.ts", "*.tsx"],
+  "include": ["src/**/*", "components/**/*", "pages/**/*", "portal/**/*", "*.ts", "*.tsx"],
   "exclude": ["node_modules", "dist", ".vercel"]
 }

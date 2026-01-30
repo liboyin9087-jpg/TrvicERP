@@ -1,5 +1,5 @@
 /**
- * @file Type definitions for dashboard elements and configurations within TrvicERP.
+ * @file Type definitions for dashboard elements and configurations within TravelMaster.
  *
  * This file defines the core types used to describe widgets, their layouts,
  * configurations, and dashboard structures. It addresses architectural concerns

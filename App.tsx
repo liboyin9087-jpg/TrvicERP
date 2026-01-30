@@ -1,15 +1,15 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, Link, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, LayoutDashboard, Calendar, Map, Users, CreditCard, FileText,
-  MessageCircle, LogOut, Menu, Bell, Layers, Search, Settings,
+  MessageCircle, LogOut, Menu, Bell, Search, Settings,
   Calculator, Shield, Activity, Receipt, Sparkles, Building2, ChevronLeft, X, Briefcase, Loader2
 } from 'lucide-react';
 import { cn } from './src/lib/utils';
 
 // Zustand Store
-import { useAppStore, type ViewKey, type UserRole } from './src/store/useAppStore';
+import { useAppStore, type UserRole } from './src/store/useAppStore';
 import { useToastStore } from './src/store/useToastStore';
 
 // Auth (保持靜態引入，因為這是進入點)
@@ -19,15 +19,13 @@ import LoginPage from './components/auth/LoginPage';
 import DraggableDashboard from './components/dashboard/DraggableDashboard';
 import { useDashboardStore } from './src/store/useDashboardStore';
 
-// 🔄 [優化重點] 其他所有組件改為懶加載 (Lazy Load)
-// 這樣打包時，這些檔案會被切分成獨立的 chunk，不會全部塞進 index.js
+// Lazy-loaded components (code-split into separate chunks)
 const SessionManager = lazy(() => import('./components/admin/SessionManager'));
 const WelfareDashboard = lazy(() => import('./components/admin/WelfareDashboard'));
 const PaymentMonitor = lazy(() => import('./components/admin/PaymentMonitor'));
 const PassportKanban = lazy(() => import('./components/admin/PassportKanban'));
 const CostingDashboard = lazy(() => import('./components/admin/CostingDashboard'));
 
-// Staff Components
 const VisualPlanner = lazy(() => import('./components/staff/VisualPlanner'));
 const CustomerCDP = lazy(() => import('./components/staff/CustomerCDP'));
 const CorporateCRM = lazy(() => import('./components/staff/CorporateCRM'));
@@ -40,7 +38,6 @@ const MiniTourEstimator = lazy(() => import('./components/staff/MiniTourEstimato
 const ItineraryBuilder = lazy(() => import('./components/staff/ItineraryBuilder'));
 const ProposalEngine = lazy(() => import('./components/staff/ProposalEngine'));
 
-// Client Components
 const TravelerApp = lazy(() => import('./components/client/TravelerApp'));
 const ItineraryView = lazy(() => import('./components/client/ItineraryView'));
 const VotingPage = lazy(() => import('./components/client/VotingPage'));
@@ -48,29 +45,21 @@ const DigitalBriefing = lazy(() => import('./components/client/DigitalBriefing')
 const TourAddons = lazy(() => import('./components/client/TourAddons'));
 const TravelFootprint = lazy(() => import('./components/client/TravelFootprint'));
 
-// Demo Pages
 const TravelWidgetsShowcase = lazy(() => import('./pages/TravelWidgetsShowcase'));
-
-// Shared Components
-const EdgeAssistant = lazy(() => import('./components/shared/EdgeAssistant'));
 const InteractiveMap = lazy(() => import('./components/shared/InteractiveMap'));
-const LegalAssistant = lazy(() => import('./components/shared/LegalAssistant'));
 const AICopilotPanel = lazy(() => import('./components/shared/AICopilotPanel'));
-// ErrorBoundary, ToastContainer, ViewSwitcher 保持靜態，因為它們是全域共用的
+const GlassmorphismDemo = lazy(() => import('./pages/GlassmorphismDemo'));
+
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
-import ViewSwitcher from './components/shared/ViewSwitcher';
-import LandingPage from './components/shared/LandingPage';
 import ClientPortal from './components/portal/ClientPortal';
-
-// Glassmorphism Demo
-const GlassmorphismDemo = lazy(() => import('./pages/GlassmorphismDemo'));
 
 // ============================================
 // Navigation Configuration
 // ============================================
 interface NavItem {
-  id: ViewKey;
+  id: string;
+  path: string;
   label: string;
   icon: React.ReactNode;
 }
@@ -83,28 +72,28 @@ const STAFF_NAV: NavGroup[] = [
   {
     label: '核心管理',
     items: [
-      { id: 'dashboard', label: '儀表板', icon: <LayoutDashboard className="w-5 h-5" /> },
-      { id: 'sessions', label: '行程管理', icon: <Calendar className="w-5 h-5" /> },
-      { id: 'planner', label: '行程規劃', icon: <Map className="w-5 h-5" /> },
-      { id: 'crm', label: '客戶管理', icon: <Users className="w-5 h-5" /> },
+      { id: 'dashboard', path: '/dashboard', label: '儀表板', icon: <LayoutDashboard className="w-5 h-5" /> },
+      { id: 'sessions', path: '/sessions', label: '行程管理', icon: <Calendar className="w-5 h-5" /> },
+      { id: 'planner', path: '/planner', label: '行程規劃', icon: <Map className="w-5 h-5" /> },
+      { id: 'crm', path: '/crm', label: '客戶管理', icon: <Users className="w-5 h-5" /> },
     ],
   },
   {
     label: '財務 & 營運',
     items: [
-      { id: 'payments', label: '付款監控', icon: <CreditCard className="w-5 h-5" /> },
-      { id: 'costing', label: '成本分析', icon: <Calculator className="w-5 h-5" /> },
-      { id: 'passport', label: '護照管理', icon: <Shield className="w-5 h-5" /> },
-      { id: 'operations', label: '營運中心', icon: <Activity className="w-5 h-5" /> },
+      { id: 'payments', path: '/payments', label: '付款監控', icon: <CreditCard className="w-5 h-5" /> },
+      { id: 'costing', path: '/costing', label: '成本分析', icon: <Calculator className="w-5 h-5" /> },
+      { id: 'passport', path: '/passport', label: '護照管理', icon: <Shield className="w-5 h-5" /> },
+      { id: 'operations', path: '/operations', label: '營運中心', icon: <Activity className="w-5 h-5" /> },
     ],
   },
   {
     label: '業務工具',
     items: [
-      { id: 'quotation', label: '報價系統', icon: <FileText className="w-5 h-5" /> },
-      { id: 'proposal-engine', label: '提案引擎', icon: <Sparkles className="w-5 h-5" /> },
-      { id: 'insurance', label: '保險匯出', icon: <Receipt className="w-5 h-5" /> },
-      { id: 'expense', label: '費用管理', icon: <Briefcase className="w-5 h-5" /> },
+      { id: 'quotation', path: '/quotation', label: '報價系統', icon: <FileText className="w-5 h-5" /> },
+      { id: 'proposal-engine', path: '/proposal-engine', label: '提案引擎', icon: <Sparkles className="w-5 h-5" /> },
+      { id: 'insurance', path: '/insurance', label: '保險匯出', icon: <Receipt className="w-5 h-5" /> },
+      { id: 'expense', path: '/expense', label: '費用管理', icon: <Briefcase className="w-5 h-5" /> },
     ],
   },
 ];
@@ -113,9 +102,9 @@ const WELFARE_NAV: NavGroup[] = [
   {
     label: '福委會',
     items: [
-      { id: 'welfare', label: '福委儀表板', icon: <Building2 className="w-5 h-5" /> },
-      { id: 'sessions', label: '活動管理', icon: <Calendar className="w-5 h-5" /> },
-      { id: 'corporate-crm', label: '企業 CRM', icon: <Users className="w-5 h-5" /> },
+      { id: 'welfare', path: '/welfare', label: '福委儀表板', icon: <Building2 className="w-5 h-5" /> },
+      { id: 'sessions', path: '/sessions', label: '活動管理', icon: <Calendar className="w-5 h-5" /> },
+      { id: 'corporate-crm', path: '/corporate-crm', label: '企業 CRM', icon: <Users className="w-5 h-5" /> },
     ],
   },
 ];
@@ -124,10 +113,10 @@ const CLIENT_NAV: NavGroup[] = [
   {
     label: '我的旅程',
     items: [
-      { id: 'traveler', label: '旅遊應用', icon: <Plane className="w-5 h-5" /> },
-      { id: 'itinerary', label: '行程檢視', icon: <Map className="w-5 h-5" /> },
-      { id: 'voting', label: '行程投票', icon: <MessageCircle className="w-5 h-5" /> },
-      { id: 'briefing', label: '數位手冊', icon: <FileText className="w-5 h-5" /> },
+      { id: 'traveler', path: '/traveler', label: '旅遊應用', icon: <Plane className="w-5 h-5" /> },
+      { id: 'itinerary', path: '/itinerary', label: '行程檢視', icon: <Map className="w-5 h-5" /> },
+      { id: 'voting', path: '/voting', label: '行程投票', icon: <MessageCircle className="w-5 h-5" /> },
+      { id: 'briefing', path: '/briefing', label: '數位手冊', icon: <FileText className="w-5 h-5" /> },
     ],
   },
 ];
@@ -146,7 +135,7 @@ function getNavGroups(role: UserRole): NavGroup[] {
 }
 
 // ============================================
-// Wrapper Components for components requiring props
+// Wrapper Components
 // ============================================
 function DraggableDashboardWrapper() {
   const userRole = useAppStore((state) => state.userRole);
@@ -193,11 +182,11 @@ function DraggableDashboardWrapper() {
 
 function ClientPortalWrapper() {
   const { addToast } = useToastStore();
-  
+
   const showToast = (message: string, type: 'success' | 'error' | 'info' | 'warning') => {
     addToast({ message, type });
   };
-  
+
   return (
     <ClientPortal
       employees={[]}
@@ -223,39 +212,7 @@ function ClientPortalWrapper() {
 }
 
 // ============================================
-// Component Map (新增：策略模式)
-// ============================================
-// 這裡將 ViewKey 對應到組件，消除巨大的 Switch Case
-const VIEW_COMPONENTS: Record<string, React.LazyExoticComponent<any> | React.ComponentType<any>> = {
-  'dashboard': DraggableDashboardWrapper, // 靜態
-  'sessions': SessionManager,
-  'planner': VisualPlanner,
-  'builder': ItineraryBuilder,
-  'crm': CustomerCDP,
-  'corporate-crm': CorporateCRM,
-  'payments': PaymentMonitor,
-  'passport': PassportKanban,
-  'costing': CostingDashboard,
-  'insurance': InsuranceExport,
-  'quotation': QuotationBuilder,
-  'proposal-engine': ProposalEngine,
-  'client-portal': ClientPortalWrapper,
-  'operations': OperationHub,
-  'expense': LeaderExpenseApp,
-  'chat': LineChatMonitor,
-  'estimator': MiniTourEstimator,
-  'map': InteractiveMap,
-  'welfare': WelfareDashboard,
-  'traveler': TravelerApp,
-  'itinerary': ItineraryView,
-  'voting': VotingPage,
-  'briefing': DigitalBriefing,
-  'addons': TourAddons,
-  'footprint': TravelFootprint
-};
-
-// ============================================
-// Loading Fallback (新增)
+// Loading Fallback
 // ============================================
 const PageLoader = () => (
   <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 gap-3">
@@ -265,34 +222,15 @@ const PageLoader = () => (
 );
 
 // ============================================
-// View Renderer Component (優化版)
-// ============================================
-
-function ViewRenderer({ view }: { view: ViewKey }) {
-  // 從 Map 中查找組件，找不到則預設顯示 Dashboard
-  const Component = VIEW_COMPONENTS[view] || DraggableDashboardWrapper;
-
-  return (
-    // Suspense 是 React 懶加載必備的，當組件還在下載時顯示 fallback
-    <Suspense fallback={<PageLoader />}>
-      <Component />
-    </Suspense>
-  );
-}
-
-// ============================================
-// FloatingSidebar Component
+// FloatingSidebar Component — 改用 React Router <Link>
 // ============================================
 function FloatingSidebar() {
-  // Note: Using individual selectors instead of combined object selector
-  // to avoid unnecessary re-renders caused by object reference changes
   const isSidebarOpen = useAppStore((state) => state.isSidebarOpen);
   const setSidebarOpen = useAppStore((state) => state.setSidebarOpen);
   const userRole = useAppStore((state) => state.userRole);
-  const currentView = useAppStore((state) => state.currentView);
-  const setCurrentView = useAppStore((state) => state.setCurrentView);
   const logout = useAppStore((state) => state.logout);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const navGroups = getNavGroups(userRole);
 
@@ -301,132 +239,129 @@ function FloatingSidebar() {
     navigate('/login');
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <>
-      {/* Desktop Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{
-          width: isSidebarOpen ? 280 : 80,
-          transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
-        }}
-        className="hidden lg:flex flex-col bg-gradient-to-b from-gray-900/95 via-gray-900/98 to-black/95 backdrop-blur-xl border-r border-white/10 h-screen sticky top-0"
-      >
-        {/* Logo Area */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <AnimatePresence mode="wait">
-            {isSidebarOpen ? (
-              <motion.div
-                key="expanded"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-                  <Plane className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <div className="font-bold text-white text-sm">TravelMaster</div>
-                  <div className="text-xs text-gray-400">{userRole === 'staff' ? '管理端' : userRole === 'welfare' ? '福委會' : '員工端'}</div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="collapsed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mx-auto"
-              >
-                <Plane className="w-6 h-6 text-white" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-6">
-          {navGroups.map((group, idx) => (
-            <div key={idx}>
-              <AnimatePresence mode="wait">
-                {isSidebarOpen && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                  >
-                    {group.label}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              <div className="space-y-1">
-                {group.items.map((item) => (
-                  <motion.button
-                    key={item.id}
-                    onClick={() => setCurrentView(item.id)}
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all',
-                      currentView === item.id
-                        ? 'bg-gradient-to-r from-brand-500/20 to-brand-600/20 text-brand-400 border border-brand-500/30'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                    )}
-                  >
-                    {item.icon}
-                    <AnimatePresence mode="wait">
-                      {isSidebarOpen && (
-                        <motion.span
-                          initial={{ opacity: 0, width: 0 }}
-                          animate={{ opacity: 1, width: 'auto' }}
-                          exit={{ opacity: 0, width: 0 }}
-                          className="text-sm font-medium whitespace-nowrap overflow-hidden"
-                        >
-                          {item.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* Toggle Button */}
-        <div className="p-3 border-t border-white/10">
-          <motion.button
-            onClick={() => setSidebarOpen(!isSidebarOpen)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
-          >
+    <motion.aside
+      initial={false}
+      animate={{
+        width: isSidebarOpen ? 280 : 80,
+        transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+      }}
+      className="hidden lg:flex flex-col bg-gradient-to-b from-gray-900/95 via-gray-900/98 to-black/95 backdrop-blur-xl border-r border-white/10 h-screen sticky top-0"
+    >
+      {/* Logo Area */}
+      <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <AnimatePresence mode="wait">
+          {isSidebarOpen ? (
             <motion.div
-              animate={{ rotate: isSidebarOpen ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
+              key="expanded"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-3"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
+                <Plane className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-white text-sm">TravelMaster</div>
+                <div className="text-xs text-gray-400">{userRole === 'staff' ? '管理端' : userRole === 'welfare' ? '福委會' : '員工端'}</div>
+              </div>
             </motion.div>
-            {isSidebarOpen && <span className="text-sm font-medium">收起側欄</span>}
-          </motion.button>
-        </div>
+          ) : (
+            <motion.div
+              key="collapsed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mx-auto"
+            >
+              <Plane className="w-6 h-6 text-white" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-        {/* Logout Button */}
-        <div className="p-3 border-t border-white/10">
-          <motion.button
-            onClick={handleLogout}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all border border-red-500/20"
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto p-3 space-y-6">
+        {navGroups.map((group, idx) => (
+          <div key={idx}>
+            <AnimatePresence mode="wait">
+              {isSidebarOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                >
+                  {group.label}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all',
+                    isActive(item.path)
+                      ? 'bg-gradient-to-r from-brand-500/20 to-brand-600/20 text-brand-400 border border-brand-500/30'
+                      : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  )}
+                >
+                  {item.icon}
+                  <AnimatePresence mode="wait">
+                    {isSidebarOpen && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                      >
+                        {item.label}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Toggle Button */}
+      <div className="p-3 border-t border-white/10">
+        <motion.button
+          onClick={() => setSidebarOpen(!isSidebarOpen)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+        >
+          <motion.div
+            animate={{ rotate: isSidebarOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <LogOut className="w-5 h-5" />
-            {isSidebarOpen && <span className="text-sm font-medium">登出</span>}
-          </motion.button>
-        </div>
-      </motion.aside>
-    </>
+            <ChevronLeft className="w-5 h-5" />
+          </motion.div>
+          {isSidebarOpen && <span className="text-sm font-medium">收起側欄</span>}
+        </motion.button>
+      </div>
+
+      {/* Logout Button */}
+      <div className="p-3 border-t border-white/10">
+        <motion.button
+          onClick={handleLogout}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all border border-red-500/20"
+        >
+          <LogOut className="w-5 h-5" />
+          {isSidebarOpen && <span className="text-sm font-medium">登出</span>}
+        </motion.button>
+      </div>
+    </motion.aside>
   );
 }
 
@@ -434,7 +369,6 @@ function FloatingSidebar() {
 // GlassHeader Component
 // ============================================
 function GlassHeader() {
-  // Note: Using individual selectors to prevent unnecessary re-renders
   const userName = useAppStore((state) => state.userName);
   const userRole = useAppStore((state) => state.userRole);
   const setMobileMenuOpen = useAppStore((state) => state.setMobileMenuOpen);
@@ -442,7 +376,6 @@ function GlassHeader() {
   return (
     <header className="sticky top-0 z-30 glass-panel border-b border-white/10 px-6 py-4">
       <div className="flex items-center justify-between">
-        {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(true)}
           className="lg:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
@@ -450,7 +383,6 @@ function GlassHeader() {
           <Menu className="w-6 h-6" />
         </button>
 
-        {/* Search Bar */}
         <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -462,20 +394,14 @@ function GlassHeader() {
           </div>
         </div>
 
-        {/* Right Actions */}
         <div className="flex items-center gap-3">
-          {/* Notifications */}
           <button className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all relative">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
-
-          {/* Settings */}
           <button className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all">
             <Settings className="w-5 h-5" />
           </button>
-
-          {/* User Info */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-semibold">
               {(userName || 'U').charAt(0).toUpperCase()}
@@ -492,17 +418,15 @@ function GlassHeader() {
 }
 
 // ============================================
-// MobileMenu Component
+// MobileMenu Component — 改用 React Router <Link>
 // ============================================
 function MobileMenu() {
-  // Note: Using individual selectors to avoid re-render issues from object creation
   const isMobileMenuOpen = useAppStore((state) => state.isMobileMenuOpen);
   const setMobileMenuOpen = useAppStore((state) => state.setMobileMenuOpen);
   const userRole = useAppStore((state) => state.userRole);
-  const currentView = useAppStore((state) => state.currentView);
-  const setCurrentView = useAppStore((state) => state.setCurrentView);
   const logout = useAppStore((state) => state.logout);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const navGroups = getNavGroups(userRole);
 
@@ -512,11 +436,12 @@ function MobileMenu() {
     navigate('/login');
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
     <AnimatePresence>
       {isMobileMenuOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -524,8 +449,6 @@ function MobileMenu() {
             onClick={() => setMobileMenuOpen(false)}
             className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           />
-
-          {/* Menu */}
           <motion.aside
             initial={{ x: -280 }}
             animate={{ x: 0 }}
@@ -533,7 +456,6 @@ function MobileMenu() {
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="lg:hidden fixed left-0 top-0 bottom-0 w-72 bg-gradient-to-b from-gray-900/98 via-gray-900/98 to-black/98 backdrop-blur-xl border-r border-white/10 z-50 overflow-y-auto"
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
@@ -552,7 +474,6 @@ function MobileMenu() {
               </button>
             </div>
 
-            {/* Navigation */}
             <nav className="p-3 space-y-6">
               {navGroups.map((group, idx) => (
                 <div key={idx}>
@@ -561,29 +482,26 @@ function MobileMenu() {
                   </div>
                   <div className="space-y-1">
                     {group.items.map((item) => (
-                      <button
+                      <Link
                         key={item.id}
-                        onClick={() => {
-                          setCurrentView(item.id);
-                          setMobileMenuOpen(false);
-                        }}
+                        to={item.path}
+                        onClick={() => setMobileMenuOpen(false)}
                         className={cn(
                           'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all',
-                          currentView === item.id
+                          isActive(item.path)
                             ? 'bg-gradient-to-r from-brand-500/20 to-brand-600/20 text-brand-400 border border-brand-500/30'
                             : 'text-gray-400 hover:bg-white/5 hover:text-white'
                         )}
                       >
                         {item.icon}
                         <span className="text-sm font-medium">{item.label}</span>
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 </div>
               ))}
             </nav>
 
-            {/* Logout Button */}
             <div className="p-3 border-t border-white/10 mt-auto">
               <button
                 onClick={handleLogout}
@@ -601,26 +519,8 @@ function MobileMenu() {
 }
 
 // ============================================
-// AppContent Component
+// Protected Layout — 使用 React Router <Outlet>
 // ============================================
-function AppContent() {
-  const currentView = useAppStore((state) => state.currentView);
-
-  return (
-    <div className="flex-1 flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-      <GlassHeader />
-      <main className="flex-1 p-6">
-        <ViewRenderer view={currentView} />
-      </main>
-    </div>
-  );
-}
-
-// ============================================
-// Main App Component
-// ============================================
-
-// Protected Layout
 function ProtectedLayout() {
   const [isAICopilotOpen, setIsAICopilotOpen] = React.useState(false);
   const userRole = useAppStore((state) => state.userRole);
@@ -629,9 +529,15 @@ function ProtectedLayout() {
   return (
     <div className="flex h-screen overflow-hidden" data-role={userRole}>
       <FloatingSidebar />
-      <AppContent />
+      <div className="flex-1 flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
+        <GlassHeader />
+        <main className="flex-1 p-6">
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
+        </main>
+      </div>
       <MobileMenu />
-      {/* AI Copilot Panel */}
       <Suspense fallback={null}>
         <AICopilotPanel
           isOpen={isAICopilotOpen}
@@ -644,17 +550,22 @@ function ProtectedLayout() {
   );
 }
 
-// Auth Routes
+// ============================================
+// Auth Guard Components
+// ============================================
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const isLoggedIn = useAppStore((state) => state.isLoggedIn);
-  return !isLoggedIn ? <>{children}</> : <Navigate to="/" replace />;
+  return !isLoggedIn ? <>{children}</> : <Navigate to="/dashboard" replace />;
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute() {
   const isLoggedIn = useAppStore((state) => state.isLoggedIn);
-  return isLoggedIn ? <>{children}</> : <Navigate to="/login" replace />;
+  return isLoggedIn ? <ProtectedLayout /> : <Navigate to="/login" replace />;
 }
 
+// ============================================
+// Main App — 真正的 URL 路由
+// ============================================
 function App() {
   const login = useAppStore((state) => state.login);
   const toasts = useToastStore((state) => state.toasts);
@@ -669,46 +580,59 @@ function App() {
       <ErrorBoundary>
         <ToastContainer toasts={toasts} onClose={removeToast} />
         <Routes>
-          {/* Login Page */}
+          {/* Public Routes */}
           <Route path="/login" element={
             <AuthRoute>
               <LoginPage onLogin={handleLogin} />
             </AuthRoute>
           } />
+          <Route path="/demo" element={<Suspense fallback={<PageLoader />}><GlassmorphismDemo /></Suspense>} />
+          <Route path="/travel-showcase" element={<Suspense fallback={<PageLoader />}><TravelWidgetsShowcase /></Suspense>} />
+          <Route path="/portal" element={<Suspense fallback={<PageLoader />}><ClientPortalWrapper /></Suspense>} />
 
-          {/* Demo Page - Public */}
-          <Route path="/demo" element={
-            <Suspense fallback={<PageLoader />}>
-              <GlassmorphismDemo />
-            </Suspense>
-          } />
+          {/* Protected Routes — 嵌套路由，使用 <Outlet> 渲染子路由 */}
+          <Route element={<ProtectedRoute />}>
+            {/* 首頁重導到 /dashboard */}
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<DraggableDashboardWrapper />} />
 
-          {/* Travel Widgets Showcase - Public */}
-          <Route path="/travel-showcase" element={
-            <Suspense fallback={<PageLoader />}>
-              <TravelWidgetsShowcase />
-            </Suspense>
-          } />
+            {/* 核心管理 */}
+            <Route path="sessions" element={<SessionManager />} />
+            <Route path="planner" element={<VisualPlanner />} />
+            <Route path="crm" element={<CustomerCDP />} />
+            <Route path="builder" element={<ItineraryBuilder />} />
 
-          {/* Client Portal - Public */}
-          <Route path="/portal" element={
-            <Suspense fallback={<PageLoader />}>
-              <ClientPortalWrapper />
-            </Suspense>
-          } />
+            {/* 財務 & 營運 */}
+            <Route path="payments" element={<PaymentMonitor />} />
+            <Route path="costing" element={<CostingDashboard />} />
+            <Route path="passport" element={<PassportKanban />} />
+            <Route path="operations" element={<OperationHub />} />
 
-          {/* Protected Routes */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <ProtectedLayout />
-            </ProtectedRoute>
-          } />
+            {/* 業務工具 */}
+            <Route path="quotation" element={<QuotationBuilder />} />
+            <Route path="proposal-engine" element={<ProposalEngine />} />
+            <Route path="insurance" element={<InsuranceExport />} />
+            <Route path="expense" element={<LeaderExpenseApp />} />
+            <Route path="chat" element={<LineChatMonitor />} />
+            <Route path="estimator" element={<MiniTourEstimator />} />
+            <Route path="map" element={<InteractiveMap />} />
 
-          <Route path="*" element={
-            <ProtectedRoute>
-              <ProtectedLayout />
-            </ProtectedRoute>
-          } />
+            {/* 福委會 */}
+            <Route path="welfare" element={<WelfareDashboard />} />
+            <Route path="corporate-crm" element={<CorporateCRM />} />
+            <Route path="client-portal" element={<ClientPortalWrapper />} />
+
+            {/* 旅客端 */}
+            <Route path="traveler" element={<TravelerApp />} />
+            <Route path="itinerary" element={<ItineraryView />} />
+            <Route path="voting" element={<VotingPage />} />
+            <Route path="briefing" element={<DigitalBriefing />} />
+            <Route path="addons" element={<TourAddons />} />
+            <Route path="footprint" element={<TravelFootprint />} />
+          </Route>
+
+          {/* Catch-all: 未登入→登入頁，已登入→儀表板 */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </ErrorBoundary>
     </BrowserRouter>

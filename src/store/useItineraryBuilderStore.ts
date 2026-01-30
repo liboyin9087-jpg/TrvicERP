@@ -1,4 +1,4 @@
-// /workspaces/TrvicERP/src/store/useItineraryBuilderStore.ts
+// /workspaces/TravelMaster/src/store/useItineraryBuilderStore.ts
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';

@@ -1,5 +1,5 @@
 {
-  "name": "travelmaster-os",
+  "name": "travelmaster",
   "version": "2.0.0",
   "private": true,
   "type": "module",
@@ -11,12 +11,15 @@
     "check:env": "node scripts/check-env.mjs",
     "lint": "eslint src/ components/ --max-warnings=9999",
     "lint:fix": "eslint src/ components/ --fix --max-warnings=9999",
-    "qa": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh",
-    "qa:fix": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh 15 --auto-fix --report",
-    "qa:report": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh 1 --report",
-    "qa:goose": "bash .github/workflows/trvicerp-goose-config/scripts/qa-autofix-loop.sh",
-    "qa:strict": "bash .github/workflows/trvicerp-goose-config/scripts/goose-qa-loop.sh 15 --auto-fix --strict --report",
-    "setup:ollama": "bash .github/workflows/trvicerp-goose-config/scripts/setup-ollama.sh"
+    "qa": "bash .github/workflows/travelmaster-goose-config/scripts/goose-qa-loop.sh",
+    "qa:fix": "bash .github/workflows/travelmaster-goose-config/scripts/goose-qa-loop.sh 15 --auto-fix --report",
+    "qa:report": "bash .github/workflows/travelmaster-goose-config/scripts/goose-qa-loop.sh 1 --report",
+    "qa:goose": "bash .github/workflows/travelmaster-goose-config/scripts/qa-autofix-loop.sh",
+    "qa:strict": "bash .github/workflows/travelmaster-goose-config/scripts/goose-qa-loop.sh 15 --auto-fix --strict --report",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "setup:ollama": "bash .github/workflows/travelmaster-goose-config/scripts/setup-ollama.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
@@ -39,6 +42,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25.0.10",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
@@ -49,10 +55,12 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^17.2.0",
+    "jsdom": "^27.4.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.2.0",
     "vite": "^7.3.1",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.0.18"
   }
 }

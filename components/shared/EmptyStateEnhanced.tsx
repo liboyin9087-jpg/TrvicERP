@@ -183,7 +183,7 @@ export const EmptyState = (props: KintoneEmptyStateProps) => (
   <GenericEmptyState {...props} ActionButtonComponent={KintoneButton} />
 );
 
-// --- Specific Empty State variations for TrvicERP (using the Kintone-bound EmptyState) ---
+// --- Specific Empty State variations for TravelMaster (using the Kintone-bound EmptyState) ---
 
 // ARCHITECT FIX: Specific empty state types are kept simple, focusing on their unique callbacks.
 // The base `EmptyStateConfig` handles the core structure and complexity.

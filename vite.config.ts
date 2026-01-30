@@ -10,4 +10,11 @@ export default defineConfig({
       "@/components": path.resolve(__dirname, "components"),
     },
   },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/test/setup.ts",
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "components/**/*.{test,spec}.{ts,tsx}"],
+    css: true,
+  },
 });
