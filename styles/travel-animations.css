@@ -1,0 +1,113 @@
+/* ============================================
+   Travel Theme Animations
+   ============================================ */
+
+/* Airplane Flying Animation */
+@keyframes fly-across {
+  0% {
+    transform: translateX(-100%) translateY(0) rotate(-10deg);
+  }
+  100% {
+    transform: translateX(300%) translateY(-50px) rotate(10deg);
+  }
+}
+
+/* Cloud Floating Animation */
+@keyframes float-cloud {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(20px) translateY(-10px);
+  }
+}
+
+/* Passport Flip Animation */
+@keyframes flip-passport {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+/* Map Marker Bounce Animation */
+@keyframes bounce-marker {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+  }
+}
+
+/* Ripple Wave Animation */
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* Departure Board Flip Animation */
+@keyframes flip-board {
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+/* Status Blink Animation */
+@keyframes blink-status {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Globe Rotation Animation */
+@keyframes rotate-globe {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Compass Needle Animation */
+@keyframes needle-swing {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Pulse Ring Animation */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}

@@ -1,4 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap");
+/* Import travel theme animations */
+@import './styles/travel-animations.css';
 
 @tailwind base;
 @tailwind components;
@@ -1037,4 +1039,99 @@ body {
 
 .sweep-light:hover::after {
   left: 100%;
+}
+
+/* ============================================
+   Role-Based Theming
+   ============================================ */
+
+/* Staff端 - 旅行社專業工具 (Professional Dark Theme) */
+[data-role="staff"] {
+  /* Professional deep blue-gray theme */
+  --role-bg-primary: #0f172a;
+  --role-bg-secondary: #1e293b;
+  --role-bg-card: #1e293b;
+  --role-text-primary: #f1f5f9;
+  --role-text-secondary: #94a3b8;
+  --role-accent: #3b82f6;
+  --role-accent-hover: #60a5fa;
+  --role-border: rgba(148, 163, 184, 0.1);
+}
+
+[data-role="staff"] .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
+}
+
+/* Welfare端 - 福委友善介面 (Bright Warm Theme) */
+[data-role="welfare"] {
+  /* Bright and friendly theme */
+  --role-bg-primary: #f0f9ff;
+  --role-bg-secondary: #ffffff;
+  --role-bg-card: #ffffff;
+  --role-text-primary: #1e293b;
+  --role-text-secondary: #64748b;
+  --role-accent: #fb923c;
+  --role-accent-hover: #f97316;
+  --role-border: rgba(203, 213, 225, 0.5);
+}
+
+[data-role="welfare"] .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #f0f9ff, #fff7ed, #f0f9ff);
+}
+
+/* Traveler端 - 旅客友善介面 (Soft Blue Theme) */
+[data-role="traveler"] {
+  /* Soft, inviting theme for travelers */
+  --role-bg-primary: #eff6ff;
+  --role-bg-secondary: #dbeafe;
+  --role-bg-card: #ffffff;
+  --role-text-primary: #1e3a8a;
+  --role-text-secondary: #3b82f6;
+  --role-accent: #3b82f6;
+  --role-accent-hover: #60a5fa;
+  --role-border: rgba(96, 165, 250, 0.2);
+}
+
+[data-role="traveler"] .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #eff6ff, #dbeafe, #bfdbfe);
+}
+
+/* Role-specific widget styling */
+[data-role="staff"] .widget-card {
+  background-color: var(--role-bg-card);
+  border-color: var(--role-border);
+}
+
+[data-role="welfare"] .widget-card {
+  background-color: var(--role-bg-card);
+  border: 2px solid var(--role-border);
+  box-shadow: 0 2px 8px rgba(251, 146, 60, 0.1);
+}
+
+[data-role="traveler"] .widget-card {
+  background-color: var(--role-bg-card);
+  border-color: var(--role-border);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+/* Role-specific button styling */
+[data-role="staff"] button:not(.no-role-style) {
+  transition: all 0.2s ease;
+}
+
+[data-role="staff"] button:not(.no-role-style):hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+[data-role="welfare"] button:not(.no-role-style) {
+  border-radius: 12px;
+}
+
+[data-role="welfare"] button:not(.no-role-style):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.2);
+}
+
+[data-role="traveler"] button:not(.no-role-style):hover {
+  background-color: rgba(59, 130, 246, 0.1);
 }

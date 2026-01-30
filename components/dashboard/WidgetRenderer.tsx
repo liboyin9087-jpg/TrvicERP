@@ -4,6 +4,7 @@ import { GripVertical } from 'lucide-react'; // Assuming lucide-react is availab
 
 import type { Widget } from '@/core/types/dashboard';
 import { WIDGET_COMPONENTS, WIDGET_TYPES, GenericWidgetComponentProps } from './widgetRegistry';
+import { getWidgetData } from '@/lib/widgetDataProvider';
 
 // --- Zod Schema for Widget Type Validation ---
 // This schema validates the 'type' property of the incoming widget object
@@ -112,8 +113,10 @@ export default function WidgetRenderer({ widget, isDragging }: WidgetRendererPro
             </p>
           </div>
         ) : WidgetComponent ? (
-          // Render the actual widget component
-          <WidgetComponent widget={widget} />
+          // Render the actual widget component with injected data
+          <React.Suspense fallback={<div className="flex items-center justify-center h-full"><p className="text-sm text-gray-500">Loading...</p></div>}>
+            <WidgetComponent widget={widget} {...getWidgetData(widget)} />
+          </React.Suspense>
         ) : (
           // Fallback for unexpected cases (should be caught by errorMessage)
           <div className={errorContainerClasses}>

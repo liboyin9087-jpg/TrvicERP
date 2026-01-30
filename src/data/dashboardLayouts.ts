@@ -159,6 +159,43 @@ export const DEFAULT_LAYOUTS: Record<DashboardRole, FixedWidget[]> = {
       },
       layout: { x: 8, y: 6, ...SMALL_WIDGET_DIMENSIONS },
     },
+    // Travel-themed widgets for staff dashboard
+    {
+      id: 'staff-departure-board',
+      type: 'departure-board',
+      title: '近期出發團期',
+      dragHandleClassName: 'drag-handle',
+      config: {
+        maxSessions: 5,
+        showAnimation: true,
+        cardClassName: 'bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg border border-yellow-500/20 shadow-lg',
+      },
+      layout: { x: 0, y: 10, w: 6, h: 5, minW: 4, minH: 4 },
+    },
+    {
+      id: 'staff-passport-tracker',
+      type: 'passport-tracker',
+      title: '護照管理',
+      dragHandleClassName: 'drag-handle',
+      config: {
+        showWarnings: true,
+        warningMonths: 6,
+        cardClassName: 'bg-gradient-to-br from-red-900 to-red-800 rounded-lg border-4 border-yellow-500 shadow-2xl',
+      },
+      layout: { x: 6, y: 10, w: 4, h: 5, minW: 3, minH: 4 },
+    },
+    {
+      id: 'staff-world-map',
+      type: 'world-map',
+      title: '熱門目的地',
+      dragHandleClassName: 'drag-handle',
+      config: {
+        showRanking: true,
+        maxDestinations: 10,
+        cardClassName: 'bg-gradient-to-br from-sky-50 to-blue-50 rounded-lg shadow-lg',
+      },
+      layout: { x: 0, y: 15, w: 8, h: 6, minW: 6, minH: 5 },
+    },
   ],
   welfare: [
     {
@@ -249,6 +286,31 @@ export const DEFAULT_LAYOUTS: Record<DashboardRole, FixedWidget[]> = {
         headerClassName: 'text-xl font-bold text-gray-900 mb-4',
       },
       layout: { x: 6, y: 7, ...CHART_DIMENSIONS }, // Using CHART_DIMENSIONS as default
+    },
+    // Travel-themed widgets for welfare dashboard
+    {
+      id: 'welfare-journey-timeline',
+      type: 'journey-timeline',
+      title: '企劃旅程時間軸',
+      dragHandleClassName: 'drag-handle',
+      config: {
+        maxJourneys: 5,
+        showRevenue: true,
+        cardClassName: 'bg-gradient-to-br from-sky-50 to-blue-50 rounded-lg shadow-lg',
+      },
+      layout: { x: 0, y: 11, w: 6, h: 6, minW: 4, minH: 5 },
+    },
+    {
+      id: 'welfare-revenue-compass',
+      type: 'revenue-compass',
+      title: '預算儀表板',
+      dragHandleClassName: 'drag-handle',
+      config: {
+        showBreakdown: true,
+        targetRevenue: 10000000,
+        cardClassName: 'bg-gradient-to-br from-slate-50 to-blue-50 rounded-lg shadow-lg',
+      },
+      layout: { x: 6, y: 11, w: 6, h: 6, minW: 4, minH: 5 },
     },
   ],
   traveler: [
@@ -385,5 +447,61 @@ export const DEFAULT_WIDGET_LIBRARY: WidgetLibraryItem[] = [
     category: 'info',
     defaultLayout: { x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
     defaultConfig: {},
+  },
+  // Travel-themed widgets
+  {
+    type: 'departure-board',
+    name: 'Departure Board',
+    description: 'Airport-style departure information',
+    category: 'travel',
+    defaultLayout: { x: 0, y: 0, w: 6, h: 5, minW: 4, minH: 4 },
+    defaultConfig: {
+      maxSessions: 5,
+      showAnimation: true,
+    },
+  },
+  {
+    type: 'passport-tracker',
+    name: 'Passport Tracker',
+    description: 'Track passport expiry dates',
+    category: 'travel',
+    defaultLayout: { x: 0, y: 0, w: 4, h: 5, minW: 3, minH: 4 },
+    defaultConfig: {
+      showWarnings: true,
+      warningMonths: 6,
+    },
+  },
+  {
+    type: 'journey-timeline',
+    name: 'Journey Timeline',
+    description: 'Visual journey timeline',
+    category: 'travel',
+    defaultLayout: { x: 0, y: 0, w: 6, h: 6, minW: 4, minH: 5 },
+    defaultConfig: {
+      maxJourneys: 5,
+      showRevenue: true,
+    },
+  },
+  {
+    type: 'world-map',
+    name: 'World Map',
+    description: 'Interactive destination map',
+    category: 'travel',
+    defaultLayout: { x: 0, y: 0, w: 8, h: 6, minW: 6, minH: 5 },
+    defaultConfig: {
+      showRanking: true,
+      maxDestinations: 10,
+    },
+  },
+  {
+    type: 'revenue-compass',
+    name: 'Revenue Compass',
+    description: 'Circular revenue dashboard',
+    category: 'travel',
+    defaultLayout: { x: 0, y: 0, w: 6, h: 6, minW: 4, minH: 5 },
+    defaultConfig: {
+      showBreakdown: true,
+      targetRevenue: 10000000,
+    },
   },
 ];

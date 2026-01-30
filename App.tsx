@@ -48,6 +48,9 @@ const DigitalBriefing = lazy(() => import('./components/client/DigitalBriefing')
 const TourAddons = lazy(() => import('./components/client/TourAddons'));
 const TravelFootprint = lazy(() => import('./components/client/TravelFootprint'));
 
+// Demo Pages
+const TravelWidgetsShowcase = lazy(() => import('./pages/TravelWidgetsShowcase'));
+
 // Shared Components
 const EdgeAssistant = lazy(() => import('./components/shared/EdgeAssistant'));
 const InteractiveMap = lazy(() => import('./components/shared/InteractiveMap'));
@@ -624,7 +627,7 @@ function ProtectedLayout() {
   const userId = useAppStore((state) => state.userId);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden" data-role={userRole}>
       <FloatingSidebar />
       <AppContent />
       <MobileMenu />
@@ -677,6 +680,13 @@ function App() {
           <Route path="/demo" element={
             <Suspense fallback={<PageLoader />}>
               <GlassmorphismDemo />
+            </Suspense>
+          } />
+
+          {/* Travel Widgets Showcase - Public */}
+          <Route path="/travel-showcase" element={
+            <Suspense fallback={<PageLoader />}>
+              <TravelWidgetsShowcase />
             </Suspense>
           } />
 
