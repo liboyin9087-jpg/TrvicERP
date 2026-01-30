@@ -17,7 +17,7 @@ interface IAuthService {
 // These types would typically be in a shared 'core/types' or 'core/auth/types' file.
 export type LoginCredentials = { email: string; password: string; };
 export type UserRole = 'admin' | 'manager' | 'sales' | 'operator' | 'finance' | 'welfare' | 'traveler';
-export type LoginResult = { success: true; user: { id: string; name: string; role: UserRole; }; } | { success: false; error: string; };
+export type LoginResult = { success: true; user: { id: string; name: string; role: UserRole; }; token?: string; } | { success: false; error: string; };
 
 // 2. Define Config Props Interface
 // This interface encapsulates all external configurations and dependencies for the component,
@@ -36,7 +36,7 @@ interface DemoAccount {
 export interface LoginPageConfig {
   authService: IAuthService; // Injected AuthService instance
   demoAccounts?: Record<AppUserRole, DemoAccount>; // Injected Demo accounts (optional, defaults provided)
-  onLoginSuccess: (role: AppUserRole, userId?: string, userName?: string) => void;
+  onLoginSuccess: (role: AppUserRole, userId?: string, userName?: string, token?: string) => void;
   // Utility function for mapping user roles, also injected for flexibility
   mapBackendRoleToAppRole?: (role: UserRole) => AppUserRole; // Optional, default provided
   // Optional: registration/forgot password links for customization
@@ -51,7 +51,7 @@ export interface LoginPageConfig {
 // Props for the LoginPage component. It now takes a config object OR a simpler onLogin callback.
 export interface LoginPageProps {
   config?: LoginPageConfig;
-  onLogin?: (role: AppUserRole, userId?: string, userName?: string) => void;
+  onLogin?: (role: AppUserRole, userId?: string, userName?: string, token?: string) => void;
 }
 
 // --- UTILITY HOOKS & FUNCTIONS (for single responsibility principle) ---
@@ -272,7 +272,7 @@ export default function LoginPage({ config, onLogin }: LoginPageProps) {
         showNotification('登入成功！', 'success');
         setTimeout(() => {
           // 4. Service layer error boundary: Uses the injected mapBackendRoleToAppRole
-          onLoginSuccess(mapBackendRoleToAppRole(result.user!.role), result.user!.id, result.user!.name);
+          onLoginSuccess(mapBackendRoleToAppRole(result.user!.role), result.user!.id, result.user!.name, result.token);
         }, 500);
       } else if (!result.success) {
         // Handle explicit error messages from the service

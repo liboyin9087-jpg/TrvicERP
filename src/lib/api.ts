@@ -13,6 +13,7 @@
 
 // 從集中管理的文件中匯入環境變數
 import { API_BASE_URL, API_VERSION, USE_MOCK_API, MOCK_LATENCY_MS } from '../config/env';
+import { supabase } from './supabase';
 
 /**
  * API Configuration
@@ -310,7 +311,15 @@ export async function apiRequest<T>(
   }
 
   try {
-    const token = localStorage.getItem('auth_token');
+    // 優先從 Supabase session 取得 token，fallback 到 localStorage
+    let token: string | null = null;
+    if (supabase) {
+      const { data: { session } } = await supabase.auth.getSession();
+      token = session?.access_token ?? null;
+    }
+    if (!token) {
+      token = localStorage.getItem('auth_token');
+    }
 
     const response = await fetch(endpoint, {
       ...options,
