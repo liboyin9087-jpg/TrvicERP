@@ -627,7 +627,7 @@ function ProtectedLayout() {
   const userId = useAppStore((state) => state.userId);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden" data-role={userRole}>
       <FloatingSidebar />
       <AppContent />
       <MobileMenu />
