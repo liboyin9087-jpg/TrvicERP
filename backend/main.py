@@ -8,7 +8,8 @@ from app.db.database import Base, engine
 from app.api import (
     auth, users, orders, quotations, customers, tours,
     sessions, corporate_accounts, budgets, polls, reports, line,
-    suppliers, flights, payments, passports, operations
+    suppliers, flights, payments, passports, operations,
+    excel, analytics
 )
 import json
 from typing import Dict, Set
@@ -54,6 +55,9 @@ app.include_router(flights.router)
 app.include_router(payments.router)
 app.include_router(passports.router)
 app.include_router(operations.router)
+# P1 Features
+app.include_router(excel.router)
+app.include_router(analytics.router)
 
 
 # WebSocket connection manager
