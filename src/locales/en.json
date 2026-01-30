@@ -1,0 +1,158 @@
+{
+  "app": {
+    "name": "TravelMaster",
+    "loading": "Loading module...",
+    "logout": "Logout",
+    "login": "Login",
+    "search": "Search..."
+  },
+  "roles": {
+    "staff": "Admin",
+    "welfare": "Welfare",
+    "traveler": "Traveler",
+    "staffTitle": "Administrator",
+    "welfareTitle": "Welfare Committee",
+    "travelerTitle": "Employee"
+  },
+  "nav": {
+    "collapseSidebar": "Collapse sidebar",
+    "coreManagement": "Core Management",
+    "financeOps": "Finance & Ops",
+    "businessTools": "Business Tools",
+    "welfareCommittee": "Welfare Committee",
+    "myTrip": "My Trip",
+    "dashboard": "Dashboard",
+    "sessions": "Sessions",
+    "planner": "Planner",
+    "crm": "CRM",
+    "payments": "Payments",
+    "costing": "Costing",
+    "passport": "Passport",
+    "operations": "Operations",
+    "quotation": "Quotation",
+    "proposalEngine": "Proposal Engine",
+    "insurance": "Insurance",
+    "expense": "Expenses",
+    "welfareDashboard": "Welfare Dashboard",
+    "activityManagement": "Activity Management",
+    "corporateCRM": "Corporate CRM",
+    "travelerApp": "Traveler App",
+    "itinerary": "Itinerary",
+    "voting": "Voting",
+    "briefing": "Briefing"
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content",
+    "mainNavigation": "Main navigation",
+    "mobileNavigation": "Mobile navigation menu"
+  },
+  "auth": {
+    "loginFailed": "Login failed",
+    "loggedOut": "Logged out",
+    "sessionExpired": "Session expired, please log in again"
+  },
+  "portal": {
+    "title": "Client Portal",
+    "subtitle": "Welcome",
+    "loginHelp": "A login link will be sent to your email"
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "reset": "Reset",
+    "user": "User",
+    "notifications": "Notifications",
+    "settings": "Settings"
+  },
+  "green": {
+    "title": "Green Tourism",
+    "subtitle": "Sustainable Tourism Expert Mode",
+    "mode": "Green Tourism Mode",
+    "modeDescription": "Sustainable itinerary planning & carbon footprint calculation",
+    "badge": {
+      "certified": "Green Certified",
+      "ecoScore": "Eco Score",
+      "lowCarbon": "Low Carbon",
+      "organic": "Organic Certified",
+      "community": "Community Sustainable",
+      "ecoEducation": "Eco Education",
+      "carbonNeutral": "Carbon Neutral"
+    },
+    "carbon": {
+      "footprint": "Carbon Footprint",
+      "totalEmission": "Total Emission",
+      "perPerson": "Per Person Emission",
+      "reduction": "Carbon Reduction",
+      "offset": "Carbon Offset",
+      "treesNeeded": "Trees Needed",
+      "offsetCost": "Offset Cost",
+      "unit": "kg CO₂e"
+    },
+    "transport": {
+      "domesticFlight": "Domestic Flight",
+      "internationalFlight": "International Flight",
+      "car": "Gasoline Car",
+      "electricCar": "Electric Car",
+      "tourBus": "Tour Bus",
+      "electricBus": "Electric Bus",
+      "hsr": "High Speed Rail",
+      "tra": "Railway",
+      "metro": "Metro/MRT",
+      "bicycle": "Bicycle",
+      "walking": "Walking",
+      "ferry": "Ferry"
+    },
+    "accommodation": {
+      "fiveStar": "5-Star Hotel",
+      "fourStar": "4-Star Hotel",
+      "threeStar": "3-Star Hotel",
+      "budget": "Budget Hotel",
+      "greenCertified": "Green Certified Lodge",
+      "ecoLodge": "Eco Lodge",
+      "camping": "Camping"
+    },
+    "meal": {
+      "regular": "Regular Restaurant",
+      "localSourced": "Locally Sourced",
+      "vegetarian": "Vegetarian",
+      "organicFarm": "Organic Farm Dining"
+    },
+    "dashboard": {
+      "carbonFootprint": "Avg. Carbon Footprint",
+      "greenRatio": "Green Certification Ratio",
+      "localSpend": "Local Spend Ratio",
+      "greenScore": "Green Score",
+      "carbonTrend": "Carbon Footprint Trend",
+      "sustainabilityDistribution": "Sustainability Distribution"
+    },
+    "score": {
+      "transport": "Transport Low-Carbon",
+      "accommodation": "Accommodation Eco",
+      "meal": "Dining Sustainability",
+      "activity": "Activity Ecology",
+      "community": "Community Impact",
+      "total": "Total Green Score"
+    },
+    "gstc": {
+      "title": "GSTC Sustainable Tourism Criteria",
+      "management": "Sustainable Management",
+      "socioeconomic": "Socioeconomic Benefits",
+      "culturalHeritage": "Cultural Heritage",
+      "environmentalConservation": "Environmental Conservation"
+    },
+    "cost": {
+      "greenTransport": "Green Transport Upgrade",
+      "greenAccommodation": "Green Accommodation Upgrade",
+      "carbonOffset": "Carbon Offset Fee",
+      "ecoGuide": "Eco Guide Fee",
+      "greenSubsidy": "Green Transport Subsidy"
+    }
+  }
+}
