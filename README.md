@@ -1,6 +1,6 @@
-# TrvicERP - 旅遊業企業資源規劃系統
+# TravelMaster — 團體旅遊智能 ERP 系統
 
-智能化旅遊業 ERP 解決方案，整合 AI 助手、多角色權限、即時協作等企業級功能。
+TravelMaster 是專為旅行社打造的垂直式 ERP 解決方案，整合 AI 助手、多角色權限、即時協作等企業級功能。
 
 ## 功能特色
 
@@ -86,7 +86,7 @@ python main.py
 ## 專案結構
 
 ```
-TrvicERP/
+TravelMaster/
 ├── src/
 │   ├── components/       # 共用元件
 │   │   └── ErrorBoundary.tsx

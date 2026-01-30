@@ -61,7 +61,7 @@ const useAICopilotChat = ({
     {
       id: 'welcome',
       role: 'assistant',
-      content: '你好！我是 TrvicERP AI 助手 ✨\n\n我可以幫你：\n• 規劃行程與景點安排\n• 撰寫行銷文案\n• 計算成本與報價\n• 查詢旅遊法規\n\n請問有什麼需要幫忙的嗎？',
+      content: '你好！我是 TravelMaster AI 助手 ✨\n\n我可以幫你：\n• 規劃行程與景點安排\n• 撰寫行銷文案\n• 計算成本與報價\n• 查詢旅遊法規\n\n請問有什麼需要幫忙的嗎？',
       timestamp: Date.now(),
     },
   ],

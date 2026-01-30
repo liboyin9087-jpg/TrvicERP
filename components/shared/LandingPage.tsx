@@ -124,7 +124,7 @@ interface LandingPageProps {
 const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
   header: {
     logoText: 'TM',
-    logoSubtitle: 'TravelMaster OS',
+    logoSubtitle: 'TravelMaster',
     navLinks: [
       { href: '#roles', label: 'Roles' },
       { href: '#capabilities', label: 'Capabilities' },
@@ -629,7 +629,7 @@ export default function LandingPage({ config = DEFAULT_LANDING_PAGE_CONFIG, isWi
     return (
       <div className="rounded-xl border border-gray-700 bg-primary-900 shadow-lg text-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-50">TravelMaster OS Landing Page</h2>
+          <h2 className="text-lg font-semibold text-gray-50">TravelMaster Landing Page</h2>
           <div className="drag-handle p-2 cursor-grab text-gray-400 hover:text-gray-50">
             {/* Standard drag handle icon */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

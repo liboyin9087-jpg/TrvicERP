@@ -1,5 +1,5 @@
 """
-Main FastAPI application for TrvicERP Backend API
+Main FastAPI application for TravelMaster Backend API
 """
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +18,7 @@ Base.metadata.create_all(bind=engine)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="TrvicERP API",
+    title="TravelMaster API",
     description="Travel Management ERP System API",
     version="1.0.0",
     docs_url="/api/docs",
@@ -85,7 +85,7 @@ manager = ConnectionManager()
 async def root():
     """Root endpoint"""
     return {
-        "name": "TrvicERP API",
+        "name": "TravelMaster API",
         "version": "1.0.0",
         "status": "running"
     }

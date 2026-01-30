@@ -8,7 +8,7 @@ import os
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "sqlite:///./trvicerp.db"
+    DATABASE_URL: str = "sqlite:///./travelmaster.db"
     
     # JWT
     JWT_SECRET_KEY: str = "your-super-secret-jwt-key-change-this-in-production"

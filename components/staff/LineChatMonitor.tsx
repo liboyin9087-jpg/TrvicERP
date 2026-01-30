@@ -133,7 +133,7 @@ export default function LineChatMonitor({ config }: LineChatMonitorProps) {
         <h2 className="text-lg font-bold text-gray-900">
           {config.title || "LINE 客服"}
         </h2>
-        {/* [designer] 缺少 drag-handle 結構，不符合 Dashtail/TrvicERP 可拖動元件規範 */}
+        {/* [designer] 缺少 drag-handle 結構，不符合 Dashtail/TravelMaster 可拖動元件規範 */}
         <div className="drag-handle w-8 h-8 flex items-center justify-center cursor-grab text-gray-400 hover:text-gray-600 transition-colors">
           <GripVertical className="w-5 h-5" />
         </div>

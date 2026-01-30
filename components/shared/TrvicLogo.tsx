@@ -2,9 +2,9 @@ import React from 'react';
 import { Plane } from 'lucide-react';
 
 /**
- * TrvicERP Logo Component Configuration
+ * TravelMaster Logo Component Configuration
  */
-interface TrvicLogoProps {
+interface TravelMasterLogoProps {
   /** Size of the logo */
   size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Whether to show text alongside the icon */
@@ -14,17 +14,17 @@ interface TrvicLogoProps {
 }
 
 /**
- * TrvicERP Logo Component
+ * TravelMaster Logo Component
  * Travel-themed logo with airplane and globe
  * @example
  * ```tsx
- * <TrvicLogo size="md" showText showTagline />
+ * <TravelMasterLogo size="md" showText showTagline />
  * ```
  */
-export const TrvicLogo: React.FC<TrvicLogoProps> = ({ 
-  size = 'md', 
+export const TravelMasterLogo: React.FC<TravelMasterLogoProps> = ({
+  size = 'md',
   showText = true,
-  showTagline = true 
+  showTagline = true
 }) => {
   const sizeConfig = {
     sm: {
@@ -67,16 +67,16 @@ export const TrvicLogo: React.FC<TrvicLogoProps> = ({
         <div className={`${config.container} rounded-full bg-gradient-to-br from-brand-sky to-brand-ocean flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow duration-300`}>
           <Plane className={`${config.icon} text-white transform rotate-45`} />
         </div>
-        
+
         {/* Flight Trail Animation */}
         <div className={`absolute -right-1 top-1/2 ${config.trail} bg-gradient-to-r from-travel-sunset to-transparent animate-pulse rounded-full`} />
       </div>
-      
+
       {/* Text Content */}
       {showText && (
         <div className="flex flex-col">
           <div className={`${config.text} font-bold bg-gradient-to-r from-brand-sky to-travel-sunset bg-clip-text text-transparent leading-tight`}>
-            TrvicERP
+            TravelMaster
           </div>
           {showTagline && (
             <div className={`${config.tagline} text-neutral-500 tracking-wider uppercase leading-tight`}>
@@ -89,5 +89,8 @@ export const TrvicLogo: React.FC<TrvicLogoProps> = ({
   );
 };
 
-// Default export for backward compatibility
-export default TrvicLogo;
+/** @deprecated Use TravelMasterLogo instead */
+export const TrvicLogo = TravelMasterLogo;
+
+// Default export
+export default TravelMasterLogo;

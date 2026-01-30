@@ -8,7 +8,7 @@
  * - 頂部高光線條模擬玻璃厚度
  * - 支援 hover 互動效果
  * - 完全響應式設計，支援明確的尺寸限制 (maxWidth, height)
- * - 支援 Dashtail/TrvicERP 拖動規範 (drag-handle)
+ * - 支援 Dashtail/TravelMaster 拖動規範 (drag-handle)
  * - 使用 Tailwind Token 統一顏色管理 (primary-500, primary-900)
  * - 動畫效果遵循設計系統的平滑曲線規範
  */

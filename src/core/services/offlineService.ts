@@ -18,7 +18,7 @@ const uuidv4 = generateUUID;
  * 環境變數或配置檔讀取的預設配置
  */
 export const DEFAULT_OFFLINE_SERVICE_CONFIG = {
-  DB_NAME: 'TrvicERP_OfflineDB',
+  DB_NAME: 'TravelMaster_OfflineDB',
   DB_VERSION: 2, // 增加版本號以觸發onupgradeneeded
   MAX_RETRIES: 5, // 資料庫操作重試次數
   RETRY_DELAY_MS: 200, // 資料庫操作重試初始延遲（指數退避）

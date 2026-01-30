@@ -1,4 +1,4 @@
-# TrvicERP AI Copilot API 說明文件
+# TravelMaster AI Copilot API 說明文件
 
 ## 📋 目錄
 
@@ -79,7 +79,7 @@ REDIS_CACHE_TTL=3600  # 快取過期時間（秒）
 - ✅ 加快回應速度（快取命中率 30-50%）
 - ✅ 降低 LLM 服務負載
 
-**快取鍵格式**：`trvicerp:chat:<md5(mode:message:context)>`
+**快取鍵格式**：`travelmaster:chat:<md5(mode:message:context)>`
 
 ---
 
@@ -151,7 +151,7 @@ curl http://localhost:4000/api/image-status/abc123
 QDRANT_ENABLED=true
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
-QDRANT_COLLECTION_NAME=trvicerp_rules
+QDRANT_COLLECTION_NAME=travelmaster_rules
 ```
 
 **自動初始化**：
@@ -326,7 +326,7 @@ REDIS_CACHE_TTL=3600
 QDRANT_ENABLED=true
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
-QDRANT_COLLECTION_NAME=trvicerp_rules
+QDRANT_COLLECTION_NAME=travelmaster_rules
 QDRANT_API_KEY=  # 選填，Qdrant Cloud 需要
 ```
 
@@ -448,12 +448,12 @@ r.flushdb()
 
 ## 📞 技術支援
 
-- **GitHub**: https://github.com/liboyin9087-jpg/TrvicERP
-- **Email**: support@trvicerp.com
+- **GitHub**: https://github.com/liboyin9087-jpg/TravelMaster
+- **Email**: support@travelmaster.com
 - **文件**: `/docs` 資料夾
 
 ---
 
-**維護者**：TrvicERP 開發團隊  
+**維護者**：TravelMaster 開發團隊  
 **最後更新**：2026-01-29  
 **版本**：2.0.0
