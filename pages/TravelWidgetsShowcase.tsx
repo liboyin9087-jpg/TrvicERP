@@ -83,7 +83,7 @@ export default function TravelWidgetsShowcase() {
         {/* Introduction */}
         <div className="mb-8 bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-blue-100">
           <h2 className="text-2xl font-bold text-slate-800 mb-3">
-            🎨 TravelMaster Travel Theme Transformation
+            🎨 TrvicERP Travel Theme Transformation
           </h2>
           <p className="text-slate-600 mb-4">
             Explore our new travel-themed dashboard widgets designed to bring a modern, 
@@ -242,7 +242,7 @@ export default function TravelWidgetsShowcase() {
       <footer className="bg-white/80 backdrop-blur-sm border-t border-blue-100 mt-8">
         <div className="max-w-7xl mx-auto px-6 py-6 text-center">
           <p className="text-sm text-slate-600">
-            TravelMaster Travel Theme Transformation - Week 1 Implementation
+            TrvicERP Travel Theme Transformation - Week 1 Implementation
           </p>
           <p className="text-xs text-slate-500 mt-1">
             Made with ❤️ for modern travel management

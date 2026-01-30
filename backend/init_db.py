@@ -96,7 +96,7 @@ def seed_users():
 
 def main():
     """Main initialization function"""
-    print("Initializing TravelMaster Database...")
+    print("Initializing TrvicERP Database...")
     print("=" * 50)
     
     init_db()

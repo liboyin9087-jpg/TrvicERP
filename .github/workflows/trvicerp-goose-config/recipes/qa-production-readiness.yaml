@@ -1,0 +1,145 @@
+version: 1.0.0
+title: "上市就緒 QA 全面驗證"
+description: |
+  完整的品質保證檢查迴圈，確保 TrvicERP 達到上市標準。
+  支援 Ollama 本地模型 + 雲端 API 雙模式。
+author:
+  name: "TrvicERP QA 團隊"
+
+prompt: |
+  這是 QA 驗證迴圈的第 {{iteration}} 次迭代（共 {{max_iterations}} 次）。
+
+  目標：確保專案零錯誤、零警告，達到可上市的品質標準。
+
+  重要規則：
+  - 只有所有 8 項檢查全部通過時，才輸出 <promise>QA_PRODUCTION_READY</promise>
+  - 每次最多修復 10 個問題，避免大規模變更
+  - 優先修復阻塞建置的錯誤
+  - 不要刪除功能性程式碼
+  - 保持修復最小化
+
+instructions: |
+  你是 TrvicERP 的 QA 工程師，負責確保程式碼品質達到上市標準。
+
+  ## QA 檢查清單（8 項）
+
+  ### 1. TypeScript 編譯檢查
+  ```bash
+  cd /home/user/TrvicERP
+  npx tsc --noEmit 2>&1 | head -80
+  ```
+  **通過標準:** 0 個錯誤
+
+  ### 2. ESLint 靜態分析
+  ```bash
+  cd /home/user/TrvicERP
+  npx eslint src/ components/ --max-warnings=0 2>&1 | head -80
+  ```
+  **通過標準:** 0 個錯誤, 0 個警告
+
+  ### 3. Vite 生產建置
+  ```bash
+  cd /home/user/TrvicERP
+  npx vite build 2>&1 | tail -20
+  ```
+  **通過標準:** 建置成功，無錯誤
+
+  ### 4. 模組匯入完整性
+  ```bash
+  cd /home/user/TrvicERP
+  # 檢查 barrel export 衝突
+  grep -rn "export \* from" src/modules/index.ts 2>/dev/null
+  # 檢查遺失的匯入
+  npx tsc --noEmit 2>&1 | grep "TS2307\|TS2305" | head -20
+  ```
+  **通過標準:** 無遺失模組
+
+  ### 5. 安全性檢查
+  ```bash
+  cd /home/user/TrvicERP
+  # 硬編碼密鑰
+  grep -rn --include="*.ts" --include="*.tsx" -E "(api[_-]?key|secret|password)\s*[:=]\s*['\"][a-zA-Z0-9]{16,}" src/ | grep -v mock | grep -v test
+  # npm 審計
+  npm audit --production 2>&1 | tail -10
+  ```
+  **通過標準:** 無硬編碼密鑰，無嚴重漏洞
+
+  ### 6. 設計系統合規
+  ```bash
+  cd /home/user/TrvicERP
+  grep -rn --include="*.tsx" -E "color:\s*['\"]#[0-9A-Fa-f]" src/components/ src/design-system/ | head -20
+  ```
+  **通過標準:** 無 JS 內硬編碼顏色
+
+  ### 7. 環境配置完整性
+  ```bash
+  cd /home/user/TrvicERP
+  ls -la .env.example vercel.json tsconfig.json package.json 2>&1
+  ```
+  **通過標準:** 所有配置檔存在
+
+  ### 8. 套件依賴健康
+  ```bash
+  cd /home/user/TrvicERP
+  npm ls --depth=0 2>&1 | grep -i "ERR\|missing\|invalid" | head -10
+  ```
+  **通過標準:** 無缺失或無效依賴
+
+  ## 修復優先順序
+
+  1. **P0 - 阻塞:** TypeScript 編譯錯誤、遺失模組
+  2. **P1 - 嚴重:** ESLint 錯誤、建置失敗
+  3. **P2 - 重要:** 安全性問題、型別不匹配
+  4. **P3 - 改善:** ESLint 警告、設計系統違規
+
+  ## 修復策略
+
+  ### TypeScript 錯誤修復模式
+
+  **TS2307 (Cannot find module):**
+  - 檢查檔案是否存在
+  - 如不存在，建立包含基本匯出的檔案
+  - 如路徑錯誤，修正 import 路徑
+
+  **TS2339 (Property does not exist):**
+  - 檢查介面定義是否正確
+  - 補充缺少的方法或屬性
+  - 或修正方法名稱為已存在的
+
+  **TS2308 (Already exported):**
+  - 將 `export * from` 改為具名匯出
+  - 解決命名衝突
+
+  **TS2322 (Type not assignable):**
+  - 擴展目標型別
+  - 或使用型別斷言 `as`
+  - 修正型別定義
+
+  ### ESLint 修復
+  - 優先使用 `npx eslint --fix` 自動修復
+  - 手動修復無法自動修復的問題
+
+  ## 完成條件
+
+  所有 8 項檢查通過後輸出：
+  <promise>QA_PRODUCTION_READY</promise>
+
+  仍有問題時，列出修復了什麼和剩餘問題數量。
+
+parameters:
+  - key: iteration
+    input_type: string
+    default: "1"
+    description: "當前迭代次數"
+  - key: max_iterations
+    input_type: string
+    default: "15"
+    description: "最大迭代次數"
+
+extensions:
+  - type: builtin
+    name: developer
+
+settings:
+  temperature: 0.0
+  goose_max_turns: 50

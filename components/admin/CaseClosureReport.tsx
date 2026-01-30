@@ -1,5 +1,5 @@
 // ============================================
-// File Path: /workspaces/TravelMaster/components/admin/CaseClosureReport.tsx
+// File Path: /workspaces/TrvicERP/components/admin/CaseClosureReport.tsx
 // ============================================
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -447,7 +447,7 @@ function useReportExportService({ session, feedback, incidents, totalPax, durati
         </div>
 
         <div class="footer">
-          本報告由 TravelMaster 自動生成 | ${new Date().toLocaleString('zh-TW')}
+          本報告由 TravelMaster OS 自動生成 | ${new Date().toLocaleString('zh-TW')}
         </div>
       </body>
       </html>
@@ -607,7 +607,7 @@ ${feedback.improvements.map(i => `△ ${i}`).join('\n')}
 ${incidents.length > 0 ? incidents.map(inc => `- [${inc.type}] ${inc.description} → ${inc.resolution}`).join('\n') : '無特殊事件'}
 
 ---
-本報告由 TravelMaster 旅遊管理系統自動生成
+本報告由 TrvicERP 旅遊管理系統自動生成
     `.trim());
 
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');

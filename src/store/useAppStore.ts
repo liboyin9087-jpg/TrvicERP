@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthStore>()(
       resetAuth: () => set(initialAuthState),
     }),
     {
-      name: 'travelmaster-auth-storage', // Unique name for this store's persistence
+      name: 'trvic-auth-storage', // Unique name for this store's persistence
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,

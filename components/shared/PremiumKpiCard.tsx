@@ -44,7 +44,7 @@ interface PremiumKpiCardProps {
  * - 內部極光效果 (Inner Aurora)
  * - 噪點紋理增加質感
  *
- * 遵循 TravelMaster Kintone 獨立性及 Dashtail UI 規範
+ * 遵循 TrvicERP Kintone 獨立性及 Dashtail UI 規範
  */
 const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
   title,
@@ -54,7 +54,7 @@ const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
   icon: Icon,
   variant = 'default',
   className,
-  isDraggable = true, // Defaulting to true as per TravelMaster's draggable component norm
+  isDraggable = true, // Defaulting to true as per TrvicERP's draggable component norm
 }) => {
   const isPositive = trend !== undefined && trend >= 0;
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
@@ -110,7 +110,7 @@ const PremiumKpiCard: React.FC<PremiumKpiCardProps> = ({
         // Apply focus-within to the card body if it contains interactive elements or is generally selectable
         "focus-within:ring-2 focus-within:ring-primary-300 active:bg-primary-800"
       )}>
-        {/* Drag Handle Structure (TravelMaster 可拖動元件規範) */}
+        {/* Drag Handle Structure (TrvicERP 可拖動元件規範) */}
         {isDraggable && (
           <div className="absolute top-2 right-2 p-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50 drag-handle">
             <GripVertical size={16} className="text-gray-500 hover:text-gray-300" />

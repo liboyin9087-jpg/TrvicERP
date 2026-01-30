@@ -93,7 +93,7 @@ const DEFAULT_I18N: EdgeAssistantI18n = {
   confirmExecute: '確認執行',
   cancel: '取消',
   pendingActionsResolvedContent: '\n\n已取消待確認的操作。',
-  initialWelcomeMessage: '您好！我是 TravelMaster AI 助理，有什麼可以幫助您的嗎？您可以問我關於行程規劃、報價計算、法規諮詢等問題，或請我幫您導航到特定頁面。',
+  initialWelcomeMessage: '您好！我是 TrvicERP AI 助理，有什麼可以幫助您的嗎？您可以問我關於行程規劃、報價計算、法規諮詢等問題，或請我幫您導航到特定頁面。',
   quickActions: ['推薦熱門行程', '查詢客戶資料', '計算報價', '法規諮詢'],
   modes: [
     { id: 'general', label: '🧭 通用', description: '團控通用助手' },

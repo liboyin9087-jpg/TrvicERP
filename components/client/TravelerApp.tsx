@@ -29,7 +29,7 @@ import Button from "@/design-system/Button"; // Assuming design-system Button ha
 // Types - Moved to a separate file
 // ============================================
 
-// Assume these types are defined in `/workspaces/TravelMaster/types/traveler-app.ts`
+// Assume these types are defined in `/workspaces/TrvicERP/types/traveler-app.ts`
 /*
 export type TabKey =
   | "home"

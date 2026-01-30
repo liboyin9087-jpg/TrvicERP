@@ -1,6 +1,6 @@
-# TravelMaster Backend API
+# TrvicERP Backend API
 
-FastAPI-based backend server for TravelMaster Travel Management System.
+FastAPI-based backend server for TrvicERP Travel Management System.
 
 ## Features
 
@@ -158,16 +158,16 @@ Connect to `ws://localhost:4000/ws` and send/receive:
 
 ## Database
 
-Default: SQLite (`travelmaster.db`)
+Default: SQLite (`trvicerp.db`)
 
 To use PostgreSQL:
 ```env
-DATABASE_URL=postgresql://user:password@localhost/travelmaster
+DATABASE_URL=postgresql://user:password@localhost/trvicerp
 ```
 
 To use MySQL:
 ```env
-DATABASE_URL=mysql://user:password@localhost/travelmaster
+DATABASE_URL=mysql://user:password@localhost/trvicerp
 ```
 
 ## Development
@@ -209,4 +209,4 @@ backend/
 
 ## License
 
-Proprietary - TravelMaster
+Proprietary - TrvicERP

@@ -49,7 +49,7 @@ export function exportRosterToCSV(options: ExportOptions): void {
 
 /**
  * exportService 的通用工具函式和常數
- * 新增檔案: /workspaces/TravelMaster/src/lib/export/utils.ts
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/utils.ts
  */
 
 // ============================================
@@ -205,7 +205,7 @@ export function generateFilename(
 
 /**
  * CSV 匯出服務
- * 新增檔案: /workspaces/TravelMaster/src/lib/export/csvExportService.ts
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/csvExportService.ts
  */
 
 // ============================================
@@ -260,7 +260,7 @@ export function exportToCSVInternal(options: ExportOptions): void {
 
 /**
  * Excel 匯出服務
- * 新增檔案: /workspaces/TravelMaster/src/lib/export/excelExportService.ts
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/excelExportService.ts
  */
 
 // ============================================
@@ -464,7 +464,7 @@ export function exportToExcelInternal(type: DocumentType, options: ExportOptions
 
 /**
  * PDF 匯出服務 (透過瀏覽器列印功能)
- * 新增檔案: /workspaces/TravelMaster/src/lib/export/pdfExportService.ts
+ * 新增檔案: /workspaces/TrvicERP/src/lib/export/pdfExportService.ts
  */
 
 // ============================================
@@ -635,7 +635,7 @@ export function exportRosterToPDF(options: ExportOptions): void {
         </tbody>
       </table>
       <div class="footer">
-        列印日期：${new Date().toLocaleDateString('zh-TW')} | TravelMaster 旅遊管理系統
+        列印日期：${new Date().toLocaleDateString('zh-TW')} | TrvicERP 旅遊管理系統
       </div>
     </body>
     </html>
@@ -692,7 +692,7 @@ export function exportRoomListToPDF(options: ExportOptions): void {
         </tbody>
       </table>
       <div class="footer">
-        列印日期：${new Date().toLocaleDateString('zh-TW')} | TravelMaster 旅遊管理系統
+        列印日期：${new Date().toLocaleDateString('zh-TW')} | TrvicERP 旅遊管理系統
       </div>
     </body>
     </html>
@@ -778,7 +778,7 @@ export function exportSeatChartToPDF(options: ExportOptions): void {
         ${seatGridHTML}
       </div>
       <div class="footer">
-        列印日期：${new Date().toLocaleDateString('zh-TW')} | TravelMaster 旅遊管理系統
+        列印日期：${new Date().toLocaleDateString('zh-TW')} | TrvicERP 旅遊管理系統
       </div>
     </body>
     </html>
@@ -846,7 +846,7 @@ export function exportMeetingInfoToPDF(options: ExportOptions): void {
           : ''
       }
       <div class="footer">
-        列印日期：${new Date().toLocaleDateString('zh-TW')} | TravelMaster 旅遊管理系統
+        列印日期：${new Date().toLocaleDateString('zh-TW')} | TrvicERP 旅遊管理系統
       </div>
     </body>
     </html>
@@ -905,7 +905,7 @@ export function exportItineraryToPDF(options: ExportOptions): void {
       </div>
       ${itineraryHTML}
       <div class="footer">
-        列印日期：${new Date().toLocaleDateString('zh-TW')} | TravelMaster 旅遊管理系統
+        列印日期：${new Date().toLocaleDateString('zh-TW')} | TrvicERP 旅遊管理系統
       </div>
     </body>
     </html>

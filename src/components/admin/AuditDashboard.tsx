@@ -87,7 +87,7 @@ function WidgetContainer({
       className={`bg-surface rounded-lg border border-border-default shadow-sm ${className}`}
     >
       <div className="flex items-center justify-between p-4 border-b border-border-default drag-handle">
-        {/* .drag-handle is essential for Dashtail/TravelMaster draggable widgets */}
+        {/* .drag-handle is essential for Dashtail/TrvicERP draggable widgets */}
         <div>
           {typeof title === "string" ? (
             <h2 className="text-lg font-semibold text-text-primary">{title}</h2>

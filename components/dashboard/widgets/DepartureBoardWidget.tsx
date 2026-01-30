@@ -140,7 +140,7 @@ export default function DepartureBoardWidget({ widget, sessions = [] }: Departur
       {/* Footer Info */}
       <div className="mt-4 pt-4 border-t border-yellow-500/30 text-center">
         <p className="text-xs text-yellow-400/40 font-mono">
-          TravelMaster Departure System v2.0
+          TrvicERP Departure System v2.0
         </p>
       </div>
     </div>

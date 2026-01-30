@@ -416,7 +416,7 @@ class ConsoleSecurityAlertService implements ISecurityAlertService {
       if (typeof window !== "undefined" && "Notification" in window) {
         if (Notification.permission === "granted") {
           try {
-            new Notification("TravelMaster Security Alert", {
+            new Notification("TrvicERP Security Alert", {
               body: `Action: ${auditLog.action} by ${auditLog.user_name} on ${auditLog.resource_type}:${auditLog.resource_id}`,
               icon: "/favicon.ico",
               tag: `audit-alert-${auditLog.id}`,

@@ -1,4 +1,4 @@
-// 文件路徑: /workspaces/TravelMaster/src/lib/api.ts
+// 文件路徑: /workspaces/TrvicERP/src/lib/api.ts
 
 // 為了實現環境變數的集中管理，我們假設存在一個 `src/config/env.ts` 文件
 // 該文件負責解析並匯出環境變數。以下是其假設內容：

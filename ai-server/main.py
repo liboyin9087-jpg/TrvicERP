@@ -1,6 +1,6 @@
 # ai-server/main.py
 """
-TravelMaster AI Copilot - FastAPI 後端
+TrvicERP AI Copilot - FastAPI 後端
 實現多智能體動態路由架構
 使用 Google Gemini (免費額度) 或 SiliconFlow + DeepSeek-V3
 優化版：Redis 快取層 + Qdrant 向量資料庫 + 非同步圖片生成
@@ -45,7 +45,7 @@ load_dotenv(os.path.join(BASE_DIR, "..", ".env"), override=False)
 load_dotenv(os.path.join(BASE_DIR, "..", ".env.local"), override=False)
 
 app = FastAPI(
-    title="TravelMaster AI Copilot",
+    title="TrvicERP AI Copilot",
     description="多智能體動態路由 AI 服務",
     version="2.0.0"
 )
@@ -104,7 +104,7 @@ REDIS_CACHE_TTL = int(os.getenv("REDIS_CACHE_TTL", "3600"))  # 1 小時
 QDRANT_ENABLED = os.getenv("QDRANT_ENABLED", "true").lower() == "true" and QDRANT_AVAILABLE
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
-QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION_NAME", "travelmaster_rules")
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION_NAME", "trvicerp_rules")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY") or None
 
 # 圖片生成非同步設定
@@ -345,7 +345,7 @@ async def close_redis():
 def generate_cache_key(mode: str, message: str, context: str = "") -> str:
     """生成快取鍵"""
     content = f"{mode}:{message}:{context}"
-    return f"travelmaster:chat:{hashlib.md5(content.encode()).hexdigest()}"
+    return f"trvicerp:chat:{hashlib.md5(content.encode()).hexdigest()}"
 
 
 async def get_cached_response(mode: str, message: str, context: str = "") -> Optional[Dict[str, Any]]:
@@ -1761,21 +1761,21 @@ async def startup_event():
     """應用啟動時初始化"""
     await init_redis()
     init_qdrant()
-    print("🚀 TravelMaster AI Copilot 已啟動")
+    print("🚀 TrvicERP AI Copilot 已啟動")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """應用關閉時清理資源"""
     await close_redis()
-    print("👋 TravelMaster AI Copilot 已關閉")
+    print("👋 TrvicERP AI Copilot 已關閉")
 
 
 # 開發時直接執行
 if __name__ == "__main__":
     import uvicorn
     print("=" * 80)
-    print("🚀 TravelMaster AI Copilot 啟動中...")
+    print("🚀 TrvicERP AI Copilot 啟動中...")
     print("=" * 80)
     print(f"📚 法規知識庫: {'✅ 已載入' if len(RULES) > 50 else '❌ 未載入'}")
     print(f"🔑 Gemini API: {'✅ 已設定' if os.getenv('GOOGLE_API_KEY') else '❌ 未設定'}")

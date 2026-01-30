@@ -1,5 +1,5 @@
 """
-Database models for TravelMaster
+Database models for TrvicERP
 """
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, ForeignKey, JSON
 from sqlalchemy.orm import relationship

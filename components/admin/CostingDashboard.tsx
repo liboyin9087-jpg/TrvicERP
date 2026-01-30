@@ -83,9 +83,9 @@ export default function CostingDashboard({
   const formatAmountToMillion = (amount: number) => `NT$ ${(amount / 10000).toFixed(0)}萬`;
 
   return (
-    // 遵守 Dashtail/TravelMaster 規範：元件作為一個可拖曳的 Widget，需有標準卡片結構
+    // 遵守 Dashtail/TrvicERP 規範：元件作為一個可拖曳的 Widget，需有標準卡片結構
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full flex flex-col">
-      {/* 遵守 Dashtail/TravelMaster 規範：拖曳把手結構 */}
+      {/* 遵守 Dashtail/TrvicERP 規範：拖曳把手結構 */}
       <div className="drag-handle flex items-center justify-between mb-4 pb-2 border-b border-gray-100 cursor-grab">
         {/* 調整字體大小為 widget 標題常見的 text-lg */}
         <h2 className="text-lg font-semibold text-gray-900">{widgetTitle}</h2>

@@ -1,11 +1,11 @@
-# TravelMaster AI Server 安裝與部署指南
+# TrvicERP AI Server 安裝與部署指南
 
 ## 📦 安裝步驟
 
 ### 1. 基礎依賴安裝
 
 ```bash
-cd /workspaces/TravelMaster/ai-server
+cd /workspaces/TrvicERP/ai-server
 pip install -r requirements.txt
 ```
 
@@ -90,7 +90,7 @@ docker run -d \
 #### AI Server
 
 ```bash
-cd /workspaces/TravelMaster/ai-server
+cd /workspaces/TrvicERP/ai-server
 python main.py
 ```
 
@@ -449,8 +449,8 @@ REDIS_PASSWORD=your_strong_password
 ## 📞 支援
 
 - **文件**：[README.md](README.md)
-- **GitHub Issues**：https://github.com/liboyin9087-jpg/TravelMaster/issues
-- **Email**：support@travelmaster.com
+- **GitHub Issues**：https://github.com/liboyin9087-jpg/TrvicERP/issues
+- **Email**：support@trvicerp.com
 
 ---
 

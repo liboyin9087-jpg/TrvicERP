@@ -175,7 +175,7 @@ interface ButtonConfig {
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, ButtonConfig {}
 
 /**
- * A versatile Button component for TravelMaster design system.
+ * A versatile Button component for TrvicERP design system.
  * It supports various visual variants, sizes, a loading state, and optional
  * support for Kintone's .drag-handle class for widget dragging.
  */
