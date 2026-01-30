@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ArrowLeft, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import type { WidgetType } from '../components/dashboard/widgetRegistry';
 import DepartureBoardWidget from '../components/dashboard/widgets/DepartureBoardWidget';
 import PassportTrackerWidget from '../components/dashboard/widgets/PassportTrackerWidget';
 import JourneyTimelineWidget from '../components/dashboard/widgets/JourneyTimelineWidget';
@@ -14,8 +15,6 @@ import { EmptyState } from '../components/shared/EmptyStateIllustrations';
  * Demonstrates all the new travel-themed widgets
  */
 export default function TravelWidgetsShowcase() {
-  const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
-
   const widgets = [
     {
       id: 'departure-board',
@@ -128,7 +127,7 @@ export default function TravelWidgetsShowcase() {
                   <WidgetComponent
                     widget={{
                       id: widget.id,
-                      type: widget.id as any,
+                      type: widget.id as WidgetType,
                       title: widget.name,
                       config: {},
                       layout: { i: widget.id, x: 0, y: 0, w: 4, h: 4 },

@@ -16,6 +16,10 @@ interface TrvicLogoProps {
 /**
  * TrvicERP Logo Component
  * Travel-themed logo with airplane and globe
+ * @example
+ * ```tsx
+ * <TrvicLogo size="md" showText showTagline />
+ * ```
  */
 export const TrvicLogo: React.FC<TrvicLogoProps> = ({ 
   size = 'md', 
@@ -85,4 +89,5 @@ export const TrvicLogo: React.FC<TrvicLogoProps> = ({
   );
 };
 
+// Default export for backward compatibility
 export default TrvicLogo;

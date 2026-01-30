@@ -7,9 +7,10 @@ import React from 'react';
 
 /**
  * No Customers - Hot Air Balloon
+ * SVG illustration for empty customer list state
  */
 export const NoCustomersIllustration: React.FC<{ className?: string }> = ({ className = "w-32 h-32" }) => (
-  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hot air balloon illustration representing no customers yet">
     {/* Sky Background */}
     <rect width="200" height="200" fill="#e0f2fe" />
     
@@ -42,9 +43,10 @@ export const NoCustomersIllustration: React.FC<{ className?: string }> = ({ clas
 
 /**
  * No Sessions - Airplane on Runway
+ * SVG illustration for empty sessions list state
  */
 export const NoSessionsIllustration: React.FC<{ className?: string }> = ({ className = "w-32 h-32" }) => (
-  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Airplane on runway illustration representing no sessions scheduled">
     {/* Sky */}
     <rect width="200" height="120" fill="#bfdbfe" />
     
@@ -78,9 +80,10 @@ export const NoSessionsIllustration: React.FC<{ className?: string }> = ({ class
 
 /**
  * No Orders - Empty Suitcase
+ * SVG illustration for empty orders list state
  */
 export const NoOrdersIllustration: React.FC<{ className?: string }> = ({ className = "w-32 h-32" }) => (
-  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Empty suitcase illustration representing no orders found">
     {/* Background */}
     <rect width="200" height="200" fill="#fef3c7" />
     
@@ -110,9 +113,10 @@ export const NoOrdersIllustration: React.FC<{ className?: string }> = ({ classNa
 
 /**
  * No Quotes - Blank Map
+ * SVG illustration for empty quotes list state
  */
 export const NoQuotesIllustration: React.FC<{ className?: string }> = ({ className = "w-32 h-32" }) => (
-  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg">
+  <svg viewBox="0 0 200 200" className={className} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Blank map illustration representing no quotes available">
     {/* Background */}
     <rect width="200" height="200" fill="#f1f5f9" />
     

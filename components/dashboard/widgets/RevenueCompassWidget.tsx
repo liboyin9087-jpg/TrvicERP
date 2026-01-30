@@ -54,7 +54,8 @@ export default function RevenueCompassWidget({
   };
 
   const percentage = Math.min((displayRevenue / targetRevenue) * 100, 100);
-  const rotation = (percentage / 100) * 270 - 135; // -135 to 135 degrees
+  // Ensure needle stays within valid range (-135 to 135 degrees)
+  const rotation = Math.max(-135, Math.min(135, (percentage / 100) * 270 - 135));
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('zh-TW', {
@@ -190,7 +191,7 @@ export default function RevenueCompassWidget({
           </div>
           <div className="space-y-2">
             {breakdownItems.map((item) => {
-              const itemPercentage = (item.value / displayRevenue) * 100;
+  const itemPercentage = displayRevenue > 0 ? (item.value / displayRevenue) * 100 : 0;
               
               return (
                 <div key={item.key}>

@@ -152,7 +152,11 @@ export default function JourneyTimelineWidget({ widget, journeys = [] }: Journey
                           <StatusIcon className={`w-5 h-5 ${statusConfig.textColor}`} />
                           <h4 className="text-lg font-bold text-slate-800">{journey.destination}</h4>
                         </div>
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusConfig.textColor} bg-${journey.status === 'ongoing' ? 'green' : journey.status === 'upcoming' ? 'sky' : 'slate'}-100`}>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusConfig.textColor} ${
+                          journey.status === 'ongoing' ? 'bg-green-100' : 
+                          journey.status === 'upcoming' ? 'bg-sky-100' : 
+                          'bg-slate-100'
+                        }`}>
                           {statusConfig.label}
                         </span>
                       </div>

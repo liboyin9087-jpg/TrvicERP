@@ -159,7 +159,7 @@ export default {
         "spin-slow": "spin 8s linear infinite",
         "gradient-shift": "gradient-shift 3s ease infinite",
         breathe: "breathe 4s ease-in-out infinite",
-        // Travel theme animations
+        // Travel theme animations (use CSS-defined keyframes)
         'fly': 'fly-across 15s linear infinite',
         'float-cloud': 'float-cloud 8s ease-in-out infinite',
         'float-delayed': 'float-cloud 8s ease-in-out 2s infinite',
@@ -188,28 +188,7 @@ export default {
           "0%, 100%": { transform: "scale(1)", opacity: "0.8" },
           "50%": { transform: "scale(1.02)", opacity: "1" },
         },
-        // Travel theme keyframes
-        "fly-across": {
-          "0%": { transform: "translateX(-100%) translateY(0) rotate(-10deg)" },
-          "100%": { transform: "translateX(300%) translateY(-50px) rotate(10deg)" },
-        },
-        "float-cloud": {
-          "0%, 100%": { transform: "translateX(0) translateY(0)" },
-          "50%": { transform: "translateX(20px) translateY(-10px)" },
-        },
-        "flip-passport": {
-          "0%": { transform: "rotateY(0deg)" },
-          "50%": { transform: "rotateY(90deg)" },
-          "100%": { transform: "rotateY(0deg)" },
-        },
-        "bounce-marker": {
-          "0%, 100%": { transform: "translateY(0) scale(1)" },
-          "50%": { transform: "translateY(-10px) scale(1.1)" },
-        },
-        "ripple": {
-          "0%": { transform: "scale(1)", opacity: "1" },
-          "100%": { transform: "scale(3)", opacity: "0" },
-        },
+        // Note: Travel theme keyframes defined in styles/travel-animations.css
       },
       borderRadius: {
         "4xl": "2rem",
