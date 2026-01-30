@@ -796,21 +796,72 @@ export class OfflineService {
   }
 
   /**
-   * 模擬發送資料到後端 API
-   * TODO: 替換為實際的 HTTP 請求
+   * 發送同步資料到後端 API
+   * 根據操作類型 (create/update/delete) 對應至 HTTP 方法 (POST/PUT/DELETE)
    */
   private async sendToBackend(item: SyncQueueItem): Promise<{ success: boolean; message?: string }> {
-    console.log(`Simulating API call for ${item.operation} on ${item.table} (ID: ${item.data.id})...`);
-    return new Promise(resolve => {
-      setTimeout(() => {
-        // 模擬成功或失敗
-        if (Math.random() > 0.1) { // 90% 成功
-          resolve({ success: true, message: 'Simulated success' });
-        } else { // 10% 失敗
-          resolve({ success: false, message: 'Simulated network error or backend issue' });
-        }
-      }, 500 + Math.random() * 1000); // 模擬網路延遲
-    });
+    const baseUrl = this.getApiBaseUrl();
+    const endpoint = `${baseUrl}/api/v1/${item.table}`;
+
+    try {
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      let response: Response;
+
+      switch (item.operation) {
+        case 'create':
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(item.data),
+          });
+          break;
+        case 'update':
+          response = await fetch(`${endpoint}/${item.data.id}`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(item.data),
+          });
+          break;
+        case 'delete':
+          response = await fetch(`${endpoint}/${item.data.id}`, {
+            method: 'DELETE',
+            headers,
+          });
+          break;
+        default:
+          return { success: false, message: `Unknown operation: ${item.operation}` };
+      }
+
+      if (response.ok) {
+        return { success: true, message: `${item.operation} on ${item.table}/${item.data.id} succeeded` };
+      }
+
+      const errorBody = await response.text().catch(() => '');
+      return {
+        success: false,
+        message: `HTTP ${response.status}: ${errorBody || response.statusText}`,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, message: `Network error: ${message}` };
+    }
+  }
+
+  /**
+   * 取得 API 的 base URL，可從環境變數或預設值獲取
+   */
+  private getApiBaseUrl(): string {
+    if (typeof window !== 'undefined') {
+      // 嘗試從 meta tag 或環境中取得，否則使用預設值
+      const metaTag = document.querySelector<HTMLMetaElement>('meta[name="api-base-url"]');
+      if (metaTag?.content) return metaTag.content;
+    }
+    return 'http://localhost:4000';
   }
 
   /**

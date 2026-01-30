@@ -701,14 +701,68 @@ const DEFAULT_PERMISSION_MATRIX: PermissionRule[] = [
 ];
 
 /**
+ * 組織架構檢查器介面
+ * 提供團隊和部門層級的歸屬檢查，用於權限等級驗證。
+ * 實作時應根據實際組織架構（例如 HR 系統或 LDAP）提供查詢邏輯。
+ */
+export interface IOrganizationChecker {
+  /** 檢查使用者是否與資源擁有者屬於同一團隊 */
+  isInSameTeam(userId: string, resourceOwnerId: string): boolean;
+  /** 檢查使用者是否與資源擁有者屬於同一部門 */
+  isInSameDepartment(userId: string, userDepartment: string, resourceOwnerId: string): boolean;
+}
+
+/**
+ * 預設組織架構檢查器
+ * 基於部門名稱的簡易比對邏輯。在實際應用中應替換為查詢 HR 系統或組織資料庫。
+ */
+export class DefaultOrganizationChecker implements IOrganizationChecker {
+  /**
+   * 團隊對照表：團隊名稱 -> 成員 ID 集合
+   * 可在建構時注入，或從外部系統載入。
+   */
+  private teamMembers: Map<string, Set<string>>;
+  /**
+   * 成員所屬部門對照表：成員 ID -> 部門名稱
+   */
+  private memberDepartments: Map<string, string>;
+
+  constructor(
+    teamMembers?: Map<string, Set<string>>,
+    memberDepartments?: Map<string, string>
+  ) {
+    this.teamMembers = teamMembers ?? new Map();
+    this.memberDepartments = memberDepartments ?? new Map();
+  }
+
+  isInSameTeam(userId: string, resourceOwnerId: string): boolean {
+    // 遍歷所有團隊，檢查兩者是否在同一團隊
+    for (const [, members] of this.teamMembers) {
+      if (members.has(userId) && members.has(resourceOwnerId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isInSameDepartment(userId: string, userDepartment: string, resourceOwnerId: string): boolean {
+    const ownerDepartment = this.memberDepartments.get(resourceOwnerId);
+    if (!ownerDepartment) {
+      // 若無法查到資源擁有者的部門資訊，回退至同一部門假設不成立
+      return false;
+    }
+    return userDepartment === ownerDepartment;
+  }
+}
+
+/**
  * 權限矩陣服務配置介面
  * 允許在實例化服務時注入初始規則或其他依賴項，提高可測試性和 Kintone 獨立性。
  */
 export interface PermissionMatrixServiceConfig {
   initialRules?: PermissionRule[];
   auditService?: IPermissionAuditService;
-  // 可以加入其他依賴，例如一個更通用的日誌服務
-  // logger?: ILogger;
+  organizationChecker?: IOrganizationChecker;
 }
 
 /**
@@ -718,6 +772,7 @@ export interface PermissionMatrixServiceConfig {
 export class PermissionMatrixService {
   private permissionRules: Map<string, PermissionRule> = new Map();
   private auditService: IPermissionAuditService;
+  private organizationChecker: IOrganizationChecker;
 
   constructor(config?: PermissionMatrixServiceConfig) {
     // 初始化權限規則
@@ -733,6 +788,8 @@ export class PermissionMatrixService {
 
     // 注入審計服務，如果未提供則使用預設實例
     this.auditService = config?.auditService || new PermissionAuditService();
+    // 注入組織架構檢查器，如果未提供則使用預設實例
+    this.organizationChecker = config?.organizationChecker || new DefaultOrganizationChecker();
   }
 
   /**
@@ -767,8 +824,8 @@ export class PermissionMatrixService {
     // 按優先級排序，使用最高優先級的規則（數字越小優先級越高）
     const rule = applicableRules.sort((a, b) => a.priority - b.priority)[0];
 
-    // 檢查權限等級
-    const levelCheck = this.checkPermissionLevel(rule, userId, resourceOwnerId);
+    // 檢查權限等級（傳入 userDepartment 以支援部門層級檢查）
+    const levelCheck = this.checkPermissionLevel(rule, userId, resourceOwnerId, userDepartment);
     if (!levelCheck.granted) {
       this.auditService.logPermissionViolation(userId, userRole, resource, action, levelCheck.reason!, { ipAddress, userAgent });
       return levelCheck;
@@ -963,7 +1020,8 @@ export class PermissionMatrixService {
   private checkPermissionLevel(
     rule: PermissionRule,
     userId: string,
-    resourceOwnerId?: string
+    resourceOwnerId?: string,
+    userDepartment?: string
   ): PermissionCheckResult {
     switch (rule.level) {
       case 'none':
@@ -982,11 +1040,37 @@ export class PermissionMatrixService {
           reason: '只能操作自己的資源，但未提供資源所有者信息或不匹配'
         };
       case 'team':
+        // 若未提供資源擁有者 ID，無法進行團隊歸屬檢查
+        if (!resourceOwnerId) {
+          return { granted: true, conditions: ['需提供資源擁有者 ID 以完整驗證團隊權限'] };
+        }
+        // 自己的資源一定通過
+        if (userId === resourceOwnerId) {
+          return { granted: true };
+        }
+        if (this.organizationChecker.isInSameTeam(userId, resourceOwnerId)) {
+          return { granted: true };
+        }
+        return {
+          granted: false,
+          reason: `用戶 ${userId} 與資源擁有者 ${resourceOwnerId} 不在同一團隊`
+        };
       case 'department':
-        // 這些需要更複雜的邏輯，例如查詢用戶的團隊/部門歸屬和資源的團隊/部門歸屬。
-        // 為簡化，暫時視為通過，但實際應用中應實現。
-        // TODO: Implement actual team/department checks based on your organization structure or inject a checker
-        return { granted: true, reason: `需檢查 ${rule.level} 級別，此為簡化通過` };
+        // 若未提供資源擁有者 ID，無法進行部門歸屬檢查
+        if (!resourceOwnerId) {
+          return { granted: true, conditions: ['需提供資源擁有者 ID 以完整驗證部門權限'] };
+        }
+        // 自己的資源一定通過
+        if (userId === resourceOwnerId) {
+          return { granted: true };
+        }
+        if (this.organizationChecker.isInSameDepartment(userId, userDepartment || '', resourceOwnerId)) {
+          return { granted: true };
+        }
+        return {
+          granted: false,
+          reason: `用戶 ${userId} 與資源擁有者 ${resourceOwnerId} 不在同一部門`
+        };
       default:
         return {
           granted: false,

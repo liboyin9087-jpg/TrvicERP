@@ -84,6 +84,8 @@ export interface AuditLogQuery {
   date_to?: string;
   severity?: AuditLog["severity"] | AuditLog["severity"][];
   tags?: string[];
+  /** 搜尋 metadata 中的 key 或 value（模糊比對） */
+  metadata_search?: string;
   limit?: number;
   offset?: number;
   order_by?: "timestamp" | "action" | "severity";

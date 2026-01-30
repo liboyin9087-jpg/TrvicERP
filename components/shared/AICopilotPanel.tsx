@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // import { aiService } from '@/lib/ai/aiService'; // Moved to useAICopilotChat hook
-import { useFunctionExecutor, type FunctionExecutionResult } from '@/hooks/useFunctionExecutor';
+import { useFunctionExecutor, type FunctionExecutionResult, type UseFunctionExecutorConfig } from '@/hooks/useFunctionExecutor';
 // import { useAppStore } from '@/store/useAppStore'; // Removed direct dependency
 import type { AIMode, ChatMessage, FunctionCall, PendingAction } from '@/types/ai';
 
@@ -20,6 +20,8 @@ interface UseAICopilotChatProps {
   userId: string | null;
   initialMessages?: ChatMessage[];
   defaultMode?: AIMode;
+  /** 函數執行器配置，若提供則啟用 AI 函數呼叫整合 */
+  functionExecutorConfig?: UseFunctionExecutorConfig;
 }
 
 interface UseAICopilotChatReturn {
@@ -38,6 +40,20 @@ interface UseAICopilotChatReturn {
 }
 
 // NOTE: In a real project, this hook would be in its own file (e.g., /hooks/useAICopilotChat.ts)
+/** 空操作配置，當父層未提供 functionExecutorConfig 時使用 */
+const NOOP_FUNCTION_EXECUTOR_CONFIG: UseFunctionExecutorConfig = {
+  setCurrentView: () => {},
+  setSelectedSession: () => {},
+  validViewKeys: [],
+  getDashboardState: () => ({ widgets: [], availableWidgets: [] }),
+  setDashboardEditMode: () => {},
+  addDashboardWidget: () => {},
+  removeDashboardWidget: () => {},
+  updateDashboardWidgetConfig: () => {},
+  updateDashboardWidgetLayout: () => {},
+  updateDashboardWidgetTitle: () => {},
+};
+
 const useAICopilotChat = ({
   userRole,
   userId,
@@ -50,6 +66,7 @@ const useAICopilotChat = ({
     },
   ],
   defaultMode = 'general',
+  functionExecutorConfig,
 }: UseAICopilotChatProps): UseAICopilotChatReturn => {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');
@@ -58,22 +75,12 @@ const useAICopilotChat = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  
-  // Note: useFunctionExecutor is called but may not be actively used in this component.
-  // The stub config is provided to satisfy the hook's type requirements.
-  // TODO: Either integrate proper function execution or remove this hook if not needed.
-  const { executeFunction, executeFunctions } = useFunctionExecutor({
-    setCurrentView: () => {},
-    setSelectedSession: () => {},
-    validViewKeys: [],
-    getDashboardState: () => ({ widgets: [], availableWidgets: [] }),
-    setDashboardEditMode: () => {},
-    addDashboardWidget: () => {},
-    removeDashboardWidget: () => {},
-    updateDashboardWidgetConfig: () => {},
-    updateDashboardWidgetLayout: () => {},
-    updateDashboardWidgetTitle: () => {},
-  });
+
+  // 使用父層注入的 functionExecutorConfig；若未提供，使用空操作配置。
+  // 父層只需傳入 functionExecutorConfig 即可完整啟用 AI 函數呼叫整合。
+  const { executeFunction, executeFunctions } = useFunctionExecutor(
+    functionExecutorConfig ?? NOOP_FUNCTION_EXECUTOR_CONFIG
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -399,9 +406,11 @@ interface AICopilotPanelProps {
   onToggle: () => void;
   userRole?: string | null; // Config prop from parent
   userId?: string | null;   // Config prop from parent
+  /** 函數執行器配置，傳入後 AI 助手即可執行導航、儀表板操作等功能 */
+  functionExecutorConfig?: UseFunctionExecutorConfig;
 }
 
-export default function AICopilotPanel({ isOpen, onToggle, userRole = null, userId = null }: AICopilotPanelProps) {
+export default function AICopilotPanel({ isOpen, onToggle, userRole = null, userId = null, functionExecutorConfig }: AICopilotPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const {
@@ -417,7 +426,7 @@ export default function AICopilotPanel({ isOpen, onToggle, userRole = null, user
     clearHistory,
     messagesEndRef,
     inputRef,
-  } = useAICopilotChat({ userRole, userId });
+  } = useAICopilotChat({ userRole, userId, functionExecutorConfig });
 
   // Focus input when panel opens
   useEffect(() => {
