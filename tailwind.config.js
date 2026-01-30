@@ -41,7 +41,7 @@ export default {
           DEFAULT: "var(--color-secondary-500)",
         },
 
-        // Legacy brand colors (backward compatibility)
+        // Travel theme brand colors (sky to ocean)
         brand: {
           50: "var(--color-brand-50)",
           100: "var(--color-brand-100)",
@@ -54,6 +54,29 @@ export default {
           800: "var(--color-brand-800)",
           900: "var(--color-brand-900)",
           DEFAULT: "var(--color-brand-500)",
+          // Travel theme specific colors
+          sky: '#60a5fa',      // 天空藍（主色）
+          ocean: '#3b82f6',    // 海洋藍（深色）
+          deep: '#2563eb',     // 深海藍（active）
+        },
+
+        // Travel auxiliary colors
+        travel: {
+          sunrise: '#fb923c',  // 日出橘
+          sunset: '#f97316',   // 夕陽橘
+          sand: '#fbbf24',     // 沙灘金
+          forest: '#10b981',   // 森林綠
+          coral: '#ef4444',    // 珊瑚紅
+          lavender: '#a855f7', // 薰衣草紫
+        },
+
+        // Simplified neutral colors (5 key shades)
+        neutral: {
+          50: '#f8fafc',   // 雲朵白
+          200: '#e2e8f0',  // 霧灰
+          500: '#64748b',  // 石灰
+          700: '#334155',  // 板岩灰
+          900: '#0f172a',  // 夜空黑
         },
 
         // Semantic colors
@@ -136,6 +159,13 @@ export default {
         "spin-slow": "spin 8s linear infinite",
         "gradient-shift": "gradient-shift 3s ease infinite",
         breathe: "breathe 4s ease-in-out infinite",
+        // Travel theme animations
+        'fly': 'fly-across 15s linear infinite',
+        'float-cloud': 'float-cloud 8s ease-in-out infinite',
+        'float-delayed': 'float-cloud 8s ease-in-out 2s infinite',
+        'ripple': 'ripple 1.5s ease-out infinite',
+        'bounce-marker': 'bounce-marker 1s ease-in-out infinite',
+        'flip-passport': 'flip-passport 2s ease-in-out infinite',
       },
       keyframes: {
         float: {
@@ -157,6 +187,28 @@ export default {
         breathe: {
           "0%, 100%": { transform: "scale(1)", opacity: "0.8" },
           "50%": { transform: "scale(1.02)", opacity: "1" },
+        },
+        // Travel theme keyframes
+        "fly-across": {
+          "0%": { transform: "translateX(-100%) translateY(0) rotate(-10deg)" },
+          "100%": { transform: "translateX(300%) translateY(-50px) rotate(10deg)" },
+        },
+        "float-cloud": {
+          "0%, 100%": { transform: "translateX(0) translateY(0)" },
+          "50%": { transform: "translateX(20px) translateY(-10px)" },
+        },
+        "flip-passport": {
+          "0%": { transform: "rotateY(0deg)" },
+          "50%": { transform: "rotateY(90deg)" },
+          "100%": { transform: "rotateY(0deg)" },
+        },
+        "bounce-marker": {
+          "0%, 100%": { transform: "translateY(0) scale(1)" },
+          "50%": { transform: "translateY(-10px) scale(1.1)" },
+        },
+        "ripple": {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "100%": { transform: "scale(3)", opacity: "0" },
         },
       },
       borderRadius: {

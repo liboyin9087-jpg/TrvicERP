@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import travel theme animations */
+@import './styles/travel-animations.css';
+
 /* ============================================
    CSS Variables - Design System
    ============================================ */

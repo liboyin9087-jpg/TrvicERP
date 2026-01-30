@@ -14,7 +14,13 @@ export type WidgetType =
   | 'data-table'
   | 'notifications'
   | 'pending-tasks'
-  | 'custom';
+  | 'custom'
+  // Travel theme widgets
+  | 'departure-board'
+  | 'passport-tracker'
+  | 'journey-timeline'
+  | 'world-map'
+  | 'revenue-compass';
 
 export const WIDGET_TYPES: WidgetType[] = [
   'kpi-card',
@@ -25,6 +31,12 @@ export const WIDGET_TYPES: WidgetType[] = [
   'notifications',
   'pending-tasks',
   'custom',
+  // Travel theme widgets
+  'departure-board',
+  'passport-tracker',
+  'journey-timeline',
+  'world-map',
+  'revenue-compass',
 ];
 
 export interface GenericWidgetComponentProps {
@@ -48,6 +60,12 @@ export const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType<GenericWi
   'notifications': React.lazy(() => import('./widgets/NotificationsWidget')),
   'pending-tasks': React.lazy(() => import('./widgets/PendingTasksWidget')),
   'custom': CustomWidgetComponent,
+  // Travel theme widgets
+  'departure-board': React.lazy(() => import('./widgets/DepartureBoardWidget')),
+  'passport-tracker': React.lazy(() => import('./widgets/PassportTrackerWidget')),
+  'journey-timeline': React.lazy(() => import('./widgets/JourneyTimelineWidget')),
+  'world-map': React.lazy(() => import('./widgets/WorldMapWidget')),
+  'revenue-compass': React.lazy(() => import('./widgets/RevenueCompassWidget')),
 };
 
 /**
@@ -73,6 +91,12 @@ export function getWidgetMetadata(type: WidgetType) {
     'notifications': { label: 'Notifications', description: 'Show system notifications' },
     'pending-tasks': { label: 'Pending Tasks', description: 'Display pending action items' },
     'custom': { label: 'Custom', description: 'Custom widget content' },
+    // Travel theme widgets
+    'departure-board': { label: 'Departure Board', description: 'Airport-style departure information' },
+    'passport-tracker': { label: 'Passport Tracker', description: 'Track passport expiry dates' },
+    'journey-timeline': { label: 'Journey Timeline', description: 'Visual journey timeline' },
+    'world-map': { label: 'World Map', description: 'Interactive destination map' },
+    'revenue-compass': { label: 'Revenue Compass', description: 'Circular revenue dashboard' },
   };
 
   return metadata[type];
