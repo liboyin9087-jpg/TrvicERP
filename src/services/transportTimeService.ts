@@ -463,9 +463,118 @@ export class TransportTimeService {
       }
     }
 
-    // TODO: 可以根據需要在此處添加餐食時間的自動調整邏輯，使其在適當時間點發生。
+    // 餐食時間自動調整：根據行程推進的時間點，自動插入餐食到合理的時段
+    this.autoScheduleMeals(optimized, currentTime);
 
     return optimized;
+  }
+
+  /**
+   * 自動調整餐食時間安排。
+   * 檢查已有的餐食類型，若缺少午餐或晚餐且行程時間涵蓋該餐期，
+   * 則在適當的時間點自動插入一筆餐食。早餐通常在出發前已完成，不自動插入。
+   *
+   * @param dayItinerary 待調整的日程（會直接修改此物件）。
+   * @param itineraryEndTimeMinutes 行程結束時的累計分鐘數（從午夜起算）。
+   */
+  private autoScheduleMeals(dayItinerary: DayItinerary, itineraryEndTimeMinutes: number): void {
+    const existingMealTypes = new Set(dayItinerary.meals.map(m => m.type));
+
+    // 午餐：行程是否跨越午餐時段
+    if (
+      !existingMealTypes.has('lunch') &&
+      DEFAULT_ITINERARY_START_TIME_MINUTES < LUNCH_END_TIME_MINUTES &&
+      itineraryEndTimeMinutes > LUNCH_START_TIME_MINUTES
+    ) {
+      // 尋找最佳午餐時間：在午餐時段內，找到離景點間隔最近的空檔
+      const lunchTime = this.findBestMealSlot(
+        dayItinerary,
+        LUNCH_START_TIME_MINUTES,
+        LUNCH_END_TIME_MINUTES,
+        12 * MINUTES_PER_HOUR // 預設 12:00
+      );
+      dayItinerary.meals.push({
+        id: `auto_lunch_${Date.now()}`,
+        type: 'lunch',
+        time: this.minutesToTimeString(lunchTime),
+        location: '行程安排中的餐廳',
+        notes: '系統自動排程',
+      });
+    }
+
+    // 晚餐：行程是否跨越晚餐時段
+    if (
+      !existingMealTypes.has('dinner') &&
+      itineraryEndTimeMinutes > DINNER_START_TIME_MINUTES
+    ) {
+      const dinnerTime = this.findBestMealSlot(
+        dayItinerary,
+        DINNER_START_TIME_MINUTES,
+        DINNER_END_TIME_MINUTES,
+        18 * MINUTES_PER_HOUR // 預設 18:00
+      );
+      dayItinerary.meals.push({
+        id: `auto_dinner_${Date.now()}`,
+        type: 'dinner',
+        time: this.minutesToTimeString(dinnerTime),
+        location: '行程安排中的餐廳',
+        notes: '系統自動排程',
+      });
+    }
+
+    // 按時間排序餐食
+    dayItinerary.meals.sort((a, b) => a.time.localeCompare(b.time));
+  }
+
+  /**
+   * 在指定的餐期時段內，尋找最適合插入餐食的時間點。
+   * 優先選擇景點之間的空檔時間。
+   *
+   * @param dayItinerary 日程安排。
+   * @param periodStart 餐期開始（分鐘）。
+   * @param periodEnd 餐期結束（分鐘）。
+   * @param defaultTime 若無法找到空檔，則使用的預設時間（分鐘）。
+   * @returns 最佳餐食時間（分鐘）。
+   */
+  private findBestMealSlot(
+    dayItinerary: DayItinerary,
+    periodStart: number,
+    periodEnd: number,
+    defaultTime: number
+  ): number {
+    // 蒐集所有景點的結束時間（景點開始時間 + 停留時間），作為可能的餐食插入點
+    const spotEndTimes: number[] = [];
+    for (const spot of dayItinerary.spots) {
+      const [h, m] = spot.time.split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) continue;
+      const spotStart = h * MINUTES_PER_HOUR + m;
+      const spotEnd = spotStart + (spot.duration || DEFAULT_SPOT_DURATION_MINUTES);
+      // 若景點結束時間落在餐期範圍內，則為理想的餐食開始時間
+      if (spotEnd >= periodStart && spotEnd <= periodEnd) {
+        spotEndTimes.push(spotEnd);
+      }
+    }
+
+    if (spotEndTimes.length > 0) {
+      // 取最接近餐期中間點的景點結束時間
+      const mid = (periodStart + periodEnd) / 2;
+      spotEndTimes.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
+      return spotEndTimes[0];
+    }
+
+    // 無合適空檔時，使用預設時間（確保在餐期範圍內）
+    return Math.max(periodStart, Math.min(defaultTime, periodEnd));
+  }
+
+  /**
+   * 將分鐘數轉換為 HH:mm 格式的時間字串。
+   * @param minutes 從午夜起算的分鐘數。
+   * @returns HH:mm 格式的字串。
+   */
+  private minutesToTimeString(minutes: number): string {
+    const h = Math.floor(minutes / MINUTES_PER_HOUR);
+    const m = minutes % MINUTES_PER_HOUR;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
   }
 
   /**

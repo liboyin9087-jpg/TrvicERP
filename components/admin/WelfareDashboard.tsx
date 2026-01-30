@@ -94,7 +94,14 @@ export interface WelfareDashboardConfigProps {
   initialRoomAssignments: RoomAssignment[];
   // Handlers for data mutations, to be implemented by the parent component (e.g., Kintone app)
   onUpdateEmployeeStatus: (employeeId: string, status: EmployeeStatus) => void;
-  // Potentially other handlers like onCreateTrip, onEditTrip, etc.
+  /** 從模板建立新活動 */
+  onCreateTrip: (templateId: string) => void;
+  /** 編輯已建立的活動 */
+  onEditTrip: (tripId: string) => void;
+  /** 刪除已建立的活動 */
+  onDeleteTrip: (tripId: string) => void;
+  /** 複製已建立的活動 */
+  onCopyTrip: (tripId: string) => void;
 }
 
 // ============================================
@@ -347,10 +354,14 @@ function TripRow({ trip }: TripRowProps) {
 interface GroupsTabProps {
   trips: WelfareTrip[];
   templates: TripTemplate[];
+  onCreateTrip: (templateId: string) => void;
+  onEditTrip: (tripId: string) => void;
+  onDeleteTrip: (tripId: string) => void;
+  onCopyTrip: (tripId: string) => void;
 }
 
 // Groups Tab - 建立/複製團體
-function GroupsTab({ trips, templates }: GroupsTabProps) {
+function GroupsTab({ trips, templates, onCreateTrip, onEditTrip, onDeleteTrip, onCopyTrip }: GroupsTabProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
@@ -401,7 +412,10 @@ function GroupsTab({ trips, templates }: GroupsTabProps) {
                 </span>
               </div>
               <div className="flex gap-2 mt-3">
-                <button className="flex-1 py-2 bg-primary-900 text-white rounded-lg text-sm font-medium hover:bg-primary-800 transition-colors"> {/* Dashtail UI Fix: Using primary-900 */}
+                <button
+                  onClick={() => onCreateTrip(template.id)}
+                  className="flex-1 py-2 bg-primary-900 text-white rounded-lg text-sm font-medium hover:bg-primary-800 transition-colors"
+                >
                   <Copy className="w-4 h-4 inline mr-1" />
                   複製建立
                 </button>
@@ -436,13 +450,25 @@ function GroupsTab({ trips, templates }: GroupsTabProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <button
+                    onClick={() => onEditTrip(trip.id)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="編輯活動"
+                  >
                     <Edit className="w-4 h-4 text-gray-500" />
                   </button>
-                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <button
+                    onClick={() => onCopyTrip(trip.id)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="複製活動"
+                  >
                     <Copy className="w-4 h-4 text-gray-500" />
                   </button>
-                  <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                  <button
+                    onClick={() => onDeleteTrip(trip.id)}
+                    className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                    title="刪除活動"
+                  >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </button>
                 </div>
@@ -1204,6 +1230,10 @@ export default function WelfareDashboard({
   initialEmployees,
   initialRoomAssignments,
   onUpdateEmployeeStatus,
+  onCreateTrip,
+  onEditTrip,
+  onDeleteTrip,
+  onCopyTrip,
 }: WelfareDashboardConfigProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   // Architectural Fix: Data now comes from props, component manages local view state
@@ -1289,7 +1319,14 @@ export default function WelfareDashboard({
               <DashboardTab trips={initialTrips} employees={currentEmployees} onNavigate={setActiveTab} />
             )}
             {activeTab === 'groups' && (
-              <GroupsTab trips={initialTrips} templates={initialTemplates} />
+              <GroupsTab
+                trips={initialTrips}
+                templates={initialTemplates}
+                onCreateTrip={onCreateTrip}
+                onEditTrip={onEditTrip}
+                onDeleteTrip={onDeleteTrip}
+                onCopyTrip={onCopyTrip}
+              />
             )}
             {activeTab === 'rules' && (
               <RulesTab rules={initialSubsidyRules} />

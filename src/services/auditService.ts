@@ -173,7 +173,25 @@ class LocalStorageAuditLogStorage implements IAuditLogStorage {
       const severities = Array.isArray(params.severity) ? params.severity : [params.severity];
       filteredLogs = filteredLogs.filter((log) => severities.includes(log.severity));
     }
-    // TODO: Add support for metadata and tags search if needed for a more complete mock
+    // Tags 篩選：日誌必須包含查詢中指定的所有 tags
+    if (params.tags && params.tags.length > 0) {
+      filteredLogs = filteredLogs.filter((log) => {
+        if (!log.tags || log.tags.length === 0) return false;
+        return params.tags!.every((tag) => log.tags!.includes(tag));
+      });
+    }
+    // Metadata 模糊搜尋：在 metadata 的 key 或 value（字串化後）中比對關鍵字
+    if (params.metadata_search) {
+      const searchLower = params.metadata_search.toLowerCase();
+      filteredLogs = filteredLogs.filter((log) => {
+        if (!log.metadata) return false;
+        return Object.entries(log.metadata).some(([key, value]) => {
+          if (key.toLowerCase().includes(searchLower)) return true;
+          const valueStr = typeof value === 'string' ? value : JSON.stringify(value);
+          return valueStr.toLowerCase().includes(searchLower);
+        });
+      });
+    }
 
     const orderBy = params.order_by || "timestamp";
     const direction = params.order_direction || "desc";

@@ -498,8 +498,10 @@ export interface UseGlobalSearchConfig {
   bookingData: Booking[];         // 訂單資料
   tourSessionData: TourSession[]; // 團期資料
   passengerData: Passenger[];     // 旅客資料
-  // 可以擴展，例如：
-  // fetchRemoteData?: (query: string, filters: SearchFilters, signal: AbortSignal) => Promise<SearchResult[]>;
+
+  // ==== 遠端 API 搜尋配置 ====
+  // 提供此函數即可啟用遠端搜尋，結果將與本地搜尋合併後排序。
+  fetchRemoteData?: (query: string, filters: SearchFilters, signal: AbortSignal) => Promise<SearchResult[]>;
 }
 
 // =============================================================================
@@ -575,21 +577,47 @@ export function useGlobalSearch(config: UseGlobalSearchConfig) {
 
       try {
         // 執行本地資料的組合搜尋
+        const mergedFilters = { ...filters, ...searchFilters };
         const localResults = performCombinedLocalSearch(
           searchQuery,
-          { ...filters, ...searchFilters }, // 合併當前 filters 和傳入的 searchFilters
+          mergedFilters,
           allSearchableData,
           minQueryLength,
           maxResults
         );
 
-        // TODO: 如果有遠端 API 搜尋需求，可以在此處加入異步呼叫邏輯
-        // if (config.fetchRemoteData) {
-        //   const remoteResults = await config.fetchRemoteData(searchQuery, { ...filters, ...searchFilters }, newAbortController.signal);
-        //   combinedResults = [...localResults, ...remoteResults];
-        // }
-
-        const combinedResults = localResults; // 目前只包含本地搜尋結果
+        // 遠端 API 搜尋：若提供 fetchRemoteData 則並行呼叫遠端 API
+        let combinedResults = localResults;
+        if (config.fetchRemoteData) {
+          try {
+            const remoteResults = await config.fetchRemoteData(
+              searchQuery,
+              mergedFilters,
+              newAbortController.signal
+            );
+            // 合併本地與遠端結果，透過 ID + type 去重（優先保留分數較高者）
+            const resultMap = new Map<string, SearchResult>();
+            for (const result of localResults) {
+              const key = `${result.type}:${result.id}`;
+              resultMap.set(key, result);
+            }
+            for (const result of remoteResults) {
+              const key = `${result.type}:${result.id}`;
+              const existing = resultMap.get(key);
+              if (!existing || result.score > existing.score) {
+                resultMap.set(key, result);
+              }
+            }
+            combinedResults = Array.from(resultMap.values());
+          } catch (remoteErr) {
+            // 若遠端搜尋因取消 (AbortError) 以外的原因失敗，僅記錄警告，
+            // 仍然回傳本地搜尋結果，確保搜尋功能不因遠端失敗而完全中斷。
+            if (remoteErr instanceof Error && remoteErr.name === 'AbortError') {
+              throw remoteErr; // 取消操作直接往上拋
+            }
+            console.warn('遠端搜尋失敗，僅回傳本地結果：', remoteErr);
+          }
+        }
 
         // 再次排序並限制數量，確保最終結果符合要求
         const sortedResults = combinedResults
@@ -614,7 +642,7 @@ export function useGlobalSearch(config: UseGlobalSearchConfig) {
         }
       }
     },
-    [allSearchableData, filters, minQueryLength, maxResults] // 依賴項應包含所有引用的外部值
+    [allSearchableData, filters, minQueryLength, maxResults, config.fetchRemoteData] // 依賴項應包含所有引用的外部值
   );
 
   /**
