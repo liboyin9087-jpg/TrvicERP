@@ -39,3 +39,9 @@ analysis_reports/
 # QA Reports (auto-generated)
 .qa-reports/
 .validation-progress.log
+
+# Scraper output (large JSON files)
+scrapers/output/*.json
+
+# SQLite databases
+*.db
