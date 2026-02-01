@@ -1,8 +1,8 @@
 """
 Payments API endpoints for TrvicERP
-Manages payment processing, invoices, and financial transactions
+P0 Enhanced: Real Stripe payment integration, invoices, and financial transactions
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -10,8 +10,13 @@ from datetime import datetime, date
 from uuid import uuid4
 from decimal import Decimal
 from app.db.database import get_db
+from app.core.stripe_service import stripe_service, PaymentIntentCreate, RefundRequest
+from app.core.email_service import email_service
+from app.core.observability import track_payment_processed, capture_exception, get_logger
+from app.core.security import require_permission, Permission
 
 router = APIRouter(prefix="/api/v1/payments", tags=["Payments"])
+logger = get_logger(__name__)
 
 
 # Pydantic Schemas
@@ -19,7 +24,7 @@ class PaymentBase(BaseModel):
     order_id: str = Field(..., description="Associated order ID")
     customer_id: Optional[str] = None
     payment_type: str = Field(..., description="deposit, balance, refund, penalty")
-    payment_method: str = Field(..., description="cash, credit_card, bank_transfer, line_pay")
+    payment_method: str = Field(..., description="cash, credit_card, bank_transfer, line_pay, stripe")
     amount: float = Field(..., ge=0)
     currency: str = Field(default="TWD")
     exchange_rate: float = Field(default=1.0)
@@ -88,7 +93,26 @@ class InvoiceResponse(InvoiceBase):
         from_attributes = True
 
 
-# In-memory storage
+# Stripe-specific schemas
+class StripePaymentIntentRequest(BaseModel):
+    """Request to create a Stripe payment intent"""
+    order_id: str
+    amount: int  # Amount in TWD (smallest unit)
+    customer_email: Optional[str] = None
+    customer_name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class StripePaymentIntentResponse(BaseModel):
+    """Response with Stripe client secret for frontend"""
+    payment_intent_id: str
+    client_secret: str
+    status: str
+    amount: int
+    currency: str
+
+
+# In-memory storage (will be replaced with database in production)
 payments_db: dict = {}
 invoices_db: dict = {}
 invoice_counter = 1
@@ -132,6 +156,9 @@ async def create_payment(payment: PaymentCreate):
     }
     
     payments_db[payment_id] = payment_data
+    track_payment_processed(status="created", method=payment.payment_method)
+    logger.info("Payment created", payment_id=payment_id, order_id=payment.order_id)
+    
     return payment_data
 
 
@@ -182,6 +209,9 @@ async def complete_payment(payment_id: str, reference_number: Optional[str] = No
         payments_db[payment_id]["reference_number"] = reference_number
     payments_db[payment_id]["updated_at"] = datetime.utcnow()
     
+    track_payment_processed(status="completed", method=payments_db[payment_id].get("payment_method", "unknown"))
+    logger.info("Payment completed", payment_id=payment_id)
+    
     return {"message": "Payment completed", "payment_id": payment_id}
 
 
@@ -228,7 +258,156 @@ async def refund_payment(payment_id: str, refund_amount: Optional[float] = None,
     payments_db[payment_id]["payment_status"] = "refunded"
     payments_db[payment_id]["updated_at"] = now
     
+    track_payment_processed(status="refunded", method=original["payment_method"])
+    logger.info("Payment refunded", payment_id=payment_id, refund_id=refund_id, amount=refund_amt)
+    
     return {"message": "Refund processed", "refund_id": refund_id, "refund_amount": refund_amt}
+
+
+# ===================
+# Stripe Integration Endpoints
+# ===================
+
+@router.post("/stripe/create-intent", response_model=StripePaymentIntentResponse)
+async def create_stripe_payment_intent(request: StripePaymentIntentRequest):
+    """
+    Create a Stripe PaymentIntent for processing payment.
+    Returns client_secret for frontend to complete payment.
+    """
+    try:
+        payment_data = PaymentIntentCreate(
+            amount=request.amount,
+            currency="twd",
+            order_id=request.order_id,
+            customer_email=request.customer_email,
+            customer_name=request.customer_name,
+            description=request.description or f"TrvicERP Order {request.order_id}",
+        )
+        
+        result = await stripe_service.create_payment_intent(payment_data)
+        
+        logger.info("Stripe payment intent created", 
+                   payment_intent_id=result.id, 
+                   order_id=request.order_id)
+        
+        return StripePaymentIntentResponse(
+            payment_intent_id=result.id,
+            client_secret=result.client_secret,
+            status=result.status,
+            amount=result.amount,
+            currency=result.currency,
+        )
+        
+    except ValueError as e:
+        logger.warning("Stripe not configured", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment service not configured"
+        )
+    except Exception as e:
+        capture_exception(e, {"order_id": request.order_id})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create payment intent: {str(e)}"
+        )
+
+
+@router.get("/stripe/intent/{payment_intent_id}")
+async def get_stripe_payment_intent(payment_intent_id: str):
+    """Get Stripe PaymentIntent status"""
+    try:
+        result = await stripe_service.retrieve_payment_intent(payment_intent_id)
+        return result
+    except Exception as e:
+        capture_exception(e, {"payment_intent_id": payment_intent_id})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve payment intent: {str(e)}"
+        )
+
+
+@router.post("/stripe/cancel/{payment_intent_id}")
+async def cancel_stripe_payment_intent(payment_intent_id: str):
+    """Cancel a Stripe PaymentIntent"""
+    try:
+        result = await stripe_service.cancel_payment_intent(payment_intent_id)
+        logger.info("Stripe payment intent cancelled", payment_intent_id=payment_intent_id)
+        return result
+    except Exception as e:
+        capture_exception(e, {"payment_intent_id": payment_intent_id})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to cancel payment intent: {str(e)}"
+        )
+
+
+@router.post("/stripe/refund")
+async def create_stripe_refund(refund_request: RefundRequest):
+    """Create a Stripe refund"""
+    try:
+        result = await stripe_service.create_refund(refund_request)
+        track_payment_processed(status="refunded", method="stripe")
+        logger.info("Stripe refund created", 
+                   refund_id=result["id"], 
+                   payment_intent=refund_request.payment_intent_id)
+        return result
+    except Exception as e:
+        capture_exception(e, {"payment_intent_id": refund_request.payment_intent_id})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create refund: {str(e)}"
+        )
+
+
+@router.post("/stripe/webhook")
+async def stripe_webhook(
+    request: Request,
+    stripe_signature: str = Header(None, alias="Stripe-Signature")
+):
+    """
+    Stripe webhook endpoint for payment events.
+    Handles payment success, failure, and refund events.
+    """
+    if not stripe_signature:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing Stripe signature"
+        )
+    
+    payload = await request.body()
+    
+    try:
+        event = stripe_service.verify_webhook_signature(payload, stripe_signature)
+        result = await stripe_service.handle_webhook_event(event)
+        
+        # Track metrics based on event type
+        if event.type == "payment_intent.succeeded":
+            track_payment_processed(status="completed", method="stripe")
+            
+            # Send confirmation email
+            order_id = result.get("order_id")
+            if order_id:
+                # TODO: Get customer email from order
+                pass
+                
+        elif event.type == "payment_intent.payment_failed":
+            track_payment_processed(status="failed", method="stripe")
+        
+        logger.info("Stripe webhook processed", event_type=event.type, result=result)
+        return {"status": "success", "result": result}
+        
+    except ValueError as e:
+        logger.error("Stripe webhook verification failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid webhook signature"
+        )
+    except Exception as e:
+        capture_exception(e, {"event_type": "webhook"})
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Webhook processing failed: {str(e)}"
+        )
 
 
 # Invoice endpoints
