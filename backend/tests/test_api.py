@@ -13,7 +13,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
 
+# Test client
 client = TestClient(app)
+
+# Test configuration - can be overridden via environment variables
+TEST_API_BASE_URL = os.environ.get("TEST_API_BASE_URL", "http://localhost:4000")
 
 
 class TestHealthEndpoints:

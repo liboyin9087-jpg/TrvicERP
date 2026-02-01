@@ -282,7 +282,6 @@ def capture_message(message: str, level: str = "info", context: Optional[dict] =
         sentry_sdk.capture_message(message, level=level)
 
 
-# ===================
 # Health Check
 # ===================
 def get_health_status() -> dict:
@@ -291,7 +290,7 @@ def get_health_status() -> dict:
         "status": "healthy",
         "environment": settings.ENVIRONMENT,
         "sentry_enabled": sentry_initialized,
-        "version": "1.0.0",
+        "version": settings.APP_VERSION,
     }
 
 

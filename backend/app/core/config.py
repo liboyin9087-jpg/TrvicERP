@@ -9,6 +9,12 @@ import os
 
 class Settings(BaseSettings):
     # ===================
+    # Application Info
+    # ===================
+    APP_NAME: str = "TrvicERP API"
+    APP_VERSION: str = "2.0.0"
+    
+    # ===================
     # Database Configuration
     # ===================
     DATABASE_URL: str = "sqlite:///./trvicerp.db"

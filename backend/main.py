@@ -33,9 +33,9 @@ Base.metadata.create_all(bind=engine)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="TrvicERP API",
+    title=settings.APP_NAME,
     description="Travel Management ERP System API - Production Ready",
-    version="2.0.0",
+    version=settings.APP_VERSION,
     docs_url="/api/docs" if settings.is_development else None,
     redoc_url="/api/redoc" if settings.is_development else None,
 )
@@ -238,8 +238,8 @@ manager = ConnectionManager()
 async def root():
     """Root endpoint"""
     return {
-        "name": "TrvicERP API",
-        "version": "2.0.0",
+        "name": settings.APP_NAME,
+        "version": settings.APP_VERSION,
         "status": "running",
         "environment": settings.ENVIRONMENT,
     }
@@ -371,7 +371,7 @@ async def startup_event():
     logger.info(
         "Application starting",
         environment=settings.ENVIRONMENT,
-        version="2.0.0",
+        version=settings.APP_VERSION,
     )
 
 
