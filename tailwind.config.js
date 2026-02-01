@@ -42,6 +42,7 @@ export default {
         },
 
         // Travel theme brand colors (sky to ocean)
+        // All values reference CSS variables defined in index.css :root
         brand: {
           50: "var(--color-brand-50)",
           100: "var(--color-brand-100)",
@@ -54,29 +55,28 @@ export default {
           800: "var(--color-brand-800)",
           900: "var(--color-brand-900)",
           DEFAULT: "var(--color-brand-500)",
-          // Travel theme specific colors
-          sky: '#60a5fa',      // 天空藍（主色）
-          ocean: '#3b82f6',    // 海洋藍（深色）
-          deep: '#2563eb',     // 深海藍（active）
+          sky: "var(--color-brand-sky)",
+          ocean: "var(--color-brand-ocean)",
+          deep: "var(--color-brand-deep)",
         },
 
-        // Travel auxiliary colors
+        // Travel auxiliary colors (referenced from CSS variables)
         travel: {
-          sunrise: '#fb923c',  // 日出橘
-          sunset: '#f97316',   // 夕陽橘
-          sand: '#fbbf24',     // 沙灘金
-          forest: '#10b981',   // 森林綠
-          coral: '#ef4444',    // 珊瑚紅
-          lavender: '#a855f7', // 薰衣草紫
+          sunrise: "var(--color-travel-sunrise)",
+          sunset: "var(--color-travel-sunset)",
+          sand: "var(--color-travel-sand)",
+          forest: "var(--color-travel-forest)",
+          coral: "var(--color-travel-coral)",
+          lavender: "var(--color-travel-lavender)",
         },
 
-        // Simplified neutral colors (5 key shades)
+        // Simplified neutral colors (referenced from CSS variables)
         neutral: {
-          50: '#f8fafc',   // 雲朵白
-          200: '#e2e8f0',  // 霧灰
-          500: '#64748b',  // 石灰
-          700: '#334155',  // 板岩灰
-          900: '#0f172a',  // 夜空黑
+          50: "var(--color-neutral-50)",
+          200: "var(--color-neutral-200)",
+          500: "var(--color-neutral-500)",
+          700: "var(--color-neutral-700)",
+          900: "var(--color-neutral-900)",
         },
 
         // Semantic colors

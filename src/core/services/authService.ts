@@ -1,4 +1,5 @@
 import { api, API_ENDPOINTS } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import type {
   User,
   LoginCredentials,
@@ -365,6 +366,100 @@ export class MockAuthRepository implements IAuthRepository {
 }
 
 /**
+ * 基於 Supabase Auth 的認證儲存庫實作。
+ * 使用 Supabase 的認證 API 進行使用者登入、登出、Token 刷新等操作。
+ * 當 VITE_USE_MOCK 設為 false 且 Supabase 環境變數已設定時使用。
+ */
+export class SupabaseAuthRepository implements IAuthRepository {
+  private authStorage: IAuthStorage;
+
+  constructor(authStorage: IAuthStorage) {
+    if (!supabase) {
+      throw new Error(
+        'Supabase client not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.'
+      );
+    }
+    this.authStorage = authStorage;
+  }
+
+  async login(credentials: LoginCredentials): Promise<LoginResponse> {
+    const { data, error } = await supabase!.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
+    });
+
+    if (error || !data.session) {
+      return {
+        success: false,
+        error: error?.message || '登入失敗',
+      };
+    }
+
+    const session = data.session;
+    const supabaseUser = data.user;
+    const role: UserRole =
+      (supabaseUser.user_metadata?.role as UserRole) || 'admin';
+
+    const user: User = {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name: supabaseUser.user_metadata?.name || supabaseUser.email || '',
+      role,
+      status: 'active',
+      permissions: ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS.admin,
+      lastLogin: new Date().toISOString(),
+      createdAt: supabaseUser.created_at || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.authStorage.setToken(session.access_token);
+    this.authStorage.setRefreshToken(session.refresh_token);
+    this.authStorage.setUser(user);
+
+    return {
+      success: true,
+      user,
+      token: session.access_token,
+      refreshToken: session.refresh_token,
+    };
+  }
+
+  async logout(): Promise<void> {
+    if (supabase) {
+      await supabase.auth.signOut().catch(() => {
+        // 確保即使 Supabase signOut 失敗也清除本地狀態
+      });
+    }
+    this.authStorage.clear();
+  }
+
+  async refreshToken(): Promise<boolean> {
+    if (!supabase) return false;
+
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session) {
+      return false;
+    }
+
+    this.authStorage.setToken(data.session.access_token);
+    this.authStorage.setRefreshToken(data.session.refresh_token);
+    return true;
+  }
+
+  async resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
+    if (!supabase) {
+      return { success: false, error: 'Supabase client not configured' };
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  }
+}
+
+/**
  * 主要認證服務。
  * 作為應用程式與認證邏輯的介面，它透過依賴注入來使用不同的認證儲存庫和儲存機制。
  * 負責協調認證操作和使用者狀態管理。
@@ -493,9 +588,12 @@ export class AuthService {
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
 const authStorage = new LocalStorageAuthStorage();
+
+// Mock 模式使用 MockAuthRepository；非 Mock 模式使用 SupabaseAuthRepository（需設定 Supabase 環境變數）
+// ApiAuthRepository 保留作為不使用 Supabase 的自建後端選項
 const authRepository: IAuthRepository = USE_MOCK
   ? new MockAuthRepository(authStorage)
-  : new ApiAuthRepository(authStorage);
+  : new SupabaseAuthRepository(authStorage);
 
 // 導出一個預設的 AuthSercice 實例，供應用程式直接使用。
 // 在大型應用程式中，這部分可能會被更複雜的依賴注入容器取代。

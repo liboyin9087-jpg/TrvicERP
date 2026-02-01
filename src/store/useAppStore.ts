@@ -32,12 +32,14 @@ interface AuthState {
   userRole: UserRole;
   userId: string | null;
   userName: string | null;
+  token: string | null;
 }
 
 interface AuthActions {
-  login: (role: UserRole, userId?: string, userName?: string) => void;
+  login: (role: UserRole, userId?: string, userName?: string, token?: string) => void;
   logout: () => void;
   setUserRole: (role: UserRole) => void;
+  setToken: (token: string | null) => void;
   resetAuth: () => void; // Action to reset only Auth state
 }
 
@@ -48,6 +50,7 @@ const initialAuthState: AuthState = {
   userRole: 'staff',
   userId: null,
   userName: null,
+  token: null,
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -55,27 +58,23 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       ...initialAuthState,
 
-      login: (role, userId, userName) => {
+      login: (role, userId, userName, token) => {
         set({
           isLoggedIn: true,
           userRole: role,
           userId: userId ?? null,
           userName: userName ?? null,
+          token: token ?? null,
         });
-        // Note: The original 'login' also set 'currentView'. This violates SRP.
-        // UI concerns should be handled by the UI store or a coordinating component.
-        // If a default view should be set on login, the UI store should subscribe
-        // to auth state changes or be explicitly updated by the login component.
       },
 
       logout: () => {
-        // This action primarily resets the authentication state.
-        // For a full application reset (e.g., clearing all other stores and localStorage),
-        // use the `globalResetApp` function.
         set(initialAuthState);
       },
 
       setUserRole: (role) => set({ userRole: role }),
+
+      setToken: (token) => set({ token }),
 
       resetAuth: () => set(initialAuthState),
     }),
@@ -87,10 +86,13 @@ export const useAuthStore = create<AuthStore>()(
         userRole: state.userRole,
         userId: state.userId,
         userName: state.userName,
+        token: state.token,
       }),
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
-        // Handle future migrations here if AuthState structure changes
+        if (version < 2) {
+          return { ...persistedState, token: null };
+        }
         return persistedState as AuthStore;
       },
     }
@@ -103,9 +105,11 @@ export const useAuth = () => useAuthStore((state) => ({
   userRole: state.userRole,
   userId: state.userId,
   userName: state.userName,
+  token: state.token,
   login: state.login,
   logout: state.logout,
   setUserRole: state.setUserRole,
+  setToken: state.setToken,
 }));
 
 export const useIsLoggedIn = () => useAuthStore((state) => state.isLoggedIn);

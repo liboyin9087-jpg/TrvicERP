@@ -117,6 +117,28 @@
   --aurora-blue: rgba(59, 130, 246, 0.15);
   --aurora-purple: rgba(147, 51, 234, 0.1);
   --aurora-indigo: rgba(99, 102, 241, 0.12);
+
+  /* ============================================
+     Travel Theme Brand Colors
+     (Single source of truth for tailwind.config.js brand/travel tokens)
+     ============================================ */
+  --color-brand-sky: #60a5fa;
+  --color-brand-ocean: #3b82f6;
+  --color-brand-deep: #2563eb;
+
+  --color-travel-sunrise: #fb923c;
+  --color-travel-sunset: #f97316;
+  --color-travel-sand: #fbbf24;
+  --color-travel-forest: #10b981;
+  --color-travel-coral: #ef4444;
+  --color-travel-lavender: #a855f7;
+
+  /* Neutral Key Shades */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-500: #64748b;
+  --color-neutral-700: #334155;
+  --color-neutral-900: #0f172a;
 }
 
 /* ============================================
@@ -692,74 +714,9 @@ body {
   background-clip: text;
 }
 
-/* Semantic utilities */
-.text-success {
-  color: var(--color-success) !important;
-}
-.bg-success {
-  background: var(--color-success) !important;
-}
-.badge-success {
-  background: var(--color-success);
-  color: var(--color-white);
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.text-info {
-  color: var(--color-info) !important;
-}
-.bg-info {
-  background: var(--color-info) !important;
-}
-.badge-info {
-  background: var(--color-info);
-  color: var(--color-white);
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.text-warning {
-  color: var(--color-warning) !important;
-}
-.bg-warning {
-  background: var(--color-warning) !important;
-}
-.badge-warning {
-  background: var(--color-warning);
-  color: var(--color-black);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.text-error {
-  color: var(--color-error) !important;
-}
-.bg-error {
-  background: var(--color-error) !important;
-}
-.badge-error {
-  background: var(--color-error);
-  color: var(--color-white);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
+/* DEPRECATED: Duplicate semantic utilities removed.
+   Use the canonical definitions in @layer utilities above:
+   .text-success, .bg-success, .badge-success, etc. */
 
 .text-gradient-purple {
   background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);

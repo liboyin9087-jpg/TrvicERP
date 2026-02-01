@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -9,11 +9,13 @@ import {
 import { cn } from './src/lib/utils';
 
 // Zustand Store
-import { useAppStore, type ViewKey, type UserRole } from './src/store/useAppStore';
+import { useAppStore, useAuthStore, type ViewKey, type UserRole } from './src/store/useAppStore';
 import { useToastStore } from './src/store/useToastStore';
 
 // Auth (保持靜態引入，因為這是進入點)
 import LoginPage from './components/auth/LoginPage';
+import defaultAuthService from './src/core/services/authService';
+import { supabase } from './src/lib/supabase';
 
 // Admin Components - 預設首頁保持靜態引入，提升 LCP 速度
 import DraggableDashboard from './components/dashboard/DraggableDashboard';
@@ -61,6 +63,7 @@ import ErrorBoundary from './components/shared/ErrorBoundary';
 import ToastContainer from './components/shared/ToastContainer';
 import ViewSwitcher from './components/shared/ViewSwitcher';
 import LandingPage from './components/shared/LandingPage';
+import SkipNavigation from './components/shared/SkipNavigation';
 import ClientPortal from './components/portal/ClientPortal';
 
 // Glassmorphism Demo
@@ -296,7 +299,8 @@ function FloatingSidebar() {
 
   const navGroups = getNavGroups(userRole);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await defaultAuthService.logout();
     logout();
     navigate('/login');
   };
@@ -346,7 +350,7 @@ function FloatingSidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-6">
+        <nav aria-label="主導覽" className="flex-1 overflow-y-auto p-3 space-y-6">
           {navGroups.map((group, idx) => (
             <div key={idx}>
               <AnimatePresence mode="wait">
@@ -506,7 +510,8 @@ function MobileMenu() {
 
   const navGroups = getNavGroups(userRole);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await defaultAuthService.logout();
     logout();
     setMobileMenuOpen(false);
     navigate('/login');
@@ -553,7 +558,7 @@ function MobileMenu() {
             </div>
 
             {/* Navigation */}
-            <nav className="p-3 space-y-6">
+            <nav aria-label="行動裝置導覽" className="p-3 space-y-6">
               {navGroups.map((group, idx) => (
                 <div key={idx}>
                   <div className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -609,7 +614,7 @@ function AppContent() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
       <GlassHeader />
-      <main className="flex-1 p-6">
+      <main id="main-content" className="flex-1 p-6" role="main">
         <ViewRenderer view={currentView} />
       </main>
     </div>
@@ -628,6 +633,7 @@ function ProtectedLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden" data-role={userRole}>
+      <SkipNavigation />
       <FloatingSidebar />
       <AppContent />
       <MobileMenu />
@@ -655,13 +661,86 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isLoggedIn ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
+// Role mapping: backend auth role → app UI role
+function mapBackendRoleToAppRole(role: string): 'staff' | 'welfare' | 'traveler' {
+  switch (role) {
+    case 'welfare':
+      return 'welfare';
+    case 'traveler':
+      return 'traveler';
+    default:
+      return 'staff';
+  }
+}
+
+// Adapter: wraps defaultAuthService to match LoginPage's IAuthService interface
+const loginPageAuthService = {
+  login: async (credentials: { email: string; password: string }) => {
+    const result = await defaultAuthService.login(credentials);
+    if (result.success && result.user) {
+      return {
+        success: true as const,
+        user: {
+          id: result.user.id,
+          name: result.user.name,
+          role: result.user.role,
+        },
+        token: result.token,
+      };
+    }
+    return {
+      success: false as const,
+      error: result.error || '登入失敗',
+    };
+  },
+};
+
 function App() {
   const login = useAppStore((state) => state.login);
   const toasts = useToastStore((state) => state.toasts);
   const removeToast = useToastStore((state) => state.removeToast);
 
-  const handleLogin = (role: 'staff' | 'welfare' | 'traveler', userId?: string, userName?: string) => {
-    login(role, userId, userName);
+  // Supabase auth state listener: validates session on mount and handles sign-out events
+  useEffect(() => {
+    const isMock = import.meta.env.VITE_USE_MOCK !== 'false';
+    if (isMock || !supabase) return;
+
+    // Validate persisted session on app mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const storeState = useAuthStore.getState();
+      if (!session && storeState.isLoggedIn) {
+        // Supabase session expired but store still shows logged in → force logout
+        storeState.logout();
+      } else if (session?.user && !storeState.isLoggedIn) {
+        // Supabase session exists but store is not logged in → restore session
+        const metadata = session.user.user_metadata;
+        const role = metadata?.role || 'admin';
+        const appRole = mapBackendRoleToAppRole(role);
+        storeState.login(
+          appRole,
+          session.user.id,
+          metadata?.name || session.user.email || '',
+          session.access_token,
+        );
+      }
+    });
+
+    // Listen for auth state changes (sign-out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          useAuthStore.getState().logout();
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          useAuthStore.getState().setToken(session.access_token);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = (role: 'staff' | 'welfare' | 'traveler', userId?: string, userName?: string, token?: string) => {
+    login(role, userId, userName, token);
   };
 
   return (
@@ -672,7 +751,12 @@ function App() {
           {/* Login Page */}
           <Route path="/login" element={
             <AuthRoute>
-              <LoginPage onLogin={handleLogin} />
+              <LoginPage
+                config={{
+                  authService: loginPageAuthService,
+                  onLoginSuccess: handleLogin,
+                }}
+              />
             </AuthRoute>
           } />
 
