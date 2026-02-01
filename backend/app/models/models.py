@@ -42,7 +42,6 @@ class Customer(Base):
     dietary_restrictions = Column(String)
     medical_notes = Column(Text)
     tags = Column(JSON)  # 客戶標籤
-    version = Column(Integer, default=1, nullable=False)  # For optimistic locking
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -163,7 +162,6 @@ class Order(Base):
     participants = Column(JSON)  # 參團人員資料
     notes = Column(Text)
     created_by = Column(String, ForeignKey("users.id"))
-    version = Column(Integer, default=1, nullable=False)  # For optimistic locking
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -227,18 +225,3 @@ class Poll(Base):
     created_by = Column(String, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-    
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)  # Who performed the action
-    action = Column(String, nullable=False, index=True)  # e.g., CREATE_ORDER, UPDATE_ITINERARY
-    resource_id = Column(String, nullable=False, index=True)  # The ID of the affected resource
-    resource_type = Column(String, nullable=False, index=True)  # order, customer, etc.
-    changes = Column(JSON)  # JSON field containing the diff or the new state
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    
-    # Relationships
-    user = relationship("User")
