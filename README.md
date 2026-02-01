@@ -260,7 +260,7 @@ npm run check:env
 如果您不小心刪除了 Git 分支，我們提供了完整的恢復指南和工具：
 
 - **快速恢復**：執行 `bash scripts/recover-branch.sh` 使用互動式恢復工具
-- **詳細文檔**：查看 [Git 分支恢復指南](docs/GIT_BRANCH_RECOVERY.md) 了解完整的恢復方法
+- **詳細文檔**：查看 [Git 分支恢復指南](docs/GIT_BRANCH_RECOVERY.md) 了解完整的恢復方法（[English Version](docs/GIT_BRANCH_RECOVERY_EN.md)）
 
 ## 授權
 
