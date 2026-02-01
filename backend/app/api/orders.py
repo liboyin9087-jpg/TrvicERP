@@ -27,7 +27,6 @@ async def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     db_order = Order(
         id=f"ord_{uuid4().hex[:12]}",
         order_number=f"ORD-{datetime.now().strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}",
-        version=1,
         **order.dict()
     )
     

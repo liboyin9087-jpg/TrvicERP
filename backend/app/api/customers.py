@@ -25,7 +25,6 @@ async def create_customer(customer: CustomerCreate, db: Session = Depends(get_db
     """Create a new customer"""
     db_customer = Customer(
         id=f"cust_{uuid4().hex[:12]}",
-        version=1,
         **customer.dict()
     )
     
