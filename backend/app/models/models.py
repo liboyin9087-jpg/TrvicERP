@@ -42,6 +42,7 @@ class Customer(Base):
     dietary_restrictions = Column(String)
     medical_notes = Column(Text)
     tags = Column(JSON)  # 客戶標籤
+    version = Column(Integer, default=1, nullable=False)  # For optimistic locking
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -162,6 +163,7 @@ class Order(Base):
     participants = Column(JSON)  # 參團人員資料
     notes = Column(Text)
     created_by = Column(String, ForeignKey("users.id"))
+    version = Column(Integer, default=1, nullable=False)  # For optimistic locking
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -232,7 +234,7 @@ class Poll(Base):
 class Supplier(Base):
     """供應商/供應商管理 - Vendor/Supplier Management"""
     __tablename__ = "suppliers"
-    
+
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False, index=True)
     type = Column(String, nullable=False)  # hotel, restaurant, transport, activity, ground_handler, airline
@@ -256,7 +258,7 @@ class Supplier(Base):
 class Flight(Base):
     """航班/機票管理 - Flight/Ticket Management"""
     __tablename__ = "flights"
-    
+
     id = Column(String, primary_key=True, index=True)
     pnr = Column(String, unique=True, index=True)  # Passenger Name Record
     booking_reference = Column(String)
@@ -283,7 +285,7 @@ class Flight(Base):
 class Passport(Base):
     """護照管理 - Passport Management"""
     __tablename__ = "passports"
-    
+
     id = Column(String, primary_key=True, index=True)
     customer_id = Column(String, ForeignKey("customers.id"), nullable=False)
     passport_number = Column(String, nullable=False, index=True)
@@ -306,7 +308,7 @@ class Passport(Base):
 class Visa(Base):
     """簽證管理 - Visa Management"""
     __tablename__ = "visas"
-    
+
     id = Column(String, primary_key=True, index=True)
     passport_id = Column(String, ForeignKey("passports.id"), nullable=False)
     destination_country = Column(String, nullable=False)
@@ -326,7 +328,7 @@ class Visa(Base):
 class Payment(Base):
     """收付款管理 - Payment Management (AR/AP)"""
     __tablename__ = "payments"
-    
+
     id = Column(String, primary_key=True, index=True)
     type = Column(String, nullable=False)  # receivable (AR), payable (AP)
     order_id = Column(String, ForeignKey("orders.id"))
@@ -349,7 +351,7 @@ class Payment(Base):
 class Insurance(Base):
     """旅遊保險管理 - Travel Insurance Management"""
     __tablename__ = "insurances"
-    
+
     id = Column(String, primary_key=True, index=True)
     order_id = Column(String, ForeignKey("orders.id"))
     session_id = Column(String, ForeignKey("sessions.id"))
@@ -373,7 +375,7 @@ class Insurance(Base):
 class HotelAllotment(Base):
     """飯店房控管理 - Hotel Room Allotment Management"""
     __tablename__ = "hotel_allotments"
-    
+
     id = Column(String, primary_key=True, index=True)
     supplier_id = Column(String, ForeignKey("suppliers.id"), nullable=False)  # 酒店供應商
     session_id = Column(String, ForeignKey("sessions.id"))
@@ -397,7 +399,7 @@ class HotelAllotment(Base):
 class Notification(Base):
     """通知系統 - Notification System"""
     __tablename__ = "notifications"
-    
+
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey("users.id"))
     type = Column(String, nullable=False)  # email, sms, system
@@ -446,7 +448,7 @@ class ImportedOrder(Base):
 class ExchangeRate(Base):
     """匯率管理 - Exchange Rate Management"""
     __tablename__ = "exchange_rates"
-    
+
     id = Column(String, primary_key=True, index=True)
     base_currency = Column(String, nullable=False, default="TWD")
     target_currency = Column(String, nullable=False)
@@ -457,3 +459,18 @@ class ExchangeRate(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)  # Who performed the action
+    action = Column(String, nullable=False, index=True)  # e.g., CREATE_ORDER, UPDATE_ITINERARY
+    resource_id = Column(String, nullable=False, index=True)  # The ID of the affected resource
+    resource_type = Column(String, nullable=False, index=True)  # order, customer, etc.
+    changes = Column(JSON)  # JSON field containing the diff or the new state
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Relationships
+    user = relationship("User")
