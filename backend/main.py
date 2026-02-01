@@ -7,7 +7,9 @@ from app.core.config import settings
 from app.db.database import Base, engine
 from app.api import (
     auth, users, orders, quotations, customers, tours,
-    sessions, corporate_accounts, budgets, polls, reports, line
+    sessions, corporate_accounts, budgets, polls, reports, line,
+    suppliers, flights, payments, passports, operations,
+    excel, analytics, import_api, weather_push
 )
 import json
 from typing import Dict, Set
@@ -47,6 +49,19 @@ app.include_router(budgets.router)
 app.include_router(polls.router)
 app.include_router(reports.router)
 app.include_router(line.router)
+# P0 Critical Modules
+app.include_router(suppliers.router)
+app.include_router(flights.router)
+app.include_router(payments.router)
+app.include_router(passports.router)
+app.include_router(operations.router)
+# P1 Features
+app.include_router(excel.router)
+app.include_router(analytics.router)
+# Import / Chrome Extension
+app.include_router(import_api.router)
+# Weather Push (CWA + Gemini AI)
+app.include_router(weather_push.router)
 
 
 # WebSocket connection manager
