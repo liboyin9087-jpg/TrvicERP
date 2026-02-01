@@ -253,6 +253,15 @@ npm run check:env
 4. **路由**: 專案使用 React Router，`vercel.json` 已配置 SPA fallback
 5. **Mock 模式**: 若暫時無後端，可設定 `VITE_USE_MOCK=true` 使用模擬資料
 
+## Git 操作指南
+
+### 不小心刪除分支？
+
+如果您不小心刪除了 Git 分支，我們提供了完整的恢復指南和工具：
+
+- **快速恢復**：執行 `bash scripts/recover-branch.sh` 使用互動式恢復工具
+- **詳細文檔**：查看 [Git 分支恢復指南](docs/GIT_BRANCH_RECOVERY.md) 了解完整的恢復方法
+
 ## 授權
 
 MIT License
