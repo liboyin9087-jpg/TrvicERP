@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrvicERP 資料擷取</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 360px;
+      min-height: 480px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+      font-size: 13px;
+      color: #1f2937;
+      background: #f9fafb;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo {
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px; font-family: monospace;
+    }
+    .header-text h1 { font-size: 15px; font-weight: 600; }
+    .header-text p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+
+    /* Stats Row */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 12px 16px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 8px 4px;
+      background: #f0fdf4;
+      border-radius: 8px;
+    }
+    .stat-num { font-size: 20px; font-weight: 700; color: #059669; }
+    .stat-label { font-size: 10px; color: #6b7280; margin-top: 2px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b7280;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #059669; }
+    .tab.active { color: #059669; border-bottom-color: #059669; }
+
+    /* Tab Content */
+    .tab-content { display: none; padding: 16px; }
+    .tab-content.active { display: block; }
+
+    /* Actions Panel */
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .action-btn {
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .action-btn:hover {
+      border-color: #059669;
+      background: #f0fdf4;
+    }
+    .action-btn .icon { font-size: 20px; margin-bottom: 4px; }
+    .action-btn .label { font-size: 11px; color: #374151; }
+
+    .action-btn.primary {
+      grid-column: span 2;
+      background: #059669;
+      color: white;
+      border-color: #059669;
+    }
+    .action-btn.primary:hover { background: #047857; }
+    .action-btn.primary .label { color: white; }
+
+    .action-btn.danger {
+      border-color: #fca5a5;
+      color: #dc2626;
+    }
+    .action-btn.danger:hover { background: #fef2f2; }
+
+    /* Settings Panel */
+    .form-group { margin-bottom: 12px; }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: #059669; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+    .toggle-row .label { font-size: 12px; }
+    .toggle-row .desc { font-size: 10px; color: #9ca3af; }
+
+    .toggle {
+      position: relative;
+      width: 36px; height: 20px;
+      background: #d1d5db;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle.active { background: #059669; }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle.active::after { transform: translateX(16px); }
+
+    .save-btn {
+      width: 100%;
+      padding: 10px;
+      background: #059669;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .save-btn:hover { background: #047857; }
+
+    /* Data List */
+    .data-list { max-height: 260px; overflow-y: auto; }
+    .data-item {
+      padding: 10px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+    .data-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .data-item-title { font-size: 12px; font-weight: 500; }
+    .data-item-badge {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .badge-synced { background: #d1fae5; color: #065f46; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .data-item-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 10px;
+      color: #9ca3af;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: #9ca3af;
+    }
+    .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+
+    /* Status Bar */
+    .status-bar {
+      padding: 8px 16px;
+      background: #f3f4f6;
+      border-top: 1px solid #e5e7eb;
+      font-size: 10px;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">T</div>
+    <div class="header-text">
+      <h1>TrvicERP 資料擷取</h1>
+      <p>競品行程 / 訂單自動擷取工具</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-item">
+      <div class="stat-num" id="stat-total">0</div>
+      <div class="stat-label">已擷取</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-synced">0</div>
+      <div class="stat-label">已同步</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat-pending">0</div>
+      <div class="stat-label">待同步</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="actions">操作</div>
+    <div class="tab" data-tab="data">資料</div>
+    <div class="tab" data-tab="settings">設定</div>
+  </div>
+
+  <!-- Actions Tab -->
+  <div class="tab-content active" id="tab-actions">
+    <div class="action-grid">
+      <div class="action-btn" id="btn-scrape-list">
+        <div class="icon">&#128203;</div>
+        <div class="label">擷取列表</div>
+      </div>
+      <div class="action-btn" id="btn-scrape-detail">
+        <div class="icon">&#128196;</div>
+        <div class="label">擷取明細</div>
+      </div>
+      <div class="action-btn" id="btn-export">
+        <div class="icon">&#128229;</div>
+        <div class="label">匯出 JSON</div>
+      </div>
+      <div class="action-btn" id="btn-sync">
+        <div class="icon">&#9729;</div>
+        <div class="label">同步後端</div>
+      </div>
+      <div class="action-btn danger" id="btn-clear">
+        <div class="icon">&#128465;</div>
+        <div class="label">清除資料</div>
+      </div>
+      <div class="action-btn" id="btn-refresh">
+        <div class="icon">&#128260;</div>
+        <div class="label">重新整理</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Tab -->
+  <div class="tab-content" id="tab-data">
+    <div class="data-list" id="data-list">
+      <div class="empty-state">
+        <div class="icon">&#128194;</div>
+        <div>尚無擷取資料</div>
+        <div style="font-size:10px; margin-top:4px;">請前往旅行社網站後點擊「擷取列表」</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div class="tab-content" id="tab-settings">
+    <div class="form-group">
+      <label>API 伺服器位址</label>
+      <input type="text" id="cfg-api-url" placeholder="http://localhost:4000/api/v1">
+    </div>
+    <div class="form-group">
+      <label>API Token (Bearer)</label>
+      <input type="text" id="cfg-token" placeholder="輸入 API Token...">
+    </div>
+    <div class="form-group">
+      <label>批次上傳數量</label>
+      <input type="number" id="cfg-batch" min="1" max="200" value="50">
+    </div>
+    <div class="toggle-row">
+      <div>
+        <div class="label">自動同步</div>
+        <div class="desc">擷取後自動上傳到後端</div>
+      </div>
+      <div class="toggle" id="cfg-auto-sync"></div>
+    </div>
+    <button class="save-btn" id="btn-save-config">儲存設定</button>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span id="status-text">就緒</span>
+    <span id="status-platform">—</span>
+  </div>
+
+  <script>
+    // ============ Tab Switching ============
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ============ Toggle ============
+    document.getElementById('cfg-auto-sync').addEventListener('click', function () {
+      this.classList.toggle('active');
+    });
+
+    // ============ Stats ============
+    async function refreshStats() {
+      try {
+        const resp = await chrome.runtime.sendMessage({ action: 'GET_SCRAPED_COUNT' });
+        document.getElementById('stat-total').textContent = resp.total || 0;
+        document.getElementById('stat-synced').textContent = resp.synced || 0;
+        document.getElementById('stat-pending').textContent = resp.unsynced || 0;
+      } catch (e) {
+        console.error('Stats error:', e);
+      }
+    }
+
+    // ============ Data List ============
+    async function refreshDataList() {
+      try {
+        const result = await chrome.storage.local.get('scrapedData');
+        const data = result.scrapedData || [];
+        const container = document.getElementById('data-list');
+
+        if (!data.length) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">&#128194;</div>
+              <div>尚無擷取資料</div>
+              <div style="font-size:10px; margin-top:4px;">請前往旅行社網站後點擊「擷取列表」</div>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = data.slice(-50).reverse().map(item => `
+          <div class="data-item">
+            <div class="data-item-header">
+              <div class="data-item-title">${escapeHtml(item.product_name || item.external_id || '—')}</div>
+              <div class="data-item-badge ${item.synced ? 'badge-synced' : 'badge-pending'}">
+                ${item.synced ? '已同步' : '待同步'}
+              </div>
+            </div>
+            <div class="data-item-meta">
+              <span>${escapeHtml(item.company || '')}</span>
+              <span>${escapeHtml(item.depart_date || '')}</span>
+              <span>${item.total_price ? 'NT$' + Number(item.total_price).toLocaleString() : ''}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error('Data list error:', e);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ============ Config ============
+    async function loadConfig() {
+      try {
+        const resp = await chrome.runtime.sendMessage({ action: 'GET_CONFIG' });
+        document.getElementById('cfg-api-url').value = resp.apiBaseUrl || '';
+        document.getElementById('cfg-token').value = resp.authToken || '';
+        document.getElementById('cfg-batch').value = resp.batchSize || 50;
+        if (resp.autoSync) {
+          document.getElementById('cfg-auto-sync').classList.add('active');
+        }
+      } catch (e) {
+        console.error('Config load error:', e);
+      }
+    }
+
+    document.getElementById('btn-save-config').addEventListener('click', async () => {
+      const config = {
+        apiBaseUrl: document.getElementById('cfg-api-url').value.trim(),
+        authToken: document.getElementById('cfg-token').value.trim(),
+        batchSize: parseInt(document.getElementById('cfg-batch').value) || 50,
+        autoSync: document.getElementById('cfg-auto-sync').classList.contains('active'),
+      };
+      await chrome.runtime.sendMessage({ action: 'SAVE_CONFIG', data: config });
+      setStatus('設定已儲存');
+    });
+
+    // ============ Actions ============
+    async function sendToActiveTab(action) {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) { setStatus('無法取得當前分頁'); return; }
+      try {
+        await chrome.tabs.sendMessage(tab.id, { action });
+      } catch (e) {
+        setStatus('請先前往旅行社網站');
+      }
+    }
+
+    document.getElementById('btn-scrape-list').addEventListener('click', () => {
+      sendToActiveTab('TRIGGER_SCRAPE_LIST');
+      setStatus('正在擷取列表...');
+    });
+
+    document.getElementById('btn-scrape-detail').addEventListener('click', () => {
+      sendToActiveTab('TRIGGER_SCRAPE_DETAIL');
+      setStatus('正在擷取明細...');
+    });
+
+    document.getElementById('btn-export').addEventListener('click', async () => {
+      setStatus('匯出中...');
+      const resp = await chrome.runtime.sendMessage({ action: 'EXPORT_JSON' });
+      if (resp.ok) {
+        // Download via data URL
+        const blob = new Blob([JSON.stringify(resp.data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `trvic_export_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus(`已匯出 ${resp.data.count} 筆`);
+      } else {
+        setStatus(resp.error || '匯出失敗');
+      }
+    });
+
+    document.getElementById('btn-sync').addEventListener('click', async () => {
+      setStatus('同步中...');
+      const resp = await chrome.runtime.sendMessage({ action: 'SYNC_TO_BACKEND' });
+      if (resp.ok) {
+        setStatus(`已同步 ${resp.synced} 筆`);
+      } else {
+        setStatus(resp.error || '同步失敗');
+      }
+      refreshStats();
+      refreshDataList();
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', async () => {
+      if (!confirm('確定要清除所有擷取資料嗎？')) return;
+      await chrome.runtime.sendMessage({ action: 'CLEAR_DATA' });
+      setStatus('資料已清除');
+      refreshStats();
+      refreshDataList();
+    });
+
+    document.getElementById('btn-refresh').addEventListener('click', () => {
+      refreshStats();
+      refreshDataList();
+      setStatus('已重新整理');
+    });
+
+    // ============ Status ============
+    function setStatus(msg) {
+      document.getElementById('status-text').textContent = msg;
+    }
+
+    async function detectPlatform() {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab || !tab.url) return;
+        const host = new URL(tab.url).hostname;
+        const platforms = {
+          'liontravel': '雄獅旅遊',
+          'settour': '山富旅遊',
+          'lifetour': '五福旅遊',
+          'colatour': '可樂旅遊',
+          'eztravel': '易遊網',
+          'startravel': '燦星旅遊',
+          'kkday': 'KKday',
+          'klook': 'Klook',
+        };
+        for (const [key, name] of Object.entries(platforms)) {
+          if (host.includes(key)) {
+            document.getElementById('status-platform').textContent = name;
+            return;
+          }
+        }
+        document.getElementById('status-platform').textContent = '非旅遊平台';
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    // ============ Init ============
+    refreshStats();
+    refreshDataList();
+    loadConfig();
+    detectPlatform();
+
+    // Listen for updates from background
+    chrome.runtime.onMessage.addListener((msg) => {
+      if (msg.action === 'DATA_UPDATED') {
+        refreshStats();
+        refreshDataList();
+      }
+    });
+  </script>
+</body>
+</html>

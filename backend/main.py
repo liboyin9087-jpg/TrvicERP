@@ -9,7 +9,7 @@ from app.api import (
     auth, users, orders, quotations, customers, tours,
     sessions, corporate_accounts, budgets, polls, reports, line,
     suppliers, flights, payments, passports, operations,
-    excel, analytics
+    excel, analytics, import_api
 )
 import json
 from typing import Dict, Set
@@ -58,6 +58,8 @@ app.include_router(operations.router)
 # P1 Features
 app.include_router(excel.router)
 app.include_router(analytics.router)
+# Import / Chrome Extension
+app.include_router(import_api.router)
 
 
 # WebSocket connection manager

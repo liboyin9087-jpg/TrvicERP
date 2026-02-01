@@ -712,7 +712,105 @@ class NotificationResponse(NotificationBase):
         from_attributes = True
 
 
-# --- Exchange Rate Schemas ---
+# ============ Import / Chrome Extension Schemas ============
+
+class ImportedOrderBase(BaseModel):
+    external_id: str
+    company: str
+    product_name: Optional[str] = None
+    group_name: Optional[str] = None
+    destination: Optional[str] = None
+    depart_date: Optional[str] = None
+    return_date: Optional[str] = None
+    days: Optional[int] = None
+    nights: Optional[int] = None
+    pax: Optional[int] = None
+    total_price: Optional[float] = None
+    status: str = "scraped"
+    poi_list: Optional[List[str]] = None
+    itinerary: Optional[List[Dict[str, Any]]] = None
+    cost_breakdown: Optional[Dict[str, Any]] = None
+    inclusions: Optional[List[str]] = None
+    exclusions: Optional[List[str]] = None
+    payment_status: Optional[str] = None
+    source: str = "chrome_extension"
+    raw_data: Optional[Dict[str, Any]] = None
+    tags: Optional[List[str]] = None
+
+
+class ImportedOrderCreate(ImportedOrderBase):
+    pass
+
+
+class ImportedOrderUpdate(BaseModel):
+    product_name: Optional[str] = None
+    group_name: Optional[str] = None
+    destination: Optional[str] = None
+    depart_date: Optional[str] = None
+    return_date: Optional[str] = None
+    days: Optional[int] = None
+    nights: Optional[int] = None
+    pax: Optional[int] = None
+    total_price: Optional[float] = None
+    status: Optional[str] = None
+    poi_list: Optional[List[str]] = None
+    itinerary: Optional[List[Dict[str, Any]]] = None
+    cost_breakdown: Optional[Dict[str, Any]] = None
+    inclusions: Optional[List[str]] = None
+    exclusions: Optional[List[str]] = None
+    payment_status: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+class ImportedOrderResponse(ImportedOrderBase):
+    id: str
+    converted_order_id: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ImportBatchRequest(BaseModel):
+    """批次匯入請求 - Chrome Extension / JSON 上傳"""
+    items: List[ImportedOrderCreate]
+
+
+class ImportBatchResponse(BaseModel):
+    """批次匯入回應"""
+    total: int
+    created: int
+    updated: int
+    errors: List[Dict[str, Any]] = []
+
+
+class ImportUpsertRequest(BaseModel):
+    """Upsert 單筆匯入（依 external_id 去重）"""
+    external_id: str
+    company: str
+    product_name: Optional[str] = None
+    group_name: Optional[str] = None
+    destination: Optional[str] = None
+    depart_date: Optional[str] = None
+    return_date: Optional[str] = None
+    days: Optional[int] = None
+    nights: Optional[int] = None
+    pax: Optional[int] = None
+    total_price: Optional[float] = None
+    poi_list: Optional[List[str]] = None
+    itinerary: Optional[List[Dict[str, Any]]] = None
+    cost_breakdown: Optional[Dict[str, Any]] = None
+    inclusions: Optional[List[str]] = None
+    exclusions: Optional[List[str]] = None
+    payment_status: Optional[str] = None
+    source: str = "chrome_extension"
+    raw_data: Optional[Dict[str, Any]] = None
+    tags: Optional[List[str]] = None
+
+
+# ============ Exchange Rate Schemas ============
+
 class ExchangeRateBase(BaseModel):
     base_currency: str = "TWD"
     target_currency: str
