@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "TrvicERP 旅遊資料擷取",
+  "version": "1.0.0",
+  "description": "從旅行社平台擷取訂單、行程、POI 資料，匯入 TrvicERP 系統",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://*.liontravel.com/*",
+    "https://*.settour.com.tw/*",
+    "https://*.lifetour.com.tw/*",
+    "https://*.colatour.com.tw/*",
+    "https://*.eztravel.com.tw/*",
+    "https://*.startravel.com.tw/*",
+    "https://*.kkday.com/*",
+    "https://*.klook.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.liontravel.com/*",
+        "https://*.settour.com.tw/*",
+        "https://*.lifetour.com.tw/*",
+        "https://*.colatour.com.tw/*",
+        "https://*.eztravel.com.tw/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "TrvicERP 資料擷取"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

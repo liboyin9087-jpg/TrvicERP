@@ -1,0 +1,36 @@
+# TrvicERP Scraper 排程設定
+# 複製到 crontab: crontab scrapers/crontab.example
+# 或手動編輯:     crontab -e
+#
+# 請先修改 TRVIC_DIR 為你的專案路徑
+
+TRVIC_DIR=/home/user/TrvicERP
+PYTHON=/usr/bin/python3
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# 設定環境變數 (填入你的 API Key)
+# TDX_CLIENT_ID=your_client_id
+# TDX_CLIENT_SECRET=your_client_secret
+# CWA_API_KEY=your_cwa_key
+
+# ============ 排程 ============
+
+# 飯店 — 每週日 02:00 (Booking), 03:00 (Agoda)
+0 2 * * 0   cd $TRVIC_DIR && $PYTHON -m scrapers.scheduler once booking  >> scrapers/output/logs/cron.log 2>&1
+0 3 * * 0   cd $TRVIC_DIR && $PYTHON -m scrapers.scheduler once agoda    >> scrapers/output/logs/cron.log 2>&1
+
+# 航班 — 每週三、六 04:00
+0 4 * * 3,6 cd $TRVIC_DIR && $PYTHON -m scrapers.scheduler once skyscanner >> scrapers/output/logs/cron.log 2>&1
+
+# 觀光局 — 每月 1 號 05:00
+0 5 1 * *   cd $TRVIC_DIR && $PYTHON -m scrapers.scheduler once tourism  >> scrapers/output/logs/cron.log 2>&1
+
+# 天氣 — 每 6 小時
+0 */6 * * * cd $TRVIC_DIR && $PYTHON -m scrapers.scheduler once weather  >> scrapers/output/logs/cron.log 2>&1
+
+# 交通 — 每週一 05:30
+30 5 * * 1  cd $TRVIC_DIR && $PYTHON -m scrapers.scheduler once transport >> scrapers/output/logs/cron.log 2>&1
+
+# 清理 7 天前舊檔 — 每天 06:00
+0 6 * * *   cd $TRVIC_DIR && $PYTHON -m scrapers.scheduler once cleanup  >> scrapers/output/logs/cron.log 2>&1

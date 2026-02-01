@@ -1,6 +1,7 @@
 {
-  "short_name": "TravelMaster",
-  "name": "TravelMaster Uber Edition",
+  "short_name": "TrvicERP",
+  "name": "TrvicERP - 旅遊管理系統",
+  "description": "智慧旅遊 ERP 管理平台 - 數位領隊、天氣推播、競品分析",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,8 +9,16 @@
       "type": "image/x-icon"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "any",
+  "theme_color": "#059669",
+  "background_color": "#f9fafb",
+  "categories": ["travel", "business", "productivity"],
+  "prefer_related_applications": false,
+  "serviceworker": {
+    "src": "/sw.js",
+    "scope": "/"
+  }
 }

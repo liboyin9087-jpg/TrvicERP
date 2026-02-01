@@ -122,6 +122,24 @@ export const API_ENDPOINTS = {
     teams: buildApiUrl('reports/teams'),
     export: (type: string) => buildApiUrl(`reports/${type}/export`),
   },
+  // 匯入管理 (Chrome Extension / JSON)
+  import: {
+    list: buildApiUrl('import'),
+    batch: buildApiUrl('import'),
+    upsert: buildApiUrl('import/upsert'),
+    upload: buildApiUrl('import/upload'),
+    stats: buildApiUrl('import/stats'),
+    detail: (id: string) => buildApiUrl(`import/${id}`),
+    update: (id: string) => buildApiUrl(`import/${id}`),
+    delete: (id: string) => buildApiUrl(`import/${id}`),
+    convert: (id: string) => buildApiUrl(`import/${id}/convert`),
+  },
+  // 天氣推播
+  weather: {
+    forecast: buildApiUrl('weather/forecast'),
+    alerts: buildApiUrl('weather/alerts'),
+    push: buildApiUrl('weather/push'),
+  },
 } as const;
 
 // 預設請求 headers
@@ -162,6 +180,8 @@ const MOCK_LIST_ENDPOINTS: RegExp[] = [
   /\/api\/v1\/polls\/?$/,
   /\/api\/v1\/budgets\/?$/,
   /\/api\/v1\/reports\/(revenue|customers|teams)\/?$/,
+  /\/api\/v1\/import\/?$/,
+  /\/api\/v1\/weather\/(forecast|alerts)\/?$/,
 ];
 
 // MOCK_LATENCY_MS 現在從 env.ts 匯入

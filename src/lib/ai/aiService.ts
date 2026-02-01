@@ -62,6 +62,7 @@ const MOCK_MODE_OPTIONS: AIModeOption[] = [
   { id: 'marketing', name: 'marketing', label: '行銷文案', description: 'Mock 模式 (無後端)', enabled: true },
   { id: 'costing', name: 'costing', label: '成本估算', description: 'Mock 模式 (無後端)', enabled: true },
   { id: 'legal', name: 'legal', label: '法規諮詢', description: 'Mock 模式 (無後端)', enabled: true },
+  { id: 'green', name: 'green', label: '綠色旅遊', description: 'Mock 模式 (無後端)', enabled: true },
 ];
 
 const MOCK_MODE_DESCRIPTIONS = MOCK_MODE_OPTIONS.reduce<Record<AIMode, string>>(
