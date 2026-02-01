@@ -60,6 +60,9 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+          VITE_USE_MOCK: 'true'
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -129,3 +132,5 @@ jobs:
           npm run build
           du -sh dist/
           echo "Bundle size analysis complete"
+        env:
+          VITE_USE_MOCK: 'true'
