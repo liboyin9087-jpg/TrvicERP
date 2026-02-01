@@ -98,7 +98,7 @@ export interface OfflineServiceConfig {
 /**
  * 同步狀態
  */
-export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'error';
+export type SyncStatus = 'pending' | 'syncing' | 'synced' | 'error' | 'conflict';
 
 /**
  * 基礎實體介面，所有可儲存的資料都應該實現此介面
@@ -114,6 +114,8 @@ export interface Order extends StorableEntity {
   customerId: string;
   status: string;
   amount: number;
+  version?: number; // For optimistic locking
+  updatedAt?: string; // Timestamp for version checking
   // ... 其他訂單相關屬性
 }
 
@@ -121,12 +123,17 @@ export interface Quotation extends StorableEntity {
   customerId: string;
   status: string;
   totalPrice: number;
+  version?: number; // For optimistic locking
+  updatedAt?: string; // Timestamp for version checking
   // ... 其他報價相關屬性
 }
 
 // 其他實體...
 export interface Session extends StorableEntity { }
-export interface Customer extends StorableEntity { }
+export interface Customer extends StorableEntity {
+  version?: number; // For optimistic locking
+  updatedAt?: string; // Timestamp for version checking
+}
 export interface Itinerary extends StorableEntity { }
 
 /**
@@ -142,6 +149,17 @@ export interface SyncQueueItem<T extends StorableEntity = StorableEntity> {
   retryCount: number;
   error?: string;
   lastAttemptTimestamp?: number; // 上次嘗試同步的時間
+  conflictData?: ConflictData<T>; // Data for conflict resolution
+}
+
+/**
+ * Conflict data for resolution
+ */
+export interface ConflictData<T extends StorableEntity = StorableEntity> {
+  localVersion: T; // The local version of the data
+  serverVersion: T; // The server version of the data
+  currentVersion: number; // Server's current version number
+  providedVersion: number; // Client's provided version number
 }
 
 /**
@@ -761,11 +779,22 @@ export class OfflineService {
         await this.updateSyncItemStatus(item.queueId, 'syncing'); // 更新狀態為正在同步
 
         try {
-          // 模擬發送資料到後端 API
-          // TODO: 替換為實際的 API 呼叫，例如 axios.post('/api/sync', item.data)
+          // Send data to backend API
           const backendResponse = await this.sendToBackend(item);
 
-          // 檢查後端響應是否表示成功處理 (冪等性處理應在後端完成)
+          // Check if response indicates a conflict
+          if (backendResponse.isConflict) {
+            console.warn(`Conflict detected for item ${item.queueId}. Storing conflict data for resolution.`);
+            await this.updateSyncItemStatusWithConflict(
+              item.queueId,
+              'conflict',
+              backendResponse.message || 'Version conflict',
+              backendResponse.conflictData
+            );
+            continue;
+          }
+
+          // Check backend response for success
           if (backendResponse.success) {
             await this.updateSyncItemStatus(item.queueId, 'synced'); // 同步成功
             console.log(`SyncQueueItem ${item.queueId} synced successfully.`);
@@ -798,8 +827,9 @@ export class OfflineService {
   /**
    * 發送同步資料到後端 API
    * 根據操作類型 (create/update/delete) 對應至 HTTP 方法 (POST/PUT/DELETE)
+   * Handles 409 Conflict responses for optimistic locking
    */
-  private async sendToBackend(item: SyncQueueItem): Promise<{ success: boolean; message?: string }> {
+  private async sendToBackend(item: SyncQueueItem): Promise<{ success: boolean; message?: string; isConflict?: boolean; conflictData?: any }> {
     const baseUrl = this.getApiBaseUrl();
     const endpoint = `${baseUrl}/api/v1/${item.table}`;
 
@@ -839,6 +869,47 @@ export class OfflineService {
 
       if (response.ok) {
         return { success: true, message: `${item.operation} on ${item.table}/${item.data.id} succeeded` };
+      }
+
+      // Handle 409 Conflict specifically for optimistic locking
+      if (response.status === 409) {
+        try {
+          const conflictInfo = await response.json();
+          console.warn(`Conflict detected for ${item.table}/${item.data.id}:`, conflictInfo);
+          
+          // Fetch the current server version
+          let serverVersion = null;
+          try {
+            const fetchResponse = await fetch(`${endpoint}/${item.data.id}`, {
+              method: 'GET',
+              headers,
+            });
+            if (fetchResponse.ok) {
+              serverVersion = await fetchResponse.json();
+            }
+          } catch (fetchError) {
+            console.error('Failed to fetch server version:', fetchError);
+          }
+          
+          return {
+            success: false,
+            isConflict: true,
+            message: 'Version conflict detected',
+            conflictData: {
+              error: conflictInfo,
+              serverVersion,
+              localVersion: item.data
+            }
+          };
+        } catch (parseError) {
+          console.error('Failed to parse conflict response:', parseError);
+          const errorBody = await response.text().catch(() => '');
+          return {
+            success: false,
+            isConflict: true,
+            message: `Conflict (HTTP 409): ${errorBody || response.statusText}`,
+          };
+        }
       }
 
       const errorBody = await response.text().catch(() => '');
@@ -888,6 +959,112 @@ export class OfflineService {
     }
 
     await this.offlineDB.save(this.config.stores.SYNC_QUEUE, item);
+  }
+
+  /**
+   * Update sync item status with conflict data for resolution
+   */
+  async updateSyncItemStatusWithConflict(
+    queueId: string,
+    status: 'conflict',
+    error: string,
+    conflictData?: any
+  ): Promise<void> {
+    const item = await this.offlineDB.get<SyncQueueItem>(this.config.stores.SYNC_QUEUE, queueId);
+    if (!item) {
+      console.warn(`SyncQueueItem with queueId ${queueId} not found.`);
+      return;
+    }
+
+    item.status = status;
+    item.lastAttemptTimestamp = Date.now();
+    item.error = error;
+    
+    // Store conflict data for UI to display and allow user resolution
+    if (conflictData) {
+      item.conflictData = {
+        localVersion: item.data,
+        serverVersion: conflictData.serverVersion || null,
+        currentVersion: conflictData.error?.detail?.current_version || 0,
+        providedVersion: conflictData.error?.detail?.provided_version || 0
+      };
+    }
+    
+    // Don't increment retry count for conflicts as they need user intervention
+    await this.offlineDB.save(this.config.stores.SYNC_QUEUE, item);
+  }
+
+  /**
+   * Get all items with conflicts for UI display
+   */
+  async getConflictItems(): Promise<SyncQueueItem[]> {
+    return this.offlineDB.queryByIndex<SyncQueueItem>(
+      this.config.stores.SYNC_QUEUE,
+      'status',
+      'conflict'
+    );
+  }
+
+  /**
+   * Resolve a conflict by choosing a resolution strategy
+   * @param queueId - The queue item ID with conflict
+   * @param resolution - 'keep_mine' | 'use_server' | 'manual'
+   * @param manualData - Optional manual merge data
+   */
+  async resolveConflict(
+    queueId: string,
+    resolution: 'keep_mine' | 'use_server' | 'manual',
+    manualData?: any
+  ): Promise<void> {
+    const item = await this.offlineDB.get<SyncQueueItem>(this.config.stores.SYNC_QUEUE, queueId);
+    if (!item || item.status !== 'conflict') {
+      console.warn(`Conflict item with queueId ${queueId} not found or not in conflict state.`);
+      return;
+    }
+
+    switch (resolution) {
+      case 'keep_mine':
+        // Update local version with server's current version and retry sync
+        if (item.conflictData?.currentVersion) {
+          (item.data as any).version = item.conflictData.currentVersion;
+        }
+        item.status = 'pending';
+        item.retryCount = 0;
+        delete item.error;
+        delete item.conflictData;
+        await this.offlineDB.save(this.config.stores.SYNC_QUEUE, item);
+        console.log(`Conflict resolved: keeping local changes for ${queueId}`);
+        break;
+
+      case 'use_server':
+        // Accept server version and remove from sync queue
+        if (item.conflictData?.serverVersion) {
+          // Update local storage with server version
+          await this.offlineDB.save(item.table, item.conflictData.serverVersion);
+        }
+        // Mark as synced to remove from queue
+        await this.updateSyncItemStatus(queueId, 'synced');
+        console.log(`Conflict resolved: using server version for ${queueId}`);
+        break;
+
+      case 'manual':
+        // Use manually merged data
+        if (manualData) {
+          item.data = manualData;
+          if (item.conflictData?.currentVersion) {
+            (item.data as any).version = item.conflictData.currentVersion;
+          }
+          item.status = 'pending';
+          item.retryCount = 0;
+          delete item.error;
+          delete item.conflictData;
+          await this.offlineDB.save(this.config.stores.SYNC_QUEUE, item);
+          console.log(`Conflict resolved: using manual merge for ${queueId}`);
+        } else {
+          console.error('Manual resolution requires merged data');
+        }
+        break;
+    }
   }
 
   /**
