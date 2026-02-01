@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "lastUpdated": "2026-01-12",
-  "totalSpots": 121,
+  "totalSpots": 141,
   "spots": [
     {"id": "1", "name": "世芳有機茶園", "region": "新北市坪林區", "tags": ["有機茶園", "製茶體驗", "食農教育"], "audience": ["親子", "文青", "銀髮"], "attributes": {"certification": "有機認證", "area": "水源保護區"}, "activities": ["DIY工作坊"], "season": "春季採茶", "sustainability": "有機認證"},
     {"id": "2", "name": "熊空茶園", "region": "新北市三峽區", "tags": ["有機茶園", "落羽松秘境", "森林咖啡"], "audience": ["情侶", "攝影", "文青"], "attributes": {"certification": "台灣農林有機認證"}, "activities": ["參觀", "品茗"], "season": "秋冬落羽松", "sustainability": "有機認證"},
@@ -123,6 +123,31 @@
     {"id": "118", "name": "窄門咖啡館", "region": "台南市中西區", "tags": ["百年老屋", "窄門入口", "歷史空間"], "audience": ["文青", "攝影", "情侶"], "attributes": {"nickname": "台南經典老屋咖啡"}, "activities": ["喝咖啡"], "season": "下午", "sustainability": "老屋保存"},
     {"id": "119", "name": "南埕衖事", "region": "台南市中西區", "tags": ["建築大師設計", "垂直巷弄", "網美打卡"], "audience": ["文青", "網美", "情侶"], "attributes": {"designer": "藤本壯介設計"}, "activities": ["參觀"], "season": "全天", "sustainability": "建築設計"},
     {"id": "120", "name": "星巴克洄瀾門市", "region": "花蓮縣吉安鄉", "tags": ["綠建築", "貨櫃咖啡", "建築大師"], "audience": ["建築", "攝影", "文青"], "attributes": {"sustainability": "貨櫃回收再利用", "certification": "綠建築"}, "activities": ["喝咖啡"], "season": "全天", "sustainability": "綠建築"},
-    {"id": "121", "name": "台灣花磚博物館", "region": "嘉義市西區", "tags": ["花磚保存", "日式老建築", "文化傳承"], "audience": ["文青", "文化", "攝影"], "attributes": {"mission": "文化資產搶救保存"}, "activities": ["參觀"], "season": "全天", "sustainability": "文資保存"}
+    {"id": "121", "name": "台灣花磚博物館", "region": "嘉義市西區", "tags": ["花磚保存", "日式老建築", "文化傳承"], "audience": ["文青", "文化", "攝影"], "attributes": {"mission": "文化資產搶救保存"}, "activities": ["參觀"], "season": "全天", "sustainability": "文資保存"},
+
+    {"id": "122", "name": "阿里山國家森林遊樂區", "region": "嘉義縣阿里山鄉", "tags": ["千年神木", "日出雲海", "森林浴", "小火車", "員工旅遊熱門"], "audience": ["團體", "企業ESG", "親子", "銀髮", "攝影"], "attributes": {"certification": "國家風景區永續管理", "highlight": "祝山日出、神木群、沼平公園", "groupSize": "20-50人最佳"}, "activities": ["森林步道", "日出觀賞", "小火車體驗", "生態導覽"], "season": "全年（春櫻、夏避暑、秋楓、冬雲海）", "sustainability": "永續森林管理", "note": "員工旅遊首選地，凌晨祝山小火車NT$300/人"},
+    {"id": "123", "name": "奮起湖", "region": "嘉義縣竹崎鄉", "tags": ["鐵路便當", "懷舊老街", "森林步道", "螢火蟲"], "audience": ["團體", "銀髮", "親子", "文青"], "attributes": {"feature": "南台灣九份", "cuisine": "鐵路便當", "altitude": "海拔1405公尺"}, "activities": ["老街散策", "鐵路便當品嘗", "步道健行", "螢火蟲季"], "season": "全年（4-6月螢火蟲季）", "sustainability": "在地文化保存"},
+    {"id": "124", "name": "祝山觀日出", "region": "嘉義縣阿里山鄉", "tags": ["日出", "雲海", "小火車", "療癒"], "audience": ["團體", "攝影", "登山"], "attributes": {"transport": "祝山小火車", "cost": "NT$300/人", "highlight": "阿里山日出三大奇景之一"}, "activities": ["日出觀賞", "小火車體驗", "雲海攝影"], "season": "全年（秋冬雲海最佳）", "sustainability": "低碳小火車"},
+    {"id": "125", "name": "二延平步道", "region": "嘉義縣番路鄉", "tags": ["雲霧步道", "茶園風光", "輕鬆健行"], "audience": ["團體", "銀髮", "攝影", "登山新手"], "attributes": {"difficulty": "輕鬆", "length": "單程約800公尺", "highlight": "雲瀑、茶園、山景三合一"}, "activities": ["輕鬆健行", "攝影", "品茗"], "season": "全年（秋冬雲瀑最佳）", "sustainability": "生態步道"},
+    {"id": "126", "name": "姊妹潭", "region": "嘉義縣阿里山鄉", "tags": ["傳說景點", "森林湖泊", "木棧道"], "audience": ["團體", "親子", "銀髮"], "attributes": {"story": "鄒族姊妹殉情傳說", "trail": "平緩木棧道"}, "activities": ["森林散步", "人文導覽", "攝影"], "season": "全年", "sustainability": "生態保育"},
+
+    {"id": "127", "name": "墾丁國家公園", "region": "屏東縣恆春鎮", "tags": ["海灘度假", "珊瑚礁", "水上活動", "員工旅遊熱門"], "audience": ["團體", "年輕族群", "親子"], "attributes": {"certification": "國家公園", "highlight": "南灣、白砂灣、船帆石、鵝鑾鼻", "groupSize": "20-50人最佳"}, "activities": ["浮潛", "水上活動", "夜市逛街", "生態導覽"], "season": "全年（4-10月戲水最佳）", "sustainability": "海洋保育", "note": "員工旅遊熱門但需注意預算控制"},
+    {"id": "128", "name": "後壁湖海洋保護區", "region": "屏東縣恆春鎮", "tags": ["海鮮", "浮潛", "海洋保育", "珊瑚礁"], "audience": ["團體", "生態愛好者", "親子"], "attributes": {"conservation": "海洋保護區", "highlight": "花瓶石、珊瑚礁群"}, "activities": ["浮潛", "生態導覽", "海鮮品嘗"], "season": "4-10月", "sustainability": "海洋保育"},
+    {"id": "129", "name": "國立海洋生物博物館", "region": "屏東縣車城鄉", "tags": ["海生館", "夜宿海生館", "海洋教育"], "audience": ["親子", "團體", "學校團體"], "attributes": {"feature": "亞洲最大水族館之一", "experience": "夜宿海生館"}, "activities": ["參觀", "夜宿體驗", "海洋教育"], "season": "全年", "sustainability": "海洋生態教育"},
+    {"id": "130", "name": "社頂自然公園", "region": "屏東縣恆春鎮", "tags": ["珊瑚礁森林", "生態步道", "夜間導覽"], "audience": ["生態愛好者", "登山", "攝影"], "attributes": {"type": "珊瑚礁森林", "highlight": "夜間生態導覽"}, "activities": ["生態導覽", "健行", "夜間觀察"], "season": "全年", "sustainability": "珊瑚礁生態保育"},
+    {"id": "131", "name": "恆春古城", "region": "屏東縣恆春鎮", "tags": ["古城門", "海角七號", "在地文化"], "audience": ["文青", "團體", "文化"], "attributes": {"heritage": "台灣保存最完整的古城", "pop_culture": "海角七號拍攝地"}, "activities": ["古城導覽", "在地美食", "文化體驗"], "season": "全年", "sustainability": "文化資產保存"},
+
+    {"id": "132", "name": "知本溫泉", "region": "台東縣卑南鄉", "tags": ["溫泉", "放鬆療癒", "森林步道", "員工旅遊熱門"], "audience": ["團體", "銀髮", "療癒族", "企業ESG"], "attributes": {"type": "碳酸氫鈉泉（美人湯）", "highlight": "白玉瀑布、知本森林遊樂區", "groupSize": "20-50人最佳"}, "activities": ["溫泉泡湯", "森林步道", "放鬆療癒"], "season": "全年（秋冬泡湯最佳）", "sustainability": "地熱永續利用", "note": "員工旅遊超值選擇，溫泉飯店包場價格合理"},
+    {"id": "133", "name": "知本國家森林遊樂區", "region": "台東縣卑南鄉", "tags": ["森林浴", "千根榕", "溫泉溪"], "audience": ["親子", "銀髮", "生態愛好者"], "attributes": {"highlight": "千根榕、觀林橋、好漢坡", "area": "面積約110公頃"}, "activities": ["森林浴", "步道健行", "生態導覽"], "season": "全年", "sustainability": "國有林永續管理"},
+    {"id": "134", "name": "台東森林公園", "region": "台東縣台東市", "tags": ["琵琶湖", "自行車道", "黑森林"], "audience": ["親子", "團體", "自行車愛好者"], "attributes": {"feature": "琵琶湖與活水湖", "cycle": "園區自行車道約3.5公里"}, "activities": ["自行車漫遊", "湖邊散步", "攝影"], "season": "全年", "sustainability": "生態復育"},
+    {"id": "135", "name": "三仙台", "region": "台東縣成功鎮", "tags": ["八拱跨海步橋", "珊瑚礁島", "日出聖地"], "audience": ["攝影", "團體", "登山"], "attributes": {"highlight": "八拱跨海步橋、台灣第一道曙光", "conservation": "自然保護區"}, "activities": ["步道健行", "日出觀賞", "攝影"], "season": "全年（元旦日出）", "sustainability": "自然保護區"},
+    {"id": "136", "name": "都蘭部落", "region": "台東縣東河鄉", "tags": ["阿美族", "手作體驗", "部落文化", "都蘭鼻"], "audience": ["文青", "文化", "團體"], "attributes": {"tribe": "阿美族", "experience": "傳統手作、月光海音樂會"}, "activities": ["部落導覽", "手作體驗", "文化體驗"], "season": "全年（7月豐年祭）", "sustainability": "原住民文化傳承"},
+    {"id": "137", "name": "鹿野高台", "region": "台東縣鹿野鄉", "tags": ["熱氣球", "飛行傘", "茶園"], "audience": ["團體", "親子", "冒險"], "attributes": {"event": "台灣國際熱氣球嘉年華", "tea": "福鹿茶園"}, "activities": ["熱氣球", "飛行傘", "品茗"], "season": "6-8月熱氣球季", "sustainability": "低碳觀光"},
+
+    {"id": "138", "name": "嘉義市區文化巡禮", "region": "嘉義市東區", "tags": ["檜意森活村", "射日塔", "文化路夜市"], "audience": ["團體", "文青", "銀髮"], "attributes": {"highlight": "全台最大日式建築群", "cuisine": "火雞肉飯、砂鍋魚頭"}, "activities": ["文化導覽", "美食巡禮", "購物"], "season": "全年", "sustainability": "文化資產活化"},
+    {"id": "139", "name": "高鐵嘉義站周邊", "region": "嘉義縣太保市", "tags": ["故宮南院", "蒜頭糖廠", "交通樞紐"], "audience": ["團體", "銀髮", "親子"], "attributes": {"feature": "故宮南院、蒜頭糖廠五分車", "transport": "高鐵接駁便利"}, "activities": ["博物館參觀", "五分車體驗", "在地美食"], "season": "全年", "sustainability": "低碳轉乘"},
+
+    {"id": "140", "name": "墾丁海龜保育中心", "region": "屏東縣恆春鎮", "tags": ["海龜保育", "海洋教育", "志工體驗"], "audience": ["親子", "生態愛好者", "企業ESG"], "attributes": {"conservation": "海龜保育與復育", "experience": "志工參與"}, "activities": ["保育導覽", "海洋教育", "志工體驗"], "season": "5-10月（海龜產卵季）", "sustainability": "海洋生態保育"},
+    {"id": "141", "name": "池上伯朗大道", "region": "台東縣池上鄉", "tags": ["稻田風光", "金城武樹", "自行車"], "audience": ["團體", "攝影", "文青"], "attributes": {"highlight": "天堂路、金城武樹", "cycle": "自行車道全長約6公里"}, "activities": ["自行車漫遊", "攝影", "米食體驗"], "season": "5-6月綠稻、10-11月黃金稻", "sustainability": "有機農業示範區"}
   ]
 }

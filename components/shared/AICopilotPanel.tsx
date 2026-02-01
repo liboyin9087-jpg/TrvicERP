@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Send, X, Sparkles, ChevronRight, ChevronLeft,
   Copy, Check, Loader2, Map, Megaphone, Calculator, Scale, MessageCircle,
-  Play, AlertCircle, RefreshCw, Maximize2, Minimize2, Settings, GripVertical
+  Play, AlertCircle, RefreshCw, Maximize2, Minimize2, Settings, GripVertical, Leaf
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // import { aiService } from '@/lib/ai/aiService'; // Moved to useAICopilotChat hook
@@ -61,7 +61,7 @@ const useAICopilotChat = ({
     {
       id: 'welcome',
       role: 'assistant',
-      content: '你好！我是 TrvicERP AI 助手 ✨\n\n我可以幫你：\n• 規劃行程與景點安排\n• 撰寫行銷文案\n• 計算成本與報價\n• 查詢旅遊法規\n\n請問有什麼需要幫忙的嗎？',
+      content: '你好！我是 TrvicERP AI 助手 ✨\n\n我可以幫你：\n• 規劃行程與景點安排\n• 撰寫行銷文案\n• 計算成本與報價\n• 查詢旅遊法規\n• 🌿 規劃綠色永續行程與碳足跡試算\n\n請問有什麼需要幫忙的嗎？',
       timestamp: Date.now(),
     },
   ],
@@ -250,6 +250,13 @@ const MODE_OPTIONS: ModeOption[] = [
     icon: <Scale className="w-4 h-4" />,
     description: '旅遊法規查詢',
     colorClass: 'bg-yellow-600', // Standard yellow for warning/caution related tasks
+  },
+  {
+    id: 'green',
+    label: '綠色旅遊',
+    icon: <Leaf className="w-4 h-4" />,
+    description: '永續行程與碳足跡',
+    colorClass: 'bg-emerald-600', // Emerald green for sustainability
   },
 ];
 

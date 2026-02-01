@@ -369,6 +369,182 @@ export class RAGEngine {
   getAllSpots(): SpotRecord[] {
     return this.spots;
   }
+
+  // ========== Green Tourism Search & Recommendations ==========
+
+  /** Green-related sustainability keywords for filtering and boosting. */
+  private static readonly GREEN_KEYWORDS = [
+    '綠色', '永續', '低碳', '環保', '生態', '有機', '零廢棄',
+    '碳中和', '社區', '在地', '部落', '森林浴', '慢旅', '保育',
+    '再生能源', '減塑', '回收', '循環經濟', '生態教育', '共管',
+  ];
+
+  /**
+   * Search for green/sustainable spots.
+   * Filters spots that have sustainability indices and boosts green-related results.
+   * @param query Optional search query to further filter results.
+   * @param limit Maximum number of results.
+   * @returns Array of SpotRecord objects with sustainability information.
+   */
+  searchGreenSpots(query?: string, limit: number = 20): SpotRecord[] {
+    // First, get all spots with sustainability info
+    let greenSpots = this.spots.filter(spot =>
+      spot.sustainability && spot.sustainability.trim().length > 0
+    );
+
+    // If query provided, further filter by search relevance
+    if (query && query.trim().length > 0) {
+      const searchResults = this.searchSpots(query, limit * 2);
+      const searchIds = new Set(searchResults.map(r => r.item.id));
+      greenSpots = greenSpots.filter(spot => searchIds.has(spot.id));
+    }
+
+    // Score and sort by green relevance
+    const scored = greenSpots.map(spot => {
+      let score = 1; // Base score for having sustainability
+
+      // Boost for green keywords in sustainability field
+      for (const keyword of RAGEngine.GREEN_KEYWORDS) {
+        if (spot.sustainability.includes(keyword)) score += 1;
+      }
+
+      // Boost for green-related tags
+      for (const tag of spot.tags) {
+        for (const keyword of RAGEngine.GREEN_KEYWORDS) {
+          if (tag.includes(keyword)) score += 0.5;
+        }
+      }
+
+      // Boost for eco-related activities
+      const ecoActivities = ['生態導覽', '步道健行', '自行車', '農事體驗', '茶園體驗'];
+      for (const activity of spot.activities) {
+        if (ecoActivities.some(ea => activity.includes(ea))) score += 0.5;
+      }
+
+      return { spot, score };
+    });
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(s => s.spot);
+  }
+
+  /**
+   * Get green tourism recommendations with sustainability-boosted scoring.
+   * Similar to getRecommendations but with heavy sustainability weighting.
+   * @param context Recommendation context.
+   * @param limit Maximum number of results.
+   * @returns Array of recommended green SpotRecord objects.
+   */
+  getGreenRecommendations(context: RecommendationContext, limit: number = 10): SpotRecord[] {
+    let candidates = this.spots.filter(
+      spot => spot.sustainability && spot.sustainability.trim().length > 0
+    );
+
+    // Filter by region if specified
+    if (context.currentRegion) {
+      const cityMatch = context.currentRegion.match(/^(.+?[市縣])/);
+      if (cityMatch) {
+        const city = cityMatch[1];
+        const regionCandidates = candidates.filter(spot => spot.region.startsWith(city));
+        // Fall back to all green spots if no region matches
+        if (regionCandidates.length > 0) {
+          candidates = regionCandidates;
+        }
+      }
+    }
+
+    // Exclude already selected spots
+    if (context.excludeIds && context.excludeIds.length > 0) {
+      candidates = candidates.filter(spot => !context.excludeIds!.includes(spot.id));
+    }
+
+    // Score with strong sustainability boost
+    const scored = candidates.map(spot => {
+      let score = 0;
+
+      // Sustainability bonus (highest weight for green mode)
+      if (spot.sustainability) {
+        score += 3;
+        for (const keyword of RAGEngine.GREEN_KEYWORDS) {
+          if (spot.sustainability.includes(keyword)) score += 1;
+        }
+      }
+
+      // Audience match
+      if (context.audience && context.audience.length > 0) {
+        const audienceMatches = spot.audience.filter(a =>
+          context.audience!.some(ca => a.includes(ca) || ca.includes(a))
+        ).length;
+        score += audienceMatches * 1.5;
+      }
+
+      // Tag match
+      if (context.tags && context.tags.length > 0) {
+        const tagMatches = spot.tags.filter(t =>
+          context.tags!.some(ct => t.includes(ct) || ct.includes(t))
+        ).length;
+        score += tagMatches * 1;
+      }
+
+      return { spot, score };
+    });
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map(s => s.spot);
+  }
+
+  /**
+   * Get all unique sustainability types from spots data.
+   * Useful for building filters in the green dashboard.
+   * @returns Array of unique sustainability index strings.
+   */
+  getAllSustainabilityTypes(): string[] {
+    const types = new Set<string>();
+    this.spots.forEach(spot => {
+      if (spot.sustainability && spot.sustainability.trim().length > 0) {
+        types.add(spot.sustainability);
+      }
+    });
+    return Array.from(types).sort();
+  }
+
+  /**
+   * Calculate green certification statistics for dashboard KPIs.
+   * @returns Object with green tourism statistics.
+   */
+  getGreenStats(): {
+    totalGreenSpots: number;
+    totalSpots: number;
+    greenPercentage: number;
+    sustainabilityTypes: { type: string; count: number }[];
+  } {
+    const greenSpots = this.spots.filter(
+      s => s.sustainability && s.sustainability.trim().length > 0
+    );
+
+    const typeCounts: Record<string, number> = {};
+    greenSpots.forEach(spot => {
+      const type = spot.sustainability;
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+    });
+
+    const sustainabilityTypes = Object.entries(typeCounts)
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      totalGreenSpots: greenSpots.length,
+      totalSpots: this.spots.length,
+      greenPercentage: this.spots.length > 0
+        ? Math.round((greenSpots.length / this.spots.length) * 100)
+        : 0,
+      sustainabilityTypes,
+    };
+  }
 }
 
 // The singleton instance and convenience functions (ragEngine, searchSpots, etc.)

@@ -412,6 +412,37 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class ImportedOrder(Base):
+    """匯入訂單 - 來自 Chrome Extension / JSON 匯入的外部競品訂單"""
+    __tablename__ = "imported_orders"
+
+    id = Column(String, primary_key=True, index=True)
+    external_id = Column(String, unique=True, nullable=False, index=True)  # 外部單號（去重/追溯）
+    company = Column(String, nullable=False)           # 來源公司（雄獅/山富/五福 etc.）
+    product_name = Column(String)                      # 產品名稱
+    group_name = Column(String)                        # 團名
+    destination = Column(String)                       # 目的地
+    depart_date = Column(String)                       # 出發日期
+    return_date = Column(String)                       # 返回日期
+    days = Column(Integer)                             # 天數
+    nights = Column(Integer)                           # 夜數
+    pax = Column(Integer)                              # 人數
+    total_price = Column(Float)                        # 總價
+    status = Column(String, default="scraped")         # scraped/imported/converted
+    poi_list = Column(JSON, default=[])                # 行程景點串列
+    itinerary = Column(JSON)                           # 完整行程資料
+    cost_breakdown = Column(JSON)                      # 成本拆解
+    inclusions = Column(JSON)                          # 包含項目
+    exclusions = Column(JSON)                          # 不含項目
+    payment_status = Column(String)                    # 付款狀態
+    source = Column(String, default="chrome_extension") # chrome_extension / json_import / api
+    raw_data = Column(JSON)                            # 原始擷取資料
+    tags = Column(JSON, default=[])                    # AI 分析標籤 (e.g. #購物停留久)
+    converted_order_id = Column(String, ForeignKey("orders.id"))  # 轉換為正式訂單後的 ID
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ExchangeRate(Base):
     """匯率管理 - Exchange Rate Management"""
     __tablename__ = "exchange_rates"

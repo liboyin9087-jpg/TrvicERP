@@ -1,0 +1,158 @@
+{
+  "app": {
+    "name": "TravelMaster",
+    "loading": "載入模組中...",
+    "logout": "登出",
+    "login": "登入",
+    "search": "搜尋..."
+  },
+  "roles": {
+    "staff": "管理端",
+    "welfare": "福委會",
+    "traveler": "員工端",
+    "staffTitle": "管理員",
+    "welfareTitle": "福委會",
+    "travelerTitle": "員工"
+  },
+  "nav": {
+    "collapseSidebar": "收起側欄",
+    "coreManagement": "核心管理",
+    "financeOps": "財務 & 營運",
+    "businessTools": "業務工具",
+    "welfareCommittee": "福委會",
+    "myTrip": "我的旅程",
+    "dashboard": "儀表板",
+    "sessions": "行程管理",
+    "planner": "行程規劃",
+    "crm": "客戶管理",
+    "payments": "付款監控",
+    "costing": "成本分析",
+    "passport": "護照管理",
+    "operations": "營運中心",
+    "quotation": "報價系統",
+    "proposalEngine": "提案引擎",
+    "insurance": "保險匯出",
+    "expense": "費用管理",
+    "welfareDashboard": "福委儀表板",
+    "activityManagement": "活動管理",
+    "corporateCRM": "企業 CRM",
+    "travelerApp": "旅遊應用",
+    "itinerary": "行程檢視",
+    "voting": "行程投票",
+    "briefing": "數位手冊"
+  },
+  "a11y": {
+    "skipToContent": "跳至主要內容",
+    "mainNavigation": "主導覽",
+    "mobileNavigation": "行動裝置導覽選單"
+  },
+  "auth": {
+    "loginFailed": "登入失敗",
+    "loggedOut": "已登出",
+    "sessionExpired": "工作階段已過期，請重新登入"
+  },
+  "portal": {
+    "title": "客戶入口",
+    "subtitle": "歡迎使用",
+    "loginHelp": "系統會將登入連結寄送到您的信箱"
+  },
+  "common": {
+    "confirm": "確認",
+    "cancel": "取消",
+    "save": "儲存",
+    "delete": "刪除",
+    "edit": "編輯",
+    "close": "關閉",
+    "back": "返回",
+    "next": "下一步",
+    "submit": "送出",
+    "reset": "重置",
+    "user": "用戶",
+    "notifications": "通知",
+    "settings": "設定"
+  },
+  "green": {
+    "title": "綠色旅遊",
+    "subtitle": "永續旅遊專家模式",
+    "mode": "綠色旅遊模式",
+    "modeDescription": "永續行程規劃與碳足跡試算",
+    "badge": {
+      "certified": "綠色認證",
+      "ecoScore": "環保分數",
+      "lowCarbon": "低碳行程",
+      "organic": "有機認證",
+      "community": "社區永續",
+      "ecoEducation": "生態教育",
+      "carbonNeutral": "碳中和"
+    },
+    "carbon": {
+      "footprint": "碳足跡",
+      "totalEmission": "總碳排放",
+      "perPerson": "人均碳排放",
+      "reduction": "減碳比例",
+      "offset": "碳抵銷",
+      "treesNeeded": "需種植樹木",
+      "offsetCost": "碳抵銷費用",
+      "unit": "kg CO₂e"
+    },
+    "transport": {
+      "domesticFlight": "國內航班",
+      "internationalFlight": "國際航班",
+      "car": "汽油自用車",
+      "electricCar": "電動自用車",
+      "tourBus": "遊覽車",
+      "electricBus": "電動巴士",
+      "hsr": "高鐵",
+      "tra": "台鐵",
+      "metro": "捷運",
+      "bicycle": "自行車",
+      "walking": "步行",
+      "ferry": "渡輪"
+    },
+    "accommodation": {
+      "fiveStar": "五星級飯店",
+      "fourStar": "四星級飯店",
+      "threeStar": "三星級飯店",
+      "budget": "一般旅館",
+      "greenCertified": "綠色認證旅宿",
+      "ecoLodge": "生態旅舍",
+      "camping": "露營"
+    },
+    "meal": {
+      "regular": "一般餐廳",
+      "localSourced": "在地食材餐廳",
+      "vegetarian": "蔬食餐廳",
+      "organicFarm": "有機農場餐"
+    },
+    "dashboard": {
+      "carbonFootprint": "平均碳足跡",
+      "greenRatio": "綠色認證比例",
+      "localSpend": "在地消費回饋率",
+      "greenScore": "環保分數",
+      "carbonTrend": "碳足跡趨勢",
+      "sustainabilityDistribution": "永續認證分佈"
+    },
+    "score": {
+      "transport": "交通低碳度",
+      "accommodation": "住宿環保度",
+      "meal": "餐飲永續度",
+      "activity": "活動生態性",
+      "community": "社區回饋度",
+      "total": "總環保分數"
+    },
+    "gstc": {
+      "title": "GSTC 永續旅遊準則",
+      "management": "永續管理",
+      "socioeconomic": "社會經濟效益",
+      "culturalHeritage": "文化遺產",
+      "environmentalConservation": "環境保育"
+    },
+    "cost": {
+      "greenTransport": "環保交通升級",
+      "greenAccommodation": "綠色旅宿升級",
+      "carbonOffset": "碳抵銷費用",
+      "ecoGuide": "生態導覽專業費",
+      "greenSubsidy": "環保交通補貼"
+    }
+  }
+}

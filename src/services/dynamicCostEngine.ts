@@ -131,7 +131,59 @@ const DEFAULT_INITIAL_COST_FACTORS: CostFactor[] = [
     effectiveDate: '2024-01-01'
   },
   
+  // 綠色旅遊成本因子
+  {
+    id: 'green_transport_upgrade',
+    name: '環保交通升級（電動巴士）',
+    type: 'per_person',
+    value: 200,
+    unit: '元/人',
+    category: 'green',
+    isActive: true,
+    effectiveDate: '2026-01-01'
+  },
+  {
+    id: 'green_accommodation_upgrade',
+    name: '綠色旅宿升級',
+    type: 'per_person',
+    value: 300,
+    unit: '元/人/晚',
+    category: 'green',
+    isActive: true,
+    effectiveDate: '2026-01-01'
+  },
+  {
+    id: 'carbon_offset_fee',
+    name: '碳抵銷費用',
+    type: 'per_person',
+    value: 50,
+    unit: '元/人',
+    category: 'green',
+    isActive: true,
+    effectiveDate: '2026-01-01'
+  },
+  {
+    id: 'eco_guide_fee',
+    name: '生態導覽專業費',
+    type: 'per_day',
+    value: 1500,
+    unit: '元/天',
+    category: 'green',
+    isActive: true,
+    effectiveDate: '2026-01-01'
+  },
+
   // 折扣
+  {
+    id: 'green_subsidy_discount',
+    name: '環保交通補貼',
+    type: 'percentage',
+    value: -3, // -3%
+    unit: '%',
+    category: 'discount',
+    isActive: true,
+    effectiveDate: '2026-01-01'
+  },
   {
     id: 'early_booking_discount',
     name: '早鳥優惠',
@@ -1078,6 +1130,10 @@ export class DynamicCostEngine {
     if (fuelSurcharge && fuelSurcharge.amount > 0 && this.marketData.fuelPrice > this.referenceFuelPrice * 1.1) {
       suggestions.push('當前油價較高，建議考慮優化交通路線或選擇更節能的交通工具，以降低燃油附加費影響。');
     }
+
+    // 綠色旅遊建議
+    suggestions.push('🌿 考慮升級為綠色行程：選擇電動巴士可減少約 52% 交通碳排放，並可申請環保交通補貼（-3%）。');
+    suggestions.push('🌿 選擇綠色認證旅宿可降低住宿碳足跡約 58%，符合 GSTC 永續旅遊標準。');
 
     return suggestions;
   }

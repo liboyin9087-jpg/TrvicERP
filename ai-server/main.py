@@ -105,6 +105,7 @@ QDRANT_ENABLED = os.getenv("QDRANT_ENABLED", "true").lower() == "true" and QDRAN
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION_NAME", "trvicerp_rules")
+QDRANT_GREEN_COLLECTION = os.getenv("QDRANT_GREEN_COLLECTION_NAME", "trvicerp_green_tourism")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY") or None
 
 # 圖片生成非同步設定
@@ -309,6 +310,38 @@ def load_rules() -> str:
 
 RULES = load_rules()
 
+
+def load_green_knowledge() -> str:
+    """載入綠色旅遊知識庫"""
+    possible_paths = [
+        "green_tourism_kb.txt",
+        os.path.join(os.path.dirname(__file__), "green_tourism_kb.txt"),
+    ]
+
+    for path in possible_paths:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+                print(f"✅ 綠色旅遊知識庫載入成功: {path} ({len(content)} 字元)")
+                return content
+        except FileNotFoundError:
+            continue
+
+    print("⚠️ 未找到綠色旅遊知識庫，使用預設資料")
+    return "暫無綠色旅遊專用資料，請參考一般永續旅遊原則。"
+
+
+GREEN_KNOWLEDGE = load_green_knowledge()
+GREEN_KNOWLEDGE_CHUNKS = chunk_text(GREEN_KNOWLEDGE, RAG_MAX_CHARS) if GREEN_KNOWLEDGE and len(GREEN_KNOWLEDGE) > 20 else []
+
+GREEN_KEYWORDS = [
+    "綠色", "永續", "低碳", "碳足跡", "環保", "生態", "有機", "零廢棄",
+    "碳中和", "碳排放", "GSTC", "GTS", "綠色旅宿", "綠色標章", "環境",
+    "淨零", "碳權", "碳費", "社區", "在地", "部落", "森林浴", "慢旅",
+    "電動車", "自行車", "步行", "火車", "高鐵", "減塑", "回收",
+    "再生能源", "太陽能", "雨水回收", "green", "sustainable", "eco",
+]
+
 # =============================================================================
 # Redis 快取層
 # =============================================================================
@@ -426,6 +459,19 @@ def init_qdrant():
         else:
             print(f"✅ Qdrant collection 已存在: {QDRANT_COLLECTION}")
         
+        # 建立綠色旅遊 collection
+        if QDRANT_GREEN_COLLECTION not in collection_names:
+            qdrant_client.create_collection(
+                collection_name=QDRANT_GREEN_COLLECTION,
+                vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+            )
+            print(f"✅ Qdrant 綠色旅遊 collection 已建立: {QDRANT_GREEN_COLLECTION}")
+
+            if GREEN_KNOWLEDGE and len(GREEN_KNOWLEDGE) > 50:
+                load_green_knowledge_to_qdrant()
+        else:
+            print(f"✅ Qdrant 綠色旅遊 collection 已存在: {QDRANT_GREEN_COLLECTION}")
+
         print(f"✅ Qdrant 連線成功: {QDRANT_HOST}:{QDRANT_PORT}")
     except Exception as e:
         print(f"⚠️ Qdrant 初始化失敗: {e}，使用傳統 RAG")
@@ -459,6 +505,60 @@ def load_rules_to_qdrant():
         print(f"✅ {len(chunks)} 個法規片段已載入 Qdrant")
     except Exception as e:
         print(f"⚠️ 法規載入 Qdrant 失敗: {e}")
+
+
+def load_green_knowledge_to_qdrant():
+    """將綠色旅遊知識庫載入 Qdrant"""
+    if not qdrant_client or not embedding_model or not GREEN_KNOWLEDGE:
+        return
+
+    try:
+        chunks = chunk_text(GREEN_KNOWLEDGE, RAG_MAX_CHARS)
+        points = []
+
+        for idx, chunk in enumerate(chunks):
+            vector = embedding_model.encode(chunk).tolist()
+            points.append(
+                PointStruct(
+                    id=idx,
+                    vector=vector,
+                    payload={"text": chunk, "chunk_id": idx, "source": "green_tourism"}
+                )
+            )
+
+        qdrant_client.upsert(
+            collection_name=QDRANT_GREEN_COLLECTION,
+            points=points
+        )
+        print(f"✅ {len(chunks)} 個綠色旅遊片段已載入 Qdrant")
+    except Exception as e:
+        print(f"⚠️ 綠色旅遊知識載入 Qdrant 失敗: {e}")
+
+
+def retrieve_green_knowledge_qdrant(query: str, top_k: int = RAG_TOP_K) -> List[Dict[str, Any]]:
+    """使用 Qdrant 檢索綠色旅遊知識"""
+    if not qdrant_client or not embedding_model:
+        return []
+
+    try:
+        query_vector = embedding_model.encode(query).tolist()
+        results = qdrant_client.search(
+            collection_name=QDRANT_GREEN_COLLECTION,
+            query_vector=query_vector,
+            limit=top_k
+        )
+
+        snippets = []
+        for result in results:
+            snippets.append({
+                "score": result.score,
+                "text": result.payload["text"]
+            })
+
+        return snippets
+    except Exception as e:
+        print(f"⚠️ Qdrant 綠色旅遊檢索失敗: {e}")
+        return []
 
 
 def retrieve_rules_qdrant(query: str, top_k: int = RAG_TOP_K) -> List[Dict[str, Any]]:
@@ -570,17 +670,65 @@ def retrieve_rules_snippets(query: str, top_k: int = RAG_TOP_K) -> List[Dict[str
     return snippets
 
 
+def retrieve_green_snippets(query: str, top_k: int = RAG_TOP_K) -> List[Dict[str, Any]]:
+    """檢索綠色旅遊知識片段（優先使用 Qdrant，否則使用傳統 RAG）"""
+    # 優先使用 Qdrant
+    if QDRANT_ENABLED and qdrant_client and embedding_model:
+        return retrieve_green_knowledge_qdrant(query, top_k)
+
+    # 傳統 RAG 檢索
+    if not GREEN_KNOWLEDGE_CHUNKS:
+        return []
+    keywords = extract_keywords(query)
+    if not keywords:
+        return []
+
+    scored = []
+    for idx, chunk in enumerate(GREEN_KNOWLEDGE_CHUNKS):
+        score = score_chunk(chunk, keywords)
+        if score > 0:
+            scored.append((score, idx, chunk))
+
+    if not scored:
+        return []
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    snippets = []
+    for score, _, chunk in scored[:top_k]:
+        snippets.append({"score": score, "text": chunk})
+    return snippets
+
+
 def should_use_rag(mode: str, message: str) -> bool:
     if mode == "legal":
         return True
+    if mode == "green":
+        return True
     if mode == "general":
-        return any(keyword in message for keyword in LEGAL_KEYWORDS)
+        if any(keyword in message for keyword in LEGAL_KEYWORDS):
+            return True
+        if any(keyword in message for keyword in GREEN_KEYWORDS):
+            return True
     return False
 
 
 def build_rules_context(mode: str, message: str) -> Tuple[str, List[str]]:
     if not should_use_rag(mode, message):
         return "", []
+
+    # Green mode: use green knowledge RAG
+    if mode == "green" or (mode == "general" and any(kw in message for kw in GREEN_KEYWORDS)):
+        green_snippets = retrieve_green_snippets(message)
+        if green_snippets:
+            rendered = []
+            sources = []
+            for idx, snippet in enumerate(green_snippets, start=1):
+                text = snippet["text"]
+                rendered.append(f"{idx}. {text}")
+                sources.append(text[:240].replace("\n", " "))
+            return "以下為本次問題檢索到的綠色旅遊知識摘要：\n" + "\n\n".join(rendered), sources
+
+    # Legal/general mode: use rules RAG
     snippets = retrieve_rules_snippets(message)
     if not snippets:
         return "", []
@@ -853,6 +1001,8 @@ def select_llm_for_mode(mode: str) -> Tuple[str, Optional[str], Optional[float],
         )
     if mode == "legal":
         return (LLM_PROVIDER or "gemini"), None, None, None, GEMINI_LEGAL_MAX_TOKENS
+    if mode == "green":
+        return (LLM_PROVIDER or "gemini"), None, None, None, GEMINI_DEFAULT_MAX_TOKENS
     if mode == "general":
         return (LLM_PROVIDER or "gemini"), None, None, None, GEMINI_GENERAL_MAX_TOKENS
     return (LLM_PROVIDER or "gemini"), None, None, None, GEMINI_DEFAULT_MAX_TOKENS
@@ -1599,6 +1749,7 @@ async def get_modes():
             {"id": "marketing", "label": "✨ 行銷", "description": "行銷文案專家"},
             {"id": "costing", "label": "💰 成本", "description": "成本試算專家"},
             {"id": "legal", "label": "⚖️ 法規", "description": "法規諮詢專家"},
+            {"id": "green", "label": "🌿 綠色", "description": "永續旅遊專家"},
             {"id": "general", "label": "🧭 通用", "description": "團控通用助手"},
         ]
     }
@@ -1617,9 +1768,12 @@ async def chat(req: ChatRequest, background_tasks: BackgroundTasks):
     # 1. 根據模式取得溫度
     temperature = prompt_templates.get_temperature(req.mode)
 
-    # 2. RAG 檢索法規摘要（僅法律/通用）
+    # 2. RAG 檢索摘要（法律/通用/綠色）
     rag_context, rag_sources = build_rules_context(req.mode, req.message)
-    rules_context = rag_context if rag_context else RULES
+    if req.mode == "green":
+        rules_context = rag_context if rag_context else GREEN_KNOWLEDGE
+    else:
+        rules_context = rag_context if rag_context else RULES
 
     # 3. 根據模式取得專家 System Prompt
     system_prompt = prompt_templates.get_prompt_template(req.mode, rules=rules_context)
@@ -1778,6 +1932,7 @@ if __name__ == "__main__":
     print("🚀 TrvicERP AI Copilot 啟動中...")
     print("=" * 80)
     print(f"📚 法規知識庫: {'✅ 已載入' if len(RULES) > 50 else '❌ 未載入'}")
+    print(f"🌿 綠色旅遊知識庫: {'✅ 已載入' if len(GREEN_KNOWLEDGE) > 50 else '❌ 未載入'}")
     print(f"🔑 Gemini API: {'✅ 已設定' if os.getenv('GOOGLE_API_KEY') else '❌ 未設定'}")
     print(f"🔑 SiliconFlow API: {'✅ 已設定 (備用)' if os.getenv('SILICONFLOW_API_KEY') else '❌ 未設定'}")
     print(f"💾 Redis 快取: {'✅ 啟用' if REDIS_ENABLED else '❌ 停用'}")
