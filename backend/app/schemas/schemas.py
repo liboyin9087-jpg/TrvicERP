@@ -86,10 +86,12 @@ class CustomerUpdate(BaseModel):
     dietary_restrictions: Optional[str] = None
     medical_notes: Optional[str] = None
     tags: Optional[List[str]] = None
+    version: Optional[int] = None  # For optimistic locking
 
 
 class CustomerResponse(CustomerBase):
     id: str
+    version: int
     created_at: datetime
     updated_at: datetime
     
@@ -118,6 +120,7 @@ class OrderUpdate(BaseModel):
     payment_method: Optional[str] = None
     participants: Optional[List[Dict[str, Any]]] = None
     notes: Optional[str] = None
+    version: Optional[int] = None  # For optimistic locking
 
 
 class OrderResponse(OrderBase):
@@ -127,6 +130,7 @@ class OrderResponse(OrderBase):
     paid_amount: float
     payment_status: str
     created_by: Optional[str] = None
+    version: int
     created_at: datetime
     updated_at: datetime
     
@@ -395,6 +399,28 @@ class CorporateEngagementCreate(CorporateEngagementBase):
 class CorporateEngagementResponse(CorporateEngagementBase):
     id: str
     company_id: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+# ============ AuditLog Schemas ============
+class AuditLogBase(BaseModel):
+    user_id: Optional[str] = None
+    action: str
+    resource_type: str
+    resource_id: str
+    changes: Optional[Dict[str, Any]] = None
+
+
+class AuditLogResponse(AuditLogBase):
+    id: str
+    timestamp: datetime
+    
+    class Config:
+        from_attributes = True
+
     created_at: datetime
     
     class Config:
