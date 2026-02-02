@@ -2,7 +2,12 @@
  * Core AI types and interfaces
  */
 
-export type AIMode = 'chat' | 'analysis' | 'generation' | 'suggestion' | 'general' | 'itinerary' | 'marketing' | 'costing' | 'legal';
+export type AIMode =
+  | 'chat' | 'analysis' | 'generation' | 'suggestion'
+  // New agent names (v3)
+  | 'general' | 'planner' | 'copywriter' | 'costing' | 'compliance' | 'ops'
+  // Legacy aliases (v2 backward compat)
+  | 'itinerary' | 'marketing' | 'legal';
 
 export interface ChatMessage {
   id: string;
