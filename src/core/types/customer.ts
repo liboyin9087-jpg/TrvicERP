@@ -65,6 +65,15 @@ export interface Contact {
 }
 
 /**
+ * 緊急聯絡人
+ */
+export interface EmergencyContact {
+  name: string;
+  phone: string;
+  relationship?: string;
+}
+
+/**
  * 客戶
  */
 export interface Customer {
@@ -80,6 +89,7 @@ export interface Customer {
   status: CustomerStatus;
   tags: CustomerTag[];
   contacts?: Contact[];
+  emergencyContact?: EmergencyContact;
   // 企業客戶欄位
   companyName?: string;
   taxId?: string;

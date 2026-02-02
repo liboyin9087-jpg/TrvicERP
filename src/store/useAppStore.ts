@@ -1,6 +1,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Booking, TourSession, ItineraryItem } from '../../types'; // Assuming these types are defined externally
+import type { Session } from '@/core/types';
+import type { DayItinerary } from '@/core/types/itinerary';
+
+// Type aliases for backward compatibility
+type TourSession = Session;
+type Booking = {
+  id: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  sessionId?: string;
+  [key: string]: unknown;
+};
+type ItineraryItem = DayItinerary;
 
 // ============================================
 // Global/Common Type Definitions

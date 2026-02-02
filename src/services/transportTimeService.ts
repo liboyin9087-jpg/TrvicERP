@@ -402,7 +402,7 @@ export class TransportTimeService {
       const [hourStr, minuteStr] = meal.time.split(':').map(Number);
       // 檢查解析是否成功，避免NaN
       if (isNaN(hourStr) || isNaN(minuteStr)) {
-        warnings.push(`餐食 ${meal.name} 的時間格式不正確 (${meal.time})。`);
+        warnings.push(`餐食 ${meal.restaurant || meal.type} 的時間格式不正確 (${meal.time})。`);
         return;
       }
       const mealTimeInMinutes = hourStr * MINUTES_PER_HOUR + minuteStr;

@@ -69,6 +69,7 @@ export interface ValidationRule {
   customValidator?: (value: any, context?: any) => boolean | string;
   errorMessage?: string;
   warningMessage?: string;
+  fixSuggestion?: string;
 }
 
 /**
@@ -836,7 +837,7 @@ export class DataValidationService {
 
       // 數值範圍驗證
       if (typeof effectiveValue === 'number' || (typeof effectiveValue === 'string' && !isNaN(parseFloat(effectiveValue)))) {
-        const numValue = parseFloat(effectiveValue);
+        const numValue = typeof effectiveValue === 'number' ? effectiveValue : parseFloat(effectiveValue);
         if (rule.min !== undefined && numValue < rule.min) {
           errors.push({
             field: fieldName,

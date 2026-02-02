@@ -56,10 +56,15 @@ export type AuditAction =
   | "data_import"
   | "data_export"
   | "bulk_update"
+  | "heartbeat"
+  | "health_check"
   // Security Events
   | "permission_denied"
   | "suspicious_activity"
-  | "data_breach_detected";
+  | "data_breach_detected"
+  | "unauthorized_access"
+  | "system_compromised"
+  | "emergency_shutdown";
 
 export type ResourceType =
   | "user"
