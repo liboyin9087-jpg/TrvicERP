@@ -229,9 +229,211 @@ class Poll(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class Invoice(Base):
+    __tablename__ = "invoices"
+
+    id = Column(String, primary_key=True, index=True)
+    invoice_number = Column(String, unique=True, index=True, nullable=False)
+    order_id = Column(String, ForeignKey("orders.id"))
+    customer_id = Column(String, ForeignKey("customers.id"))
+    customer_name = Column(String, nullable=False)
+    invoice_type = Column(String, default="standard")  # standard, proforma, credit_note
+    status = Column(String, default="draft")  # draft, pending, sent, partial, paid, overdue, cancelled, void
+    issue_date = Column(DateTime, nullable=False)
+    due_date = Column(DateTime, nullable=False)
+    items = Column(JSON)  # InvoiceItem[]
+    subtotal = Column(Float, default=0)
+    tax_rate = Column(Float, default=0.05)
+    tax_amount = Column(Float, default=0)
+    total = Column(Float, nullable=False)
+    currency = Column(String, default="TWD")
+    exchange_rate = Column(Float, default=1.0)
+    paid_amount = Column(Float, default=0)
+    balance = Column(Float, default=0)
+    payment_method = Column(String)
+    buyer_tax_id = Column(String)
+    buyer_address = Column(String)
+    notes = Column(Text)
+    created_by = Column(String, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AccountsReceivable(Base):
+    __tablename__ = "accounts_receivable"
+
+    id = Column(String, primary_key=True, index=True)
+    invoice_id = Column(String, ForeignKey("invoices.id"))
+    customer_id = Column(String, ForeignKey("customers.id"))
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="TWD")
+    due_date = Column(DateTime, nullable=False)
+    status = Column(String, default="pending")  # pending, partial, paid, overdue
+    paid_amount = Column(Float, default=0)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AccountsPayable(Base):
+    __tablename__ = "accounts_payable"
+
+    id = Column(String, primary_key=True, index=True)
+    supplier_id = Column(String)
+    supplier_name = Column(String, nullable=False)
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="TWD")
+    due_date = Column(DateTime, nullable=False)
+    status = Column(String, default="pending")  # pending, partial, paid, overdue
+    paid_amount = Column(Float, default=0)
+    description = Column(String)
+    category = Column(String)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Supplier(Base):
+    __tablename__ = "suppliers"
+
+    id = Column(String, primary_key=True, index=True)
+    code = Column(String, unique=True, index=True)
+    name = Column(String, nullable=False)
+    name_en = Column(String)
+    supplier_type = Column(String, nullable=False)  # hotel, airline, restaurant, transportation, attraction, insurance, visa_service, other
+    category = Column(JSON)  # SupplierCategory[]
+    status = Column(String, default="active")  # active, inactive, pending_approval, suspended, blacklisted
+    contact_person = Column(String)
+    email = Column(String)
+    phone = Column(String)
+    mobile = Column(String)
+    fax = Column(String)
+    website = Column(String)
+    address = Column(JSON)  # {street, city, state, country, postalCode}
+    tax_id = Column(String)
+    business_license = Column(String)
+    payment_terms = Column(String, default="NET30")
+    currency = Column(String, default="TWD")
+    rating = Column(Float, default=0)
+    total_orders = Column(Integer, default=0)
+    total_spent = Column(Float, default=0)
+    on_time_delivery_rate = Column(Float, default=0)
+    quality_score = Column(Float, default=0)
+    account_manager_id = Column(String, ForeignKey("users.id"))
+    notes = Column(Text)
+    tags = Column(JSON)
+    created_by = Column(String, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SupplierContract(Base):
+    __tablename__ = "supplier_contracts"
+
+    id = Column(String, primary_key=True, index=True)
+    supplier_id = Column(String, ForeignKey("suppliers.id"), nullable=False)
+    contract_number = Column(String, unique=True, index=True)
+    title = Column(String, nullable=False)
+    contract_type = Column(String)  # annual, seasonal, project_based, framework, one_time
+    status = Column(String, default="draft")  # draft, under_negotiation, pending_signature, active, expired, terminated, renewed
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    auto_renewal = Column(Boolean, default=False)
+    renewal_terms = Column(String)
+    payment_terms = Column(String)
+    currency = Column(String, default="TWD")
+    total_value = Column(Float)
+    document_url = Column(String)
+    signed_by = Column(JSON)  # string[]
+    signed_date = Column(DateTime)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class InsurancePolicy(Base):
+    __tablename__ = "insurance_policies"
+
+    id = Column(String, primary_key=True, index=True)
+    policy_number = Column(String, unique=True, index=True, nullable=False)
+    order_id = Column(String, ForeignKey("orders.id"))
+    customer_id = Column(String, ForeignKey("customers.id"))
+    customer_name = Column(String, nullable=False)
+    provider = Column(String, nullable=False)  # 保險公司
+    plan_type = Column(String, nullable=False)  # basic, standard, premium, comprehensive
+    status = Column(String, default="active")  # active, expired, cancelled, claimed
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    destination = Column(String)
+    coverage_amount = Column(Float)
+    medical_coverage = Column(Float)
+    flight_delay_coverage = Column(Float)
+    luggage_coverage = Column(Float)
+    premium = Column(Float, nullable=False)
+    currency = Column(String, default="TWD")
+    beneficiary = Column(String)
+    emergency_contact = Column(String)
+    emergency_phone = Column(String)
+    notes = Column(Text)
+    created_by = Column(String, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class InsuranceClaim(Base):
+    __tablename__ = "insurance_claims"
+
+    id = Column(String, primary_key=True, index=True)
+    claim_number = Column(String, unique=True, index=True, nullable=False)
+    policy_id = Column(String, ForeignKey("insurance_policies.id"), nullable=False)
+    claim_type = Column(String, nullable=False)  # medical, flight_delay, luggage_loss, trip_cancellation, other
+    status = Column(String, default="submitted")  # submitted, under_review, approved, rejected, paid
+    incident_date = Column(DateTime, nullable=False)
+    description = Column(Text, nullable=False)
+    claim_amount = Column(Float, nullable=False)
+    approved_amount = Column(Float)
+    documents = Column(JSON)  # [{name, url, type}]
+    reviewer = Column(String)
+    review_date = Column(DateTime)
+    review_notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class VisaApplication(Base):
+    __tablename__ = "visa_applications"
+
+    id = Column(String, primary_key=True, index=True)
+    application_number = Column(String, unique=True, index=True, nullable=False)
+    customer_id = Column(String, ForeignKey("customers.id"))
+    customer_name = Column(String, nullable=False)
+    passport_number = Column(String)
+    nationality = Column(String)
+    destination_country = Column(String, nullable=False)
+    visa_type = Column(String, nullable=False)  # tourist, business, work, student, transit
+    status = Column(String, default="draft")  # draft, submitted, processing, approved, rejected, expired, cancelled
+    application_date = Column(DateTime)
+    appointment_date = Column(DateTime)
+    expected_issue_date = Column(DateTime)
+    issue_date = Column(DateTime)
+    expiry_date = Column(DateTime)
+    entry_type = Column(String)  # single, multiple
+    duration_of_stay = Column(String)
+    processing_fee = Column(Float)
+    service_fee = Column(Float)
+    currency = Column(String, default="TWD")
+    documents = Column(JSON)  # [{name, status, url}]
+    embassy_notes = Column(Text)
+    notes = Column(Text)
+    assigned_to = Column(String, ForeignKey("users.id"))
+    created_by = Column(String, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
-    
+
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)  # Who performed the action
     action = Column(String, nullable=False, index=True)  # e.g., CREATE_ORDER, UPDATE_ITINERARY
@@ -239,6 +441,6 @@ class AuditLog(Base):
     resource_type = Column(String, nullable=False, index=True)  # order, customer, etc.
     changes = Column(JSON)  # JSON field containing the diff or the new state
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    
+
     # Relationships
     user = relationship("User")

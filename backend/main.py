@@ -9,7 +9,8 @@ from app.api import (
     auth, users, orders, quotations, customers, tours,
     sessions, corporate_accounts, budgets, polls, reports, line,
     suppliers, flights, payments, passports, operations,
-    excel, analytics, import_api, weather_push
+    excel, analytics, import_api, weather_push,
+    insurance, visa, invoices
 )
 import json
 from typing import Dict, Set
@@ -62,6 +63,10 @@ app.include_router(analytics.router)
 app.include_router(import_api.router)
 # Weather Push (CWA + Gemini AI)
 app.include_router(weather_push.router)
+# P2 Financial & Compliance Modules
+app.include_router(invoices.router)
+app.include_router(insurance.router)
+app.include_router(visa.router)
 
 
 # WebSocket connection manager
