@@ -15,7 +15,8 @@ import { useToastStore } from './src/store/useToastStore';
 // Auth (保持靜態引入，因為這是進入點)
 import LoginPage from './components/auth/LoginPage';
 import defaultAuthService from './src/core/services/authService';
-import { supabase } from './src/lib/supabase';
+import { supabase, onAuthStateChange, getSession } from './src/lib/supabase';
+import { USE_MOCK_API } from './src/config/env';
 
 // Admin Components - 預設首頁保持靜態引入，提升 LCP 速度
 import DraggableDashboard from './components/dashboard/DraggableDashboard';
@@ -702,11 +703,10 @@ function App() {
 
   // Supabase auth state listener: validates session on mount and handles sign-out events
   useEffect(() => {
-    const isMock = import.meta.env.VITE_USE_MOCK !== 'false';
-    if (isMock || !supabase) return;
+    if (USE_MOCK_API) return;
 
     // Validate persisted session on app mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSession().then((session) => {
       const storeState = useAuthStore.getState();
       if (!session && storeState.isLoggedIn) {
         // Supabase session expired but store still shows logged in → force logout
@@ -726,17 +726,28 @@ function App() {
     });
 
     // Listen for auth state changes (sign-out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          useAuthStore.getState().logout();
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          useAuthStore.getState().setToken(session.access_token);
+    const unsubscribe = onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        useAuthStore.getState().logout();
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        useAuthStore.getState().setToken(session.access_token);
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        const storeState = useAuthStore.getState();
+        if (!storeState.isLoggedIn) {
+          const metadata = session.user.user_metadata;
+          const role = metadata?.role || 'admin';
+          const appRole = mapBackendRoleToAppRole(role);
+          storeState.login(
+            appRole,
+            session.user.id,
+            metadata?.name || session.user.email || '',
+            session.access_token,
+          );
         }
       }
-    );
+    });
 
-    return () => subscription.unsubscribe();
+    return unsubscribe;
   }, []);
 
   const handleLogin = (role: 'staff' | 'welfare' | 'traveler', userId?: string, userName?: string, token?: string) => {

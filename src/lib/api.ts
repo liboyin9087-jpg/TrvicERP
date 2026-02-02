@@ -1,19 +1,6 @@
-// 文件路徑: /workspaces/TrvicERP/src/lib/api.ts
-
-// 為了實現環境變數的集中管理，我們假設存在一個 `src/config/env.ts` 文件
-// 該文件負責解析並匯出環境變數。以下是其假設內容：
-/*
-  // src/config/env.ts
-  export const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-  export const API_VERSION: string = import.meta.env.VITE_API_VERSION || 'v1';
-  // 保持與原始 USE_MOCK 邏輯一致：只有當 VITE_USE_MOCK 嚴格等於 'false' 時才禁用 Mock
-  export const USE_MOCK_API: boolean = import.meta.env.VITE_USE_MOCK !== 'false';
-  export const MOCK_LATENCY_MS: number = parseInt(import.meta.env.VITE_MOCK_LATENCY_MS || '120', 10);
-*/
-
 // 從集中管理的文件中匯入環境變數
 import { API_BASE_URL, API_VERSION, USE_MOCK_API, MOCK_LATENCY_MS } from '../config/env';
-import { supabase } from './supabase';
+import { getAccessToken } from './supabase';
 
 /**
  * API Configuration
@@ -332,11 +319,7 @@ export async function apiRequest<T>(
 
   try {
     // 優先從 Supabase session 取得 token，fallback 到 localStorage
-    let token: string | null = null;
-    if (supabase) {
-      const { data: { session } } = await supabase.auth.getSession();
-      token = session?.access_token ?? null;
-    }
+    let token: string | null = await getAccessToken();
     if (!token) {
       token = localStorage.getItem('auth_token');
     }

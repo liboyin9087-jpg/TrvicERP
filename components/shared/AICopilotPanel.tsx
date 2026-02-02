@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bot, Send, X, Sparkles, ChevronRight, ChevronLeft,
   Copy, Check, Loader2, Map, Megaphone, Calculator, Scale, MessageCircle,
-  Play, AlertCircle, RefreshCw, Maximize2, Minimize2, Settings, GripVertical
+  Play, AlertCircle, RefreshCw, Maximize2, Minimize2, Settings, GripVertical,
+  Headset
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // import { aiService } from '@/lib/ai/aiService'; // Moved to useAICopilotChat hook
@@ -218,38 +219,45 @@ interface ModeOption {
 const MODE_OPTIONS: ModeOption[] = [
   {
     id: 'general',
-    label: '一般諮詢',
+    label: '通用助手',
     icon: <MessageCircle className="w-4 h-4" />,
-    description: '通用問答',
-    colorClass: 'bg-gray-600', // Standard gray for neutral/general
+    description: '一般諮詢與系統操作',
+    colorClass: 'bg-gray-600',
   },
   {
-    id: 'itinerary',
-    label: '行程規劃',
+    id: 'planner',
+    label: '行程規劃師',
     icon: <Map className="w-4 h-4" />,
-    description: '行程建議與安排',
-    colorClass: 'bg-blue-600', // Standard blue for info/primary related tasks
+    description: '行程設計與景點安排',
+    colorClass: 'bg-blue-600',
   },
   {
-    id: 'marketing',
+    id: 'copywriter',
     label: '行銷文案',
     icon: <Megaphone className="w-4 h-4" />,
-    description: '文案生成與優化',
-    colorClass: 'bg-purple-600', // Standard purple for secondary/accent related tasks
+    description: 'DM / 社群 / EDM 文案',
+    colorClass: 'bg-purple-600',
   },
   {
     id: 'costing',
-    label: '成本估算',
+    label: '成本精算',
     icon: <Calculator className="w-4 h-4" />,
-    description: '報價與成本分析',
-    colorClass: 'bg-green-600', // Standard green for success/positive related tasks
+    description: '報價與利潤分析',
+    colorClass: 'bg-green-600',
   },
   {
-    id: 'legal',
-    label: '法規諮詢',
+    id: 'compliance',
+    label: '法務合規',
     icon: <Scale className="w-4 h-4" />,
-    description: '旅遊法規查詢',
-    colorClass: 'bg-yellow-600', // Standard yellow for warning/caution related tasks
+    description: '合約 / 退改 / 法規查詢',
+    colorClass: 'bg-yellow-600',
+  },
+  {
+    id: 'ops',
+    label: '團控管家',
+    icon: <Headset className="w-4 h-4" />,
+    description: '房況 / 機位 / 領隊派遣',
+    colorClass: 'bg-rose-600',
   },
 ];
 

@@ -584,14 +584,14 @@ export class AuthService {
 // 初始化與導出 (應用程式的入口點會使用此部分)
 // ===============================================
 
-// 環境變數判斷應在應用程式啟動時進行，並用於組裝服務
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
+// 使用集中管理的環境變數判斷 mock 模式
+import { USE_MOCK_API } from '@/config/env';
 
 const authStorage = new LocalStorageAuthStorage();
 
 // Mock 模式使用 MockAuthRepository；非 Mock 模式使用 SupabaseAuthRepository（需設定 Supabase 環境變數）
 // ApiAuthRepository 保留作為不使用 Supabase 的自建後端選項
-const authRepository: IAuthRepository = USE_MOCK
+const authRepository: IAuthRepository = USE_MOCK_API
   ? new MockAuthRepository(authStorage)
   : new SupabaseAuthRepository(authStorage);
 

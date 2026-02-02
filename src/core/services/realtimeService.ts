@@ -700,10 +700,12 @@ export class RealtimeService {
 //   VITE_USE_MOCK?: string;
 // };
 
-// 配置物件，從環境變數中讀取
+import { USE_MOCK_API } from '@/config/env';
+
+// 配置物件，從集中管理的環境變數中讀取
 export const appRealtimeServiceConfig: RealtimeServiceConfig = {
   wsUrl: import.meta.env.VITE_WS_URL || 'wss://api.example.com/ws',
-  useMock: import.meta.env.VITE_USE_MOCK === 'true', // 明確檢查 'true'
+  useMock: USE_MOCK_API,
   reconnectMaxAttempts: 10,
   reconnectInitialDelayMs: 1000, // 1 秒
   reconnectMaxDelayMs: 60000,    // 1 分鐘

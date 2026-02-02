@@ -301,10 +301,9 @@ class AIService implements IAIApiClient {
 }
 
 // --- Dependency Setup and Singleton Export ---
-// Environment variables are accessed only in this section, centralizing their use.
+import { USE_MOCK_API } from '@/config/env';
+
 const API_BASE_URL_ENV = import.meta.env.VITE_AI_API_URL || 'http://localhost:4000';
-// Explicitly check for 'true' to enable mock mode. Other values (undefined, false, '') will disable it.
-const USE_MOCK_ENV = import.meta.env.VITE_USE_MOCK === 'true';
 
 // Default retry configuration for the AI service.
 const DEFAULT_AI_RETRY_CONFIG: RetryConfig = {
@@ -316,7 +315,7 @@ const DEFAULT_AI_RETRY_CONFIG: RetryConfig = {
 
 const serviceConfig: AIServiceConfig = {
   baseUrl: API_BASE_URL_ENV,
-  useMock: USE_MOCK_ENV,
+  useMock: USE_MOCK_API,
   retryConfig: DEFAULT_AI_RETRY_CONFIG,
 };
 
