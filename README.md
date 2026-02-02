@@ -297,6 +297,57 @@ GET /metrics
 
 ## 🚀 部署指南
 
+### Vercel + Supabase 部署（推薦）
+
+> 📖 詳細指南請參考 [docs/VERCEL_SUPABASE_GUIDE.md](docs/VERCEL_SUPABASE_GUIDE.md)
+
+#### 步驟 1：建立 Supabase 專案
+
+1. 前往 [Supabase Dashboard](https://supabase.com/dashboard)
+2. 建立新專案
+3. 取得 API 設定：**Settings** → **API**
+   - Project URL: `https://xxxx.supabase.co`
+   - anon public key: `eyJhbGciOi...`
+
+#### 步驟 2：設定 Vercel 環境變數
+
+在 Vercel Dashboard → **Settings** → **Environment Variables** 設定：
+
+| 變數名稱 | 值 | 必填 |
+|----------|-----|------|
+| `VITE_SUPABASE_URL` | `https://xxxx.supabase.co` | ✅ |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOi...` | ✅ |
+| `VITE_USE_MOCK` | `false` | ✅ |
+| `VITE_API_URL` | 後端 API URL | 選填 |
+
+> ⚠️ **重要**：設定後需要 **Redeploy** 才會生效
+
+#### 步驟 3：建立 Supabase 使用者
+
+1. Supabase Dashboard → **Authentication** → **Users**
+2. 點擊 **Add user** → **Create new user**
+3. 設定 User Metadata：
+```json
+{
+  "name": "管理員",
+  "role": "admin"
+}
+```
+
+#### 常見問題排解
+
+**登入失敗？**
+- 檢查 `VITE_USE_MOCK` 是否為 `false`
+- 確認 Supabase URL 和 Key 正確
+- 開啟瀏覽器 Console 檢查錯誤訊息
+
+**啟用連線診斷：**
+```env
+VITE_DEBUG_CONNECTION=true
+```
+
+---
+
 ### Docker 部署
 
 ```dockerfile
