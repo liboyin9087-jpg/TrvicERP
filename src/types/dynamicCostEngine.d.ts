@@ -49,6 +49,14 @@ export interface CostFactor {
   value: number;
   unit: string;
   category: string;
+  /**
+   * Optional conditions for applying this cost factor.
+   * Common condition keys:
+   * - minPeople: Minimum number of people required
+   * - season: 'peak' | 'shoulder' | 'off' season
+   * - advanceBooking: Days in advance for booking
+   * - vehicleType: Type of vehicle
+   */
   conditions?: Record<string, unknown>;
   isActive: boolean;
   effectiveDate: string;

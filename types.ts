@@ -25,7 +25,8 @@ export interface Booking {
   totalAmount?: number;
   paidAmount?: number;
   notes?: string;
-  [key: string]: unknown;
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -67,5 +68,6 @@ export interface ProcessedBooking {
   status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   special_needs?: string;
   booking_date?: string;
-  [key: string]: unknown;
+  /** Additional metadata */
+  metadata?: Record<string, unknown>;
 }
