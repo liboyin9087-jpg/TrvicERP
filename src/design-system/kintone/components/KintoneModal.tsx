@@ -38,7 +38,7 @@ const modalVariants: Variants = {
 const dashtailTokens = {
   textColor: {
     default: "text-gray-900", // Main text color
-    muted: "text-gray-500",   // Secondary text/icon color
+    muted: "text-gray-500", // Secondary text/icon color
   },
   borderColor: {
     default: "border-gray-200", // Default border color
@@ -139,7 +139,7 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
                     "flex items-center justify-between p-4 sm:p-6",
                     dashtailTokens.borderColor.default,
                     "border-b",
-                    "cursor-grab" // Indicate draggable area
+                    "cursor-grab", // Indicate draggable area
                   )}
                 >
                   {/* Drag Handle */}
@@ -149,12 +149,14 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
                     role="button" // Indicate it's an interactive element for screen readers
                     aria-label="Drag modal"
                   >
-                    <GripVertical className={cn("w-5 h-5", dashtailTokens.textColor.muted)} />
+                    <GripVertical
+                      className={cn("w-5 h-5", dashtailTokens.textColor.muted)}
+                    />
                     <h2
                       id="kintone-modal-title"
                       className={cn(
                         "text-lg sm:text-xl font-semibold truncate",
-                        dashtailTokens.textColor.default
+                        dashtailTokens.textColor.default,
                       )}
                     >
                       {title}
@@ -166,11 +168,13 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
                       "p-2 rounded-md transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center",
                       dashtailTokens.closeButton.hoverBg,
                       dashtailTokens.closeButton.focusRing,
-                      dashtailTokens.closeButton.activeBg
+                      dashtailTokens.closeButton.activeBg,
                     )}
                     aria-label="Close modal"
                   >
-                    <X className={cn("w-5 h-5", dashtailTokens.textColor.muted)} />
+                    <X
+                      className={cn("w-5 h-5", dashtailTokens.textColor.muted)}
+                    />
                   </button>
                 </div>
               )}
@@ -186,7 +190,7 @@ export const KintoneModal: React.FC<KintoneModalProps> = ({
                   className={cn(
                     "flex items-center justify-end gap-3 p-4 sm:p-6",
                     dashtailTokens.borderColor.default,
-                    "border-t"
+                    "border-t",
                   )}
                 >
                   {footer}

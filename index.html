@@ -1,14 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/favicon.ico">
-    <meta name="theme-color" content="#000000">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- CSP: 生產環境需要允許後端 API 域名 -->
-  <!-- 注意: 實際部署時應根據後端域名調整 connect-src -->
-  <meta http-equiv="Content-Security-Policy" content="
+  <head>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <meta name="theme-color" content="#000000" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- CSP: 生產環境需要允許後端 API 域名 -->
+    <!-- 注意: 實際部署時應根據後端域名調整 connect-src -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
     default-src 'self';
     script-src 'self' 'unsafe-inline' 'unsafe-eval';
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
@@ -24,23 +26,33 @@
       https://generativelanguage.googleapis.com;
     frame-src 'self' https://*.supabase.co;
     worker-src 'self' blob:;
-  " />
-  <title>TrvicERP - AI-Powered Travel Intelligence Platform</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  
-  <!-- PWA Meta Tags -->
-  <meta name="description" content="TrvicERP - 專為台灣旅行業設計的 AI 智能 ERP 系統" />
-  <meta name="application-name" content="TrvicERP" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="TrvicERP" />
-</head>
-<body>
-  <noscript>您需要啟用 JavaScript 才能使用此應用程式。</noscript>
-  <div id="root"></div>
-  <script type="module" src="/src/index.tsx"></script>
-</body>
+  "
+    />
+    <title>TrvicERP - AI-Powered Travel Intelligence Platform</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- PWA Meta Tags -->
+    <meta
+      name="description"
+      content="TrvicERP - 專為台灣旅行業設計的 AI 智能 ERP 系統"
+    />
+    <meta name="application-name" content="TrvicERP" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="TrvicERP" />
+  </head>
+  <body>
+    <noscript>您需要啟用 JavaScript 才能使用此應用程式。</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
 </html>

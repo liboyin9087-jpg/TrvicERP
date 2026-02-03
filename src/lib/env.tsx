@@ -15,6 +15,11 @@ const REQUIRED_URLS: RequiredUrlConfig[] = [
   { key: 'VITE_AI_API_URL', label: 'AI API URL' },
   { key: 'VITE_WS_URL', label: 'WebSocket URL' },
   { key: 'VITE_LINE_API_URL', label: 'LINE API URL' },
+  { key: 'VITE_SUPABASE_URL', label: 'Supabase URL' },
+];
+
+const REQUIRED_KEYS: Array<{ key: keyof Omit<EnvConfigWidgetConfig, 'isProd' | 'useMock'>; label: string }> = [
+  { key: 'VITE_SUPABASE_ANON_KEY', label: 'Supabase Anon Key' },
 ];
 
 /**
@@ -29,6 +34,8 @@ export interface EnvConfigWidgetConfig {
   VITE_AI_API_URL?: string;
   VITE_WS_URL?: string;
   VITE_LINE_API_URL?: string;
+  VITE_SUPABASE_URL?: string;
+  VITE_SUPABASE_ANON_KEY?: string;
   // Add any other environment variables here that need to be checked by this widget.
 }
 
@@ -78,6 +85,13 @@ const EnvConfigWidget: React.FC<EnvConfigWidgetConfig> = (props) => {
     }
   }
 
+  for (const { key, label } of REQUIRED_KEYS) {
+    const value = (envUrlProps as Record<string, string | undefined>)[key];
+    if (!value) {
+      issues.push(`${key} is missing (${label}).`);
+    }
+  }
+
   // If there are no issues and not in mock mode, the widget does not need to be displayed.
   if (issues.length === 0) {
     return null;
@@ -119,6 +133,14 @@ export const warnIfEnvMisconfigured = (config: EnvConfigWidgetConfig): boolean =
   }
 
   for (const { key } of REQUIRED_URLS) {
+    const value = (envUrlProps as Record<string, string | undefined>)[key];
+    if (!value) {
+      console.warn(`Environment variable ${key} is missing`);
+      return true;
+    }
+  }
+
+  for (const { key } of REQUIRED_KEYS) {
     const value = (envUrlProps as Record<string, string | undefined>)[key];
     if (!value) {
       console.warn(`Environment variable ${key} is missing`);

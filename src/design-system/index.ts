@@ -36,3 +36,9 @@ export type { AnimationDuration, AnimationEasing, MotionVariantType, TransitionT
 // This addresses "混合關注點", "設計系統索引混合了核心元件和 Kintone 特定元件",
 // and "部分元件依賴 Context 而非明確的 Props 傳遞" issues, promoting modularity
 // and explicit prop-based configuration for components.
+// New Components
+export { default as Avatar } from './components/Avatar/Avatar';
+export { default as AvatarStack } from './components/AvatarStack/AvatarStack';
+export { default as StatusBadge } from './components/StatusBadge/StatusBadge';
+export { default as TripCard } from './components/TripCard/TripCard';
+export { default as ProgressRing } from './components/ProgressRing/ProgressRing';

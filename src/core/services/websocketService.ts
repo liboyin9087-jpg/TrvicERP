@@ -53,10 +53,10 @@ export class WebSocketManager {
         this.ws = new WebSocket(this.config.url);
 
         this.ws.onopen = () => {
-          console.log('[WebSocket] Connected to', this.config.url);
+          console.log("[WebSocket] Connected to", this.config.url);
           this.reconnectAttempts = 0;
           this.startHeartbeat();
-          this.emit('connected');
+          this.emit("connected");
           resolve();
         };
 
@@ -65,27 +65,34 @@ export class WebSocketManager {
             const message: WebSocketMessage = JSON.parse(event.data);
             this.handleMessage(message);
           } catch (error) {
-            console.error('[WebSocket] Failed to parse message:', event.data, error);
+            console.error(
+              "[WebSocket] Failed to parse message:",
+              event.data,
+              error,
+            );
           }
         };
 
         this.ws.onerror = (error) => {
-          console.error('[WebSocket] Connection error:', error);
-          this.emit('error', { error });
+          console.error("[WebSocket] Connection error:", error);
+          this.emit("error", { error });
           reject(error);
         };
 
         this.ws.onclose = () => {
-          console.log('[WebSocket] Connection closed');
+          console.log("[WebSocket] Connection closed");
           this.stopHeartbeat();
-          this.emit('disconnected');
+          this.emit("disconnected");
 
-          if (!this.isIntentionallyClosed && this.reconnectAttempts < this.config.reconnectAttempts) {
+          if (
+            !this.isIntentionallyClosed &&
+            this.reconnectAttempts < this.config.reconnectAttempts
+          ) {
             this.attemptReconnect();
           }
         };
       } catch (error) {
-        console.error('[WebSocket] Failed to create WebSocket:', error);
+        console.error("[WebSocket] Failed to create WebSocket:", error);
         reject(error);
       }
     });
@@ -97,11 +104,13 @@ export class WebSocketManager {
   private attemptReconnect(): void {
     this.reconnectAttempts++;
     const delay = this.config.reconnectDelay * this.reconnectAttempts;
-    console.log(`[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.config.reconnectAttempts}) in ${delay}ms...`);
+    console.log(
+      `[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.config.reconnectAttempts}) in ${delay}ms...`,
+    );
 
     setTimeout(() => {
       this.connect().catch((error) => {
-        console.error('[WebSocket] Reconnection failed:', error);
+        console.error("[WebSocket] Reconnection failed:", error);
       });
     }, delay);
   }
@@ -123,17 +132,19 @@ export class WebSocketManager {
    */
   public send(message: WebSocketMessage): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error('[WebSocket] WebSocket is not connected');
+      console.error("[WebSocket] WebSocket is not connected");
       return;
     }
 
     try {
-      this.ws.send(JSON.stringify({
-        ...message,
-        timestamp: Date.now(),
-      }));
+      this.ws.send(
+        JSON.stringify({
+          ...message,
+          timestamp: Date.now(),
+        }),
+      );
     } catch (error) {
-      console.error('[WebSocket] Failed to send message:', error);
+      console.error("[WebSocket] Failed to send message:", error);
     }
   }
 
@@ -178,13 +189,13 @@ export class WebSocketManager {
    */
   private handleMessage(message: WebSocketMessage): void {
     // 處理心跳
-    if (message.type === 'ping') {
-      this.send({ type: 'pong' });
+    if (message.type === "ping") {
+      this.send({ type: "pong" });
       this.resetHeartbeatTimeout();
       return;
     }
 
-    if (message.type === 'pong') {
+    if (message.type === "pong") {
       this.resetHeartbeatTimeout();
       return;
     }
@@ -196,19 +207,25 @@ export class WebSocketManager {
         try {
           handler(message);
         } catch (error) {
-          console.error(`[WebSocket] Error in message handler for type "${message.type}":`, error);
+          console.error(
+            `[WebSocket] Error in message handler for type "${message.type}":`,
+            error,
+          );
         }
       });
     }
 
     // 分發給通用訊號器
-    const wildcard = this.messageHandlers.get('*');
+    const wildcard = this.messageHandlers.get("*");
     if (wildcard) {
       wildcard.forEach((handler) => {
         try {
           handler(message);
         } catch (error) {
-          console.error('[WebSocket] Error in wildcard message handler:', error);
+          console.error(
+            "[WebSocket] Error in wildcard message handler:",
+            error,
+          );
         }
       });
     }
@@ -219,7 +236,7 @@ export class WebSocketManager {
    */
   private startHeartbeat(): void {
     this.heartbeatTimer = setInterval(() => {
-      this.send({ type: 'ping' });
+      this.send({ type: "ping" });
       this.startHeartbeatTimeout();
     }, this.config.heartbeatInterval);
   }
@@ -240,10 +257,12 @@ export class WebSocketManager {
    */
   private startHeartbeatTimeout(): void {
     this.heartbeatTimeoutTimer = setTimeout(() => {
-      console.warn('[WebSocket] Heartbeat timeout, reconnecting...');
+      console.warn("[WebSocket] Heartbeat timeout, reconnecting...");
       this.disconnect();
       this.connect().catch(() => {
-        console.error('[WebSocket] Failed to reconnect after heartbeat timeout');
+        console.error(
+          "[WebSocket] Failed to reconnect after heartbeat timeout",
+        );
       });
     }, this.config.heartbeatTimeout);
   }
@@ -289,9 +308,12 @@ let wsManager: WebSocketManager | null = null;
 /**
  * 初始化全局 WebSocket 連接
  */
-export function initializeWebSocket(url: string, config?: Partial<WebSocketConfig>): WebSocketManager {
+export function initializeWebSocket(
+  url: string,
+  config?: Partial<WebSocketConfig>,
+): WebSocketManager {
   if (wsManager) {
-    console.warn('[WebSocket] WebSocket manager already initialized');
+    console.warn("[WebSocket] WebSocket manager already initialized");
     return wsManager;
   }
 
@@ -335,16 +357,16 @@ export function useWebSocket(url: string, config?: Partial<WebSocketConfig>) {
 
     managerRef.current = manager;
 
-    const unsubscribeConnected = manager.on('connected', () => {
+    const unsubscribeConnected = manager.on("connected", () => {
       setIsConnected(true);
     });
 
-    const unsubscribeDisconnected = manager.on('disconnected', () => {
+    const unsubscribeDisconnected = manager.on("disconnected", () => {
       setIsConnected(false);
     });
 
     manager.connect().catch((error) => {
-      console.error('[WebSocket] Failed to connect:', error);
+      console.error("[WebSocket] Failed to connect:", error);
     });
 
     return () => {
@@ -358,10 +380,12 @@ export function useWebSocket(url: string, config?: Partial<WebSocketConfig>) {
     isConnected,
     manager: managerRef.current,
     send: (message: WebSocketMessage) => managerRef.current?.send(message),
-    on: (type: string, handler: MessageHandler) => managerRef.current?.on(type, handler),
-    once: (type: string, handler: MessageHandler) => managerRef.current?.once(type, handler),
+    on: (type: string, handler: MessageHandler) =>
+      managerRef.current?.on(type, handler),
+    once: (type: string, handler: MessageHandler) =>
+      managerRef.current?.once(type, handler),
   };
 }
 
 // 需要導入 React
-import React from 'react';
+import React from "react";

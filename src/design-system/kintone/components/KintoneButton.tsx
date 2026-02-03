@@ -76,13 +76,16 @@ export const KintoneButton: React.FC<KintoneButtonProps> = ({
   // are defined in the project's Tailwind configuration.
   const variantStyles = {
     // Kintone primary blue -> Tailwind primary palette
-    primary: "bg-primary-600 hover:bg-primary-700 text-white border-transparent",
+    primary:
+      "bg-primary-600 hover:bg-primary-700 text-white border-transparent",
     // Generic secondary color (light grey button)
     secondary: "bg-white hover:bg-gray-50 text-gray-800 border-gray-300",
     // Kintone success green -> Tailwind success palette
-    success: "bg-success-600 hover:bg-success-700 text-white border-transparent",
+    success:
+      "bg-success-600 hover:bg-success-700 text-white border-transparent",
     // Kintone warning orange -> Tailwind warning palette
-    warning: "bg-warning-500 hover:bg-warning-600 text-white border-transparent",
+    warning:
+      "bg-warning-500 hover:bg-warning-600 text-white border-transparent",
     // Kintone danger red -> Tailwind danger palette
     danger: "bg-danger-600 hover:bg-danger-700 text-white border-transparent",
     // Kintone info cyan -> Tailwind info palette

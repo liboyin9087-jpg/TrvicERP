@@ -9,6 +9,44 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Design System Colors
+        coral: {
+          50: '#FFF5F5',
+          100: '#FFE3E3',
+          200: '#FFC9C9',
+          300: '#FFA8A8',
+          400: '#FF8787',
+          500: '#FF6B6B',
+          600: '#FA5252',
+          700: '#F03E3E',
+          800: '#E03131',
+          900: '#C92A2A',
+        },
+        teal: {
+          50: '#E6FFFA',
+          100: '#B2F5EA',
+          200: '#81E6D9',
+          300: '#4FD1C5',
+          400: '#38B2AC',
+          500: '#4ECDC4',
+          600: '#319795',
+          700: '#2C7A7B',
+          800: '#285E61',
+          900: '#234E52',
+        },
+        sunshine: {
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          200: '#FDE68A',
+          300: '#FCD34D',
+          400: '#FBBF24',
+          500: '#FFE66D',
+          600: '#D97706',
+          700: '#B45309',
+          800: '#92400E',
+          900: '#78350F',
+        },
+        
         // Primary color system (main brand)
         primary: {
           50: "var(--color-primary-50)",

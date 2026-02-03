@@ -23,7 +23,7 @@ import {
 
 // ARCHITECT FIX: KintoneButton is now imported here to be injected into the generic EmptyState,
 // rather than being a direct dependency of GenericEmptyState itself.
-import { KintoneButton } from '@/design-system/components/KintoneButton';
+import { KintoneButton } from '@/design-system/kintone/components/KintoneButton';
 
 // --- Dashtail Design System Tokens (Hypothetical Definitions) ---
 // In a real-world scenario, these would be imported from a centralized design system package

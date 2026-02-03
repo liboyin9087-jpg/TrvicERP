@@ -65,7 +65,14 @@ const frontRequired = ['VITE_USE_MOCK'];
 const useMock = frontendEnv.VITE_USE_MOCK !== 'false';
 
 if (!useMock) {
-  frontRequired.push('VITE_API_URL', 'VITE_AI_API_URL', 'VITE_WS_URL', 'VITE_LINE_API_URL');
+  frontRequired.push(
+    'VITE_API_URL',
+    'VITE_AI_API_URL',
+    'VITE_WS_URL',
+    'VITE_LINE_API_URL',
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_ANON_KEY'
+  );
 }
 
 if (!frontendEnv.VITE_APP_URL) {
@@ -120,6 +127,8 @@ reportSection('Frontend env summary', [
   `VITE_WS_URL=${maskValue('VITE_WS_URL', frontendEnv.VITE_WS_URL) || '(missing)'}`,
   `VITE_LINE_API_URL=${maskValue('VITE_LINE_API_URL', frontendEnv.VITE_LINE_API_URL) || '(missing)'}`,
   `VITE_APP_URL=${maskValue('VITE_APP_URL', frontendEnv.VITE_APP_URL) || '(missing)'}`,
+  `VITE_SUPABASE_URL=${maskValue('VITE_SUPABASE_URL', frontendEnv.VITE_SUPABASE_URL) || '(missing)'}`,
+  `VITE_SUPABASE_ANON_KEY=${maskValue('VITE_SUPABASE_ANON_KEY', frontendEnv.VITE_SUPABASE_ANON_KEY) || '(missing)'}`,
   `VITE_WEATHER_PROVIDER=${frontendEnv.VITE_WEATHER_PROVIDER || '(missing)'}`,
   `VITE_WEATHER_API_URL=${maskValue('VITE_WEATHER_API_URL', frontendEnv.VITE_WEATHER_API_URL) || '(missing)'}`,
   `VITE_WEATHER_API_KEY=${maskValue('VITE_WEATHER_API_KEY', frontendEnv.VITE_WEATHER_API_KEY) || '(missing)'}`,

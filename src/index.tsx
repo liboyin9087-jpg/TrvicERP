@@ -1,10 +1,10 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import './index.css';
-import '@/lib/i18n'; // Initialize i18next before rendering
-import { warnIfEnvMisconfigured } from '@/lib/env';
-import { USE_MOCK_API } from '@/config/env';
+import React from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import "./index.css";
+import "@/lib/i18n"; // Initialize i18next before rendering
+import { warnIfEnvMisconfigured } from "@/lib/env";
+import { USE_MOCK_API } from "@/config/env";
 
 // Check environment configuration on startup
 warnIfEnvMisconfigured({
@@ -16,7 +16,11 @@ warnIfEnvMisconfigured({
   VITE_LINE_API_URL: import.meta.env.VITE_LINE_API_URL,
 });
 
-const container = document.getElementById('root');
+const container = document.getElementById("root");
 if (container) {
-  createRoot(container).render(<React.StrictMode><App /></React.StrictMode>);
+  createRoot(container).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useCallback, DragEvent } from 'react';
-import { KintoneButton } from '@/design-system/components/KintoneButton';
-import { KintoneModal } from '@/design-system/components/KintoneModal';
+import { KintoneButton } from '@/design-system/kintone/components/KintoneButton';
+import { KintoneModal } from '@/design-system/kintone/components/KintoneModal';
 import { useMobile } from '@/design-system/contexts/MobileContext';
 import { formatFileSize } from '@/lib/file-scanner-types'; // Assuming this provides utility and potentially types
 

@@ -28,7 +28,10 @@ const KINTONE_INPUT_SIZE_STYLES = {
  * KintoneInput - A Kintone-styled input component
  * Mobile-optimized with appropriate sizing, supporting drag-and-drop as a widget.
  */
-export const KintoneInput = React.forwardRef<HTMLInputElement, KintoneInputProps>(
+export const KintoneInput = React.forwardRef<
+  HTMLInputElement,
+  KintoneInputProps
+>(
   (
     {
       value,
@@ -54,8 +57,19 @@ export const KintoneInput = React.forwardRef<HTMLInputElement, KintoneInputProps
         {/* drag-handle 區域，通常是一個小圖示或特定區域，允許用戶拖曳整個 Widget */}
         <div className="absolute top-1 right-1 p-1 cursor-grab text-neutral-400 hover:text-neutral-600 drag-handle">
           {/* 替換為實際的拖曳圖示（例如來自 Icon Library 的 SVG） */}
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16m-7 6h7"
+            />
           </svg>
         </div>
 
