@@ -1,0 +1,19 @@
+# Railway Deployment Configuration
+# 文件位置: backend/railway.json
+
+# 部署說明:
+# 1. 在 Railway Dashboard 建立新專案
+# 2. 連結此 GitHub Repository
+# 3. 設定 Root Directory 為 'backend'
+# 4. 設定環境變數 (參考 .env.production.example)
+# 5. Railway 會自動偵測 Python 並部署
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

@@ -14,7 +14,7 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"],
-      "@/components/*": ["./components/*"],
+      "@/components/*": ["./src/components/*"],
       "@/core/*": ["./src/core/*"],
       "@/modules/*": ["./src/modules/*"],
       "@/lib/*": ["./src/lib/*"],
@@ -30,6 +30,6 @@
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "components/**/*", "*.ts", "*.tsx"],
+  "include": ["src/**/*", "*.ts", "*.tsx"],
   "exclude": ["node_modules", "dist", ".vercel"]
 }

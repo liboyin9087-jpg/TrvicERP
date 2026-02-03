@@ -33,7 +33,7 @@
  * To use with Tailwind CSS, extend `tailwind.config.js` like this:
  * ```javascript
  * // tailwind.config.js
- * const { kintoneColors } = require('./src/design-system/kintone/theme');
+ * const { kintoneColors } = require('@/design-system/kintone/theme');
  * module.exports = {
  *   theme: {
  *     extend: {
@@ -139,7 +139,7 @@ export const kintoneColors = {
  * To use with Tailwind CSS, extend `tailwind.config.js` like this:
  * ```javascript
  * // tailwind.config.js
- * const { kintoneSpacing } = require('./src/design-system/kintone/theme');
+ * const { kintoneSpacing } = require('@/design-system/kintone/theme');
  * module.exports = {
  *   theme: {
  *     extend: {
@@ -170,7 +170,7 @@ export const kintoneSpacing = {
  * To use with Tailwind CSS, extend `tailwind.config.js` like this:
  * ```javascript
  * // tailwind.config.js
- * const { kintoneBorderRadius } = require('./src/design-system/kintone/theme');
+ * const { kintoneBorderRadius } = require('@/design-system/kintone/theme');
  * module.exports = {
  *   theme: {
  *     extend: {
@@ -200,7 +200,7 @@ export const kintoneBorderRadius = {
  * To use with Tailwind CSS, extend `tailwind.config.js` like this:
  * ```javascript
  * // tailwind.config.js
- * const { kintoneShadows } = require('./src/design-system/kintone/theme');
+ * const { kintoneShadows } = require('@/design-system/kintone/theme');
  * module.exports = {
  *   theme: {
  *     extend: {
@@ -230,7 +230,7 @@ export const kintoneShadows = {
  * To use with Tailwind CSS, extend `tailwind.config.js` like this:
  * ```javascript
  * // tailwind.config.js
- * const { kintoneTypography } = require('./src/design-system/kintone/theme');
+ * const { kintoneTypography } = require('@/design-system/kintone/theme');
  * module.exports = {
  *   theme: {
  *     extend: {
@@ -297,7 +297,7 @@ export const kintoneTypography = {
  * To use with Tailwind CSS, extend `tailwind.config.js` like this:
  * ```javascript
  * // tailwind.config.js
- * const { kintoneBreakpoints } = require('./src/design-system/kintone/theme');
+ * const { kintoneBreakpoints } = require('@/design-system/kintone/theme');
  * module.exports = {
  *   theme: {
  *     extend: {
@@ -326,7 +326,7 @@ export const kintoneBreakpoints = {
  * To use with Tailwind CSS, extend `tailwind.config.js` like this:
  * ```javascript
  * // tailwind.config.js
- * const { kintoneZIndex } = require('./src/design-system/kintone/theme');
+ * const { kintoneZIndex } = require('@/design-system/kintone/theme');
  * module.exports = {
  *   theme: {
  *     extend: {

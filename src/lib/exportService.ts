@@ -49,7 +49,7 @@ export function exportRosterToCSV(options: ExportOptions): void {
 
 /**
  * exportService 的通用工具函式和常數
- * 新增檔案: /workspaces/TrvicERP/src/lib/export/utils.ts
+ * 新增檔案: /workspaces/TrvicER@/lib/export/utils.ts
  */
 
 // ============================================
@@ -205,7 +205,7 @@ export function generateFilename(
 
 /**
  * CSV 匯出服務
- * 新增檔案: /workspaces/TrvicERP/src/lib/export/csvExportService.ts
+ * 新增檔案: /workspaces/TrvicER@/lib/export/csvExportService.ts
  */
 
 // ============================================
@@ -260,7 +260,7 @@ export function exportToCSVInternal(options: ExportOptions): void {
 
 /**
  * Excel 匯出服務
- * 新增檔案: /workspaces/TrvicERP/src/lib/export/excelExportService.ts
+ * 新增檔案: /workspaces/TrvicER@/lib/export/excelExportService.ts
  */
 
 // ============================================
@@ -464,7 +464,7 @@ export function exportToExcelInternal(type: DocumentType, options: ExportOptions
 
 /**
  * PDF 匯出服務 (透過瀏覽器列印功能)
- * 新增檔案: /workspaces/TrvicERP/src/lib/export/pdfExportService.ts
+ * 新增檔案: /workspaces/TrvicER@/lib/export/pdfExportService.ts
  */
 
 // ============================================

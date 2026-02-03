@@ -59,7 +59,7 @@ export type Permission =
 
 /**
  * 注意：ROLE_PERMISSIONS 常數已基於可維護性考量，
- * 拆分到 /src/core/configs/rolePermissionsConfig.ts 檔案中。
+ * 拆分到@/core/configs/rolePermissionsConfig.ts 檔案中。
  * 若需修改角色與權限對應，請至該檔案進行調整。
  */
 

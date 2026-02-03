@@ -1,14 +1,14 @@
 import React from 'react';
 import { ArrowLeft, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { WidgetType } from '../components/dashboard/widgetRegistry';
-import DepartureBoardWidget from '../components/dashboard/widgets/DepartureBoardWidget';
-import PassportTrackerWidget from '../components/dashboard/widgets/PassportTrackerWidget';
-import JourneyTimelineWidget from '../components/dashboard/widgets/JourneyTimelineWidget';
-import WorldMapWidget from '../components/dashboard/widgets/WorldMapWidget';
-import RevenueCompassWidget from '../components/dashboard/widgets/RevenueCompassWidget';
-import TrvicLogo from '../components/shared/TrvicLogo';
-import { EmptyState } from '../components/shared/EmptyStateIllustrations';
+import type { WidgetType } from '@/components/dashboard/widgetRegistry';
+import DepartureBoardWidget from '@/components/dashboard/widgets/DepartureBoardWidget';
+import PassportTrackerWidget from '@/components/dashboard/widgets/PassportTrackerWidget';
+import JourneyTimelineWidget from '@/components/dashboard/widgets/JourneyTimelineWidget';
+import WorldMapWidget from '@/components/dashboard/widgets/WorldMapWidget';
+import RevenueCompassWidget from '@/components/dashboard/widgets/RevenueCompassWidget';
+import TrvicLogo from '@/components/shared/TrvicLogo';
+import { EmptyState } from '@/components/shared/EmptyStateIllustrations';
 
 /**
  * Travel Widgets Showcase Page

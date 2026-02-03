@@ -21,9 +21,9 @@ import GlassmorphismDashboard, {
   SidebarNavItem,
   GlassCard,
   SectionTitle,
-} from '../components/shared/GlassmorphismDashboard';
-import PremiumKpiCard from '../components/shared/PremiumKpiCard';
-import FloatingCopilot from '../components/shared/FloatingCopilot';
+} from '@/components/shared/GlassmorphismDashboard';
+import PremiumKpiCard from '@/components/shared/PremiumKpiCard';
+import FloatingCopilot from '@/components/shared/FloatingCopilot';
 import { cn } from '../src/lib/utils';
 
 /**
